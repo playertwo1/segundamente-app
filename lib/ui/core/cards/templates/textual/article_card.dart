@@ -52,43 +52,9 @@ class ArticleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // 3. Body - Long-form text style
                 // 3. Body - Markdown content
                 MarkdownBody(
-                  data: body,
-                  styleSheet: MarkdownStyleSheet(
-                    p: const TextStyle(
-                      fontSize: 15,
-                      height: 1.6,
-                      color: AppColors.textSecondary, // Slate-600
-                    ),
-                    // Add other styles as needed to match the app's theme
-                    h1: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary),
-                    h2: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary),
-                    h3: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary),
-                    blockquote: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontStyle: FontStyle.italic),
-                    code: const TextStyle(
-                      backgroundColor: AppColors.background,
-                      color: AppColors.textPrimary,
-                      fontFamily: 'monospace',
-                    ),
-                    codeblockDecoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
+                    data: body, styleSheet: articleMarkdownStyleSheet()),
               ],
             ),
           ),
@@ -96,4 +62,68 @@ class ArticleCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Reading-first Markdown style for long text such as minutes and reports.
+///
+/// Clear heading steps, one-idea blocks with room between them, amber list
+/// markers and a ruled table keep the text scannable (Nielsen Norman Group,
+/// "How Users Read on the Web"); 16sp body with 1.55 line height follows the
+/// font-size findings of Rello et al., CHI 2016. See docs/EXTRACAO-DOCUMENTOS.md.
+MarkdownStyleSheet articleMarkdownStyleSheet() {
+  const body = TextStyle(
+    fontSize: 16,
+    height: 1.55,
+    color: AppColors.textSecondary,
+  );
+  const heading = TextStyle(
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.3,
+  );
+  return MarkdownStyleSheet(
+    p: body,
+    pPadding: const EdgeInsets.only(bottom: 4),
+    strong: body.copyWith(
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+    ),
+    em: body.copyWith(fontStyle: FontStyle.italic),
+    h1: heading.copyWith(fontSize: 22),
+    h1Padding: const EdgeInsets.only(top: 4, bottom: 8),
+    h2: heading.copyWith(fontSize: 19),
+    h2Padding: const EdgeInsets.only(top: 18, bottom: 6),
+    h3: heading.copyWith(fontSize: 16),
+    h3Padding: const EdgeInsets.only(top: 12, bottom: 4),
+    blockSpacing: 10,
+    listIndent: 20,
+    listBullet: body.copyWith(color: AppColors.primary),
+    listBulletPadding: const EdgeInsets.only(right: 6),
+    blockquote: body.copyWith(fontStyle: FontStyle.italic),
+    blockquotePadding: const EdgeInsets.only(left: 12),
+    blockquoteDecoration: const BoxDecoration(
+      border: Border(left: BorderSide(color: AppColors.primary, width: 2)),
+    ),
+    horizontalRuleDecoration: const BoxDecoration(
+      border: Border(top: BorderSide(color: AppColors.divider)),
+    ),
+    tableHead: body.copyWith(
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+    ),
+    tableBody: body.copyWith(fontSize: 14, height: 1.4),
+    tableBorder: TableBorder.all(color: AppColors.divider, width: 1),
+    tableCellsPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    tableHeadAlign: TextAlign.left,
+    code: const TextStyle(
+      backgroundColor: AppColors.surface,
+      color: AppColors.textPrimary,
+      fontFamily: 'monospace',
+      fontSize: 14,
+    ),
+    codeblockDecoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(8),
+    ),
+  );
 }

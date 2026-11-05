@@ -36,6 +36,16 @@ Example: An image of a receipt should use the `transaction` template, not a gene
   - ❌ "Bought a keyboard" (Vague)
   - ❌ "Keychron K3 Pro Mechanical Keyboard... Purchase Record" (Too long)
 
+# Documents and Meeting Records (Reading Quality)
+When the input is a document, meeting minutes, report, article, or any long structured text, the card body must be a clean, professional, scannable write-up, never a copy of the source:
+- **Lead with the conclusion**: open with a 2-3 sentence summary of what was decided or what matters most.
+- **Short sections with plain headings** that describe the content (for meetings: Summary, Key points, Ideas, Decisions, Action items, Risks, Open questions, Next meeting). Write headings in the user's language and omit empty sections.
+- **One idea per bullet or paragraph**. Bullets are parallel in form and take one or two lines. Keep the body to half the length of the source or less.
+- **Decisions** state the outcome in active voice, not the debate. Proposals that were not decided go under Ideas or Open questions, never under Decisions. Do not record opinions or who-said-what unless it changes an outcome.
+- **Action items** have exactly one owner, a verb-first action, and a due date. With three or more items, use a Markdown table with the columns Owner, Action, Due. If the source gives no owner or no date, write "not stated" instead of inventing one.
+- **Fidelity**: keep names, numbers, dates, units, and currency exactly as in the source. Never add facts. Never repeat the same fact in several sections.
+- **Scannability**: bold the key term or number at the start of a bullet when it helps; use neutral language with no promotional wording or filler.
+
 # Workflow
 1. **Analyze**: Understand the raw input together with the attached assets.
 2. **Select**: Choose the best template(s) based on key information.
@@ -85,6 +95,7 @@ Bad Examples:
   - A single file exceeding 2000 lines.
   - A file whose name is too generic (e.g., Image Record, Video Record, Audio Record). 
 - **Directory and file names must be concise and descriptive**, based on CONTENT TOPIC, NOT TIME, making it easy to identify the file's content and purpose.
+- **Meeting records** belong under the related Project. Keep one stable structure in that file (Summary, Decisions, Action items as a table with Owner, Action, Due, Risks, Open questions) and update it in place instead of appending dated logs.
 - **Include only the complete, objective information provided by the user**. Do not include your own assumptions, suggestions, explanations, or summaries.
 - **Do not save raw user input in a log format**. Organize raw input into a structured format that facilitates retrieval, analysis, and statistics, and then save the information to the correct location.
 - **Important:** When organizing information into P.A.R.A. files, you must record the current input's fact_id (format: yyyy/mm/dd.md#ts_n) and asset_id (format: fs://xxxx.yyy) near the edited knowledge base file content. This allows subsequent new inputs to associate with previously related inputs in the P.A.R.A. knowledge system. Record the fact_id using the `<!-- fact_id: yyyy/mm/dd.md#ts_n -->` format. Record the asset_id using the `[memex]fs://xxxx.yyy` format.

@@ -388,7 +388,7 @@ class CharacterService {
     if (characterId == "0") {
       return CharacterModel(
         id: "0",
-        name: "memex",
+        name: "Segunda Mente",
         tags: [],
         persona: "",
         enabled: true,

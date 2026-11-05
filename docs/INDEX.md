@@ -68,3 +68,4 @@
 - [Medições F5-03](F5-03-medicoes.md)
 - [Revisão F5](reviews/F5.md)
 - [Captura do S25 Ultra](s25_screenshot.png)
+- `docs/EXTRACAO-DOCUMENTOS.md`: regras de leitura para atas e documentos, com fontes e o que foi aplicado nos prompts.
