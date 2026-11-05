@@ -36,4 +36,18 @@ void main() {
     expect(find.text('Já tem'), findsOneWidget);
     expect(find.byKey(const ValueKey('link-preview-title')), findsNothing);
   });
+
+  testWidgets('without a title the card shows the whole address',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await pump(tester, {'url': 'https://example.com/a/b?x=1'});
+    expect(find.text('example.com/a/b?x=1'), findsOneWidget);
+  });
+
+  testWidgets('with a title the card shows only the domain', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await pump(tester, {'url': 'https://example.com/a/b', 'title': 'T'});
+    expect(find.text('example.com'), findsOneWidget);
+    expect(find.text('example.com/a/b'), findsNothing);
+  });
 }

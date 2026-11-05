@@ -277,9 +277,8 @@ class _AiServiceSetupPageState extends State<AiServiceSetupPage> {
   Color _statusColor(AiServiceConnectionMode mode) {
     switch (mode) {
       case AiServiceConnectionMode.memexOfficial:
-        return AppColors.primary;
       case AiServiceConnectionMode.customProvider:
-        return AppColors.success;
+        return AppColors.primary;
       case AiServiceConnectionMode.notConfigured:
         return AppColors.warning;
     }

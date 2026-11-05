@@ -16,6 +16,11 @@ class LinkCard extends StatelessWidget {
     final String url = data['url'] ?? '';
     final String domain = data['domain'] ?? Uri.tryParse(url)?.host ?? '';
     final String? title = data['title'];
+    // Without a title the card is only a link, so show the whole address.
+    final hasTitle = title != null && title.isNotEmpty;
+    final label = !hasTitle && url.isNotEmpty
+        ? url.replaceFirst(RegExp(r'^https?://'), '')
+        : domain;
 
     return GlassCard(
       onTap: onTap,
@@ -43,14 +48,17 @@ class LinkCard extends StatelessWidget {
               children: [
                 const Icon(Icons.link, size: 16, color: AppColors.primary),
                 const SizedBox(width: 6),
-                Text(
-                  domain,
+                Flexible(
+                    child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
                   ),
-                ),
+                )),
               ],
             ),
           ),
