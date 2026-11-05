@@ -38,7 +38,7 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('ai-service-official-route-card')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.byKey(const ValueKey('ai-service-custom-route-card')),
@@ -232,28 +232,17 @@ void main() {
     expect(languageSetting.keywords, isNot(contains('翻译')));
   });
 
-  testWidgets('official route opens the existing Memex auth flow', (
+  testWidgets('the upstream Memex service is not offered (D-035)', (
     tester,
   ) async {
     await _pumpPage(tester, const AiServiceSetupPage());
 
-    expect(find.textContaining('MemeX'), findsNothing);
-
-    await _tapByKey(tester, const ValueKey('ai-service-official-route-card'));
-
-    expect(find.byType(MemexOfficialServicePage), findsOneWidget);
-    expect(find.text(UserStorage.l10n.aiServiceMemexRouteTitle), findsWidgets);
     expect(
-      find.text(UserStorage.l10n.aiServiceSettingsDescription),
-      findsOneWidget,
-    );
-    expect(find.text(UserStorage.l10n.modelRolesTitle), findsNothing);
-
-    await tester.tap(find.text(UserStorage.l10n.enableAiService));
-    await tester.pumpAndSettle();
-
-    expect(find.text(UserStorage.l10n.memexUsername), findsOneWidget);
-    expect(find.text(UserStorage.l10n.memexPassword), findsOneWidget);
+        find.byKey(const ValueKey('ai-service-official-route-card')),
+        findsNothing);
+    expect(find.textContaining('Memex'), findsNothing);
+    expect(find.text(UserStorage.l10n.aiServiceMemexRouteTitle), findsNothing);
+    expect(find.text(UserStorage.l10n.memexUsername), findsNothing);
   });
 
   testWidgets('official service page still saves Memex credentials', (

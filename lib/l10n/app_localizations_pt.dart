@@ -881,14 +881,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get setupModelConfigComplete => 'Concluir e seguir';
 
   @override
-  String get aiService => 'Serviço de modelos Memex';
+  String get aiService => 'Serviço de modelos Segunda Mente';
 
   @override
   String get aiModelHubTitle => 'Modelos e serviços AI';
 
   @override
   String get aiModelHubSubtitle =>
-      'Escolha o serviço oficial do Memex ou traga seu próprio provedor. O roteamento avançado de modelos fica disponível quando você precisar.';
+      'Conecte seu próprio provedor, como o ChatGPT por login ou uma chave de API. O roteamento avançado de modelos fica disponível quando você precisar.';
 
   @override
   String get aiSetupCurrentStatusTitle => 'Configuração atual';
@@ -929,11 +929,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Escolha um método de conexão para ativar a organização AI de registros, mídia e insights.';
 
   @override
-  String get aiSetupStatusMemexTitle => 'Usando o serviço oficial Memex';
+  String get aiSetupStatusMemexTitle =>
+      'Usando o serviço oficial Segunda Mente';
 
   @override
   String get aiSetupStatusMemexDescription =>
-      'Memex usará a conexão oficial e credenciais de API gerenciadas pela sua conta Memex.';
+      'Segunda Mente usará a conexão oficial e credenciais de API gerenciadas pela sua conta Segunda Mente.';
 
   @override
   String get aiSetupStatusCustomTitle =>
@@ -952,7 +953,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get aiSetupOfficialRouteDescription =>
-      'Entre no Memex para usar o serviço oficial de IA.';
+      'Entre no Segunda Mente para usar o serviço oficial de IA.';
 
   @override
   String get aiSetupCustomRouteDescription =>
@@ -991,7 +992,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get modelConnectionsDescription =>
-      'Conecte o serviço oficial do Memex ou adicione suas próprias credenciais de provedor.';
+      'Adicione as credenciais do seu provedor para a Segunda Mente usar.';
 
   @override
   String get relatedAiCapabilitiesTitle =>
@@ -1038,7 +1039,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get modelSlotUpdated => 'Papel do modelo atualizado';
 
   @override
-  String get aiServiceMemexRouteTitle => 'Conectar pelo Memex';
+  String get aiServiceMemexRouteTitle => 'Conectar pelo Segunda Mente';
 
   @override
   String get aiServiceLongDescription =>
@@ -1052,14 +1053,14 @@ class AppLocalizationsPt extends AppLocalizations {
       'Escolha isto primeiro se você já tem uma chave API da OpenAI, Anthropic, Gemini ou outro provedor.';
 
   @override
-  String get enableAiService => 'Conectar com Memex';
+  String get enableAiService => 'Conectar com Segunda Mente';
 
   @override
   String get aiServiceReadyToast => 'Organização AI ativada';
 
   @override
   String get aiServiceSettingsDescription =>
-      'Se você não tem uma chave API, use uma conta Memex para conectar a serviços de modelos populares.';
+      'Se você não tem uma chave API, use uma conta Segunda Mente para conectar a serviços de modelos populares.';
 
   @override
   String get advancedModelConfiguration => 'Configurar chave API';
@@ -1740,7 +1741,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get providerOllama => 'Ollama local';
 
   @override
-  String get providerMemex => 'Serviço proxy Memex';
+  String get providerMemex => 'Serviço proxy Segunda Mente';
 
   @override
   String get memexSignIn => 'Entrar';
@@ -1761,7 +1762,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get memexSignInLink => 'Entrar em vez disso';
 
   @override
-  String get memexTopUp => 'Adicione créditos para começar a usar Memex AI';
+  String get memexTopUp =>
+      'Adicione créditos para começar a usar Segunda Mente';
 
   @override
   String get memexTopUpSuccess => 'Crédito adicionado com sucesso!';
@@ -1806,7 +1808,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get memexTopUpPlanCustom => 'Créditos personalizados';
 
   @override
-  String get memexTopUpPlanStarterSubtitle => 'Bom para testar Memex AI';
+  String get memexTopUpPlanStarterSubtitle => 'Bom para testar Segunda Mente';
 
   @override
   String get memexTopUpPlanEverydaySubtitle => 'Bom para organização regular';

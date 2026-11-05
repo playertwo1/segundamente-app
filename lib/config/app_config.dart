@@ -42,7 +42,9 @@ class AppConfig {
   // ─── Feature Flags ───────────────────────────────────────────────
   // Add more flavor-dependent flags here as needed, e.g.:
   //
-  static bool get enableMemexModelService => AppFlavor.isGlobal;
+  // D-035: the upstream project's paid model service (memexlab.ai) is not
+  // offered in Segunda Mente; the code stays dormant behind this flag.
+  static bool get enableMemexModelService => false;
   // static bool get enableICloudSync => AppFlavor.isGlobal;
   // static bool get enableHealthKit  => AppFlavor.isGlobal;
 }

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:memex/config/app_config.dart';
 import 'package:memex/domain/models/timeline_card_model.dart';
 import 'package:memex/db/app_database.dart';
 import 'package:memex/ui/card_attachments/card_attachment_data.dart';
@@ -31,7 +30,6 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:memex/utils/permission_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:memex/ui/settings/widgets/ai_service_setup_page.dart';
-import 'package:memex/ui/settings/widgets/model_config_list_page.dart';
 import 'package:memex/ui/settings/widgets/system_authorization_page.dart';
 import 'package:memex/ui/core/widgets/agent_logo_loading.dart';
 import 'package:memex/ui/core/widgets/memex_brand_title.dart';
@@ -453,10 +451,7 @@ class TimelineScreenState extends State<TimelineScreen> {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AppConfig.enableMemexModelService
-                                  ? const AiServiceSetupPage()
-                                  : const ModelConfigListPage(),
+                          builder: (context) => const AiServiceSetupPage(),
                         ),
                       );
                     },

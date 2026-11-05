@@ -19,8 +19,8 @@ void main() {
   test('pt locale exposes the simplified AI setup copy', () {
     const expectedCopy = <String, List<String>>{
       'pt': [
-        'Usando o serviço oficial Memex',
-        'Entre no Memex para usar o serviço oficial de IA.',
+        'Usando o serviço oficial Segunda Mente',
+        'Entre no Segunda Mente para usar o serviço oficial de IA.',
         'Adicione seu próprio provedor e sua chave de API.',
       ],
     };

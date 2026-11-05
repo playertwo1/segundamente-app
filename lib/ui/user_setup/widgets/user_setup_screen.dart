@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:ui' show PlatformDispatcher;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:memex/config/app_config.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/media_service.dart';
@@ -133,7 +132,7 @@ class _UserSetupScreenState extends State<UserSetupScreen> {
         await _memexRouter.updateUserAvatar(avatarToSave);
         if (!mounted) return;
 
-        if (AppConfig.enableMemexModelService) {
+        {
           final completedAiSetup = await Navigator.push<bool>(
             context,
             MaterialPageRoute(

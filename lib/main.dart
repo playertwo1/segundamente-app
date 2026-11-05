@@ -8,7 +8,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:memex/config/dependencies.dart';
-import 'package:memex/config/app_config.dart';
 import 'package:memex/config/app_flavor.dart';
 import 'package:memex/ui/insight/view_models/insight_viewmodel.dart';
 import 'package:memex/ui/knowledge/view_models/knowledge_base_viewmodel.dart';
@@ -29,7 +28,6 @@ import 'package:record/record.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:memex/ui/settings/widgets/ai_service_setup_page.dart';
-import 'package:memex/ui/settings/widgets/model_config_list_page.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/file_import_service.dart';
 import 'package:memex/data/services/event_bus_service.dart';
@@ -785,9 +783,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AppConfig.enableMemexModelService
-                      ? const AiServiceSetupPage()
-                      : const ModelConfigListPage(),
+                  builder: (context) => const AiServiceSetupPage(),
                 ),
               );
             },
@@ -840,9 +836,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AppConfig.enableMemexModelService
-                        ? const AiServiceSetupPage()
-                        : const ModelConfigListPage(),
+                    builder: (context) => const AiServiceSetupPage(),
                   ),
                 );
               },

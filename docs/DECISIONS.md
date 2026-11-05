@@ -202,3 +202,9 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: abrir somente trabalho de pesquisa e de documento, sem código, dependência, permissão ou download de modelo: F8-01 (viabilidade do NotebookLM), F9-01 (mapeamento e perguntas), F9-02 (corpus de 40 casos em dados) e um plano de medição para F7-02. As demais subfases seguem `BLOCKED`.
 - Limites: nenhuma recomendação dos documentos está aceita; as decisões do dono estão listadas em `docs/F8-01-viabilidade.md` (seção 5) e `docs/F9-01-mapeamento.md` (seção 3). O que depende do S25 continua `NOT_RUN`. A F5 segue aberta e o MVP não muda.
 - Evidência: `docs/F8-01-viabilidade.md`, `docs/F9-01-mapeamento.md`, `docs/F9-02-corpus.md` e `docs/medicoes/f9-02/`, `docs/F7-02-plano-de-medicao.md`.
+
+## D-035 — Serviço pago do Memex fora da interface; GPS de foto sob o interruptor de localização (2026-11-05)
+- Contexto: o dono pediu "retire conectar pelo Memex e serviço oficial Memex, troque tudo por Segunda Mente" e deixou o GPS a meu critério. A auditoria da F5 achou que o GPS do EXIF de foto ia ao Nominatim e ao prompt do modelo sem passar pelo interruptor de localização.
+- Decisão: `AppConfig.enableMemexModelService` passa a `false`; as rotas de configuração de modelo abrem sempre `AiServiceSetupPage`; 12 textos (pt e en) foram reescritos sem citar o serviço do Memex. O GPS de foto só é lido e enviado quando `LocationContextConfig.enabled` está ligado (padrão: desligado); sem ele a foto informa só a data.
+- Limites: o código do serviço (`MemexAuthSection`, `MemexCloudService`) continua no repositório, inativo, para facilitar mesclar o upstream; apagar é decisão futura. Quem já tinha tag de local vinda de foto mantém o que foi gravado.
+- Evidência: `test/data/services/image_exif_context_test.dart` (falha sem a trava), `test/ui/settings/widgets/ai_service_setup_page_test.dart`, `test/config/app_config_test.dart`.

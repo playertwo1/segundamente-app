@@ -29,7 +29,11 @@ Future<String?> buildImageExifInfo(String userId, String imagePath) async {
       infoLines.add('${Prompts.captureTime}: ${exif['datetime_original_str']}');
     }
 
-    if (exif.containsKey('gps_coordinates')) {
+    // Photo GPS leaves the device twice (reverse geocoding on OpenStreetMap and
+    // the model prompt), so it follows the location switch, off by default.
+    final locationEnabled =
+        (await UserStorage.getLocationContextConfig()).enabled;
+    if (locationEnabled && exif.containsKey('gps_coordinates')) {
       try {
         final coords = exif['gps_coordinates'] as List;
         final lat = coords[0] as double;

@@ -18,7 +18,7 @@ void main() {
 
       expect(
           AppConfig.availableProviders, isNot(contains(LLMConfig.typeMemex)));
-      expect(AppConfig.enableMemexModelService, isTrue);
+      expect(AppConfig.enableMemexModelService, isFalse);
     });
   });
 }

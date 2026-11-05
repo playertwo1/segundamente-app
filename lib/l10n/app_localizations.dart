@@ -1626,7 +1626,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiService.
   ///
   /// In en, this message translates to:
-  /// **'Memex Model Service'**
+  /// **'Segunda Mente Model Service'**
   String get aiService;
 
   /// No description provided for @aiModelHubTitle.
@@ -1638,7 +1638,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiModelHubSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose Memex\'s official service or bring your own provider. Advanced model routing stays available when you need it.'**
+  /// **'Connect your own provider, such as ChatGPT by sign-in or an API key. Advanced model routing stays available when you need it.'**
   String get aiModelHubSubtitle;
 
   /// No description provided for @aiSetupCurrentStatusTitle.
@@ -1704,13 +1704,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiSetupStatusMemexTitle.
   ///
   /// In en, this message translates to:
-  /// **'Using Memex official service'**
+  /// **'Using Segunda Mente official service'**
   String get aiSetupStatusMemexTitle;
 
   /// No description provided for @aiSetupStatusMemexDescription.
   ///
   /// In en, this message translates to:
-  /// **'Memex will use the official connection and API credentials managed by your Memex account.'**
+  /// **'Segunda Mente will use the official connection and API credentials managed by your Segunda Mente account.'**
   String get aiSetupStatusMemexDescription;
 
   /// No description provided for @aiSetupStatusCustomTitle.
@@ -1740,7 +1740,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiSetupOfficialRouteDescription.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to Memex to use the official AI service.'**
+  /// **'Sign in to Segunda Mente to use the official AI service.'**
   String get aiSetupOfficialRouteDescription;
 
   /// No description provided for @aiSetupCustomRouteDescription.
@@ -1806,7 +1806,7 @@ abstract class AppLocalizations {
   /// No description provided for @modelConnectionsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Connect Memex\'s official service or add your own provider credentials.'**
+  /// **'Add your provider credentials for Segunda Mente to use.'**
   String get modelConnectionsDescription;
 
   /// No description provided for @relatedAiCapabilitiesTitle.
@@ -1884,7 +1884,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiServiceMemexRouteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Connect through Memex'**
+  /// **'Connect through Segunda Mente'**
   String get aiServiceMemexRouteTitle;
 
   /// No description provided for @aiServiceLongDescription.
@@ -1908,7 +1908,7 @@ abstract class AppLocalizations {
   /// No description provided for @enableAiService.
   ///
   /// In en, this message translates to:
-  /// **'Connect with Memex'**
+  /// **'Connect with Segunda Mente'**
   String get enableAiService;
 
   /// No description provided for @aiServiceReadyToast.
@@ -1920,7 +1920,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiServiceSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'If you do not have an API key, use a Memex account to connect to mainstream model services.'**
+  /// **'If you do not have an API key, use a Segunda Mente account to connect to mainstream model services.'**
   String get aiServiceSettingsDescription;
 
   /// No description provided for @advancedModelConfiguration.
@@ -3120,7 +3120,7 @@ abstract class AppLocalizations {
   /// No description provided for @providerMemex.
   ///
   /// In en, this message translates to:
-  /// **'Memex proxy service'**
+  /// **'Segunda Mente proxy service'**
   String get providerMemex;
 
   /// No description provided for @memexSignIn.
@@ -3162,7 +3162,7 @@ abstract class AppLocalizations {
   /// No description provided for @memexTopUp.
   ///
   /// In en, this message translates to:
-  /// **'Top up to start using Memex AI'**
+  /// **'Top up to start using Segunda Mente'**
   String get memexTopUp;
 
   /// No description provided for @memexTopUpSuccess.
@@ -3246,7 +3246,7 @@ abstract class AppLocalizations {
   /// No description provided for @memexTopUpPlanStarterSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Good for trying Memex AI'**
+  /// **'Good for trying Segunda Mente'**
   String get memexTopUpPlanStarterSubtitle;
 
   /// No description provided for @memexTopUpPlanEverydaySubtitle.
