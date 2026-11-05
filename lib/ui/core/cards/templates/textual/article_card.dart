@@ -12,7 +12,7 @@ class ArticleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String title = data['title'] ?? 'Article';
+    final String title = (data['title'] as String?)?.trim() ?? '';
     final String body = data['body'] ?? '';
     final String? imageUrl = data['image_url'];
 
@@ -39,18 +39,20 @@ class ArticleCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 2. Title - Headline style
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
+                // 2. Title - Headline style (omitted when the card has none)
+                if (title.isNotEmpty) ...[
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                ],
 
                 // 3. Body - Markdown content
                 MarkdownBody(

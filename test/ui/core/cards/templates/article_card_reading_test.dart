@@ -46,4 +46,18 @@ void main() {
     expect(find.textContaining('Avançar'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('without a title there is no placeholder heading',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: ArticleCard(data: const {'body': _minutes}),
+        ),
+      ),
+    ));
+
+    expect(find.text('Article'), findsNothing);
+    expect(find.textContaining('Avançar'), findsOneWidget);
+  });
 }
