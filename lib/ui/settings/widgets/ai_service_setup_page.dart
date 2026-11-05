@@ -154,7 +154,7 @@ class _AiServiceSetupPageState extends State<AiServiceSetupPage> {
             _AiServiceRouteCard(
               key: const ValueKey('ai-service-custom-route-card'),
               icon: Icons.key_rounded,
-              iconColor: AppColors.success,
+              iconColor: AppColors.primary,
               title: l10n.aiServiceCustomApiRouteTitle,
               description: l10n.aiSetupCustomRouteDescription,
               onTap: _openCustomService,
