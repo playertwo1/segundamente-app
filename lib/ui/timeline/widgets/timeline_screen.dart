@@ -900,7 +900,14 @@ class TimelineFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userTags = viewModel.tags;
-    final totalCount = 2 + userTags.length;
+    // A filter set from the Tags screen or a saved view may not be one of the
+    // chips; show it as its own selected chip so it can be seen and cleared.
+    final showActive = viewModel.viewMode == TimelineViewMode.timeline &&
+        viewModel.activeFilter != 'all' &&
+        (viewModel.extraTags.isNotEmpty ||
+            !userTags.any((t) => t.name == viewModel.activeFilter));
+    final lead = showActive ? 3 : 2;
+    final totalCount = lead + userTags.length;
 
     return ListView.separated(
       controller: scrollController,
@@ -943,7 +950,20 @@ class TimelineFilterBar extends StatelessWidget {
           return chip;
         }
 
-        final tag = userTags[index - 2];
+        if (showActive && index == 2) {
+          return _buildTagChip(
+            key: const ValueKey('timeline-active-filter'),
+            label: [viewModel.activeFilter, ...viewModel.extraTags].join(' + '),
+            isSelected: true,
+            onTap: () {
+              viewModel.setActiveFilter('all');
+              viewModel.loadCards(refresh: true);
+              onPageSelected(0);
+            },
+          );
+        }
+
+        final tag = userTags[index - lead];
         return _buildTagChip(
           label: tag.name,
           isSelected: viewModel.activeFilter == tag.name &&
@@ -952,7 +972,7 @@ class TimelineFilterBar extends StatelessWidget {
             viewModel.setViewMode(TimelineViewMode.timeline);
             viewModel.setActiveFilter(tag.name);
             viewModel.loadCards(refresh: true);
-            onPageSelected(index);
+            onPageSelected(index - lead + 2);
           },
         );
       },
@@ -960,11 +980,13 @@ class TimelineFilterBar extends StatelessWidget {
   }
 
   Widget _buildTagChip({
+    Key? key,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
+      key: key,
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
