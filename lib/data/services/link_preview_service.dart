@@ -121,6 +121,9 @@ Future<RawResponse> pinnedGet(Uri uri, InternetAddress pinned) async {
     ..connectionTimeout = linkPreviewTimeout
     ..userAgent = 'Mozilla/5.0 (compatible; SegundaMente link preview)'
     ..autoUncompress = true;
+  // shortcut: https connects by name; a plain-socket factory sends cleartext to
+  // port 443 (400), and the certificate must match the host, so a rebound
+  // private IP cannot answer. Pin with SecureSocket if blind connects matter.
   if (uri.scheme != 'https') {
     client.connectionFactory = (target, proxyHost, proxyPort) =>
         Socket.startConnect(pinned, target.port);
