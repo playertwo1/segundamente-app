@@ -1,0 +1,26 @@
+Segunda Mente
+=============
+
+Segunda Mente is a fork of Memex (https://github.com/memex-lab/memex).
+
+Original project : Memex, by the memex-lab authors
+Fork base commit : 6143923e7b2237520b7143f4e5aae88822788aa4
+Fork source      : https://github.com/playertwo1/segundamente
+License          : GNU General Public License, version 3 (see LICENSE)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU GPL v3. It comes with ABSOLUTELY NO WARRANTY.
+
+Changes
+-------
+Segunda Mente changes the original code (name, interface, privacy controls,
+session reports, local search and other features). The history of every change
+is in the git log of the repository above, starting after the base commit.
+
+Distribution
+------------
+Whoever distributes a build of this app (for example an APK) must offer the
+corresponding source code under the GPL v3 (section 6), keep this NOTICE and
+the LICENSE file, and keep the copyright and license notices of the original
+Memex project and of third-party packages (listed in the app, under Licenses).
+The names and logos of the original project are not part of this license grant.
