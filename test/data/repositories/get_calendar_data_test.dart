@@ -51,11 +51,38 @@ tags: []
 
     final expectedDay =
         DateTime.utc(2026, 10, 1).subtract(utcPlus4).millisecondsSinceEpoch ~/
-        1000;
+            1000;
 
     expect(occupied, hasLength(1));
     expect(occupied.single.timestamp, expectedDay);
     expect(occupied.single.cards.single.title, 'Night note');
     expect(occupied.single.cards.single.id, factId);
+  });
+
+  test('a link card without a title shows its address', () async {
+    final instant = DateTime.utc(2026, 10, 1, 12);
+    final timestamp = instant.millisecondsSinceEpoch ~/ 1000;
+    const factId = '2026/10/01.md#ts_2';
+    final cardPath = FileSystemService.instance.getCardPath(userId, factId);
+    await File(cardPath).create(recursive: true);
+    await File(cardPath).writeAsString('''
+timestamp: $timestamp
+status: completed
+title: ""
+tags: []
+ui_configs:
+  - template_id: link
+    data:
+      url: https://example.com/a/b
+''');
+
+    final days = await getCalendarData(
+      DateTime.utc(2026, 10, 1).millisecondsSinceEpoch ~/ 1000,
+      DateTime.utc(2026, 10, 1, 23, 59, 59).millisecondsSinceEpoch ~/ 1000,
+      utcOffset: Duration.zero,
+    );
+    final cards = days.expand((d) => d.cards).toList();
+
+    expect(cards.single.title, 'example.com/a/b');
   });
 }

@@ -1,5 +1,6 @@
 import 'package:path/path.dart' as path;
 import 'package:memex/domain/models/calendar_model.dart';
+import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:memex/data/services/file_system_service.dart';
@@ -105,8 +106,7 @@ Future<List<CalendarDay>> getCalendarData(
         );
 
         if (dailyData.containsKey(dayStartTs)) {
-          final location =
-              cardData.userFixedAddress ??
+          final location = cardData.userFixedAddress ??
               cardData.userFixedLocation?.name ??
               cardData.address ??
               '';
@@ -114,7 +114,7 @@ Future<List<CalendarDay>> getCalendarData(
           final calCard = CalendarCard(
             id: factId,
             timestamp: ts,
-            title: cardData.title ?? 'Untitled',
+            title: _calendarTitle(cardData),
             tags: List<String>.from(cardData.tags),
             location: location,
           );
@@ -171,4 +171,17 @@ int _calendarDayStartUnix(int year, int month, int day, {Duration? utcOffset}) {
         day,
       ).subtract(utcOffset).millisecondsSinceEpoch ~/
       1000;
+}
+
+/// A link card saved without a title is shown by its address, as on the timeline.
+String _calendarTitle(CardData card) {
+  final title = card.title?.trim() ?? '';
+  if (title.isNotEmpty) return title;
+  for (final ui in card.uiConfigs) {
+    final url = ui.templateId == 'link' ? ui.data['url'] : null;
+    if (url is String && url.isNotEmpty) {
+      return url.replaceFirst(RegExp(r'^https?://'), '');
+    }
+  }
+  return 'Untitled';
 }
