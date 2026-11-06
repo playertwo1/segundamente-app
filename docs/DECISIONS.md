@@ -37,6 +37,8 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-031 | 2026-11-05 | Abrir só a pesquisa F7-01 (sem código) antes do portão F5 | ACCEPTED |
 | D-032 | 2026-11-05 | F7 sem ponte para CLIs: o login ChatGPT/Codex já existente basta | ACCEPTED |
 | D-033 | 2026-11-05 | `daedalus-echo` só como referência; F7-02 passa a medir IA no aparelho, não Ollama | ACCEPTED |
+| D-037 | 2026-11-05 | F10 detalhada por questionário; exportador com biblioteca de PDF entra já na F4 | ACCEPTED |
+| D-038 | 2026-11-05 | Critério 7 sem segunda confirmação para anexos do chat; critério 6 sem prova de troca de modelo | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -208,3 +210,23 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: `AppConfig.enableMemexModelService` passa a `false`; as rotas de configuração de modelo abrem sempre `AiServiceSetupPage`; 12 textos (pt e en) foram reescritos sem citar o serviço do Memex. O GPS de foto só é lido e enviado quando `LocationContextConfig.enabled` está ligado (padrão: desligado); sem ele a foto informa só a data.
 - Limites: o código do serviço (`MemexAuthSection`, `MemexCloudService`) continua no repositório, inativo, para facilitar mesclar o upstream; apagar é decisão futura. Quem já tinha tag de local vinda de foto mantém o que foi gravado.
 - Evidência: `test/data/services/image_exif_context_test.dart` (falha sem a trava), `test/ui/settings/widgets/ai_service_setup_page_test.dart`, `test/config/app_config_test.dart`.
+
+## D-036 — Enriquecer conversas nos comentários e produzir materiais (2026-11-05)
+- Contexto: o dono confirmou que quer desenvolver as conversas que surgem dos comentários das personas em documentos e registros, respondendo quando quiser e transformando o que foi construído em novos materiais.
+- Decisão de produto: preservar esse ponto de entrada; permitir aprofundamento, criação e revisão por pedido na própria conversa, com saídas MD/PDF/DOCX, imagens e relatório ilustrado. Original, fontes, hipóteses, decisões e versões permanecem distinguíveis.
+- Planejamento: F10 em BACKLOG, detalhada em [F10-criacao-nos-comentarios.md](F10-criacao-nos-comentarios.md). Primeiro conversa/rascunho/exportação textual; depois imagens e relatório ilustrado. Reutilizar F3/F4/F6/F9 onde compatível, sem exigir Todo, NotebookLM ou desktop.
+- Limites: este pedido autoriza estruturar a ideia no projeto. Não abre implementação, não altera a fase ativa nem amplia o MVP fechado. Prioridade de execução após MVP ou exceção explícita ainda precisa ser registrada. Provedor/custo de imagem e contratos persistidos ainda não estão decididos.
+- Evidência: plano com mapa de código, contratos, etapas e casos de aceite. Funcionalidade e revisão independente: NOT_RUN.
+
+## D-037 — Desenho da F10 e exportador compartilhado na F4 (2026-11-05)
+- Contexto: avaliação crítica da F10 mostrou que o PDF anexado não fica no workspace (a persona vê só o resumo do cartão), que o prompt de resposta limita a persona a 1-2 frases e que o exportador da F4 troca aspas curvas, travessão e reticências por "?" no PDF e corta palavras no meio. O dono respondeu ao questionário [2026-11-05-f10-criacao-nos-comentarios.md](questionario/2026-11-05-f10-criacao-nos-comentarios.md) (D1–D24).
+- Decisão de produto (F10): textos curtos e longos; PDF guardado no registro e transcrito por página pelo modelo do chat só quando o registro é discutido, com confirmação acima de um limite de páginas; respostas proporcionais ao usuário; outras personas podem entrar e debater entre si só depois de uma resposta do usuário, com no máximo 4 falas por mensagem dele; documento pedido por texto ou botão, a partir do fio do pedido, em voz neutra com créditos (outra voz sob pedido); busca automática de registros relacionados só envia o que o usuário confirmar na lista; cartão do documento no fio com tela própria, versões, revisão pelo fio ou pela tela e edição manual sem sobrescrita; exclusão da origem pergunta se apaga os documentos; modelo que não lê PDF gera aviso e documento com a limitação escrita.
+- Mudança de regra: substitui, no plano da F10, "comentar não autoriza debate autônomo entre personas" pelo debate com o freio acima. Envio remoto continua exigindo escolha explícita (PROJECT.md).
+- Prioridade: a F10 só começa depois do fechamento do MVP, na ordem conversa → PDF guardado → documento. Exceção: o exportador novo (pacote `pdf`, Apache-2.0, compatível com GPL-3.0, com a fonte Inter já empacotada) entra agora como F4-05 e passa a servir relatório de sessão, F10 e F9.
+- Evidência: questionário concluído. Implementação da F10: NOT_RUN. F4-05: ver STATE.md.
+
+## D-038 — Critérios 6 e 7 do MVP sem passos extras (2026-11-05)
+- Contexto: no checklist da F5-01, o critério 7 esperava prévia "isto vai sair do telefone" também para anexos do chat, e o critério 6 esperava trocar o modelo do chat no S25 e reabrir conversas antigas.
+- Decisão do dono: anexos do chat (foto, PDF, áudio) não precisam de segunda confirmação; vê-los na caixa de mensagem e tocar em enviar é a escolha explícita. A troca de modelo não precisa ser provada no aparelho.
+- Mantido: prévia e confirmação na importação de TXT/arquivos e no "Gerar com o modelo" do relatório; itens nascem não confirmados; histórico em arquivo local, independente do provedor.
+- Efeito: critérios 6 e 7 passam com a evidência já registrada no S25; F2-07 deixa de exigir prévia para anexos do chat.

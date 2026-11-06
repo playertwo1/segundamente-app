@@ -33,3 +33,7 @@ Os 7 critérios de aceite do ROADMAP (seção "Critérios de aceite do MVP") pas
 
 ## Autoridade de produto
 O dono do repositório aprova mudanças de escopo.
+
+## Evolução planejada — conversas nos comentários (D-036)
+
+F10: aprofundar as respostas aos comentários das personas em documentos/registros e transformar o que foi construído, por pedido na própria conversa, em MD, PDF, DOCX, imagens e relatório ilustrado. Manter participação opcional, fontes e histórico de revisões. Planejada fora do MVP; implementação ainda não aberta. Ver [plano](docs/F10-criacao-nos-comentarios.md) e ROADMAP.md.

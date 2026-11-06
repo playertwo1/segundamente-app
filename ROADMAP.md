@@ -44,12 +44,13 @@
 | F2 — Chat, voz e importação | Conversa persistente, entrada de voz e arquivos autorizados | F1; aberta antecipadamente por decisão do dono | IN_PROGRESS | Critérios 1, 2, 3 e consentimento de envio comprovados |
 | F3 — Extração e relatório | Relatório editável, fiel às fontes e com itens não confirmados por padrão | F2; aberta antecipadamente por decisão do dono | IN_PROGRESS | Critério 6, extração real do modelo e amostra longa comprovados |
 | F4 — Exportação | O mesmo relatório em Markdown, PDF e DOCX | F3 | DONE | Critério 5 e compartilhamento verificados no fixture e no S25 |
-| F5 — Fechamento do MVP | Aceite integral, privacidade, desempenho e auditoria | F0–F4 | IN_PROGRESS | Sete critérios no S25 e auditoria sem bloqueios |
+| F5 — Fechamento do MVP | Aceite integral, privacidade, desempenho e auditoria | F0–F4 | DONE | Fechado em 2026-11-05: sete critérios no S25 (1–3 aprovados pelo dono), F5-03 medida e AUDIT RESULT: PASS |
 | F5V — Redesign visual | Aplicação da direção AMOLED aprovada nas telas existentes | D-022 permite execução em paralelo à F5 | IN_PROGRESS; fase ativa | Interações, acessibilidade e validação visual comprovadas |
 | F6 — Memória longitudinal | Busca, encaminhamentos, histórico de mudanças, tópicos e agenda | D-010 permite avançar antes do fechamento do MVP | IN_PROGRESS | Busca semântica, tópicos, justificativas e encaminhamentos verificados |
 | F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas | BLOCKED | Portão F7 |
 | F8 — NotebookLM | Exportação opt-in e integração somente se suportada e aprovada | MVP e exportação estáveis; termos e destino aprovados | BLOCKED | Portão F8 |
 | F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | BLOCKED | Portão F9 |
+| F10 — Criação nos comentários | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; começa após o fechamento do MVP | BACKLOG | Portão F10 |
 
 **Exceções vigentes:** D-010 permite avançar F6 enquanto o MVP está aberto. D-022 permite executar F5V em paralelo à F5. Nenhuma delas declara pronto o MVP nem libera F7, F8 ou F9.
 
@@ -100,7 +101,7 @@
 | F2-04 | Manter original imutável e guardar separadamente o texto normalizado | P1 | F2-03 | DONE | Teste confirma bytes originais inalterados |
 | F2-05 | Anexar JPG/PNG e analisar com provedor com visão; avisar quando o modelo não tem visão | P0 | F1-03, F2-01 | NOT_RUN | Foto real analisada em um provedor e aviso observado em provedor sem visão |
 | F2-06 | Criar sessão por texto digitado ou colado | P1 | F2-01 | DONE | Texto colado persiste como sessão; leitura de PDF para gerar relatório pertence à F9; o anexo de chat existente permanece em F2-08 |
-| F2-07 | Antes de qualquer envio remoto, mostrar o conteúdo e destino e pedir confirmação explícita | P0 | F2-03, F2-08 | IN_PROGRESS | Prévia e confirmação cobrindo texto, TXT, áudio/transcrição, imagem e outros anexos enviados; cancelar não envia |
+| F2-07 | Antes de qualquer envio remoto, mostrar o conteúdo e destino e pedir confirmação explícita | P0 | F2-03, F2-08 | IN_PROGRESS | Prévia e confirmação para TXT/arquivos importados e para o relatório com modelo; cancelar não envia. Anexos do chat (foto, PDF, áudio) ficam visíveis na caixa de mensagem e só saem ao tocar em enviar, sem segunda confirmação (D-038) |
 | F2-08 | Menu único de anexos no chat: câmera, galeria, TXT, PDF e áudio, sem faixa de fotos recentes | P1 | F2-01 | DONE | Menu validado no S25; TXT chega ao agente; limites de PDF são descritos separadamente |
 | F2-09 | Transcrever áudio anexado/compartilhado em pt-BR; enviar ao modelo somente o texto após ação do usuário (D-011) | P0 | F2-08 | IN_PROGRESS | Áudios sintéticos de 8 s, 100 s e aproximadamente 50 min processados no S25; falta validar amostra real e limites/qualidade do serviço |
 | F2-10 | Abrir chat com o anexo ao compartilhar TXT, PDF ou áudio com o app | P1 | F2-08 | IN_PROGRESS | TXT validado no S25; PDF e áudio compartilhados ainda precisam de prova |
@@ -144,6 +145,7 @@
 | F4-02 | Exportar PDF legível com acentos pt-BR e hierarquia de títulos | P0 | F4-01 | DONE | PDF aberto no Adobe Acrobat do S25; acentos e hierarquia conferidos; exportação mantém fontes e relógios do relatório |
 | F4-03 | Exportar DOCX legível e editável | P0 | F4-01 | DONE | DOCX aberto no Word do S25; acentos, títulos e conteúdo exportado conferidos |
 | F4-04 | Compartilhar ou salvar relatório inteiro/selecionado sem enviar a serviço remoto sem consentimento | P1 | F4-01 | DONE | Teste comprova exportação de seleção; folha nativa Android abriu para PDF e DOCX no S25 sem envio automático |
+| F4-05 | Exportador compartilhado: PDF por biblioteca (`pdf`) com fonte embutida, quebra por palavra, listas e negrito; DOCX com listas e negrito; serve relatório de sessão, F10 e F9 (D-037) | P1 | F4-02, F4-03 | DONE | Aspas curvas, travessão e reticências sem "?"; nenhuma palavra cortada; testes de exportação passando; PDF no Acrobat e DOCX no Word do S25 conferidos em 2026-11-05 |
 
 **Portão F4:** cumprido em 2026-11-04. Markdown foi conferido no fixture; o PDF foi aberto no Acrobat e o DOCX no Word do S25, ambos com acentos e títulos corretos. O teste de exportação também cobre relatório completo e seleção de itens. A integração externa escolhida pelo usuário continua sujeita ao consentimento normal do sistema.
 
@@ -151,13 +153,13 @@
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F5-01 | Executar e registrar os sete critérios de aceite em fluxo ponta a ponta no S25 Ultra | P0 | F1–F4 | IN_PROGRESS | Checklist completo em docs/F5-01-checklist.md, com resultado e evidência de cada critério |
-| F5-02 | Revisar consentimento, dados enviados, armazenamento de chaves/tokens e logs | P0 | F1–F4 | IN_PROGRESS | Migração do cofre no S25 ainda NOT_RUN; revisar também exceções OAuth ainda registradas; relatório em docs/F5-02-privacidade.md |
-| F5-03 | Medir sessão longa, geração/exportação e lista de histórico; corrigir regressões relevantes | P1 | F2–F4 | IN_PROGRESS | Medições reproduzíveis no dispositivo com entrada, tempo e memória; números de fixture não substituem medida real; registrar em docs/F5-03-medicoes.md |
+| F5-01 | Executar e registrar os sete critérios de aceite em fluxo ponta a ponta no S25 Ultra | P0 | F1–F4 | DONE | Checklist completo em docs/F5-01-checklist.md, com resultado e evidência de cada critério |
+| F5-02 | Revisar consentimento, dados enviados, armazenamento de chaves/tokens e logs | P0 | F1–F4 | DONE | Migração do cofre no S25 ainda NOT_RUN; revisar também exceções OAuth ainda registradas; relatório em docs/F5-02-privacidade.md |
+| F5-03 | Medir sessão longa, geração/exportação e lista de histórico; corrigir regressões relevantes | P1 | F2–F4 | DONE | Medições reproduzíveis no dispositivo com entrada, tempo e memória; números de fixture não substituem medida real; registrar em docs/F5-03-medicoes.md |
 | F5-04 | Definir e documentar direção visual móvel AMOLED | P2 | D-017 | DONE | DESIGN.md, D-017 e dez pranchas aprovadas em docs/INDEX.md |
-| F5-05 | Fazer auditoria final e conferir atribuições GPL | P0 | F5-01, F5-02, F5-03 | IN_PROGRESS | docs/reviews/F5.md sem CRITICAL/HIGH aberto e resultado da auditoria registrado |
+| F5-05 | Fazer auditoria final e conferir atribuições GPL | P0 | F5-01, F5-02, F5-03 | DONE | docs/reviews/F5.md sem CRITICAL/HIGH aberto e resultado da auditoria registrado |
 
-**Portão F5 = MVP pronto.** Os sete critérios abaixo precisam de prova, assim como privacidade, desempenho e auditoria. docs/reviews/F5.md registra AUDIT RESULT: FAIL; o MVP não está pronto. F5V e F6 não substituem este portão.
+**Portão F5 = MVP pronto.** Os sete critérios abaixo precisam de prova, assim como privacidade, desempenho e auditoria. Portão FECHADO em 2026-11-05: docs/reviews/F5.md registra AUDIT RESULT: PASS. Os critérios 1, 2 e 3 foram executados e aprovados pelo dono no S25. O MVP está pronto; F5V e F6 seguem abertas. Com o MVP fechado, F7, F8, F9 e F10 podem ser priorizadas pelo dono.
 
 ### Sete critérios de aceite do MVP
 
@@ -166,8 +168,8 @@
 3. Analisar uma foto em ao menos um provedor com visão e avisar quando o provedor escolhido não oferece essa capacidade.
 4. Selecionar modelo por ID ou por catálogo atualizado sem instalar outro APK.
 5. Exportar o mesmo relatório em PDF, DOCX e Markdown com acentuação correta.
-6. Editar e confirmar decisões, ideias, tarefas e follow-ups, sem alterar a fonte original; manter histórico ao trocar o modelo.
-7. Mostrar o que será enviado, pedir escolha explícita antes do envio remoto e exigir confirmação humana antes de tornar decisão ou tarefa definitiva.
+6. Editar e confirmar decisões, ideias, tarefas e follow-ups, sem alterar a fonte original; manter histórico ao trocar o modelo (a troca de modelo não precisa de prova no S25, D-038: o histórico é arquivo local independente do provedor).
+7. Mostrar o que será enviado, pedir escolha explícita antes do envio remoto e exigir confirmação humana antes de tornar decisão ou tarefa definitiva. No chat, ver os anexos na caixa de mensagem e tocar em enviar é a escolha explícita (D-038).
 
 ## F5V — Redesign visual
 
@@ -325,3 +327,24 @@ Ideias já avaliadas e distribuídas em tarefas ficam nas decisões D-014, D-016
 - 2026-11-04 — D-025 a D-028: pranchas visuais, microfone explícito e limites de execução; ver docs/DECISIONS.md.
 - 2026-11-04 — D-029/D-030: planejar Meeting Decoder na F9 com PDFs, Todo pessoal, encaminhamentos e relatórios PDF/DOCX. F9 permanece bloqueada.
 - 2026-11-05 — ideia futura de conversas guiadas por perfil: objeções e veredito para o Advogado do Diabo, com dinâmicas próprias para outros personagens; sem iniciar implementação.
+- 2026-11-05 — D-038: critério 7 sem segunda confirmação para anexos do chat; critério 6 sem prova de troca de modelo no S25.
+- 2026-11-05 — D-036/D-037: F10 desenhada por questionário (debate entre personas com freio, PDF guardado e transcrito, documentos com versões); começa após o MVP. Exportador compartilhado antecipado como F4-05.
+
+## F10 — Criação a partir das conversas nos comentários
+
+**Estado:** BACKLOG. Desenho decidido em D-036/D-037 ([questionário](docs/questionario/2026-11-05-f10-criacao-nos-comentarios.md)). Começa só depois do fechamento do MVP, na ordem abaixo. O exportador compartilhado foi antecipado como F4-05.
+
+**Objetivo:** aprofundar as conversas que nascem dos comentários das personas e, por pedido do usuário na própria conversa, produzir e revisar documentos vinculados às fontes. Responder continua opcional. Sem pedido não começa produção; conversa casual não reescreve documento.
+
+**Plano e critérios:** [F10 — Criação nos comentários](docs/F10-criacao-nos-comentarios.md).
+
+| ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
+|---|---|---:|---|---|---|
+| F10-01 | Respostas proporcionais ao usuário e debate entre personas (só após resposta do usuário; máx. 4 falas por mensagem dele); contexto pelo fio | P0 | MVP fechado | BLOCKED | Resposta curta continua curta; argumento recebe argumento; debate para em 4 falas; comentário inicial sem debate; S25 com modelo real |
+| F10-02 | Guardar o PDF anexado no registro e transcrever por página pelo modelo do chat na primeira discussão, com confirmação acima do limite de páginas; aviso quando o modelo não lê PDF | P0 | F10-01 | BLOCKED | Original preservado após reinício; texto por página reaproveitado sem nova chamada; Gemini OAuth gera aviso em vez de descarte silencioso; custo e tempo medidos no S25 |
+| F10-03 | Documento por texto ou botão, a partir do fio; voz neutra com créditos; busca de registros relacionados com lista confirmada; cartão no fio e tela própria | P0 | F10-02 | BLOCKED | Tarefa persistente sem duplicata em retry; citações conferidas contra a fonte; sugestão não vira decisão; nada extra enviado sem confirmação |
+| F10-04 | Versões, revisão pelo fio ou pela tela, edição manual, exclusão da origem e exportação pela F4-05 | P0 | F10-03, F4-05 | BLOCKED | Versão anterior intacta; edição concorrente não sobrescreve; exclusão pergunta; mesma versão em MD/PDF/DOCX; PDF e DOCX no S25 |
+| F10-05 | Imagens e relatório ilustrado | P1 | F10-04; questionário próprio | BLOCKED | Decisões de provedor, custo e origem das imagens antes do código |
+| F10-06 | Validar qualidade, privacidade, acessibilidade e fluxo completo | P0 | F10-04 (textual), F10-05 (ilustrado) | BLOCKED | Testes, análise, build, modelo real, S25 e auditoria sem bloqueios |
+
+**Portão F10:** discussão nos comentários produz materiais revisáveis com fontes, preserva original e versões, exporta texto e relatório ilustrado e passa a validação indicada. Primeira entrega textual não fecha a fase ilustrada. Não depende de F7/F8 ou da F9 inteira.

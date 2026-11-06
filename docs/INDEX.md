@@ -6,6 +6,7 @@
 - [Roadmap, fases e evidências](../ROADMAP.md)
 - [Visão e escopo do produto](../PROJECT.md)
 - [Decisões aceitas e pendentes](DECISIONS.md)
+- [F10 — Criação a partir das conversas nos comentários](F10-criacao-nos-comentarios.md)
 - [Regras de execução](WATCHDOG.md) · [auditoria](AUDIT.md)
 - [Roteiro de teste no S25 de 2026-11-04](TESTE-NO-S25-2026-11-04.md)
 
