@@ -123,11 +123,15 @@ class _TodoScreenState extends State<TodoScreen> {
               Expanded(
                 child: items.isEmpty
                     ? Center(
-                        child: Text(
-                          viewModel.hasAny
-                              ? l10n.todoNoResults
-                              : l10n.todoEmpty,
-                          key: const ValueKey('todo_empty'),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            viewModel.hasAny
+                                ? l10n.todoNoResults
+                                : l10n.todoEmpty,
+                            textAlign: TextAlign.center,
+                            key: const ValueKey('todo_empty'),
+                          ),
                         ),
                       )
                     : ListView(
