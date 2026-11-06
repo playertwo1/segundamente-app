@@ -366,3 +366,7 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 - S25: menu mostra "Lista de tarefas"; lista vazia ok; no relatório do PDF, "Confirmar assim" aprovou a tarefa com prazo "sexta" e "Adicionar à lista de tarefas" gravou o item com fonte `p.2` (conferido em `todo.json`). NOT_RUN no S25: ver o item na tela da lista, concluir, buscar, abrir a fonte. A lista no aparelho tem 1 item de teste fictício (`Enviar a versão final.`) para apagar.
 - Lembrete (F9-06): botão no item aberto cuja data tem hora explícita (`2026-11-21 14:30`); pede confirmação, só então pede a permissão do calendário e cria o evento curto com alarme (`NativeActionService.addReminder`). Data sem hora ou "sexta" só tem o botão de calendário. Testes de widget: confirma/cancela, permissão negada, sem hora. `NOT_RUN` no S25: criação real do lembrete.
 - Fora do escopo desta etapa: ordenar por data; mover item entre listas; sincronização.
+
+## F9-06 — lembrete provado no S25 (2026-11-06)
+- Item da lista com prazo `2026-12-20 14:30`: botões de calendário e de lembrete aparecem; confirmação aparece; ao confirmar, evento criado com `dtstart` correto (14:30 local), depois apagado. Permissão do calendário já estava concedida, então o pedido de permissão em si não foi visto no aparelho.
+- Riscos abertos e plano de correção: `docs/RISCOS-F9.md`.
