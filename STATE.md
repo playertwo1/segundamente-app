@@ -325,3 +325,6 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 ## F7-02 — etapa 1 no PC (2026-11-06)
 - Gemma 3 1B Q4_K_M (GGUF da Unsloth, 806 MB) + llama.cpp b12167 no PC, fora do repositório (`%TEMP%\f702`). 40 casos da F9-02: prompt A 8/40 (20%), prompt B 7/40 (17,5%, JSON válido só 21/40). Detalhes e limites em `docs/F7-02-medicao.md`.
 - Recomendação provisória: classificação com modelo de 1B não serve; ainda falta medir a regra da F3-07 no corpus e, se o dono quiser, resumo curto. S25 (velocidade, RAM, calor, bateria) `NOT_RUN`; nenhuma sonda criada, nada instalado no aparelho.
+
+## F7-02 — pesquisa de modelos mais novos (2026-11-06)
+- Pesquisa em fontes oficiais: `docs/F7-02-pesquisa-modelos.md`. Candidato principal: Gemma 4 E2B pelo LiteRT-LM (Apache-2.0, 2,58 GB, ~52 tok/s na GPU do S26 Ultra segundo o Google). Nada baixado nem medido; S25 `NOT_RUN`. Lacunas: sem benchmark de português/JSON para o Gemma 4.
