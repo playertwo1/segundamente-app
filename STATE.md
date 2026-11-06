@@ -321,3 +321,7 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 - F6 → `DONE` por pedido do dono, sem auditoria própria; limites declarados: corte 0,42 provisório, índice semântico só em memória (reserva em "Ideias futuras" do ROADMAP), tempos e bateria não medidos.
 - F7: abri só a F7-02 (`IN_PROGRESS`, nada executado). Termos de Uso do Gemma lidos (resumo, não parecer jurídico): uso só no aparelho do dono não é distribuição; empacotar os pesos no app exigiria repassar as restrições (possível conflito com GPL-3.0) → baixar sob demanda, nunca no APK/repositório.
 - NOT_RUN: nenhum modelo baixado, nenhuma sonda criada, nada medido no S25. Falta a confirmação do dono: baixar Gemma 3 1B (~529 MB), S25 livre ~1 h e carregado, sonda como app separado.
+
+## F7-02 — etapa 1 no PC (2026-11-06)
+- Gemma 3 1B Q4_K_M (GGUF da Unsloth, 806 MB) + llama.cpp b12167 no PC, fora do repositório (`%TEMP%\f702`). 40 casos da F9-02: prompt A 8/40 (20%), prompt B 7/40 (17,5%, JSON válido só 21/40). Detalhes e limites em `docs/F7-02-medicao.md`.
+- Recomendação provisória: classificação com modelo de 1B não serve; ainda falta medir a regra da F3-07 no corpus e, se o dono quiser, resumo curto. S25 (velocidade, RAM, calor, bateria) `NOT_RUN`; nenhuma sonda criada, nada instalado no aparelho.
