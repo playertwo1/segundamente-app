@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Segunda Mente</title>
+  <desc id="desc">Registre fragmentos, descubra conexões e preserve seu espaço.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#11100f"/>
+      <stop offset="1" stop-color="#080807"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7c17a"/>
+      <stop offset="1" stop-color="#df8127"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#e99a3d" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#e99a3d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
+  <circle cx="960" cy="175" r="238" fill="url(#glow)"/>
+  <g fill="none" stroke="#e99a3d" stroke-opacity=".26" stroke-width="2">
+    <path d="M770 105 880 145 1017 79M880 145 1030 209 1128 154M880 145 845 251 981 281 1030 209M1030 209 1124 284"/>
+  </g>
+  <g fill="#e99a3d">
+    <circle cx="770" cy="105" r="5"/><circle cx="1017" cy="79" r="5"/><circle cx="1128" cy="154" r="5"/>
+    <circle cx="845" cy="251" r="5"/><circle cx="1124" cy="284" r="5"/>
+  </g>
+  <g transform="rotate(-9 960 173)">
+    <rect x="836" y="83" width="248" height="174" rx="18" fill="#181614" stroke="#484039" stroke-width="2"/>
+    <rect x="858" y="106" width="95" height="8" rx="4" fill="#e99a3d" opacity=".9"/>
+    <rect x="858" y="130" width="186" height="5" rx="2.5" fill="#aaa6a0" opacity=".58"/>
+    <rect x="858" y="146" width="154" height="5" rx="2.5" fill="#aaa6a0" opacity=".36"/>
+    <rect x="858" y="174" width="82" height="49" rx="10" fill="#e99a3d" opacity=".16" stroke="#e99a3d" stroke-opacity=".65"/>
+    <circle cx="879" cy="190" r="4" fill="#e99a3d"/><circle cx="900" cy="205" r="4" fill="#e99a3d"/><circle cx="922" cy="187" r="4" fill="#e99a3d"/>
+    <path d="m879 190 21 15 22-18" fill="none" stroke="#e99a3d" stroke-width="2"/>
+    <rect x="954" y="177" width="90" height="6" rx="3" fill="#aaa6a0" opacity=".55"/>
+    <rect x="954" y="193" width="70" height="6" rx="3" fill="#aaa6a0" opacity=".34"/>
+  </g>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <text x="72" y="82" font-size="13" font-weight="700" letter-spacing="3.2" fill="#e99a3d">MEMÓRIA PESSOAL · LOCAL-FIRST</text>
+    <text x="68" y="174" font-size="58" font-weight="750" letter-spacing="-2.2" fill="#f3eee6">Segunda Mente</text>
+    <text x="72" y="222" font-size="20" fill="#c8c1b8">Registre fragmentos. Descubra conexões.</text>
+    <text x="72" y="252" font-size="20" fill="#c8c1b8">Preserve seu espaço.</text>
+    <rect x="72" y="288" width="35" height="3" rx="1.5" fill="url(#amber)"/>
+    <text x="119" y="294" font-size="12" font-weight="600" letter-spacing="2" fill="#81796e">FLUTTER · ANDROID · GPL-3.0</text>
+  </g>
+</svg>
