@@ -8,7 +8,6 @@ import 'package:memex/ui/core/widgets/agent_logo_loading.dart';
 import 'package:memex/ui/core/widgets/back_button.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/chat/view_models/follow_ups_viewmodel.dart';
-import 'package:memex/ui/chat/view_models/session_report_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/agent_chat_dialog.dart';
 import 'package:memex/ui/chat/widgets/follow_ups_screen.dart';
 import 'package:memex/ui/chat/widgets/session_report_screen.dart';
@@ -108,25 +107,17 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
   }
 
   void _openFollowUps() {
+    final viewModel = FollowUpsViewModel(router: MemexRouter());
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => FollowUpsScreen(
-          viewModel: FollowUpsViewModel(router: MemexRouter()),
-        ),
+        builder: (context) => FollowUpsScreen(viewModel: viewModel),
       ),
     );
   }
 
   void _openReport(String sessionId) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => SessionReportScreen(
-          viewModel: SessionReportViewModel(
-            router: MemexRouter(),
-            sessionId: sessionId,
-          ),
-        ),
-      ),
+      SessionReportScreen.route(router: MemexRouter(), sessionId: sessionId),
     );
   }
 

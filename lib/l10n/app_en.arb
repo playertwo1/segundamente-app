@@ -1624,6 +1624,7 @@
   "followUpsSearchHint": "Search reports",
   "addAttachment": "Attach",
   "attachGallery": "Gallery",
+  "attachNoVisionWarning": "The model chosen for chat may not read images. Pick a vision model in AI models and services, or the photo will be ignored.",
   "attachPdf": "PDF",
   "attachAudio": "Audio",
   "openSourceLicenses": "Licenses",

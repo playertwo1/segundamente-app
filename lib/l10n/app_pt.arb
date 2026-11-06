@@ -1617,6 +1617,7 @@
   "followUpsSearchHint": "Buscar nos relatórios",
   "addAttachment": "Anexar",
   "attachGallery": "Galeria",
+  "attachNoVisionWarning": "O modelo escolhido para o chat pode não ler imagens. Escolha um modelo com visão em Modelos e serviços AI, ou a foto será ignorada.",
   "attachPdf": "PDF",
   "attachAudio": "Áudio",
   "openSourceLicenses": "Licenças",

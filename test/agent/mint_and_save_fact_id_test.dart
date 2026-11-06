@@ -340,6 +340,39 @@ void main() {
       expect(cachedCard.timestamp, createdAt);
     });
 
+    test('tags sent as bare names save like tag objects', () async {
+      // Seen on the S25: the model sent ["Audio"]; the cast to Map threw, the
+      // placeholder was rolled back and every retry hit "does not exist".
+      final mintResult = await _runToolCall(
+        tool: _tool('mint_record_fact_id'),
+        arguments: const {},
+        metadata: {'userId': userId},
+      );
+      final factId = _artifactId(mintResult)!;
+
+      final result = await _runToolCall(
+        tool: _tool('save_timeline_card'),
+        arguments: {
+          'fact_id': factId,
+          'title': 'Teste de turno falado',
+          'fact': 'Oi, estou fazendo aqui o turno falado.',
+          'tags': ['audio', {'name': 'Knowledge'}],
+          'ui_configs': [
+            {
+              'template_id': 'snippet',
+              'data': {'text': 'Oi, estou fazendo aqui o turno falado.'},
+            },
+          ],
+        },
+        metadata: {'userId': userId},
+      );
+      expect(result.isError, isFalse, reason: _text(result));
+      final card =
+          await FileSystemService.instance.readCardFile(userId, factId);
+      expect(card!.status, 'completed');
+      expect(card.tags, containsAll(['Audio', 'Knowledge']));
+    });
+
     test('a fact containing an fs:// reference is rejected', () async {
       final mintResult = await _runToolCall(
         tool: _tool('mint_record_fact_id'),

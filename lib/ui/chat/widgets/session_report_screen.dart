@@ -18,6 +18,22 @@ class SessionReportScreen extends StatefulWidget {
 
   final SessionReportViewModel viewModel;
 
+  /// Creates the ViewModel once, outside the route builder: GoRouter rebuilds
+  /// routes on system back, and a ViewModel made in the builder would be
+  /// replaced by one that never loads.
+  static Route<void> route({
+    required MemexRouter router,
+    required String sessionId,
+  }) {
+    final viewModel = SessionReportViewModel(
+      router: router,
+      sessionId: sessionId,
+    );
+    return MaterialPageRoute<void>(
+      builder: (_) => SessionReportScreen(viewModel: viewModel),
+    );
+  }
+
   @override
   State<SessionReportScreen> createState() => _SessionReportScreenState();
 }
@@ -46,31 +62,33 @@ class _SessionReportScreenState extends State<SessionReportScreen> {
             key: const ValueKey('report_revisions'),
             tooltip: UserStorage.l10n.reportRevisionsTitle,
             icon: const Icon(Icons.history, color: AppColors.textSecondary),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => ReportRevisionsScreen(
-                  viewModel: ReportRevisionsViewModel(
-                    router: context.read<MemexRouter>(),
-                    sessionId: widget.viewModel.sessionId,
-                  ),
+            onPressed: () {
+              final viewModel = ReportRevisionsViewModel(
+                router: context.read<MemexRouter>(),
+                sessionId: widget.viewModel.sessionId,
+              );
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ReportRevisionsScreen(viewModel: viewModel),
                 ),
-              ),
-            ),
+              );
+            },
           ),
           IconButton(
             key: const ValueKey('report_corrections'),
             tooltip: UserStorage.l10n.correctionsOpen,
             icon: const Icon(Icons.spellcheck, color: AppColors.textSecondary),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => CorrectionsScreen(
-                  viewModel: CorrectionsViewModel(
-                    router: context.read<MemexRouter>(),
-                    sessionId: widget.viewModel.sessionId,
-                  ),
+            onPressed: () {
+              final viewModel = CorrectionsViewModel(
+                router: context.read<MemexRouter>(),
+                sessionId: widget.viewModel.sessionId,
+              );
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => CorrectionsScreen(viewModel: viewModel),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),

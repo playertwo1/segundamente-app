@@ -3528,6 +3528,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachGallery => 'Gallery';
 
   @override
+  String get attachNoVisionWarning =>
+      'The model chosen for chat may not read images. Pick a vision model in AI models and services, or the photo will be ignored.';
+
+  @override
   String get attachPdf => 'PDF';
 
   @override

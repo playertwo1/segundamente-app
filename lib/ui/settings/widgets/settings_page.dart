@@ -479,12 +479,11 @@ class _SettingsPageState extends State<SettingsPage> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
+                final viewModel = DataImportViewModel(router: MemexRouter());
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DataImportPage(
-                      viewModel: DataImportViewModel(router: MemexRouter()),
-                    ),
+                    builder: (context) => DataImportPage(viewModel: viewModel),
                   ),
                 );
               },

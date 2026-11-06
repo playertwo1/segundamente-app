@@ -23,6 +23,7 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_asset_server.dart';
 import 'package:memex/data/services/system_action_service.dart';
 import 'package:memex/db/app_database.dart';
+import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/view_models/voice_dictation_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/agent_chat_dialog.dart';
@@ -283,6 +284,58 @@ void main() {
     expect(vm.items.single.prepared!.path, '/original/IMG_original.HEIC');
     expect(vm.items.single.prepared!.originalName, 'IMG_original.HEIC');
     expect(find.byKey(reliableThumbnailImageKey), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  Future<void> pickGalleryPhotoWithChatModel(
+    WidgetTester tester, {
+    required String type,
+    required String modelId,
+  }) async {
+    final config = LLMConfig.createDefaultClientConfig()
+        .copyWith(type: type, modelId: modelId);
+    await UserStorage.saveLLMConfigs([config]);
+    const channel = MethodChannel('com.fluttercandies/photo_manager');
+    tester.binding.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async => null);
+    addTearDown(() => tester.binding.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null));
+    final service = PhotoAttachmentService.forTesting(
+        assetLoader: (id) async => FakePhotoAsset(
+            id: id,
+            fileLoader: (_) async => File('/original/photo.jpg'),
+            titleLoader: () async => 'photo.jpg'));
+    final vm =
+        PhotoAttachmentsViewModel.forTesting(loader: service.prepareAsset);
+    addTearDown(vm.dispose);
+    await _pumpDialogFrame(tester,
+        dialog: AgentChatDialog(
+          photoAttachmentsForTesting: vm,
+          imagePickerForTesting: (_) async =>
+              [AssetEntity(id: 'photo', typeInt: 1, width: 10, height: 10)],
+        ));
+    await tester.pump(const Duration(milliseconds: 600));
+    await _tapGalleryFromMenu(tester);
+    // The warning waits for the stored model config; let it and the
+    // thumbnail retry timer finish.
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+  }
+
+  testWidgets('attaching a photo warns when the chat model has no vision',
+      (tester) async {
+    await pickGalleryPhotoWithChatModel(tester,
+        type: LLMConfig.typeChatCompletion, modelId: 'text-only-model');
+    expect(find.text(UserStorage.l10n.attachNoVisionWarning), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('attaching a photo stays quiet for the gpt-6 OAuth chat model',
+      (tester) async {
+    await pickGalleryPhotoWithChatModel(tester,
+        type: LLMConfig.typeOpenAiOauth, modelId: 'gpt-6-luna');
+    expect(find.text(UserStorage.l10n.attachNoVisionWarning), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

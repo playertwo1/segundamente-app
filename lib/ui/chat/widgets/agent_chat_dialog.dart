@@ -34,6 +34,8 @@ import 'package:memex/ui/knowledge/widgets/knowledge_file_page.dart';
 import 'package:memex/ui/timeline/widgets/timeline_card_detail_screen.dart';
 import 'package:memex/data/services/photo_suggestion_service.dart';
 import 'package:memex/utils/toast_helper.dart';
+import 'package:memex/domain/models/agent_definitions.dart';
+import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/utils/user_storage.dart';
@@ -1425,6 +1427,23 @@ class _AgentChatDialogState extends State<AgentChatDialog>
     );
   }
 
+  /// Tells the user, without blocking, that the chat model may ignore photos.
+  Future<void> _warnIfChatModelLacksVision() async {
+    try {
+      final config = await UserStorage.getAgentLLMConfig(
+        AgentDefinitions.chatAgent,
+        defaultClientKey: LLMConfig.defaultClientKey,
+      );
+      if (!mounted ||
+          LLMConfig.isKnownMultimodal(config.type, config.modelId)) {
+        return;
+      }
+      ToastHelper.showInfo(context, UserStorage.l10n.attachNoVisionWarning);
+    } catch (_) {
+      // No model configured yet: the missing-model banner already covers it.
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     if (_isPhotoPickerActive) return;
     try {
@@ -1435,6 +1454,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         );
         if (image != null && mounted) {
           setState(() => _selectedImages.add(image));
+          unawaited(_warnIfChatModelLacksVision());
         }
         return;
       }
@@ -1469,6 +1489,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
                 photo.entity.id == asset.id &&
                 _selectedImages
                     .any((image) => image.path == photo.xFile.path))));
+        if (result.isNotEmpty) unawaited(_warnIfChatModelLacksVision());
       } finally {
         if (mounted) _resumePhotoSuggestionsAfterPicker();
       }

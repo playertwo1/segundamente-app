@@ -347,6 +347,7 @@ class LLMConfig {
         return id.contains('gpt-4o') ||
             id.contains('gpt-4.1') ||
             id.contains('gpt-5') ||
+            id.contains('gpt-6') ||
             id.contains('o3');
       case typeOllama:
         return id.startsWith('gemma4') || id.startsWith('llama4');
@@ -357,6 +358,7 @@ class LLMConfig {
             id.contains('gpt-4o') ||
             id.contains('gpt-4.1') ||
             id.contains('gpt-5') ||
+            id.contains('gpt-6') ||
             id.contains('o3') ||
             id.contains('vision');
       default:

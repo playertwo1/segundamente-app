@@ -114,13 +114,14 @@ class _PersonalCenterScreenState extends State<PersonalCenterScreen> {
                         children: [
                           GestureDetector(
                             onTap: () {
+                              final viewModel = SettingsSearchViewModel(
+                                router: _memexRouter,
+                              );
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => SettingsSearchScreen(
-                                    viewModel: SettingsSearchViewModel(
-                                      router: _memexRouter,
-                                    ),
+                                    viewModel: viewModel,
                                   ),
                                 ),
                               );
@@ -224,7 +225,6 @@ class _PersonalCenterScreenState extends State<PersonalCenterScreen> {
                             color: AppColors.textPrimary,
                           ),
                         ),
-
                       ],
                     ),
 

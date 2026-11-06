@@ -55,15 +55,14 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
               }
             },
             onOpenRevisions: (hit) {
+              final viewModel = ReportRevisionsViewModel(
+                router: widget.viewModel.router,
+                sessionId: hit.sessionId,
+                itemId: hit.item.id,
+              );
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => ReportRevisionsScreen(
-                    viewModel: ReportRevisionsViewModel(
-                      router: widget.viewModel.router,
-                      sessionId: hit.sessionId,
-                      itemId: hit.item.id,
-                    ),
-                  ),
+                  builder: (_) => ReportRevisionsScreen(viewModel: viewModel),
                 ),
               );
             },

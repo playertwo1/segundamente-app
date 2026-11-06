@@ -404,8 +404,9 @@ class TimelineCardSkill extends Skill {
                 tags == null ? null : _normalizeListArgument(tags, 'tags');
             if (tagsList != null) {
               for (var tagObj in tagsList) {
-                final extractMap = Map<String, dynamic>.from(tagObj as Map);
-                var tagName = (extractMap['name'] as String?)?.trim() ?? '';
+                // Models also send bare names ("Audio") instead of {"name": ...}.
+                final rawName = tagObj is Map ? tagObj['name'] : tagObj;
+                var tagName = rawName is String ? rawName.trim() : '';
 
                 if (tagName.isEmpty) continue;
 

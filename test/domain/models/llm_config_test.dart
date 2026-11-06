@@ -149,6 +149,9 @@ void main() {
       const multimodalModels = <(String, String)>[
         (LLMConfig.typeClaude, 'claude-fable-5'),
         (LLMConfig.typeOllama, 'gemma4:12b'),
+        // The owner's ChatGPT OAuth chat model read a photo on the S25.
+        (LLMConfig.typeOpenAiOauth, 'gpt-6-luna'),
+        (LLMConfig.typeOpenAiOauth, 'gpt-6.1-sol'),
       ];
 
       for (final (provider, model) in multimodalModels) {

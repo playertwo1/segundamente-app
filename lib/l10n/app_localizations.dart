@@ -6327,6 +6327,12 @@ abstract class AppLocalizations {
   /// **'Gallery'**
   String get attachGallery;
 
+  /// No description provided for @attachNoVisionWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The model chosen for chat may not read images. Pick a vision model in AI models and services, or the photo will be ignored.'**
+  String get attachNoVisionWarning;
+
   /// No description provided for @attachPdf.
   ///
   /// In en, this message translates to:

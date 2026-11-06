@@ -1536,15 +1536,14 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
     final tappableAvatar = isCharacterAvatar
         ? GestureDetector(
             onTap: () {
+              final viewModel = PersonaChatViewModel(
+                router: _memexRouter,
+                initialCharacterId: characterId,
+              );
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => PersonaChatScreen(
-                    viewModel: PersonaChatViewModel(
-                      router: _memexRouter,
-                      initialCharacterId: characterId,
-                    ),
-                  ),
+                  builder: (_) => PersonaChatScreen(viewModel: viewModel),
                 ),
               );
             },
