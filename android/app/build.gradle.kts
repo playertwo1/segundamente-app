@@ -129,3 +129,8 @@ dependencies {
     implementation("androidx.work:work-runtime:2.10.2")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
 }
+
+// O sherpa_onnx traz libonnxruntime.so 1.24.3 (símbolos versionados); o plugin pede 1.28.0 e não carrega com ela.
+configurations.all {
+    resolutionStrategy.force("com.microsoft.onnxruntime:onnxruntime-android:1.24.3")
+}

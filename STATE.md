@@ -303,3 +303,13 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 - Suíte completa repetida: `flutter test` 1.417 passaram, 1 ignorado, 0 falhas nesta rodada (`test_exit=0`).
 - S25 ficou com o APK quebrado instalado; nenhum dado do dono foi tocado.
 - Opções: (a) trocar a biblioteca escolhida pelo pickFirst para a do Maven (pode quebrar sherpa/voz); (b) fazer `sherpa_onnx` e `flutter_onnxruntime` usarem uma única ORT compatível (build próprio); (c) rodar o MiniLM pelo próprio sherpa/ORT C API via FFI; (d) adiar a busca semântica. Decisão do dono; se escolhida, registrar como D-040.
+
+## F6-01 — correção da convivência ONNX e prova parcial no S25 (2026-11-06)
+- Causa real do bloqueio anterior: as bibliotecas usam símbolos versionados. `sherpa_onnx` traz `libonnxruntime.so` 1.24.3 (`OrtGetApiBase@VERS_1.24.3`); o `flutter_onnxruntime` 1.9.0 puxava o Java 1.28.0 (`VERS_1.28.0`). Trocar qual arquivo vence não resolveria (quebraria a voz).
+- Correção: `configurations.all { resolutionStrategy.force("com.microsoft.onnxruntime:onnxruntime-android:1.24.3") }` em `android/app/build.gradle.kts`, igualando a versão do sherpa. Build `flutter build apk --flavor globalDev --debug` PASS.
+- S25: o APK instalado abre normalmente (sem `GeneratedPluginsRegister` com erro; tela inicial com os dados reais).
+- Configurações → "Busca por significado": ligada, download concluído e verificado ("Modelo pronto"), sem erro de SHA-256.
+- Encaminhamentos → busca "prazo de lancamento e responsaveis" (sem palavras em comum com "decidir a data de publicação e quem cuida de cada parte"): trouxe esse item mais 2 sobre o lançamento. Busca fora do tema ("receita de bolo de chocolate", com resto de texto no campo): "Nenhum encaminhamento para essa busca" — confirma também a correção do texto de vazio no aparelho.
+- RAM do app com a busca ativa (debug): ~974 MB RSS, ~894 MB PSS. Tempo de carga/consulta não medido nesta rodada.
+- NÃO provado: transcrição por voz (sherpa) depois da correção; `find_related_sessions` no chat; calibração do corte 0,42 com as notas do dono. O dono passou a usar o telefone (foco no WhatsApp), então parei sem gravar nada.
+- Nenhum dado de teste foi criado no aparelho nesta rodada.
