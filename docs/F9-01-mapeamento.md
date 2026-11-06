@@ -51,3 +51,6 @@ Data: 2026-11-05. Só leitura do código e da documentação (D-034); nenhuma de
 ## 4. Estado
 
 F9-01 fica `IN_PROGRESS`: o mapeamento está feito; falta o dono decidir a seção 3. F9-02 a F9-09 seguem `BLOCKED`, exceto o corpus de dados já gerado (`docs/F9-02-corpus.md`).
+
+## 5. Decisões do dono (2026-11-06, D-042)
+1. PDF: lido pelo modelo (ChatGPT), sem OCR local; DOCX e outros formatos depois. 2. Todo: lista própria. 3. Lembretes: `SystemActionService`, item a item. 4. Imagens: só as do dono; JSON sim; ICS só sob pedido. 5. Desktop: adiado, só Android. 6. Ordem: F9 começa agora que F5 e F6 estão fechadas. F9-01 passa a `DONE`.

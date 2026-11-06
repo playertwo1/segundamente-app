@@ -42,6 +42,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-039 | 2026-11-06 | Busca semântica local com MiniLM-L12 int8, opcional e baixada sob demanda | ACCEPTED |
 | D-040 | 2026-11-06 | Fechar a F6 sem auditoria própria; abrir a F7-02 (medição do modelo local no S25) | ACCEPTED |
 | D-041 | 2026-11-06 | Adiar a F7-02 (modelo local) e guardar como reserva; nada implementado | ACCEPTED |
+| D-042 | 2026-11-06 | F9 aberta: PDF lido pelo modelo (ChatGPT), Todo própria, só imagens do dono, JSON sim e ICS só sob pedido, só Android | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -251,3 +252,9 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Contexto: a medição no PC mostrou o Gemma 3 1B fraco (8/40) e o Gemma 4 E2B melhor (até 23/40 no corpus da F9-02), ainda abaixo do que serve para classificar sozinho. O dono: "vamos deixar esse negocio para depois, coloque no rollback, nao vamos implementar isso agora".
 - Decisão: a F7-02 volta a `BLOCKED` e vira reserva em "Ideias futuras". Nenhum código, dependência, sonda ou instalação no S25. Os arquivos baixados ficam só em `%TEMP%702` (fora do repositório).
 - Reavaliar quando: o modelo remoto ficar caro/indisponível, ou o dono quiser voz/resumo sem nuvem. Antes, rodar o E4B com os dois prompts, comparar com o modelo remoto + regra da F3-07 e medir velocidade e RAM no S25.
+
+## D-042 — Decisões da F9-01 e abertura da F9 (2026-11-06)
+- Contexto: o dono pediu "vamos para o f09" e respondeu às perguntas de `docs/F9-01-mapeamento.md` (seção 3). MVP e F6 estão fechados.
+- Decisão (escolha do dono): (1) PDF é lido pelo **modelo configurado (ChatGPT)**, não por biblioteca local; não entra OCR local nem DOCX nesta fase. (2) Todo pessoal em **lista própria**, alimentada só por itens aprovados e ligada ao relatório de origem; lembretes e agenda pelas ações nativas existentes, um item por vez. (3) Imagens: **só as do dono**, com origem registrada; JSON de exportação sim (guarda a proveniência); ICS só quando houver pedido real. (4) **Só Android** agora; desktop fica para depois. Lembretes pelo `SystemActionService`, sem permissão antecipada (recomendação aceita por falta de objeção).
+- Consequências: o cliente `codex_responses_client.dart` já envia PDF (`input_file`, base64); o `gemini_oauth_client.dart` descarta PDF, então o app deve avisar quando o modelo ativo não lê PDF. O PDF sai do aparelho para o provedor, então exige o consentimento de envio já existente, com aviso de tamanho e de páginas. Página de evidência vem do modelo e precisa ser conferida no corpus. Sem IA, PDF não gera síntese.
+- Limites: nenhuma implementação autorizada além da F9-02 (fixtures de PDF) e da F9-03 em diante conforme o ROADMAP; limite de páginas e tamanho do PDF e a conferência de página pelo modelo ficam para medir na F9-02/F9-03.

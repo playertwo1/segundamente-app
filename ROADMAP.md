@@ -49,7 +49,7 @@
 | F6 — Memória longitudinal | Busca, encaminhamentos, histórico de mudanças, tópicos e agenda | D-010 permite avançar antes do fechamento do MVP | DONE | Busca semântica, tópicos, justificativas e encaminhamentos verificados |
 | F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas | BLOCKED (F7-02 adiada, D-041) | Portão F7 |
 | F8 — NotebookLM | Exportação opt-in e integração somente se suportada e aprovada | MVP e exportação estáveis; termos e destino aprovados | BLOCKED | Portão F8 |
-| F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | BLOCKED | Portão F9 |
+| F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | IN_PROGRESS | Portão F9 |
 | F10 — Criação nos comentários | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; começa após o fechamento do MVP | BACKLOG | Portão F10 |
 
 **Exceções vigentes:** D-010 permite avançar F6 enquanto o MVP está aberto. D-022 permite executar F5V em paralelo à F5. Nenhuma delas declara pronto o MVP nem libera F7, F8 ou F9.
@@ -258,7 +258,7 @@
 
 ## F9 — Meeting Decoder
 
-**Estado:** BLOCKED e fora do MVP. D-029/D-030 autorizam detalhar esta fase, não iniciar implementação.
+**Estado:** IN_PROGRESS desde 2026-11-06 (D-042: decisões da F9-01 aceitas; só Android; PDF lido pelo modelo ChatGPT). Fora do MVP.
 
 **Objetivo:** transformar uma conversa, nota própria, transcrição importada ou PDF suportado em um relatório visualmente organizado com resumo, decisões, ideias possíveis, oportunidades, dúvidas, tarefas e follow-ups. Cada sugestão deve apontar para um trecho, relógio ou página. O usuário revisa, edita, confirma ou descarta cada item. A fase inclui Todo pessoal e encaminhamento escolhido para agenda/lembretes.
 
@@ -268,7 +268,7 @@
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F9-01 | Mapear F3/F4/F6, SystemActionService, TaskCard e destinos; decidir PDF/OCR/outros formatos, Todo/agenda/lembretes, imagens, IA e sistema desktop | P0 | F5 fechado; F3-02/04/05, F4-01/02/03, F6-02/11 | IN_PROGRESS | Matriz requisito → recurso existente/lacuna, fluxo de dados e decisões aceitas antes do código; fila de agentes separada da Todo |
+| F9-01 | Mapear F3/F4/F6, SystemActionService, TaskCard e destinos; decidir PDF/OCR/outros formatos, Todo/agenda/lembretes, imagens, IA e sistema desktop | P0 | F5 fechado; F3-02/04/05, F4-01/02/03, F6-02/11 | DONE | Matriz requisito → recurso existente/lacuna, fluxo de dados e decisões aceitas antes do código; fila de agentes separada da Todo |
 | F9-02 | Criar corpus de 40 exemplos fictícios e fixtures de PDF com saída esperada e fontes | P0 | F9-01 | IN_PROGRESS | Casos positivos/negativos cobrem tarefa clara, hipótese, fato passado, duplicata, dono ausente, data ambígua, PDF selecionável e evidência por página; sem dados pessoais reais |
 | F9-03 | Gerar relatório editorial organizado e incluir imagens relacionadas quando houver fonte aprovada, reutilizando categorias existentes e provedor autorizado | P0 | F3-01 a F3-05, F9-02 | BLOCKED | Itens apontam para timestamp ou página; confiança avaliada no corpus; imagens têm proveniência e são ilustrativas, nunca evidência; sem IA não há síntese inventada; hipótese fica separada de decisão |
 | F9-04 | Revisar cada sugestão individualmente: editar, confirmar, descartar e resolver ambiguidade/duplicata | P0 | F9-03 | BLOCKED | Evidência e confiança visíveis; data ambígua exige confirmação; descarte não chega aos destinos; duplicata é sinalizada, nunca removida em silêncio |

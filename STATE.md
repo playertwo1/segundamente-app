@@ -331,3 +331,6 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 
 ## F7-02 adiada (2026-11-06, D-041)
 - A pedido do dono, a F7-02 volta a `BLOCKED` e vira reserva. Resultados no PC: Gemma 4 E2B 23/40 (prompt B), E4B 17/40 (prompt A); E4B/B interrompido. Nada instalado no S25, nenhuma sonda criada. Arquivos baixados (~8 GB) ficam em `%TEMP%702`, fora do repositório; podem ser apagados.
+
+## F9 aberta (2026-11-06, D-042)
+- Decisões da F9-01 aceitas pelo dono: PDF lido pelo modelo ChatGPT (sem OCR local), Todo própria, só imagens do dono, JSON sim/ICS sob pedido, só Android. F9-01 `DONE`; F9 `IN_PROGRESS`. Próximo: F9-02 (fixtures de PDF sintético com página de evidência esperada) e depois F9-03. Nada implementado; S25 `NOT_RUN`.
