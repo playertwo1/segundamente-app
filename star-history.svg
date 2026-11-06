@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600" role="img" aria-labelledby="title description">
+  <title id="title">Star history for playertwo1/segundamente-app</title>
+  <desc id="description">0 current stargazers, grouped by the date each star was added.</desc>
+  <defs>
+    <filter id="xkcdify" filterUnits="userSpaceOnUse" x="-5" y="-5" width="910" height="610">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+  <style>
+    .background { fill: #fff; }
+    text { font-family: "Comic Sans MS", "Bradley Hand", cursive; fill: #000; font-size: 16px; }
+    .heading { font-size: 20px; font-weight: bold; }
+    .axis, .tick { stroke: #000; stroke-width: 1; }
+    .axis, .history, .legend-box, .legend-color { filter: url(#xkcdify); }
+    .history { fill: none; stroke: #dd4528; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+    .legend-box { fill: #fff; fill-opacity: .85; stroke: #000; stroke-width: 2; }
+    .legend-color { fill: #dd4528; }
+    .empty { font-size: 16px; }
+    @media (prefers-color-scheme: dark) {
+      .background { fill: #0d1117; }
+      text { fill: #fff; }
+      .axis, .tick { stroke: #fff; }
+      .history { stroke: #ff6b6b; }
+      .legend-box { fill: #0d1117; stroke: #fff; }
+      .legend-color { fill: #ff6b6b; }
+    }
+  </style>
+  <rect class="background" width="900" height="600" />
+  <text class="heading" x="50%" y="30" text-anchor="middle">Star History</text>
+  <text x="450.0" y="590" text-anchor="middle">Date</text>
+  <text x="20" y="300.0" text-anchor="middle" transform="rotate(-90 20 300.0)">GitHub Stars</text>
+  <line class="axis" x1="70" y1="60" x2="70" y2="550" />
+  <line class="axis" x1="70" y1="550" x2="870" y2="550" />
+  <g></g>
+  <g><line class="tick" x1="70.00" y1="550" x2="70.00" y2="552" /><text x="70.00" y="575" text-anchor="middle">Jan 1, 1970</text><line class="tick" x1="70.00" y1="550" x2="70.00" y2="552" /><text x="70.00" y="575" text-anchor="middle">Jan 1, 1970</text><line class="tick" x1="70.00" y1="550" x2="70.00" y2="552" /><text x="70.00" y="575" text-anchor="middle">Jan 1, 1970</text><line class="tick" x1="870.00" y1="550" x2="870.00" y2="552" /><text x="870.00" y="575" text-anchor="middle">Jan 2, 1970</text><line class="tick" x1="870.00" y1="550" x2="870.00" y2="552" /><text x="870.00" y="575" text-anchor="middle">Jan 2, 1970</text></g>
+  <path class="history" d="" />
+  <g>
+    <rect class="legend-box" x="78" y="65" width="254" height="32" rx="5" />
+    <rect class="legend-color" x="85" y="77" width="8" height="8" rx="2" />
+    <text x="99" y="89" font-size="15">playertwo1/segundamente-app</text>
+  </g>
+  <text class="empty" x="450.0" y="305.0" text-anchor="middle">No stars yet</text>
+</svg>
