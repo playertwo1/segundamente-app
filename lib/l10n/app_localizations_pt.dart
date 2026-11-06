@@ -3466,6 +3466,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'O texto desta sessão será enviado ao modelo configurado para organizar o relatório. Nada é enviado sem a sua confirmação.';
 
   @override
+  String get reportConfidenceHigh =>
+      'Confiança alta: citação exata, com responsável e prazo informados';
+
+  @override
+  String get reportConfidenceMedium =>
+      'Confiança média: citação exata, mas falta responsável ou prazo';
+
+  @override
+  String get reportConfidenceLow =>
+      'Confiança baixa: a citação é curta demais para provar o item';
+
+  @override
   String get reportUnconfirmed => 'Não confirmado';
 
   @override

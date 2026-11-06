@@ -400,4 +400,32 @@ void main() {
       expect(prompt, contains('never rewrite'));
     });
   });
+  group('confidence', () {
+    ReportItem item(
+            {String excerpt = 'Paulo envia a versão final.',
+            String? assignee,
+            String? due}) =>
+        ReportItem(
+          id: 'item_1',
+          kind: ReportItemKind.task,
+          text: 'x',
+          status: ReportItemStatus.unconfirmed,
+          assignee: assignee ?? reportAssigneeUnknown,
+          due: due ?? reportDueUnknown,
+          source:
+              ReportSource(segmentId: 'seg_0', excerpt: excerpt, clock: 'p.2'),
+        );
+
+    test('rates how complete the item is', () {
+      expect(reportConfidence(item(assignee: 'Paulo', due: '20/09')),
+          ReportConfidence.high);
+      expect(
+          reportConfidence(item(assignee: 'Paulo')), ReportConfidence.medium);
+      expect(reportConfidence(item()), ReportConfidence.medium);
+      expect(
+          reportConfidence(
+              item(excerpt: 'Ok, feito', assignee: 'Paulo', due: '20/09')),
+          ReportConfidence.low);
+    });
+  });
 }

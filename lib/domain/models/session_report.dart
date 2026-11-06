@@ -114,6 +114,19 @@ class SessionReport {
   }
 }
 
+enum ReportConfidence { high, medium, low }
+
+// shortcut: fixed thresholds, not tuned on the corpus; revisit after the F9-03 run.
+/// Low when the quote is too short to prove anything, high when owner and
+/// due date are both stated, medium otherwise. The quote itself is always
+/// verified as literal text, so this only rates how complete the item is.
+ReportConfidence reportConfidence(ReportItem item) {
+  if (item.source.excerpt.trim().length < 15) return ReportConfidence.low;
+  final hasOwner = item.assignee != reportAssigneeUnknown;
+  final hasDue = item.due != reportDueUnknown;
+  return hasOwner && hasDue ? ReportConfidence.high : ReportConfidence.medium;
+}
+
 bool isDefinitiveTask(ReportItem item) {
   return item.kind == ReportItemKind.task &&
       item.status == ReportItemStatus.approved;
@@ -246,7 +259,8 @@ SessionReport sessionReportFromModelJson({
     }
     final text = _requiredText(map['text']);
     // Models sometimes copy the whole label ("seg_1 p.2"); the id is its first word.
-    final segmentId = _requiredText(map['segment_id']).split(RegExp(r'\s+')).first;
+    final segmentId =
+        _requiredText(map['segment_id']).split(RegExp(r'\s+')).first;
     final segment = byId[segmentId];
     if (segment == null) {
       throw FormatException('unknown segment $segmentId');

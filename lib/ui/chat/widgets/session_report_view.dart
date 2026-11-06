@@ -330,6 +330,19 @@ class _ReportItemTile extends StatelessWidget {
             children: [
               Text(item.assignee),
               Text(item.due),
+              Text(
+                switch (reportConfidence(item)) {
+                  ReportConfidence.high => l10n.reportConfidenceHigh,
+                  ReportConfidence.medium => l10n.reportConfidenceMedium,
+                  ReportConfidence.low => l10n.reportConfidenceLow,
+                },
+                key: ValueKey('report_confidence_${item.id}'),
+              ),
+              if (item.source.clock != null)
+                Text(
+                  item.source.clock!,
+                  key: ValueKey('report_item_clock_${item.id}'),
+                ),
             ],
           ),
           onTap: () {

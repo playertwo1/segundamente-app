@@ -3432,6 +3432,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'This session\'s text will be sent to the configured model to organize the report. Nothing is sent without your confirmation.';
 
   @override
+  String get reportConfidenceHigh =>
+      'High confidence: exact quote, owner and due date stated';
+
+  @override
+  String get reportConfidenceMedium =>
+      'Medium confidence: exact quote, but owner or due date is missing';
+
+  @override
+  String get reportConfidenceLow =>
+      'Low confidence: the quote is too short to prove the item';
+
+  @override
   String get reportUnconfirmed => 'Unconfirmed';
 
   @override

@@ -159,7 +159,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('fechar o escopo'), findsWidgets);
-    expect(find.text('00:00:01'), findsOneWidget);
+    expect(find.byKey(const ValueKey('report_source_clock_item_1')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('report_item_clock_item_1')),
+        findsOneWidget);
     expect(
         find.byKey(const ValueKey('report_definitive_item_1')), findsNothing);
   });

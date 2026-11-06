@@ -6135,6 +6135,24 @@ abstract class AppLocalizations {
   /// **'This session\'s text will be sent to the configured model to organize the report. Nothing is sent without your confirmation.'**
   String get reportModelConfirmBody;
 
+  /// No description provided for @reportConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High confidence: exact quote, owner and due date stated'**
+  String get reportConfidenceHigh;
+
+  /// No description provided for @reportConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium confidence: exact quote, but owner or due date is missing'**
+  String get reportConfidenceMedium;
+
+  /// No description provided for @reportConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low confidence: the quote is too short to prove the item'**
+  String get reportConfidenceLow;
+
   /// No description provided for @reportUnconfirmed.
   ///
   /// In en, this message translates to:
