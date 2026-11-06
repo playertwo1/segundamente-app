@@ -313,3 +313,4 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 - RAM do app com a busca ativa (debug): ~974 MB RSS, ~894 MB PSS. Tempo de carga/consulta não medido nesta rodada.
 - NÃO provado: transcrição por voz (sherpa) depois da correção; `find_related_sessions` no chat; calibração do corte 0,42 com as notas do dono. O dono passou a usar o telefone (foco no WhatsApp), então parei sem gravar nada.
 - Nenhum dado de teste foi criado no aparelho nesta rodada.
+- Voz (sherpa) depois da correção: o dono gravou por voz no app (09:11, "Oi, teste de gravação, detransição.") e a transcrição apareceu no chat, com o ONNX Runtime 1.24.3 compartilhado. Prova feita pelo dono, sem medição de tempo. Convivência ONNX/sherpa considerada funcionando; o resto (chat `find_related_sessions`, corte 0,42, tempos) será testado com o uso, a pedido do dono.
