@@ -245,7 +245,8 @@ SessionReport sessionReportFromModelJson({
       throw FormatException('${itemKind.name} is outside $kind');
     }
     final text = _requiredText(map['text']);
-    final segmentId = _requiredText(map['segment_id']);
+    // Models sometimes copy the whole label ("seg_1 p.2"); the id is its first word.
+    final segmentId = _requiredText(map['segment_id']).split(RegExp(r'\s+')).first;
     final segment = byId[segmentId];
     if (segment == null) {
       throw FormatException('unknown segment $segmentId');
@@ -358,7 +359,8 @@ String reportExtractionSystemPrompt(
       'JSON object {"items":[{"kind","text","segment_id","excerpt"}]}. '
       'kind is one of: $kinds. '
       'text is a short statement in the transcript language. '
-      'segment_id is copied from the segment label. '
+      'segment_id is only the id in the segment label, such as seg_1, without '
+      'the time or page that follows it. '
       'excerpt is an exact, verbatim substring of that segment. '
       'Never invent facts, people or dates. Do not output assignees, '
       'due dates or status. Use summary for the main point and decision, '

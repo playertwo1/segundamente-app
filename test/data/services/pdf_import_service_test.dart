@@ -140,6 +140,28 @@ void main() {
     expect(report.items.single.assignee, reportAssigneeUnknown);
   });
 
+  test('accepts a segment id that still carries the page label', () async {
+    await run('c36');
+    final segments = await reports.importedSegments(userId, 'pdf_c36');
+    final report = await reports.applyModelJson(
+      userId: userId,
+      sessionId: 'pdf_c36',
+      kind: ReportKind.reuniao,
+      customTitle: null,
+      json: reportModelReplyJson(jsonEncode({
+        'items': [
+          {
+            'kind': 'decision',
+            'text': 'Revisar o orçamento',
+            'segment_id': '${segments[1].id} p.2',
+            'excerpt': 'Ficou decidido que o orçamento será revisado.',
+          },
+        ],
+      })),
+    );
+    expect(report.items.single.source.segmentId, segments[1].id);
+  });
+
   test('a quote from the wrong page is refused', () async {
     await run('c36');
     final segments = await reports.importedSegments(userId, 'pdf_c36');
