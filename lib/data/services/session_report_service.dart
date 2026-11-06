@@ -6,6 +6,7 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/semantic_search_model_service.dart';
 import 'package:memex/data/services/transcript_correction_service.dart';
+import 'package:memex/domain/models/pdf_pages.dart';
 import 'package:memex/domain/models/report_memory.dart';
 import 'package:memex/domain/models/semantic_similarity.dart';
 import 'package:memex/domain/models/session_report.dart';
@@ -437,6 +438,16 @@ class SessionReportService {
       final file = File(p.join(dir.path, 'original.bin'));
       if (!await file.exists()) continue;
       final parsed = TranscriptImport.parse(await file.readAsBytes());
+      if (parsed.kind == TranscriptKind.pdfUnsupported) {
+        final pages = File(p.join(dir.path, 'pages.json'));
+        if (await pages.exists()) {
+          segments.addAll(
+            PdfPages.fromJson(jsonDecode(await pages.readAsString()))
+                .toSegments(firstId: segments.length),
+          );
+        }
+        continue;
+      }
       if (parsed.kind != TranscriptKind.text) continue;
       for (final segment in parsed.segments) {
         if (segment.text.trim().isEmpty) continue;

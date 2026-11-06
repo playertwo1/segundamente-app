@@ -337,3 +337,8 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 
 ## F9-02 concluída (2026-11-06)
 - 5 PDFs fictícios em `test/fixtures/f9/` (c36–c40; c39 só imagem), gerador e conferidor em `docs/medicoes/f9-02/`. Conferência: texto por página igual ao esperado nos 5 (`pypdf` temporário, removido). Não executei o corpus contra um modelo (F9-03) nem pedi revisão dos esperados ao dono. Nada instalado no S25.
+
+## F9-03 — parte 1: PDF por página (2026-11-06)
+- Novo `lib/domain/models/pdf_pages.dart` (leitura/validação da resposta do modelo, rótulos `p.N`, página sem texto ignorada) e `lib/data/services/pdf_import_service.dart` (só envia após confirmação; arquivo grande pede segunda confirmação; guarda `original.bin` e `pages.json`; PDF escaneado não grava nada). `SessionReportService.importedSegments` lê as páginas e o relatório cita `p.N` com a mesma conferência de trecho exato.
+- Testes: `pdf_pages_test` (4) e `pdf_import_service_test` (6) passam, usando os PDFs de `test/fixtures/f9`; testes existentes de relatório/importação/modelos (173) passam; `flutter analyze` sem issues nos arquivos novos.
+- NOT_RUN: nenhuma chamada real ao modelo (a função de envio é injetada); sem tela para escolher PDF; sem confiança explicada; corpus não executado; S25 `NOT_RUN`.
