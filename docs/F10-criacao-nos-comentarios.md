@@ -63,6 +63,14 @@ A persona com identidade ativa usa ferramentas da memória própria e de coment�
 
 Etapas, dependências e evidência exigida: tabela F10 no [ROADMAP.md](../ROADMAP.md) (revisada em D-037). Primeira entrega: F10-01 a F10-04 e validação textual da F10-06. Segunda entrega: F10-05 e validação ilustrada. F10 permanece aberta até validar ambas.
 
+## Referências externas para artigos e imagens
+
+- [Beautiful Article — SKILL.md](https://github.com/ConardLi/garden-skills/blob/main/skills/beautiful-article/SKILL.md): revisitar em F10-03/F10-04 para avaliar o planejamento editorial, a fidelidade às fontes, a composição por seções e a revisão; em F10-05, avaliar a apresentação ilustrada e o HTML offline.
+  - É referência de fluxo e apresentação, não uma decisão de escopo. Produz um HTML independente (PDF opcional) com Vite/React e `reacticle`; não substitui os contratos da F10 para fontes, versões, persistência local e exportação MD/DOCX/PDF.
+- [GPT Image 2 — SKILL.md](https://github.com/ConardLi/garden-skills/blob/main/skills/gpt-image-2/SKILL.md): estudar em F10-05 como referência para criar e editar imagens, com modelos para capas editoriais, ilustrações, infográficos e diagramas. A skill oferece três modos: chamada de API compatível, delegação à ferramenta de imagem do agente ou geração apenas do prompt.
+  - Avaliar antes de aproveitar: envio de conteúdo da conversa ao provedor, provedor/credenciais/custo, proveniência e crédito das imagens, destino de prompts e arquivos, e necessidade de diagramas editáveis. O modo de API executa localmente, mas chama um endpoint remoto; os diagramas técnicos descritos são PNG, não SVG editável.
+- Ambas são referências para estudo, sem decisão de adotar tecnologia, provedor, armazenamento ou formato HTML. Permanecem válidos os contratos de privacidade, origem das imagens e armazenamento local da F10.
+
 ## Casos mínimos de regressão e aceite
 
 - Comentário sem resposta mantém o funcionamento atual; usuário pode só conversar e nunca gerar um arquivo.
