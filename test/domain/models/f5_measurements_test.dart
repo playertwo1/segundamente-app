@@ -3,8 +3,10 @@ import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/session_report_export.dart';
 import 'package:memex/domain/models/transcript_import.dart';
 
+import '../../helpers/report_export_fonts.dart';
+
 void main() {
-  test('a synthetic 50-minute transcript parses and exports', () {
+  test('a synthetic 50-minute transcript parses and exports', () async {
     final text = _syntheticTranscript(1500);
     final parseWatch = Stopwatch()..start();
     final parsed = TranscriptImport.parse(text.codeUnits);
@@ -41,12 +43,14 @@ void main() {
           ),
       ],
     );
+    final fonts = await testReportExportFonts();
     final exportWatch = Stopwatch()..start();
     for (final format in ReportExportFormat.values) {
-      final bytes = exportSessionReportBytes(
+      final bytes = await exportSessionReportBytes(
         report: report,
         exportedAt: DateTime(2026, 11, 2, 15, 4),
         format: format,
+        fonts: fonts,
       );
       expect(bytes, isNotEmpty);
     }

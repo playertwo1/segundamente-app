@@ -27,6 +27,8 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/report_export_fonts.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -377,7 +379,9 @@ void main() {
       kind: ReportKind.reuniao,
       customTitle: null,
     );
-    final exporter = SessionReportExportService();
+    final exporter = SessionReportExportService(
+      loadFonts: testReportExportFonts,
+    );
     final exportedAt = DateTime(2026, 11, 2, 15, 4);
     final written = <String>[];
     for (final format in ReportExportFormat.values) {
@@ -478,7 +482,8 @@ void main() {
       sessionId: sessionId,
     );
     expect(loadedRevisions, isNotEmpty);
-    expect(loadedRevisions.any((r) => r.reason == 'ajuste no cronograma'), isTrue);
+    expect(
+        loadedRevisions.any((r) => r.reason == 'ajuste no cronograma'), isTrue);
 
     final byItem = await service.loadRevisions(
       userId: userId,

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:memex/domain/models/session_report.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 enum ReportExportFormat { markdown, pdf, docx }
 
@@ -74,22 +76,43 @@ String reportExportMarkdown({
   return buffer.toString();
 }
 
-List<int> exportSessionReportBytes({
+/// TrueType fonts embedded in the PDF. Loaded by the data layer (assets), so
+/// this file stays free of Flutter.
+class ReportExportFonts {
+  const ReportExportFonts({required this.regular, required this.bold});
+
+  final ByteData regular;
+  final ByteData bold;
+}
+
+Future<List<int>> exportSessionReportBytes({
   required SessionReport report,
   required DateTime exportedAt,
   required ReportExportFormat format,
   Set<String>? itemIds,
+  ReportExportFonts? fonts,
 }) {
   final markdown = reportExportMarkdown(
     report: report,
     exportedAt: exportedAt,
     itemIds: itemIds,
   );
+  return exportMarkdownBytes(markdown: markdown, format: format, fonts: fonts);
+}
+
+/// Renders any Markdown text (session report, F10 documents) to the format.
+/// PDF needs [fonts]; Markdown and DOCX do not.
+Future<List<int>> exportMarkdownBytes({
+  required String markdown,
+  required ReportExportFormat format,
+  ReportExportFonts? fonts,
+}) async {
   switch (format) {
     case ReportExportFormat.markdown:
       return utf8.encode(markdown);
     case ReportExportFormat.pdf:
-      return _pdf(markdown);
+      if (fonts == null) throw ArgumentError('pdf export needs fonts');
+      return _pdf(markdown, fonts);
     case ReportExportFormat.docx:
       return _docx(markdown);
   }
@@ -136,101 +159,58 @@ String _statusLabel(ReportItemStatus status) {
   }
 }
 
-/// shortcut: Helvetica WinAnsi covers pt-BR. A code point above 255 becomes
-/// "?" in the PDF only. Upgrade when a Unicode font is bundled.
-List<int> _pdf(String markdown) {
-  final lines = <_ReportLine>[];
-  for (final line in const LineSplitter().convert(markdown)) {
-    final parsed = _ReportLine.parse(line);
-    for (final part in _wrap(parsed.text, parsed.wrapWidth)) {
-      lines.add(_ReportLine(part, parsed.level));
-    }
-  }
-  const perPage = 42;
-  final pages = <List<_ReportLine>>[];
-  if (lines.isEmpty) {
-    pages.add(const [_ReportLine('', 0)]);
-  } else {
-    for (var start = 0; start < lines.length; start += perPage) {
-      final end = start + perPage;
-      pages.add(lines.sublist(start, end > lines.length ? lines.length : end));
-    }
-  }
-  final bodies = <String>[
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    '',
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
-  ];
-  final kids = <int>[];
-  for (final page in pages) {
-    final pageId = bodies.length + 1;
-    final contentId = pageId + 1;
-    kids.add(pageId);
-    bodies.add(
-      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] '
-      '/Contents $contentId 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> >>',
-    );
-    bodies.add(_content(page));
-  }
-  bodies[1] =
-      '<< /Type /Pages /Kids [${kids.map((id) => '$id 0 R').join(' ')}] /Count ${kids.length} >>';
-  return _pdfFile(bodies);
+Future<List<int>> _pdf(String markdown, ReportExportFonts fonts) {
+  final document = pw.Document(
+    theme: pw.ThemeData.withFont(
+      base: pw.Font.ttf(fonts.regular),
+      bold: pw.Font.ttf(fonts.bold),
+    ),
+  );
+  final blocks = parseExportMarkdown(markdown);
+  document.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(50),
+      build: (_) => [
+        for (final block in blocks) _pdfBlock(block),
+      ],
+    ),
+  );
+  return document.save();
 }
 
-List<String> _wrap(String line, int width) {
-  if (line.length <= width) return [line];
-  final parts = <String>[];
-  for (var start = 0; start < line.length; start += width) {
-    final end = start + width;
-    parts.add(line.substring(start, end > line.length ? line.length : end));
-  }
-  return parts;
-}
-
-String _content(List<_ReportLine> lines) {
-  final commands = StringBuffer('BT\n50 800 Td\n');
-  for (final line in lines) {
-    commands.write(
-      '${line.pdfFont} ${line.pdfSize} Tf\n${line.pdfLeading} TL\n'
-      '${_pdfLiteral(line.text)} Tj\nT*\n',
-    );
-  }
-  commands.write('ET');
-  final stream = commands.toString();
-  return '<< /Length ${latin1.encode(stream).length} >>\nstream\n$stream\nendstream';
-}
-
-String _pdfLiteral(String value) {
-  final buffer = StringBuffer('(');
-  for (final unit in value.runes) {
-    final byte = unit > 255 ? 0x3f : unit;
-    if (byte == 0x28 || byte == 0x29 || byte == 0x5c) buffer.write('\\');
-    buffer.writeCharCode(byte);
-  }
-  buffer.write(')');
-  return buffer.toString();
-}
-
-List<int> _pdfFile(List<String> bodies) {
-  final out = BytesBuilder(copy: false);
-  void add(String text) => out.add(latin1.encode(text));
-  add('%PDF-1.4\n');
-  final offsets = <int>[0];
-  for (var i = 0; i < bodies.length; i++) {
-    offsets.add(out.length);
-    add('${i + 1} 0 obj\n${bodies[i]}\nendobj\n');
-  }
-  final xrefAt = out.length;
-  final size = bodies.length + 1;
-  add('xref\n0 $size\n');
-  add('0000000000 65535 f \n');
-  for (var i = 1; i < offsets.length; i++) {
-    add('${offsets[i].toString().padLeft(10, '0')} 00000 n \n');
-  }
-  add('trailer\n<< /Size $size /Root 1 0 R >>\n');
-  add('startxref\n$xrefAt\n%%EOF\n');
-  return out.takeBytes();
+pw.Widget _pdfBlock(ExportBlock block) {
+  if (block.kind == ExportBlockKind.blank) return pw.SizedBox(height: 6);
+  final heading = block.kind == ExportBlockKind.heading;
+  final size = heading ? const [11.0, 18.0, 14.0, 12.0][block.level] : 11.0;
+  final text = pw.RichText(
+    // Lets one paragraph longer than a page continue on the next page.
+    overflow: pw.TextOverflow.span,
+    text: pw.TextSpan(
+      style: pw.TextStyle(
+        fontSize: size,
+        lineSpacing: 2,
+        fontWeight: heading ? pw.FontWeight.bold : pw.FontWeight.normal,
+      ),
+      children: [
+        if (block.marker != null) pw.TextSpan(text: '${block.marker} '),
+        for (final run in block.runs)
+          pw.TextSpan(
+            text: run.text,
+            style:
+                run.bold ? pw.TextStyle(fontWeight: pw.FontWeight.bold) : null,
+          ),
+      ],
+    ),
+  );
+  return pw.Padding(
+    padding: pw.EdgeInsets.only(
+      left: block.marker == null ? 0 : 14,
+      top: heading ? 8 : 0,
+      bottom: heading ? 4 : 2,
+    ),
+    child: text,
+  );
 }
 
 List<int> _docx(String markdown) {
@@ -241,9 +221,7 @@ List<int> _docx(String markdown) {
     ..addFile(ArchiveFile('[Content_Types].xml', types.length, types))
     ..addFile(ArchiveFile('_rels/.rels', rels.length, rels))
     ..addFile(ArchiveFile('word/document.xml', document.length, document));
-  final encoded = ZipEncoder().encode(archive);
-  if (encoded == null) throw StateError('docx empty');
-  return encoded;
+  return ZipEncoder().encode(archive);
 }
 
 const _contentTypes = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -261,12 +239,26 @@ const _rels = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 ''';
 
 String _documentXml(String markdown) {
-  final paragraphs = const LineSplitter().convert(markdown).map((raw) {
-    final line = _ReportLine.parse(raw);
-    final props = line.level == 0
+  final paragraphs = parseExportMarkdown(markdown).map((block) {
+    if (block.kind == ExportBlockKind.blank) return '<w:p/>';
+    final heading = block.kind == ExportBlockKind.heading;
+    final size =
+        heading ? '<w:sz w:val="${const [22, 36, 28, 24][block.level]}"/>' : '';
+    String run(String text, bool bold) {
+      final props = bold || size.isNotEmpty
+          ? '<w:rPr>${bold ? '<w:b/>' : ''}$size</w:rPr>'
+          : '';
+      return '<w:r>$props<w:t xml:space="preserve">${_xml(text)}</w:t></w:r>';
+    }
+
+    final indent = block.marker == null
         ? ''
-        : '<w:rPr><w:b/><w:sz w:val="${line.docxHalfPoints}"/></w:rPr>';
-    return '<w:p><w:r>$props<w:t xml:space="preserve">${_xml(line.text)}</w:t></w:r></w:p>';
+        : '<w:pPr><w:ind w:left="360" w:hanging="360"/></w:pPr>';
+    final runs = [
+      if (block.marker != null) run('${block.marker} ', false),
+      for (final r in block.runs) run(r.text, heading || r.bold),
+    ].join();
+    return '<w:p>$indent$runs</w:p>';
   }).join();
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
       '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
@@ -280,23 +272,79 @@ String _xml(String value) {
       .replaceAll('>', '&gt;');
 }
 
-/// One export line. Level 1-3 is a heading (`#`, `##`, `###`) whose markers are
-/// dropped and replaced by bold, larger text in PDF and DOCX.
-class _ReportLine {
-  const _ReportLine(this.text, this.level);
+enum ExportBlockKind { heading, paragraph, item, blank }
+
+class ExportRun {
+  const ExportRun(this.text, {this.bold = false});
 
   final String text;
+  final bool bold;
+}
+
+/// One Markdown line ready for PDF/DOCX: heading level 1-3, list item with its
+/// marker ("•" or "1."), paragraph or blank line. `**text**` becomes bold.
+class ExportBlock {
+  const ExportBlock(this.kind, this.runs, {this.level = 0, this.marker});
+
+  final ExportBlockKind kind;
+  final List<ExportRun> runs;
   final int level;
+  final String? marker;
 
-  factory _ReportLine.parse(String line) {
-    final match = RegExp(r'^(#{1,3}) (.*)$').firstMatch(line);
-    if (match == null) return _ReportLine(line, 0);
-    return _ReportLine(match.group(2)!, match.group(1)!.length);
+  String get text => runs.map((run) => run.text).join();
+}
+
+final _headingPattern = RegExp(r'^(#{1,3}) (.*)$');
+final _bulletPattern = RegExp(r'^\s*[-*•] (.*)$');
+final _numberPattern = RegExp(r'^\s*(\d+[.)]) (.*)$');
+
+/// shortcut: tables, links, italics and nested lists stay as plain text.
+/// Upgrade when F10 documents need them (tables first).
+List<ExportBlock> parseExportMarkdown(String markdown) {
+  final blocks = <ExportBlock>[];
+  for (final line in const LineSplitter().convert(markdown)) {
+    if (line.trim().isEmpty) {
+      blocks.add(const ExportBlock(ExportBlockKind.blank, []));
+      continue;
+    }
+    final heading = _headingPattern.firstMatch(line);
+    if (heading != null) {
+      blocks.add(ExportBlock(
+        ExportBlockKind.heading,
+        _runs(heading.group(2)!),
+        level: heading.group(1)!.length,
+      ));
+      continue;
+    }
+    final bullet = _bulletPattern.firstMatch(line);
+    if (bullet != null) {
+      blocks.add(ExportBlock(
+        ExportBlockKind.item,
+        _runs(bullet.group(1)!),
+        marker: '•',
+      ));
+      continue;
+    }
+    final number = _numberPattern.firstMatch(line);
+    if (number != null) {
+      blocks.add(ExportBlock(
+        ExportBlockKind.item,
+        _runs(number.group(2)!),
+        marker: number.group(1),
+      ));
+      continue;
+    }
+    blocks.add(ExportBlock(ExportBlockKind.paragraph, _runs(line)));
   }
+  return blocks;
+}
 
-  String get pdfFont => level == 0 ? '/F1' : '/F2';
-  int get pdfSize => const [11, 18, 14, 12][level];
-  int get pdfLeading => const [14, 24, 20, 16][level];
-  int get wrapWidth => const [90, 56, 70, 80][level];
-  int get docxHalfPoints => const [22, 36, 28, 24][level];
+List<ExportRun> _runs(String text) {
+  final parts = text.split('**');
+  // An odd number of parts means every "**" is paired.
+  if (parts.length.isEven) return [ExportRun(text)];
+  return [
+    for (var i = 0; i < parts.length; i++)
+      if (parts[i].isNotEmpty) ExportRun(parts[i], bold: i.isOdd),
+  ];
 }
