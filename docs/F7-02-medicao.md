@@ -20,3 +20,15 @@ Data: 2026-11-06 (D-040). Só a parte de qualidade em português, no PC. **Veloc
 - Para classificar tarefa x opinião x fato passado, o Gemma 3 1B 4 bits **não chega perto** do corpus com esses prompts simples. A linha de base da regra da F3-07 **não foi medida** neste corpus, então o critério "igualar ou superar a regra" ainda não está fechado; falta rodar a regra no corpus.
 - Não testei resumo curto (10 textos, julgamento às cegas pelo dono), outros prompts (poucos exemplos, saída com esquema) nem outros modelos de 2–4 bilhões de parâmetros.
 - Uma variação de prompt pode melhorar, mas a distância (de ~20% para algo útil) é grande; a recomendação provisória é não gastar a sonda do S25 com classificação.
+
+## Etapa 2 — Gemma 4 no PC (2026-11-06, interrompida pelo dono, D-041)
+Arquivos `.litertlm` oficiais (E2B 2.588.147.712 bytes; E4B 3.659.530.240 bytes), CLI `litert-lm` em CPU, mesmos 40 casos. Script: `docs/medicoes/f7-02/classificar_no_pc.py` (versão para o LiteRT-LM não foi guardada no repositório).
+| Modelo | Prompt | Tipos e contagem certos | Responsável certo | Tempo por caso (CPU do PC) |
+|---|---|---:|---:|---:|
+| Gemma 3 1B Q4 | A | 8/40 (20%) | 3/8 | 2,6 s |
+| Gemma 4 E2B | A | 17/40 (42,5%) | 9/17 | 5,2 s |
+| Gemma 4 E2B | B | 23/40 (57,5%) | 14/23 | 6,9 s |
+| Gemma 4 E4B | A | 17/40 (42,5%) | 6/12 | 8,9 s |
+| Gemma 4 E4B | B | não terminou | — | — |
+- O E2B melhora muito sobre o Gemma 3 1B, mas ainda erra fato passado, dúvida e follow-up. O E4B não superou o E2B no prompt A.
+- Limites: sem comparação com o modelo remoto + regra da F3-07 (a regra é um filtro sobre a saída do modelo, não um classificador sozinho); velocidade medida em CPU de PC, não no S25; um só rodada por prompt.

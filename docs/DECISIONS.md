@@ -41,6 +41,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-038 | 2026-11-05 | Critério 7 sem segunda confirmação para anexos do chat; critério 6 sem prova de troca de modelo | ACCEPTED |
 | D-039 | 2026-11-06 | Busca semântica local com MiniLM-L12 int8, opcional e baixada sob demanda | ACCEPTED |
 | D-040 | 2026-11-06 | Fechar a F6 sem auditoria própria; abrir a F7-02 (medição do modelo local no S25) | ACCEPTED |
+| D-041 | 2026-11-06 | Adiar a F7-02 (modelo local) e guardar como reserva; nada implementado | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -245,3 +246,8 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: F6 `DONE` sem auditoria dedicada; limites declarados continuam valendo (corte 0,42 provisório, índice só em memória, tempos e bateria não medidos). F7: abrir somente a F7-02 (sonda de modelo local no S25, método da F6-10, app separado em `tools/`). F7-03 e F7-06 seguem `BLOCKED`; F7-04 e F7-05 seguem `CANCELLED`.
 - Limites: nenhum modelo é baixado antes de o dono confirmar o download do Gemma 3 1B (~529 MB) e liberar o S25 por cerca de uma hora. O Gemma nunca vai empacotado no APK nem no repositório (Termos de Uso exigem repassar as restrições a quem recebe os pesos; risco de conflito com a GPL-3.0). Resumo dos Termos lido em 2026-11-06, não é parecer jurídico.
 - Evidência: `ROADMAP.md`, `docs/F7-02-plano-de-medicao.md`.
+
+## D-041 — Adiar o modelo local (2026-11-06)
+- Contexto: a medição no PC mostrou o Gemma 3 1B fraco (8/40) e o Gemma 4 E2B melhor (até 23/40 no corpus da F9-02), ainda abaixo do que serve para classificar sozinho. O dono: "vamos deixar esse negocio para depois, coloque no rollback, nao vamos implementar isso agora".
+- Decisão: a F7-02 volta a `BLOCKED` e vira reserva em "Ideias futuras". Nenhum código, dependência, sonda ou instalação no S25. Os arquivos baixados ficam só em `%TEMP%702` (fora do repositório).
+- Reavaliar quando: o modelo remoto ficar caro/indisponível, ou o dono quiser voz/resumo sem nuvem. Antes, rodar o E4B com os dois prompts, comparar com o modelo remoto + regra da F3-07 e medir velocidade e RAM no S25.

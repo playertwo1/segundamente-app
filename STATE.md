@@ -328,3 +328,6 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 
 ## F7-02 — pesquisa de modelos mais novos (2026-11-06)
 - Pesquisa em fontes oficiais: `docs/F7-02-pesquisa-modelos.md`. Candidato principal: Gemma 4 E2B pelo LiteRT-LM (Apache-2.0, 2,58 GB, ~52 tok/s na GPU do S26 Ultra segundo o Google). Nada baixado nem medido; S25 `NOT_RUN`. Lacunas: sem benchmark de português/JSON para o Gemma 4.
+
+## F7-02 adiada (2026-11-06, D-041)
+- A pedido do dono, a F7-02 volta a `BLOCKED` e vira reserva. Resultados no PC: Gemma 4 E2B 23/40 (prompt B), E4B 17/40 (prompt A); E4B/B interrompido. Nada instalado no S25, nenhuma sonda criada. Arquivos baixados (~8 GB) ficam em `%TEMP%702`, fora do repositório; podem ser apagados.

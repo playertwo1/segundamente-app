@@ -47,7 +47,7 @@
 | F5 — Fechamento do MVP | Aceite integral, privacidade, desempenho e auditoria | F0–F4 | DONE | Fechado em 2026-11-05: sete critérios no S25 (1–3 aprovados pelo dono), F5-03 medida e AUDIT RESULT: PASS |
 | F5V — Redesign visual | Aplicação da direção AMOLED aprovada nas telas existentes | D-022 permite execução em paralelo à F5 | IN_PROGRESS; fase ativa | Interações, acessibilidade e validação visual comprovadas |
 | F6 — Memória longitudinal | Busca, encaminhamentos, histórico de mudanças, tópicos e agenda | D-010 permite avançar antes do fechamento do MVP | DONE | Busca semântica, tópicos, justificativas e encaminhamentos verificados |
-| F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas | BLOCKED, exceto F7-02 (D-040) | Portão F7 |
+| F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas | BLOCKED (F7-02 adiada, D-041) | Portão F7 |
 | F8 — NotebookLM | Exportação opt-in e integração somente se suportada e aprovada | MVP e exportação estáveis; termos e destino aprovados | BLOCKED | Portão F8 |
 | F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | BLOCKED | Portão F9 |
 | F10 — Criação nos comentários | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; começa após o fechamento do MVP | BACKLOG | Portão F10 |
@@ -232,7 +232,7 @@
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
 | F7-01 | Comparar viabilidade, sistemas desktop, licenças, termos, autenticação e limites de dados; decidir escopo antes de código | P0 | F5 fechado (D-031 abriu só esta linha) | DONE | Matriz de opções, riscos e decisão aceita em docs/DECISIONS.md |
-| F7-02 | Medir modelo local no S25 (D-033; antes Ollama) para qualidade em pt-BR, requisitos de hardware e privacidade | P1 | F7-01 | IN_PROGRESS | Tabela de qualidade, latência, RAM/VRAM, tamanho e plataforma; modelo escolhido ou caminho descartado com motivo |
+| F7-02 | Medir modelo local no S25 (D-033; antes Ollama) para qualidade em pt-BR, requisitos de hardware e privacidade | P1 | F7-01 | BLOCKED | Tabela de qualidade, latência, RAM/VRAM, tamanho e plataforma; modelo escolhido ou caminho descartado com motivo |
 | F7-03 | Implementar voz full duplex opcional com controle explícito, interrupção, pausa, cancelar e estado de microfone visível | P0 | F7-01, F7-02 | BLOCKED | Testes de início, interrupção, cancelamento, erro, permissão e liberação do microfone; nenhuma gravação sem ação visível |
 | F7-04 | Criar ponte desktop opcional para Claude Code e Codex CLI oficiais, com escopo e prévia de cada solicitação | P0 | F7-01 | CANCELLED | Teste com cada CLI instalada; destino/comando visíveis, confirmação antes de enviar ou executar, cancelamento sem efeito e falha sem perda de contexto |
 | F7-05 | Decidir se uma interface MCP é necessária e, se aprovada, restringir ferramentas e permissões | P2 | F7-01, F7-04 | CANCELLED | Decisão explícita; se implementada, teste de acesso somente aos recursos autorizados e ausência de escrita em Quick Query |
@@ -312,6 +312,7 @@
 | Escolher idioma do resumo pelo idioma predominante | Só se o produto voltar a suportar mais de en e pt |
 | Biblioteca agregada de fotos, PDFs e áudios | Depois de F2/F6, se a busca atual não bastar |
 | Índice semântico gravado no banco (Drift): guardar o vetor de cada item e calcular só os novos | Reserva da F6-01 (hoje o índice vive só na memória do app). Reavaliar se a primeira busca do dia passar de ~2 s ou o histórico passar de alguns milhares de itens; medir antes no S25 |
+| Modelo local no aparelho (F7-02): Gemma 4 E2B/E4B pelo LiteRT-LM (Apache-2.0) | Adiado pelo dono em 2026-11-06 (D-041); nada implementado. No PC o E2B acertou 23/40 (57,5%) no corpus da F9-02 com o melhor prompt; falta comparar com o modelo remoto + regra da F3-07 e medir velocidade/RAM no S25. Detalhes em `docs/F7-02-medicao.md` e `docs/F7-02-pesquisa-modelos.md` |
 | Chave Gemini como reserva de transcrição | Se o caminho D-011 falhar ou se os limites medidos forem insuficientes |
 | Conversas guiadas por perfil: o Advogado do Diabo define a ideia/hipótese, apresenta uma objeção por turno, recebe a réplica e termina com veredito equilibrado e resumo opcional; outros personagens podem ter ciclos próprios, como professor com perguntas e exercício ou planejador com alternativas, riscos e próximo passo. O usuário pode responder, pular ou encerrar; conclusões só viram registros após salvamento explícito. | Reavaliar após o fechamento da F5 e a validação dos chats da F5V; experimentar em dois perfis e definir controles, formato das saídas e o que pode ser salvo antes de abrir uma tarefa de implementação |
 
