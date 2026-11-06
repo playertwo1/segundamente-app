@@ -7155,6 +7155,48 @@ abstract class AppLocalizations {
   /// **'Off by default. When on, the app opens the link address from this device to read the page title, so the site sees your network address. Local and private addresses are always refused.'**
   String get linkPreviewDesc;
 
+  /// No description provided for @semanticSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic search'**
+  String get semanticSearchTitle;
+
+  /// No description provided for @semanticSearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Downloads about 127 MB once. Afterward, text and searches stay on this device; nothing is sent to a model.'**
+  String get semanticSearchDescription;
+
+  /// No description provided for @semanticSearchStatusOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get semanticSearchStatusOff;
+
+  /// No description provided for @semanticSearchStatusDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading the local model... {percent}%'**
+  String semanticSearchStatusDownloading(int percent);
+
+  /// No description provided for @semanticSearchStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Model ready. Searches run on this device.'**
+  String get semanticSearchStatusReady;
+
+  /// No description provided for @semanticSearchStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not prepare the model. Try again.'**
+  String get semanticSearchStatusError;
+
+  /// No description provided for @semanticSearchDeleteModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete downloaded model'**
+  String get semanticSearchDeleteModel;
+
   /// No description provided for @propLink.
   ///
   /// In en, this message translates to:

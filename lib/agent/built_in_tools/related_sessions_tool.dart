@@ -4,8 +4,8 @@ import 'package:memex/data/services/session_report_service.dart';
 import 'package:memex/domain/models/related_sessions.dart';
 import 'package:memex/domain/models/session_report.dart';
 
-/// Lets the agent read the session reports behind a question: the sessions
-/// whose text matches, plus sessions that share a topic with them.
+/// Lets the agent read matching session reports and sessions that share their
+/// topics.
 Tool buildRelatedSessionsTool() {
   return Tool(
     name: 'find_related_sessions',
@@ -13,12 +13,12 @@ Tool buildRelatedSessionsTool() {
         '''Find session reports (meetings, imported transcripts, chats \
 with a report) about something the user asks.
 
-Pass a short word or phrase exactly as it would be written in the session, \
-for example a person, a project or a subject. The tool matches that text; \
-sessions that share a topic or project with a match come after them. When \
+Pass a short query about a person, project or subject. The search checks text \
+first and may add meaning-based matches when semantic search is enabled. \
+Sessions that share a topic or project with a match come after them. When \
 nothing matches it returns no session: say so, do not guess.
 
-Returns for each session: its id, title, whether it matched the text or \
+Returns for each session: its id, title, whether it matched the query or \
 came by topic, and its non-discarded report items.''',
     parameters: {
       'type': 'object',
@@ -50,7 +50,7 @@ came by topic, and its non-discarded report items.''',
 String renderRelatedSession(RelatedSession related, SessionReport report) {
   final out = StringBuffer()
     ..writeln('--- Session ${related.sessionId}: ${report.title} '
-        '(${related.isSeed ? 'matches the text' : 'same topic'}) ---');
+        '(${related.isSeed ? 'matches the query' : 'same topic'}) ---');
   for (final item in report.items) {
     if (item.status == ReportItemStatus.discarded) continue;
     out.writeln('- [${item.kind.name}] ${item.text}');

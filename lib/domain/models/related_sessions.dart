@@ -11,14 +11,14 @@ class RelatedSession {
 
   final String sessionId;
 
-  /// True when the text search found it; false when it came in by topic.
+  /// True when report search found it; false when it came in by topic.
   final bool isSeed;
 
   /// How many topics it shares with the seeds (0 for a seed with no topic).
   final int sharedTopics;
 }
 
-/// Sessions to read for a question. The text-search hits are the seeds and
+/// Sessions to read for a question. Report-search hits are the seeds and
 /// always stay. Sessions that share a topic with a seed follow, ordered by
 /// shared topics then by [sessionTimes] (newest first), until their text
 /// exceeds [maxChars]. No seed means no session at all, so an off-topic

@@ -230,9 +230,8 @@ class UserStorage {
   /// install, so restoring an old "already prompted" marker could prevent the
   /// app from explaining the permission on the new device.
   static bool isDeviceLocalPreferenceKey(String key) {
-    return key.startsWith(
-      _keyMemexAgentNotificationPermissionPromptedPrefix,
-    );
+    return key == _keySemanticSearchEnabled ||
+        key.startsWith(_keyMemexAgentNotificationPermissionPromptedPrefix);
   }
 
   static Future<String?> getLatestSuperAgentHomeSessionId() async {
@@ -916,6 +915,7 @@ class UserStorage {
   static const String _keyFallbackOrder = 'llm_fallback_order';
 
   static const String _keyLinkPreview = 'link_preview_enabled';
+  static const String _keySemanticSearchEnabled = 'semantic_search_enabled';
 
   /// Whether link previews (which contact the linked site) are on. Off by default.
   static Future<bool> isLinkPreviewEnabled() async {
@@ -930,6 +930,21 @@ class UserStorage {
   static Future<void> setLinkPreviewEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyLinkPreview, enabled);
+  }
+
+  /// Whether local semantic search is on. Off by default.
+  static Future<bool> isSemanticSearchEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_keySemanticSearchEnabled) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> setSemanticSearchEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySemanticSearchEnabled, enabled);
   }
 
   /// Whether automatic model fallback is enabled.

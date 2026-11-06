@@ -4028,6 +4028,32 @@ class AppLocalizationsEn extends AppLocalizations {
       'Off by default. When on, the app opens the link address from this device to read the page title, so the site sees your network address. Local and private addresses are always refused.';
 
   @override
+  String get semanticSearchTitle => 'Semantic search';
+
+  @override
+  String get semanticSearchDescription =>
+      'Optional. Downloads about 127 MB once. Afterward, text and searches stay on this device; nothing is sent to a model.';
+
+  @override
+  String get semanticSearchStatusOff => 'Off';
+
+  @override
+  String semanticSearchStatusDownloading(int percent) {
+    return 'Downloading the local model... $percent%';
+  }
+
+  @override
+  String get semanticSearchStatusReady =>
+      'Model ready. Searches run on this device.';
+
+  @override
+  String get semanticSearchStatusError =>
+      'Could not prepare the model. Try again.';
+
+  @override
+  String get semanticSearchDeleteModel => 'Delete downloaded model';
+
+  @override
   String get propLink => 'Has a link';
 
   @override

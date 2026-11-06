@@ -15,13 +15,17 @@ import 'package:memex/db/app_database.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_task_executor.dart';
 import 'package:memex/data/services/event_bus_service.dart';
+import 'package:memex/data/services/semantic_search_model_service.dart';
 import 'package:memex/data/services/comment_settings_service.dart'
     show CommentSettings;
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/main.dart' show rootShellKey;
+import 'package:memex/utils/result.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.semanticSearchManager});
+
+  final SemanticSearchModelManager? semanticSearchManager;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -31,20 +35,38 @@ class _SettingsPageState extends State<SettingsPage> {
   String _currentLocaleTag = 'en';
   CommentSettings _commentSettings = const CommentSettings();
   bool _linkPreview = false;
+  late final SemanticSearchModelManager _semanticSearch;
+  bool _semanticSearchEnabled = false;
+  bool _semanticSearchBusy = false;
 
   @override
   void initState() {
     super.initState();
+    _semanticSearch =
+        widget.semanticSearchManager ?? SemanticSearchModelService.instance;
+    _semanticSearch.addListener(_onSemanticSearchChanged);
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    _semanticSearch.removeListener(_onSemanticSearchChanged);
+    super.dispose();
   }
 
   Future<void> _loadSettings() async {
     final locale = await UserStorage.getLocale();
     final commentSettings = await MemexRouter().getCommentSettings();
     final linkPreview = await UserStorage.isLinkPreviewEnabled();
+    final semanticSearch = await UserStorage.isSemanticSearchEnabled();
+    await _semanticSearch.refreshModelAvailability();
+    if (semanticSearch) {
+      await _semanticSearch.ensureReady(allowDownload: false);
+    }
     if (mounted) {
       setState(() {
         _linkPreview = linkPreview;
+        _semanticSearchEnabled = semanticSearch;
         _currentLocaleTag = UserStorage.localeTag(
           UserStorage.resolveToSupportedLocale(locale),
         );
@@ -80,6 +102,49 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _updateLinkPreview(bool value) async {
     await UserStorage.setLinkPreviewEnabled(value);
     if (mounted) setState(() => _linkPreview = value);
+  }
+
+  void _onSemanticSearchChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _updateSemanticSearch(bool value) async {
+    if (_semanticSearchBusy) return;
+    setState(() => _semanticSearchBusy = true);
+    if (value) {
+      final result = await _semanticSearch.ensureReady(allowDownload: true);
+      final enabled = result.isOk;
+      await UserStorage.setSemanticSearchEnabled(enabled);
+      if (mounted) {
+        setState(() {
+          _semanticSearchEnabled = enabled;
+          _semanticSearchBusy = false;
+        });
+      }
+      return;
+    }
+
+    await UserStorage.setSemanticSearchEnabled(false);
+    await _semanticSearch.disable();
+    if (mounted) {
+      setState(() {
+        _semanticSearchEnabled = false;
+        _semanticSearchBusy = false;
+      });
+    }
+  }
+
+  Future<void> _deleteSemanticModel() async {
+    if (_semanticSearchBusy) return;
+    setState(() => _semanticSearchBusy = true);
+    await UserStorage.setSemanticSearchEnabled(false);
+    await _semanticSearch.deleteModel();
+    if (mounted) {
+      setState(() {
+        _semanticSearchEnabled = false;
+        _semanticSearchBusy = false;
+      });
+    }
   }
 
   Future<void> _updateShowInsightText(bool value) async {
@@ -241,6 +306,97 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               value: _linkPreview,
               onChanged: _updateLinkPreview,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.divider)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SwitchListTile(
+                  key: const ValueKey('semantic-search-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(
+                    Icons.manage_search,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  title: Text(
+                    UserStorage.l10n.semanticSearchTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      UserStorage.l10n.semanticSearchDescription,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  value: _semanticSearchEnabled,
+                  onChanged: _semanticSearchBusy ? null : _updateSemanticSearch,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 56, top: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        switch (_semanticSearch.state) {
+                          SemanticSearchModelState.off =>
+                            UserStorage.l10n.semanticSearchStatusOff,
+                          SemanticSearchModelState.downloading =>
+                            UserStorage.l10n.semanticSearchStatusDownloading(
+                              (_semanticSearch.progress * 100).round(),
+                            ),
+                          SemanticSearchModelState.ready =>
+                            UserStorage.l10n.semanticSearchStatusReady,
+                          SemanticSearchModelState.error =>
+                            UserStorage.l10n.semanticSearchStatusError,
+                        },
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (_semanticSearch.state ==
+                          SemanticSearchModelState.downloading)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: LinearProgressIndicator(
+                            value: _semanticSearch.progress == 0
+                                ? null
+                                : _semanticSearch.progress,
+                          ),
+                        ),
+                      if (_semanticSearch.hasDownloadedFiles)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: _semanticSearchBusy
+                                ? null
+                                : _deleteSemanticModel,
+                            icon: const Icon(Icons.delete_outline),
+                            label: Text(
+                              UserStorage.l10n.semanticSearchDeleteModel,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

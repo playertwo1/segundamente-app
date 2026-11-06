@@ -7,7 +7,7 @@ import 'package:memex/utils/logger.dart';
 
 final _logger = getLogger('RelatedSessionsService');
 
-/// Joins the text search, the topics and the session dates for
+/// Joins report search, topics and session dates for
 /// [relatedSessions].
 class RelatedSessionsService {
   RelatedSessionsService({
@@ -35,8 +35,8 @@ class RelatedSessionsService {
     try {
       topics = await _topics.load(userId);
     } catch (error, stackTrace) {
-      _logger.warning('Topics unreadable, using text matches only', error,
-          stackTrace);
+      _logger.warning(
+          'Topics unreadable, using text matches only', error, stackTrace);
     }
     return relatedSessions(
       seedHits: hits,

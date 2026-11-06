@@ -4,22 +4,32 @@ import 'dart:io';
 import 'package:memex/data/services/chat_session_storage.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/glossary_service.dart';
+import 'package:memex/data/services/semantic_search_model_service.dart';
 import 'package:memex/data/services/transcript_correction_service.dart';
 import 'package:memex/domain/models/report_memory.dart';
+import 'package:memex/domain/models/semantic_similarity.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/transcript_import.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:memex/utils/result.dart';
+import 'package:memex/utils/user_storage.dart';
 import 'package:path/path.dart' as p;
+
+const sessionReportSemanticCutoff = 0.42;
+const sessionReportSemanticLimit = 3;
 
 class SessionReportService {
   SessionReportService({
     FileSystemService? fileService,
     ChatSessionStorage? sessions,
+    SemanticSearchModelManager? semanticSearch,
   })  : _files = fileService ?? FileSystemService.instance,
-        _sessions = sessions ?? ChatSessionStorage.instance;
+        _sessions = sessions ?? ChatSessionStorage.instance,
+        _semanticSearch = semanticSearch ?? SemanticSearchModelService.instance;
 
   final FileSystemService _files;
   final ChatSessionStorage _sessions;
+  final SemanticSearchModelManager _semanticSearch;
   final _glossary = GlossaryService();
   final _logger = getLogger('SessionReportService');
 
@@ -183,7 +193,51 @@ class SessionReportService {
     required String userId,
     required String query,
   }) async {
-    return searchReports(await loadAll(userId), query);
+    final reports = await loadAll(userId);
+    final textHits = searchReports(reports, query);
+    if (textHits.length >= sessionReportSemanticLimit || query.trim().isEmpty) {
+      return textHits;
+    }
+    if (!await UserStorage.isSemanticSearchEnabled()) return textHits;
+
+    try {
+      final ready = await _semanticSearch.ensureReady(allowDownload: false);
+      if (ready.isError) return textHits;
+
+      final seen = {
+        for (final hit in textHits) reportHitKey(hit.sessionId, hit.item.id),
+      };
+      final candidates = <({ReportHit item, List<num> vector})>[];
+      for (final report in reports) {
+        for (final item in report.items) {
+          if (item.status == ReportItemStatus.discarded) continue;
+          final hitKey = reportHitKey(report.sessionId, item.id);
+          if (seen.contains(hitKey)) continue;
+          final content = '${report.title}\n${item.text}'.trim();
+          if (content.isEmpty) continue;
+          candidates.add((
+            item: ReportHit(sessionId: report.sessionId, item: item),
+            vector: await _semanticSearch.embedItem(content),
+          ));
+        }
+      }
+
+      final queryVector = await _semanticSearch.embedQuery(query);
+      final semanticHits = rankBySimilarity(
+        queryVector,
+        candidates,
+        cutoff: sessionReportSemanticCutoff,
+        limit: sessionReportSemanticLimit,
+      );
+      return [...textHits, for (final hit in semanticHits) hit.item];
+    } catch (error, stackTrace) {
+      _logger.warning(
+        'Semantic report search failed; using text matches only',
+        error,
+        stackTrace,
+      );
+      return textHits;
+    }
   }
 
   Future<List<ReportHit>> approvedFollowUps({

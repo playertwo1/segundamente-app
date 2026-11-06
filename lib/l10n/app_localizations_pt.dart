@@ -4066,6 +4066,32 @@ class AppLocalizationsPt extends AppLocalizations {
       'Desligada por padrão. Ligada, o app abre o endereço do link a partir deste aparelho para ler o título da página, então o site vê o seu endereço de rede. Endereços locais e privados são sempre recusados.';
 
   @override
+  String get semanticSearchTitle => 'Busca por significado';
+
+  @override
+  String get semanticSearchDescription =>
+      'Opcional. Baixa cerca de 127 MB uma vez. Depois, o texto e as buscas ficam neste aparelho; nada é enviado a um modelo.';
+
+  @override
+  String get semanticSearchStatusOff => 'Desligada';
+
+  @override
+  String semanticSearchStatusDownloading(int percent) {
+    return 'Baixando modelo local... $percent%';
+  }
+
+  @override
+  String get semanticSearchStatusReady =>
+      'Modelo pronto. As buscas são processadas neste aparelho.';
+
+  @override
+  String get semanticSearchStatusError =>
+      'Não foi possível preparar o modelo. Tente novamente.';
+
+  @override
+  String get semanticSearchDeleteModel => 'Apagar modelo baixado';
+
+  @override
   String get propLink => 'Tem link';
 
   @override

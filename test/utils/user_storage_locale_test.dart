@@ -87,4 +87,22 @@ void main() {
       );
     });
   });
+
+  group('UserStorage semantic search preference', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('starts off and stores its device-local choice', () async {
+      expect(await UserStorage.isSemanticSearchEnabled(), isFalse);
+      expect(
+        UserStorage.isDeviceLocalPreferenceKey('semantic_search_enabled'),
+        isTrue,
+      );
+
+      await UserStorage.setSemanticSearchEnabled(true);
+
+      expect(await UserStorage.isSemanticSearchEnabled(), isTrue);
+    });
+  });
 }
