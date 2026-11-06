@@ -7,6 +7,7 @@ import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/view_models/follow_ups_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/follow_ups_view.dart';
+import 'package:memex/utils/result.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,6 +30,8 @@ void main() {
           source: ReportSource(segmentId: 'seg_1', excerpt: 'trecho de $text'),
         ),
       );
+
+  searchQueryTests();
 
   group('FollowUpsViewModel.addToCalendar', () {
     late List<Map<String, Object?>> opened;
@@ -131,4 +134,32 @@ void main() {
 class _NoRouter implements MemexRouter {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _SearchRouter implements MemexRouter {
+  @override
+  Future<Result<List<ReportHit>>> loadApprovedFollowUps() async =>
+      const Ok(<ReportHit>[]);
+
+  @override
+  Future<Result<List<ReportHit>>> searchSessionReports(String query) async =>
+      const Ok(<ReportHit>[]);
+
+  @override
+  Future<Result<Map<String, ReportRevision>>> loadReportTextChanges() async =>
+      const Ok(<String, ReportRevision>{});
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+void searchQueryTests() {
+  test('FollowUpsViewModel remembers the submitted search and clears it on load',
+      () async {
+    final vm = FollowUpsViewModel(router: _SearchRouter());
+    await vm.search('zzzxyz');
+    expect(vm.query, 'zzzxyz');
+    await vm.load();
+    expect(vm.query, '');
+  });
 }

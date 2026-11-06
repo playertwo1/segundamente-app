@@ -1612,6 +1612,7 @@
   "followUpsTitle": "Encaminhamentos",
   "openFollowUps": "Encaminhamentos",
   "followUpsEmpty": "Nenhum encaminhamento aprovado",
+  "followUpsNoResults": "Nenhum encaminhamento para essa busca",
   "addToCalendar": "Adicionar à agenda",
   "addToCalendarFailed": "Nenhum app de agenda conseguiu abrir o novo evento.",
   "followUpsSearchHint": "Buscar nos relatórios",

@@ -107,4 +107,29 @@ void main() {
     await tester.pump();
     expect(submitted, 'escopo');
   });
+
+  testWidgets('a search with no result says so, not "no approved follow-ups"',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: FollowUpsView(
+            hits: const [],
+            textChanges: const {},
+            query: 'zzzxyz',
+            onSearch: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(UserStorage.l10n.followUpsNoResults), findsOneWidget);
+    expect(find.text(UserStorage.l10n.followUpsEmpty), findsNothing);
+
+    await pump(tester, hits: const [], changes: const {}, onSearch: (_) {});
+    expect(find.text(UserStorage.l10n.followUpsEmpty), findsOneWidget);
+    expect(find.text(UserStorage.l10n.followUpsNoResults), findsNothing);
+  });
 }

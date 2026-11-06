@@ -3516,6 +3516,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get followUpsEmpty => 'No approved follow-ups';
 
   @override
+  String get followUpsNoResults => 'No follow-ups match this search';
+
+  @override
   String get addToCalendarFailed => 'No calendar app could open the new event.';
 
   @override

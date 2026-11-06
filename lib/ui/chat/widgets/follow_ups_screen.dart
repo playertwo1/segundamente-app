@@ -45,6 +45,7 @@ class _FollowUpsScreenState extends State<FollowUpsScreen> {
             hits: viewModel.hits,
             textChanges: viewModel.textChanges,
             onSearch: viewModel.search,
+            query: viewModel.query,
             onAddToCalendar: (hit) async {
               final opened = await viewModel.addToCalendar(hit);
               if (!opened && context.mounted) {

@@ -59,6 +59,9 @@ class FollowUpsViewModel extends ChangeNotifier {
   bool loading = false;
   String? errorMessage;
 
+  /// The search last submitted; empty when the list is not filtered.
+  String query = '';
+
   Future<void> load() {
     return _load(search: null);
   }
@@ -68,6 +71,7 @@ class FollowUpsViewModel extends ChangeNotifier {
   }
 
   Future<void> _load({required String? search}) async {
+    query = search ?? '';
     loading = true;
     errorMessage = null;
     notifyListeners();

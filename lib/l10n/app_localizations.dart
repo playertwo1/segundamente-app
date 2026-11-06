@@ -6303,6 +6303,12 @@ abstract class AppLocalizations {
   /// **'No approved follow-ups'**
   String get followUpsEmpty;
 
+  /// No description provided for @followUpsNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No follow-ups match this search'**
+  String get followUpsNoResults;
+
   /// No description provided for @addToCalendarFailed.
   ///
   /// In en, this message translates to:

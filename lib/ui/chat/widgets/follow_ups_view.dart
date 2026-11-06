@@ -9,6 +9,7 @@ class FollowUpsView extends StatelessWidget {
     required this.hits,
     required this.textChanges,
     required this.onSearch,
+    this.query = '',
     this.onAddToCalendar,
     this.onOpenRevisions,
   });
@@ -16,6 +17,9 @@ class FollowUpsView extends StatelessWidget {
   final List<ReportHit> hits;
   final Map<String, ReportRevision> textChanges;
   final ValueChanged<String> onSearch;
+
+  /// The search last submitted; decides which empty message to show.
+  final String query;
 
   /// Offered only for items whose date was written in full.
   final ValueChanged<ReportHit>? onAddToCalendar;
@@ -43,7 +47,9 @@ class FollowUpsView extends StatelessWidget {
           child: hits.isEmpty
               ? Center(
                   child: Text(
-                    l10n.followUpsEmpty,
+                    query.trim().isEmpty
+                        ? l10n.followUpsEmpty
+                        : l10n.followUpsNoResults,
                     key: const ValueKey('follow_ups_empty'),
                   ),
                 )

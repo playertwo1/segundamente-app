@@ -1619,6 +1619,7 @@
   "followUpsTitle": "Follow-ups",
   "openFollowUps": "Follow-ups",
   "followUpsEmpty": "No approved follow-ups",
+  "followUpsNoResults": "No follow-ups match this search",
   "addToCalendar": "Add to calendar",
   "addToCalendarFailed": "No calendar app could open the new event.",
   "followUpsSearchHint": "Search reports",

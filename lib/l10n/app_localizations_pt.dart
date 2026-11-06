@@ -3551,6 +3551,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get followUpsEmpty => 'Nenhum encaminhamento aprovado';
 
   @override
+  String get followUpsNoResults => 'Nenhum encaminhamento para essa busca';
+
+  @override
   String get addToCalendarFailed =>
       'Nenhum app de agenda conseguiu abrir o novo evento.';
 
