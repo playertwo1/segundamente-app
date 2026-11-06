@@ -28,6 +28,7 @@ void main() {
           onSelectTab: (tab) => calls.add('tab$tab'),
           onOpenChat: () => calls.add('chat'),
           onOpenChatHistory: () => calls.add('history'),
+          onOpenTodo: () => calls.add('todo'),
           onOpenCalendar: () => calls.add('calendar'),
           onOpenTags: () => calls.add('tags'),
           onOpenTopics: () => calls.add('topics'),
@@ -60,6 +61,7 @@ void main() {
     expect(await openAndTap(tester, 'Atividade'), ['activity']);
     expect(await openAndTap(tester, 'Conversar'), ['chat']);
     expect(await openAndTap(tester, 'Histórico de chat'), ['history']);
+    expect(await openAndTap(tester, 'Lista de tarefas'), ['todo']);
     expect(await openAndTap(tester, 'Perfil e configurações'), ['profile']);
   });
 
@@ -72,6 +74,7 @@ void main() {
           onSelectTab: (_) {},
           onOpenChat: () {},
           onOpenChatHistory: () {},
+          onOpenTodo: () {},
           onOpenCalendar: () {},
           onOpenTags: () {},
           onOpenTopics: () {},

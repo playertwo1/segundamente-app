@@ -3460,6 +3460,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportAmbiguousDueConfirm => 'Confirm as is';
 
   @override
+  String get todoTitle => 'To-do list';
+
+  @override
+  String get todoSearchHint => 'Search the list';
+
+  @override
+  String get todoEmpty =>
+      'Nothing here yet. Approve a task in a report and add it, or add one by hand.';
+
+  @override
+  String get todoNoResults => 'No item matches this search.';
+
+  @override
+  String get todoAdd => 'Add item';
+
+  @override
+  String get todoEdit => 'Edit item';
+
+  @override
+  String get todoTextHint => 'What needs to be done';
+
+  @override
+  String get todoDueHint => 'Due date (optional)';
+
+  @override
+  String get todoSave => 'Save';
+
+  @override
+  String get todoDeleteMessage =>
+      'Remove this item from the list? The report it came from is not changed.';
+
+  @override
+  String get todoOpenSource => 'Source';
+
+  @override
+  String get todoAddFromReport => 'Add to to-do list';
+
+  @override
+  String get todoAdded => 'Added to the to-do list';
+
+  @override
   String get reportUnconfirmed => 'Unconfirmed';
 
   @override

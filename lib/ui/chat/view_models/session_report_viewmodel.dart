@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/domain/models/session_report.dart';
+import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/session_report_export.dart';
 
 class SessionReportViewModel extends ChangeNotifier {
@@ -115,6 +116,13 @@ class SessionReportViewModel extends ChangeNotifier {
       onError: (error, _) => errorMessage = '$error',
     );
     notifyListeners();
+  }
+
+  /// Copies an approved task of this report into the personal to-do list.
+  Future<Result<TodoItem>> addToTodo(String itemId) async {
+    final item = report?.items.where((i) => i.id == itemId).firstOrNull;
+    if (item == null) return Error(StateError('item not found'));
+    return _router.addReportItemToTodo(sessionId: sessionId, item: item);
   }
 
   Future<Result<String>> export({

@@ -6177,6 +6177,84 @@ abstract class AppLocalizations {
   /// **'Confirm as is'**
   String get reportAmbiguousDueConfirm;
 
+  /// No description provided for @todoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To-do list'**
+  String get todoTitle;
+
+  /// No description provided for @todoSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search the list'**
+  String get todoSearchHint;
+
+  /// No description provided for @todoEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Approve a task in a report and add it, or add one by hand.'**
+  String get todoEmpty;
+
+  /// No description provided for @todoNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No item matches this search.'**
+  String get todoNoResults;
+
+  /// No description provided for @todoAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get todoAdd;
+
+  /// No description provided for @todoEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get todoEdit;
+
+  /// No description provided for @todoTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What needs to be done'**
+  String get todoTextHint;
+
+  /// No description provided for @todoDueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date (optional)'**
+  String get todoDueHint;
+
+  /// No description provided for @todoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get todoSave;
+
+  /// No description provided for @todoDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this item from the list? The report it came from is not changed.'**
+  String get todoDeleteMessage;
+
+  /// No description provided for @todoOpenSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get todoOpenSource;
+
+  /// No description provided for @todoAddFromReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to to-do list'**
+  String get todoAddFromReport;
+
+  /// No description provided for @todoAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to the to-do list'**
+  String get todoAdded;
+
   /// No description provided for @reportUnconfirmed.
   ///
   /// In en, this message translates to:

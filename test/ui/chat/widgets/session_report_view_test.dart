@@ -47,6 +47,7 @@ void main() {
     }) onSetStatus,
     Future<void> Function(ReportExportFormat format, Set<String> itemIds)?
         onExport,
+    Future<void> Function(String itemId)? onAddToTodo,
   }) {
     return tester.pumpWidget(
       MaterialApp(
@@ -59,6 +60,7 @@ void main() {
             onEdit: onEdit,
             onSetStatus: onSetStatus,
             onExport: onExport ?? (_, __) async {},
+            onAddToTodo: onAddToTodo,
           ),
         ),
       ),
@@ -405,6 +407,62 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
     expect(approved, ['item_2']);
+  });
+
+  testWidgets('only an approved task can be added to the to-do list',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final added = <String>[];
+    final report = setReportItemStatus(
+      twoTasks(),
+      itemId: 'item_2',
+      status: ReportItemStatus.approved,
+    );
+    await pump(
+      tester,
+      report,
+      onDraft: (_, __) async {},
+      onEdit: ({
+        required itemId,
+        required text,
+        required assignee,
+        required due,
+        reason,
+      }) async {},
+      onSetStatus: ({required itemId, required status, reason}) async {},
+      onAddToTodo: (id) async => added.add(id),
+    );
+    expect(find.byKey(const ValueKey('report_add_todo_item_1')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('report_add_todo_item_2')));
+    await tester.pumpAndSettle();
+    expect(added, ['item_2']);
+  });
+
+  testWidgets('without a to-do handler the button is not offered',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pump(
+      tester,
+      setReportItemStatus(
+        twoTasks(),
+        itemId: 'item_2',
+        status: ReportItemStatus.approved,
+      ),
+      onDraft: (_, __) async {},
+      onEdit: ({
+        required itemId,
+        required text,
+        required assignee,
+        required due,
+        reason,
+      }) async {},
+      onSetStatus: ({required itemId, required status, reason}) async {},
+    );
+    expect(find.byKey(const ValueKey('report_add_todo_item_2')), findsNothing);
   });
 
   testWidgets('a duplicate stays listed and says what it repeats',

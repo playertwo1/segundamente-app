@@ -10,6 +10,7 @@ import 'package:memex/ui/chat/view_models/session_report_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/session_report_view.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/utils/share_service.dart';
+import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
 
@@ -107,6 +108,15 @@ class _SessionReportScreenState extends State<SessionReportScreen> {
             usedLocalFallback: viewModel.usedLocalFallback,
             onEdit: viewModel.edit,
             onSetStatus: viewModel.setStatus,
+            onAddToTodo: (itemId) async {
+              final result = await viewModel.addToTodo(itemId);
+              if (!mounted || !context.mounted) return;
+              result.when(
+                onOk: (_) => ToastHelper.showSuccess(
+                    context, UserStorage.l10n.todoAdded),
+                onError: (error, _) => viewModel.showError(error),
+              );
+            },
             onExport: (format, itemIds) async {
               final result = await viewModel.export(
                 format: format,

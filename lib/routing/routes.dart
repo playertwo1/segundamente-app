@@ -26,6 +26,7 @@ abstract final class AppRoutes {
 
   /// Memory.
   static const String memory = '/memory';
+  static const String todo = '/todo';
   static const String tags = '/tags';
   static const String topics = '/topics';
   static const String savedViews = '/views';

@@ -12,6 +12,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/memory/view_models/memory_viewmodel.dart';
+import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/todo_screen.dart';
 import 'package:memex/ui/memory/widgets/memory_screen.dart';
 import 'package:memex/ui/character/widgets/character_config_screen.dart';
 import 'package:memex/ui/character/widgets/tavern_import_screen.dart';
@@ -78,6 +80,13 @@ GoRouter createAppRouter(
               AgentActivityViewModel(router: context.read<MemexRouter>()),
           onBackToTimeline: () => context.go(AppRoutes.home),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.todo,
+        builder: (context, state) {
+          final vm = TodoViewModel(router: context.read<MemexRouter>());
+          return TodoScreen(viewModel: vm);
+        },
       ),
       GoRoute(
         path: AppRoutes.memory,

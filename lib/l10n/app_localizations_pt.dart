@@ -3494,6 +3494,47 @@ class AppLocalizationsPt extends AppLocalizations {
   String get reportAmbiguousDueConfirm => 'Confirmar assim';
 
   @override
+  String get todoTitle => 'Lista de tarefas';
+
+  @override
+  String get todoSearchHint => 'Buscar na lista';
+
+  @override
+  String get todoEmpty =>
+      'Nada aqui ainda. Aprove uma tarefa num relatório e adicione, ou crie uma à mão.';
+
+  @override
+  String get todoNoResults => 'Nenhum item combina com a busca.';
+
+  @override
+  String get todoAdd => 'Adicionar item';
+
+  @override
+  String get todoEdit => 'Editar item';
+
+  @override
+  String get todoTextHint => 'O que precisa ser feito';
+
+  @override
+  String get todoDueHint => 'Prazo (opcional)';
+
+  @override
+  String get todoSave => 'Salvar';
+
+  @override
+  String get todoDeleteMessage =>
+      'Tirar este item da lista? O relatório de onde ele veio não muda.';
+
+  @override
+  String get todoOpenSource => 'Fonte';
+
+  @override
+  String get todoAddFromReport => 'Adicionar à lista de tarefas';
+
+  @override
+  String get todoAdded => 'Adicionado à lista de tarefas';
+
+  @override
   String get reportUnconfirmed => 'Não confirmado';
 
   @override

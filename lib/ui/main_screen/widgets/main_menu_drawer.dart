@@ -12,6 +12,7 @@ class MainMenuDrawer extends StatelessWidget {
     required this.onSelectTab,
     required this.onOpenChat,
     required this.onOpenChatHistory,
+    required this.onOpenTodo,
     required this.onOpenCalendar,
     required this.onOpenTags,
     required this.onOpenTopics,
@@ -26,6 +27,7 @@ class MainMenuDrawer extends StatelessWidget {
   final ValueChanged<int> onSelectTab;
   final VoidCallback onOpenChat;
   final VoidCallback onOpenChatHistory;
+  final VoidCallback onOpenTodo;
   final VoidCallback onOpenCalendar;
   final VoidCallback onOpenTags;
   final VoidCallback onOpenTopics;
@@ -115,6 +117,11 @@ class MainMenuDrawer extends StatelessWidget {
               icon: Icons.history,
               label: l10n.chatHistory,
               onTap: close(onOpenChatHistory),
+            ),
+            _MenuItem(
+              icon: Icons.checklist,
+              label: l10n.todoTitle,
+              onTap: close(onOpenTodo),
             ),
             _MenuItem(
               icon: Icons.settings_outlined,

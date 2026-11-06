@@ -14,6 +14,7 @@ class SessionReportView extends StatefulWidget {
     this.errorMessage,
     this.onDraftWithModel,
     this.usedLocalFallback = false,
+    this.onAddToTodo,
   });
 
   final SessionReport? report;
@@ -36,6 +37,9 @@ class SessionReportView extends StatefulWidget {
   final Future<void> Function(ReportKind kind, String? customTitle)?
       onDraftWithModel;
   final bool usedLocalFallback;
+
+  /// Offered only for an approved task; null hides the button.
+  final Future<void> Function(String itemId)? onAddToTodo;
 
   static Future<void> _ignoreExport(
     ReportExportFormat format,
@@ -223,6 +227,7 @@ class _SessionReportViewState extends State<SessionReportView> {
                 },
                 onEdit: widget.onEdit,
                 onSetStatus: widget.onSetStatus,
+                onAddToTodo: widget.onAddToTodo,
               ),
           ],
       ],
@@ -287,8 +292,10 @@ class _ReportItemTile extends StatelessWidget {
     required this.onSelected,
     required this.onEdit,
     required this.onSetStatus,
+    this.onAddToTodo,
   });
 
+  final Future<void> Function(String itemId)? onAddToTodo;
   final ReportItem item;
   final bool selected;
   final ValueChanged<bool> onSelected;
@@ -384,6 +391,12 @@ class _ReportItemTile extends StatelessWidget {
           Text(
             l10n.reportDefinitiveTask,
             key: ValueKey('report_definitive_${item.id}'),
+          ),
+        if (isDefinitiveTask(item) && onAddToTodo != null)
+          TextButton(
+            key: ValueKey('report_add_todo_${item.id}'),
+            onPressed: () => onAddToTodo!(item.id),
+            child: Text(l10n.todoAddFromReport),
           ),
         Wrap(
           children: [

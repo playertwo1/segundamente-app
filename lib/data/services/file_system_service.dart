@@ -1904,6 +1904,11 @@ class FileSystemService {
     return path.join(getWorkspacePath(userId), 'SessionReports');
   }
 
+  /// Folder of the personal Todo list file.
+  String getTodoPath(String userId) {
+    return path.join(getWorkspacePath(userId), 'Todo');
+  }
+
   /// GetKnowledgeInsightsdirectory path
   String getKnowledgeInsightsPath(String userId) {
     return path.join(getWorkspacePath(userId), 'KnowledgeInsights');

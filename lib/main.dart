@@ -1810,6 +1810,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             AppRoutes.chatHistory,
             extra: {'agentName': 'memex_agent'},
           ),
+          onOpenTodo: () => context.push(AppRoutes.todo),
           onOpenCalendar: () =>
               context.push(AppRoutes.calendar, extra: DateTime.now()),
           onOpenTags: _openTagTree,

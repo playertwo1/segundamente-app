@@ -61,6 +61,7 @@ void main() {
           onSelectTab: (_) {},
           onOpenChat: () {},
           onOpenChatHistory: () {},
+          onOpenTodo: () {},
           onOpenCalendar: () {},
           onOpenTags: () {},
           onOpenTopics: () {},

@@ -45,6 +45,8 @@ import 'package:memex/data/services/chat_session_storage.dart';
 import 'package:memex/data/services/session_report_export_service.dart';
 import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
+import 'package:memex/data/services/todo_service.dart';
+import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/llm_client/codex_responses_client.dart';
 import 'package:memex/llm_client/fallback_llm_client.dart';
 import 'package:memex/data/services/glossary_service.dart';
@@ -1229,9 +1231,8 @@ class MemexRouter {
         defaultClientKey: LLMConfig.defaultClientKey,
       );
       final client = resources.client;
-      final first = client is FallbackLLMClient
-          ? client.candidates.first.client
-          : client;
+      final first =
+          client is FallbackLLMClient ? client.candidates.first.client : client;
       if (first is! CodexResponsesClient) throw const PdfModelUnsupported();
       final sessionId = 'pdf_${DateTime.now().millisecondsSinceEpoch}';
       final outcome = await PdfImportService().importPdf(
@@ -1469,6 +1470,64 @@ class MemexRouter {
   Future<Result<List<RelatedSession>>> findRelatedSessions(String question) {
     return runResult(() async {
       return RelatedSessionsService().find(await _reportUserId(), question);
+    });
+  }
+
+  Future<Result<List<TodoItem>>> loadTodos() {
+    return runResult(() async => TodoService().load(await _reportUserId()));
+  }
+
+  Future<Result<TodoItem>> addTodo({required String text, String? due}) {
+    return runResult(() async {
+      return TodoService().add(
+        userId: await _reportUserId(),
+        text: text,
+        due: due,
+      );
+    });
+  }
+
+  Future<Result<TodoItem>> addReportItemToTodo({
+    required String sessionId,
+    required ReportItem item,
+  }) {
+    return runResult(() async {
+      return TodoService().addFromReport(
+        userId: await _reportUserId(),
+        sessionId: sessionId,
+        item: item,
+      );
+    });
+  }
+
+  Future<Result<void>> editTodo({
+    required String id,
+    required String text,
+    required String due,
+  }) {
+    return runResult(() async {
+      await TodoService().edit(
+        userId: await _reportUserId(),
+        id: id,
+        text: text,
+        due: due,
+      );
+    });
+  }
+
+  Future<Result<void>> setTodoDone({required String id, required bool done}) {
+    return runResult(() async {
+      await TodoService().setDone(
+        userId: await _reportUserId(),
+        id: id,
+        done: done,
+      );
+    });
+  }
+
+  Future<Result<void>> removeTodo(String id) {
+    return runResult(() async {
+      await TodoService().remove(userId: await _reportUserId(), id: id);
     });
   }
 

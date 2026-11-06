@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/native_action_service.dart';
+import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/report_memory.dart';
 import 'package:memex/utils/result.dart';
@@ -36,21 +37,14 @@ class FollowUpsViewModel extends ChangeNotifier {
   /// Opens the calendar app's new-event screen with this item. The user
   /// saves it there; nothing is written from here.
   Future<bool> addToCalendar(ReportHit hit) async {
-    final due = explicitDue(hit);
-    if (due == null) return false;
-    // All-day events are expressed in UTC midnight, as calendars expect.
-    final start = due.hasTime
-        ? due.date
-        : DateTime.utc(due.date.year, due.date.month, due.date.day);
-    final end = due.hasTime
-        ? start.add(const Duration(hours: 1))
-        : start.add(const Duration(days: 1));
+    final slot = calendarSlotFor(hit.item.due);
+    if (slot == null) return false;
     return _openCalendar(
       title: hit.item.text,
-      start: start,
-      end: end,
+      start: slot.start,
+      end: slot.end,
       description: hit.item.source.excerpt,
-      allDay: !due.hasTime,
+      allDay: slot.allDay,
     );
   }
 
