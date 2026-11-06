@@ -19,10 +19,13 @@ Formato de cada caso: `id`, `categoria`, `origem` (conversa, nota ou pdf), `text
 
 Correspondência com o código atual (`ReportItemKind`, `ReportItemStatus`): `tarefa`=`task`, `decisao`=`decision`, `ideia`=`idea`, `duvida`=`question`, `followup`=`followUp`, `resumo`=`summary`; `sugerido`=`unconfirmed`. `oportunidade` (`opportunity`) não tem caso: o corpus não a cobre ainda.
 
-## O que ainda falta (por isso F9-02 fica `IN_PROGRESS`)
+## PDFs de verdade (2026-11-06)
 
-- **Arquivos PDF de verdade.** Os cinco casos `pdf_pagina` têm o texto com marcas de página, mas não os binários. Gerar PDFs selecionáveis e um escaneado exige uma ferramenta de geração; não instalei nenhuma. O app só escreve PDF (`session_report_export.dart`); não lê texto de PDF.
-- **Execução do corpus.** Rodar os 40 casos contra a extração atual precisa de modelo real. Fica para depois do desenho da F9-03.
-- **Revisão do dono.** Os "esperados" são a minha leitura; o dono pode discordar de casos limítrofes (por exemplo `c24`, `c27` e `c33`).
+Os 5 casos `pdf_pagina` agora têm arquivos em `test/fixtures/f9/` (`c36.pdf` a `c40.pdf`), gerados por `docs/medicoes/f9-02/gerar_pdfs.py` (Python puro, sem dependência) e conferidos por `conferir_pdfs.py`: o texto de cada página sai igual ao esperado em `paginas_esperadas.json`. `c39.pdf` tem só imagem (sem texto selecionável) e o app deve avisar, sem inventar (D-042: sem OCR). Páginas sem item usam uma frase neutra. Tudo fictício.
+
+## O que fica para depois
+
+- **Execução do corpus** contra o modelo real (ChatGPT, PDF enviado como arquivo): é a F9-03; só então se sabe se a página de evidência vem certa. Ainda `NOT_RUN`.
+- **Revisão do dono** dos "esperados" (são a minha leitura; casos limítrofes `c24`, `c27`, `c33`).
 
 Parte dos casos negativos (`hipotese_opiniao`, `fato_passado`, `duplicata`) repete frases já cobertas pela regra de tarefas da F3-07 (`test/domain/models/session_report_test.dart`), de propósito, para o corpus servir de régua comum.

@@ -1,0 +1,72 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 11 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 52 >>
+stream
+BT /F1 12 Tf 72 760 Td (Relatório trimestral.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 6 0 R /Resources << /Font << /F1 11 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 82 >>
+stream
+BT /F1 12 Tf 72 760 Td (No trimestre anterior, foram vendidas 120 unidades.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 8 0 R /Resources << /Font << /F1 11 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 65 >>
+stream
+BT /F1 12 Tf 72 760 Td (Pagina sem itens para o relatorio.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 10 0 R /Resources << /Font << /F1 11 0 R >> >> >>
+endobj
+10 0 obj
+<< /Length 76 >>
+stream
+BT /F1 12 Tf 72 760 Td (Recomenda-se avaliar um novo canal de vendas.) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+12 0 obj
+<< /Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /ASCIIHexDecode /Length 129 >>
+stream
+30E0E030E0E030E0E0E030E0E030E0E0E030E0E030E0E03030E0E030E0E030E0E0E030E0E030E0E0E030E0E030E0E03030E0E030E0E030E0E0E030E0E030E0E0>
+endstream
+endobj
+xref
+0 13
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000133 00000 n 
+0000000260 00000 n 
+0000000362 00000 n 
+0000000489 00000 n 
+0000000621 00000 n 
+0000000748 00000 n 
+0000000863 00000 n 
+0000000991 00000 n 
+0000001118 00000 n 
+0000001216 00000 n 
+trailer
+<< /Size 13 /Root 1 0 R >>
+startxref
+1515
+%%EOF

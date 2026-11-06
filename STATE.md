@@ -334,3 +334,6 @@ A F0 está `DONE` e seu portão FECHADO: o Galaxy S25 Ultra (SM-S938B, Android 1
 
 ## F9 aberta (2026-11-06, D-042)
 - Decisões da F9-01 aceitas pelo dono: PDF lido pelo modelo ChatGPT (sem OCR local), Todo própria, só imagens do dono, JSON sim/ICS sob pedido, só Android. F9-01 `DONE`; F9 `IN_PROGRESS`. Próximo: F9-02 (fixtures de PDF sintético com página de evidência esperada) e depois F9-03. Nada implementado; S25 `NOT_RUN`.
+
+## F9-02 concluída (2026-11-06)
+- 5 PDFs fictícios em `test/fixtures/f9/` (c36–c40; c39 só imagem), gerador e conferidor em `docs/medicoes/f9-02/`. Conferência: texto por página igual ao esperado nos 5 (`pypdf` temporário, removido). Não executei o corpus contra um modelo (F9-03) nem pedi revisão dos esperados ao dono. Nada instalado no S25.
