@@ -189,7 +189,7 @@
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F6-01 | Buscar sessões e itens entre registros, começando por texto e avançando para semântica | P0 | D-010, F3 | IN_PROGRESS | Busca semântica em pt-BR avaliada contra busca textual, com evidência dos resultados e teste de consulta fora do tema |
+| F6-01 | Buscar sessões e itens entre registros, começando por texto e avançando para semântica | P0 | D-010, F3 | IN_PROGRESS | Busca textual + MiniLM int8 local implementadas e cobertas por testes; faltam convivência ONNX/sherpa, busca e corte calibrado no S25 |
 | F6-02 | Listar encaminhamentos aprovados sem incluir sugestões pendentes ou tarefas internas dos agentes | P0 | F3-05 | DONE | Painel no S25 exibe apenas item confirmado; validar estado vazio, busca e acesso pelo fluxo normal |
 | F6-03 | Mostrar o que mudou e preservar histórico de versões e motivo | P0 | F3-06 | DONE | Alteração cria revisão com motivo explícito ou 'não informado'; exclusão remove derivados e preserva original; testes cobrem ReportRevision, SessionReportService, revisions.json, FollowUpsView e SessionReportView |
 | F6-04 | Criar tópicos/projetos como entidade própria e relacioná-los a sessões | P1 | F6-01 | DONE | Modelo, migração, UI e persistência no S25; renomear, excluir com diálogo e desvínculo automático na exclusão de sessão |
@@ -198,7 +198,7 @@
 | F6-07 | Mostrar prévia opcional de URL, desligada por padrão | P2 | F5-02 | DONE | Somente HTTP/HTTPS; recusa localhost e IPs privados; handshake TLS corrigido para HTTPS no S25; prévia real renderizada |
 | F6-08 | Mostrar intensidade de atividade por dia no calendário mensal | P2 | D-014 | DONE | Cinco níveis: 0, 1, 2, 3–4, 5+; contraste e leitura de hoje/seleção permanecem corretos |
 | F6-09 | Recuperar sessões relacionadas a perguntas com sementes, tópico e limite de relevância | P1 | F6-01, F6-04 | DONE | Sementes de texto e irmãs por tópico validadas no S25; SuperAgent chama find_related_sessions x1 sem pesquisa pesada e responde sobre a sessão irmã |
-| F6-10 | Medir embeddings locais multilíngues para busca em português antes de decidir implementação | P2 | F6-09 | IN_PROGRESS | Comparação com busca textual em pt-BR, tamanho do modelo, tempo e memória no S25; sem benefício medido, não implementar |
+| F6-10 | Medir embeddings locais multilíngues para busca em português antes de decidir implementação | P2 | F6-09 | DONE | Comparação textual/semântica em pt-BR, medição de tamanho, tempo e memória no S25 e comparação local com 24 cartões; decisão D-039 documentada |
 | F6-11 | Oferecer “Adicionar à agenda” em encaminhamento aprovado com data explícita | P2 | F6-02 | DONE | ACTION_INSERT abre calendário com título e descrição pré-preenchidos; validado no S25 com vencimento 20/11/2026 |
 | F6-12 | Gerar Insights de Conhecimento automaticamente depois que um registro é salvo, em lote, sem depender do chat | P1 | F6-09, F5V-02 | DONE | Registro salvo enfileira uma análise agrupada e sem repetição; sem evidência entre registros não grava insight nem cartão de resumo; resumo de insight não dispara nova análise; no S25, com modelo real, o insight aparece com `related_facts` e a tela atualiza |
 
@@ -211,11 +211,11 @@
 
 **Definições adicionais:**
 
-- **F6-09:** a busca textual escolhe as sessões-semente; sessões com tópicos em comum vêm depois por relevância e data, dentro de orçamento de caracteres. Nenhuma semente acima do piso significa nenhuma sessão retornada.
-- **F6-10:** só avançar após medida que demonstre vantagem sobre busca textual. O modelo precisa cobrir português; tamanho, memória e tempo no S25 são critérios de produto.
+- **F6-09:** a busca textual escolhe as sementes primeiro; com a F6-01 ligada, a busca semântica pode acrescentar itens acima do corte quando o texto encontra menos de 3. Sessões com tópicos em comum vêm depois por relevância e data, dentro do orçamento de caracteres. Sem sementes, nenhuma sessão é retornada.
+- **F6-10:** avanço autorizado pela medição em pt-BR e pela decisão D-039; bateria/calor prolongados ficam como limites registrados, sem bloquear a comparação definida para esta tarefa.
 - **F6-11:** abrir o aplicativo de calendário Android com os campos preenchidos via ACTION_INSERT. Não ler a agenda, não sincronizar e não salvar automaticamente.
 
-**Portão F6:** busca semântica, tópico/projeto como entidade própria, histórico com motivo, painel de encaminhamentos e integração de agenda conforme escopo. F6 foi aberta sob D-010 enquanto F0–F5 estavam abertas. Estado em 2026-11-05: o MVP foi fechado (F5 com `AUDIT RESULT: PASS`). Tópico/projeto como entidade própria (F6-04), histórico com motivo da revisão (F6-03), visões salvas (F6-06), prévia de link (F6-07), sessões relacionadas no chat (F6-09) e "adicionar à agenda" (F6-11) estão `DONE` com prova no S25. F6-02, F6-05, F6-08 e F6-12 ficaram `DONE` em 2026-11-05 com prova no S25 (STATE.md). Abertas: F6-10/F6-01 (a busca provada é textual; semântica depende da decisão do dono sobre embeddings). O portão continua aberto.
+**Portão F6:** busca semântica, tópico/projeto como entidade própria, histórico com motivo, painel de encaminhamentos e integração de agenda conforme escopo. F6 foi aberta sob D-010 enquanto F0–F5 estavam abertas. Estado em 2026-11-06: o MVP foi fechado (F5 com `AUDIT RESULT: PASS`). Tópico/projeto como entidade própria (F6-04), histórico com motivo da revisão (F6-03), visões salvas (F6-06), prévia de link (F6-07), sessões relacionadas no chat (F6-09) e "adicionar à agenda" (F6-11) estão `DONE` com prova no S25. F6-02, F6-05, F6-08 e F6-12 ficaram `DONE` em 2026-11-05 com prova no S25. F6-10 está `DONE` com as medições e D-039; F6-01 segue `IN_PROGRESS` até a convivência dos runtimes, a busca no S25 e a calibração do corte. O portão continua aberto.
 
 ### Ordem das tarefas adicionais F1/F2/F3/F6
 

@@ -63,6 +63,7 @@ Não apareceu GPL-2.0-only, AGPL aplicada ao código, licença não comercial ne
 | flutter_map | 6.2.1 | BSD-3-Clause |
 | flutter_markdown | 0.7.7+1 | BSD-3-Clause |
 | flutter_native_splash | 2.4.7 | MIT |
+| flutter_onnxruntime | 1.9.0 | MIT |
 | flutter_svg | 2.2.4 | MIT |
 | geolocator | 14.0.2 | MIT |
 | go_router | 14.8.1 | BSD-3-Clause |
@@ -108,6 +109,10 @@ Não apareceu GPL-2.0-only, AGPL aplicada ao código, licença não comercial ne
 | workmanager | 0.9.0+3 | MIT |
 | xml | 6.6.1 | MIT |
 | yaml | 3.1.3 | MIT |
+
+## Atualização — 2026-11-06
+
+`flutter_onnxruntime` 1.9.0 foi acrescentado como dependência direta para a busca semântica local da F6-01. O arquivo `LICENSE` da versão resolvida no pub-cache declara MIT. O lock atual tem 299 pacotes; os totais agregados no início deste documento são o retrato de 2026-11-02 (288 pacotes) e não foram recontados nesta atualização.
 
 ## Fora do pub
 
