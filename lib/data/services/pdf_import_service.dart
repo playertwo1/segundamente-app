@@ -13,6 +13,11 @@ enum PdfImportOutcome {
   noSelectableText,
 }
 
+/// The active model cannot carry a PDF, so nothing was sent.
+class PdfModelUnsupported implements Exception {
+  const PdfModelUnsupported();
+}
+
 /// Sends a PDF to the model only after the user confirmed it, keeps the
 /// original bytes, and stores the page text the model copied so a report can
 /// quote and check it. The model never decides what the original says.

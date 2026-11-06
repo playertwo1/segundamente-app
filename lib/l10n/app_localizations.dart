@@ -6831,6 +6831,48 @@ abstract class AppLocalizations {
   /// **'View activity'**
   String get viewActivity;
 
+  /// No description provided for @pdfSendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the PDF to be read?'**
+  String get pdfSendTitle;
+
+  /// No description provided for @pdfSendBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{name}\" leaves the phone and goes to the chat model you set up, which copies the text of each page. The original stays here and nothing is sent before you confirm.'**
+  String pdfSendBody(Object name);
+
+  /// No description provided for @pdfSendButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send PDF'**
+  String get pdfSendButton;
+
+  /// No description provided for @pdfLargeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is {size} MB and may be slow and cost more. Send it anyway?'**
+  String pdfLargeBody(Object size);
+
+  /// No description provided for @pdfReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the PDF…'**
+  String get pdfReading;
+
+  /// No description provided for @pdfNoText.
+  ///
+  /// In en, this message translates to:
+  /// **'This PDF has no selectable text (it looks scanned). Nothing was saved.'**
+  String get pdfNoText;
+
+  /// No description provided for @pdfModelCannotRead.
+  ///
+  /// In en, this message translates to:
+  /// **'The active model cannot read PDFs. Use ChatGPT (Codex) in the settings.'**
+  String get pdfModelCannotRead;
+
   /// No description provided for @importingTranscript.
   ///
   /// In en, this message translates to:

@@ -3824,6 +3824,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewActivity => 'View activity';
 
   @override
+  String get pdfSendTitle => 'Send the PDF to be read?';
+
+  @override
+  String pdfSendBody(Object name) {
+    return '\"$name\" leaves the phone and goes to the chat model you set up, which copies the text of each page. The original stays here and nothing is sent before you confirm.';
+  }
+
+  @override
+  String get pdfSendButton => 'Send PDF';
+
+  @override
+  String pdfLargeBody(Object size) {
+    return 'This file is $size MB and may be slow and cost more. Send it anyway?';
+  }
+
+  @override
+  String get pdfReading => 'Reading the PDF…';
+
+  @override
+  String get pdfNoText =>
+      'This PDF has no selectable text (it looks scanned). Nothing was saved.';
+
+  @override
+  String get pdfModelCannotRead =>
+      'The active model cannot read PDFs. Use ChatGPT (Codex) in the settings.';
+
+  @override
   String get importingTranscript => 'Importing transcript…';
 
   @override

@@ -43,7 +43,10 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:memex/data/services/chat_service.dart';
 import 'package:memex/data/services/chat_session_storage.dart';
 import 'package:memex/data/services/session_report_export_service.dart';
+import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
+import 'package:memex/llm_client/codex_responses_client.dart';
+import 'package:memex/llm_client/fallback_llm_client.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
 import 'package:memex/data/services/saved_view_service.dart';
@@ -1209,6 +1212,50 @@ class MemexRouter {
     return runResult(() async {
       final userId = await _reportUserId();
       return SessionReportService().load(userId: userId, sessionId: sessionId);
+    });
+  }
+
+  /// Sends a PDF the user confirmed to the chat model and stores the page text
+  /// it copies. Only the ChatGPT (Codex) client is known to carry PDFs; the
+  /// others would answer without seeing the file, so they are refused.
+  Future<Result<({PdfImportOutcome outcome, String sessionId})>> importPdfFile({
+    required List<int> bytes,
+    required bool confirmedLarge,
+  }) {
+    return runResult(() async {
+      final userId = await _reportUserId();
+      final resources = await UserStorage.getAgentLLMResources(
+        AgentDefinitions.chatAgent,
+        defaultClientKey: LLMConfig.defaultClientKey,
+      );
+      final client = resources.client;
+      final first = client is FallbackLLMClient
+          ? client.candidates.first.client
+          : client;
+      if (first is! CodexResponsesClient) throw const PdfModelUnsupported();
+      final sessionId = 'pdf_${DateTime.now().millisecondsSinceEpoch}';
+      final outcome = await PdfImportService().importPdf(
+        userId: userId,
+        sessionId: sessionId,
+        pdfBytes: bytes,
+        confirmed: true,
+        confirmedLarge: confirmedLarge,
+        askPdf: (system, pdf) async {
+          final response = await resources.client.generate(
+            [
+              SystemMessage(system),
+              UserMessage([
+                TextPart('Copy the text of this PDF page by page.'),
+                DocumentPart(base64Encode(pdf), 'application/pdf'),
+              ]),
+            ],
+            modelConfig: resources.modelConfig,
+            jsonOutput: true,
+          );
+          return response.textOutput ?? '';
+        },
+      );
+      return (outcome: outcome, sessionId: sessionId);
     });
   }
 

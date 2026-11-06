@@ -164,10 +164,12 @@ void main() {
     expect(sent, ['[00:00:01]\nolá\n\n[00:00:01]\nolá']);
   });
 
-  testWidgets('a PDF disguised as text cannot be confirmed', (tester) async {
+  testWidgets('two PDFs together still cannot be confirmed as text',
+      (tester) async {
     var stores = 0;
     await pump(
       tester,
+      fileNames: const ['a.pdf', 'b.pdf'],
       pickBytes: () async => utf8.encode('%PDF-1.4'),
       store: (_) async {
         stores += 1;

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:memex/data/services/transcript_import_service.dart';
 import 'package:memex/domain/models/transcript_import.dart';
+import 'package:memex/ui/chat/widgets/pdf_file_import.dart';
 import 'package:memex/ui/chat/widgets/send_confirmation_view.dart';
 import 'package:memex/ui/core/widgets/editorial_scaffold.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
@@ -13,7 +14,7 @@ import 'package:memex/utils/user_storage.dart';
 
 final _logger = getLogger('TranscriptFileImportButton');
 
-/// Opens the system file picker for `.txt`, `.srt` and `.vtt` files. Returns null when dismissed
+/// Opens the system file picker for `.txt`, `.srt`, `.vtt` and `.pdf` files. Returns null when dismissed
 /// or if a chosen file has no readable bytes.
 Future<List<({String name, List<int> bytes})>?> pickTranscriptTxtFiles() async {
   final result = await FilePicker.platform.pickFiles(
@@ -24,7 +25,7 @@ Future<List<({String name, List<int> bytes})>?> pickTranscriptTxtFiles() async {
     withData: true,
   );
   if (result == null || result.files.isEmpty) return null;
-  const allowed = {'txt', 'srt', 'vtt'};
+  const allowed = {'txt', 'srt', 'vtt', 'pdf'};
   if (result.files.any((f) => !allowed.contains(f.extension?.toLowerCase()))) {
     return null;
   }
@@ -70,6 +71,15 @@ Future<void> importTranscriptFiles(
   try {
     final files = await pickFiles();
     if (files == null || files.isEmpty || !context.mounted) return;
+    // A PDF goes through the model's own page-by-page reading, one at a time.
+    if (files.length == 1 && isPdfBytes(files.first.bytes)) {
+      await importPdfFile(
+        context,
+        name: files.first.name,
+        bytes: files.first.bytes,
+      );
+      return;
+    }
     final sources = files
         .map((file) => TranscriptImport.parse(file.bytes))
         .toList(growable: false);
