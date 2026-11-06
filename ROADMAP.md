@@ -215,7 +215,7 @@
 - **F6-10:** só avançar após medida que demonstre vantagem sobre busca textual. O modelo precisa cobrir português; tamanho, memória e tempo no S25 são critérios de produto.
 - **F6-11:** abrir o aplicativo de calendário Android com os campos preenchidos via ACTION_INSERT. Não ler a agenda, não sincronizar e não salvar automaticamente.
 
-**Portão F6:** busca semântica, tópico/projeto como entidade própria, histórico com motivo, painel de encaminhamentos e integração de agenda conforme escopo. F6 foi aberta sob D-010 enquanto F0–F5 estavam abertas. Hoje a busca provada é textual; não há entidade de tópico/projeto; o motivo da alteração e a busca semântica continuam NOT_RUN. O MVP continua aberto.
+**Portão F6:** busca semântica, tópico/projeto como entidade própria, histórico com motivo, painel de encaminhamentos e integração de agenda conforme escopo. F6 foi aberta sob D-010 enquanto F0–F5 estavam abertas. Estado em 2026-11-05: o MVP foi fechado (F5 com `AUDIT RESULT: PASS`). Tópico/projeto como entidade própria (F6-04), histórico com motivo da revisão (F6-03), visões salvas (F6-06), prévia de link (F6-07), sessões relacionadas no chat (F6-09) e "adicionar à agenda" (F6-11) estão `DONE` com prova no S25. Abertas: F6-02 (painel de encaminhamentos: falta estado vazio e busca no aparelho), F6-05 (tags hierárquicas: falta prova visual), F6-08 (calendário: falta conferir no aparelho), F6-12 (insights automáticos: falta modelo real e custo de tokens) e F6-10/F6-01 (a busca provada é textual; semântica depende da decisão do dono sobre embeddings). O portão continua aberto.
 
 ### Ordem das tarefas adicionais F1/F2/F3/F6
 
