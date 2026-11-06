@@ -189,7 +189,7 @@
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F6-01 | Buscar sessões e itens entre registros, começando por texto e avançando para semântica | P0 | D-010, F3 | IN_PROGRESS | Código e testes prontos, mas no S25 o app não abre: `libonnxruntime.so` do sherpa não exporta `OrtGetApiBase` (ver STATE.md); decisão do dono pendente|
+| F6-01 | Buscar sessões e itens entre registros, começando por texto e avançando para semântica | P0 | D-010, F3 | DONE | Busca textual + MiniLM int8 local no S25: ONNX alinhado ao sherpa (1.24.3), download verificado, busca em Encaminhamentos e `find_related_sessions` no chat validados; corte 0,42 provisório, calibrar com o uso|
 | F6-02 | Listar encaminhamentos aprovados sem incluir sugestões pendentes ou tarefas internas dos agentes | P0 | F3-05 | DONE | Painel no S25 exibe apenas item confirmado; validar estado vazio, busca e acesso pelo fluxo normal |
 | F6-03 | Mostrar o que mudou e preservar histórico de versões e motivo | P0 | F3-06 | DONE | Alteração cria revisão com motivo explícito ou 'não informado'; exclusão remove derivados e preserva original; testes cobrem ReportRevision, SessionReportService, revisions.json, FollowUpsView e SessionReportView |
 | F6-04 | Criar tópicos/projetos como entidade própria e relacioná-los a sessões | P1 | F6-01 | DONE | Modelo, migração, UI e persistência no S25; renomear, excluir com diálogo e desvínculo automático na exclusão de sessão |
