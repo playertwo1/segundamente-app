@@ -343,6 +343,11 @@ class _ReportItemTile extends StatelessWidget {
                   item.source.clock!,
                   key: ValueKey('report_item_clock_${item.id}'),
                 ),
+              if (item.duplicateOf != null)
+                Text(
+                  l10n.reportDuplicateOf(item.duplicateOf!),
+                  key: ValueKey('report_duplicate_${item.id}'),
+                ),
             ],
           ),
           onTap: () {
@@ -384,10 +389,7 @@ class _ReportItemTile extends StatelessWidget {
           children: [
             TextButton(
               key: ValueKey('report_approve_${item.id}'),
-              onPressed: () => onSetStatus(
-                itemId: item.id,
-                status: ReportItemStatus.approved,
-              ),
+              onPressed: () => _approve(context),
               child: Text(l10n.reportApprove),
             ),
             TextButton(
@@ -407,6 +409,33 @@ class _ReportItemTile extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _approve(BuildContext context) async {
+    if (item.kind == ReportItemKind.task && isAmbiguousDue(item.due)) {
+      final l10n = UserStorage.l10n;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.reportAmbiguousDueTitle),
+          content: Text(l10n.reportAmbiguousDueBody(item.due)),
+          actions: [
+            TextButton(
+              key: const ValueKey('report_ambiguous_back'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(l10n.sendBack),
+            ),
+            TextButton(
+              key: const ValueKey('report_ambiguous_confirm'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(l10n.reportAmbiguousDueConfirm),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    await onSetStatus(itemId: item.id, status: ReportItemStatus.approved);
   }
 
   Future<void> _edit(BuildContext context) async {

@@ -3478,6 +3478,22 @@ class AppLocalizationsPt extends AppLocalizations {
       'Confiança baixa: a citação é curta demais para provar o item';
 
   @override
+  String reportDuplicateOf(Object id) {
+    return 'Possível duplicata de $id. Nada foi removido; você decide.';
+  }
+
+  @override
+  String get reportAmbiguousDueTitle => 'Data não é exata';
+
+  @override
+  String reportAmbiguousDueBody(Object due) {
+    return 'O prazo \"$due\" não é uma data exata. Confirmar a tarefa assim mesmo ou voltar e editar?';
+  }
+
+  @override
+  String get reportAmbiguousDueConfirm => 'Confirmar assim';
+
+  @override
   String get reportUnconfirmed => 'Não confirmado';
 
   @override

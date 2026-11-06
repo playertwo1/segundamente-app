@@ -6153,6 +6153,30 @@ abstract class AppLocalizations {
   /// **'Low confidence: the quote is too short to prove the item'**
   String get reportConfidenceLow;
 
+  /// No description provided for @reportDuplicateOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible duplicate of {id}. Nothing was removed; you decide.'**
+  String reportDuplicateOf(Object id);
+
+  /// No description provided for @reportAmbiguousDueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Date is not exact'**
+  String get reportAmbiguousDueTitle;
+
+  /// No description provided for @reportAmbiguousDueBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The due date \"{due}\" is not an exact date. Confirm the task like this, or go back and edit it?'**
+  String reportAmbiguousDueBody(Object due);
+
+  /// No description provided for @reportAmbiguousDueConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm as is'**
+  String get reportAmbiguousDueConfirm;
+
   /// No description provided for @reportUnconfirmed.
   ///
   /// In en, this message translates to:

@@ -338,7 +338,7 @@ void main() {
       expect(meeting.items.single.text, 'Carlos deve enviar o resumo amanhã.');
     });
 
-    test('the same item is not listed twice', () {
+    test('a repeated item stays in the list, flagged as a duplicate', () {
       final segs = [
         const ReportSegment(
             id: 'seg_0',
@@ -380,10 +380,18 @@ void main() {
           ],
         },
       );
-      expect(report.items.map((i) => (i.kind, i.id)), [
-        (ReportItemKind.task, 'item_1'),
-        (ReportItemKind.followUp, 'item_2'),
-      ]);
+      expect(
+        report.items.map((i) => (i.kind, i.id, i.duplicateOf)),
+        [
+          (ReportItemKind.task, 'item_1', null),
+          (ReportItemKind.task, 'item_2', 'item_1'),
+          (ReportItemKind.task, 'item_3', 'item_1'),
+          (ReportItemKind.followUp, 'item_4', null),
+        ],
+      );
+      final stored = sessionReportFromStorage(sessionReportToJson(report));
+      expect(stored.items[1].duplicateOf, 'item_1');
+      expect(stored.items[0].duplicateOf, isNull);
     });
 
     test('the prompt states what a task is', () {
@@ -427,5 +435,21 @@ void main() {
               item(excerpt: 'Ok, feito', assignee: 'Paulo', due: '20/09')),
           ReportConfidence.low);
     });
+  });
+
+  test('only a non-exact due date is ambiguous', () {
+    for (final exact in [
+      '2026-11-21',
+      '21/11',
+      '21/11/2026',
+      '21 de novembro'
+    ]) {
+      expect(isAmbiguousDue(exact), isFalse, reason: exact);
+    }
+    for (final loose in ['sexta', 'semana que vem', 'antes do dia 30']) {
+      expect(isAmbiguousDue(loose), isTrue, reason: loose);
+    }
+    expect(isAmbiguousDue(reportDueUnknown), isFalse);
+    expect(isAmbiguousDue(' '), isFalse);
   });
 }

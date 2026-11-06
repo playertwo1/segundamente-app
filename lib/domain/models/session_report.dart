@@ -54,6 +54,7 @@ class ReportItem {
     required this.assignee,
     required this.due,
     required this.source,
+    this.duplicateOf,
   });
 
   final String id;
@@ -63,6 +64,10 @@ class ReportItem {
   final String assignee;
   final String due;
   final ReportSource source;
+
+  /// Id of the earlier item this one repeats. The item stays in the list so
+  /// the user decides; nothing is removed silently.
+  final String? duplicateOf;
 
   ReportItem copyWith({
     String? text,
@@ -78,6 +83,7 @@ class ReportItem {
       assignee: assignee ?? this.assignee,
       due: due ?? this.due,
       source: source,
+      duplicateOf: duplicateOf,
     );
   }
 }
@@ -125,6 +131,23 @@ ReportConfidence reportConfidence(ReportItem item) {
   final hasOwner = item.assignee != reportAssigneeUnknown;
   final hasDue = item.due != reportDueUnknown;
   return hasOwner && hasDue ? ReportConfidence.high : ReportConfidence.medium;
+}
+
+// shortcut: only the numeric and "12 de março" forms count as exact dates;
+// anything else the user typed ("sexta", "semana que vem") asks for a
+// confirmation before a task is approved. Widen if real dates get flagged.
+final _exactDue = RegExp(
+  r'^(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}(/\d{2,4})?|'
+  r'\d{1,2} de [\p{L}]+( de \d{4})?)$',
+  unicode: true,
+  caseSensitive: false,
+);
+
+/// True when a due date was given but is not an exact calendar date.
+bool isAmbiguousDue(String due) {
+  final value = due.trim();
+  if (value.isEmpty || value == reportDueUnknown) return false;
+  return !_exactDue.hasMatch(value);
 }
 
 bool isDefinitiveTask(ReportItem item) {
@@ -248,7 +271,7 @@ SessionReport sessionReportFromModelJson({
   final byId = {for (final segment in segments) segment.id: segment};
   final sections = sectionsFor(kind);
   final items = <ReportItem>[];
-  final seen = <String>{};
+  final seen = <String, String>{};
   for (var i = 0; i < rawItems.length; i++) {
     final raw = rawItems[i];
     if (raw is! Map) throw FormatException('item $i is not an object');
@@ -278,10 +301,14 @@ SessionReport sessionReportFromModelJson({
     final duplicate = '${_normalizedKey(text)}|${finalKind.name}';
     final sameSource =
         '$segmentId|${_normalizedKey(excerpt)}|${finalKind.name}';
-    if (!seen.add(duplicate) || !seen.add(sameSource)) continue;
+    final id = 'item_${items.length + 1}';
+    final duplicateOf = seen[duplicate] ?? seen[sameSource];
+    seen.putIfAbsent(duplicate, () => id);
+    seen.putIfAbsent(sameSource, () => id);
     items.add(
       ReportItem(
-        id: 'item_${items.length + 1}',
+        id: id,
+        duplicateOf: duplicateOf,
         kind: finalKind,
         text: text,
         status: ReportItemStatus.unconfirmed,
@@ -455,6 +482,7 @@ SessionReport sessionReportFromStorage(Map<String, dynamic> json) {
           excerpt: _requiredText(sourceMap['excerpt']),
           clock: sourceMap['clock']?.toString(),
         ),
+        duplicateOf: map['duplicate_of']?.toString(),
       ),
     );
   }
@@ -486,6 +514,7 @@ Map<String, dynamic> sessionReportToJson(SessionReport report) {
           'status': item.status.name,
           'assignee': item.assignee,
           'due': item.due,
+          if (item.duplicateOf != null) 'duplicate_of': item.duplicateOf,
           'source': {
             'segment_id': item.source.segmentId,
             'excerpt': item.source.excerpt,

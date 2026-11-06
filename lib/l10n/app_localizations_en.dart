@@ -3444,6 +3444,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Low confidence: the quote is too short to prove the item';
 
   @override
+  String reportDuplicateOf(Object id) {
+    return 'Possible duplicate of $id. Nothing was removed; you decide.';
+  }
+
+  @override
+  String get reportAmbiguousDueTitle => 'Date is not exact';
+
+  @override
+  String reportAmbiguousDueBody(Object due) {
+    return 'The due date \"$due\" is not an exact date. Confirm the task like this, or go back and edit it?';
+  }
+
+  @override
+  String get reportAmbiguousDueConfirm => 'Confirm as is';
+
+  @override
   String get reportUnconfirmed => 'Unconfirmed';
 
   @override

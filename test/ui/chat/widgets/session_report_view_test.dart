@@ -161,8 +161,8 @@ void main() {
     expect(find.text('fechar o escopo'), findsWidgets);
     expect(find.byKey(const ValueKey('report_source_clock_item_1')),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('report_item_clock_item_1')),
-        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('report_item_clock_item_1')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('report_definitive_item_1')), findsNothing);
   });
@@ -316,6 +316,104 @@ void main() {
 
     expect(format, ReportExportFormat.markdown);
     expect(ids, {'item_2'});
+  });
+
+  SessionReport twoTasks() => SessionReport(
+        schemaVersion: sessionReportSchemaVersion,
+        sessionId: 's',
+        kind: ReportKind.reuniao,
+        title: 'Relatório de reunião',
+        sections: sectionsFor(ReportKind.reuniao),
+        items: const [
+          ReportItem(
+            id: 'item_1',
+            kind: ReportItemKind.task,
+            text: 'Enviar a proposta',
+            status: ReportItemStatus.unconfirmed,
+            assignee: 'Carlos',
+            due: 'sexta',
+            source: ReportSource(
+              segmentId: 'seg_0',
+              excerpt: 'Carlos envia a proposta',
+              clock: 'p.1',
+            ),
+          ),
+          ReportItem(
+            id: 'item_2',
+            kind: ReportItemKind.task,
+            text: 'Enviar a proposta',
+            status: ReportItemStatus.unconfirmed,
+            assignee: reportAssigneeUnknown,
+            due: '21/11',
+            duplicateOf: 'item_1',
+            source: ReportSource(
+              segmentId: 'seg_0',
+              excerpt: 'Carlos envia a proposta',
+              clock: 'p.1',
+            ),
+          ),
+        ],
+      );
+
+  Future<List<String>> pumpTwoTasks(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final approved = <String>[];
+    await pump(
+      tester,
+      twoTasks(),
+      onDraft: (_, __) async {},
+      onEdit: ({
+        required itemId,
+        required text,
+        required assignee,
+        required due,
+        reason,
+      }) async {},
+      onSetStatus: ({required itemId, required status, reason}) async {
+        if (status == ReportItemStatus.approved) approved.add(itemId);
+      },
+    );
+    return approved;
+  }
+
+  testWidgets('a task with a loose due date asks before it is approved',
+      (tester) async {
+    final approved = await pumpTwoTasks(tester);
+
+    await tester.tap(find.byKey(const ValueKey('report_approve_item_1')));
+    await tester.pumpAndSettle();
+    expect(find.text(UserStorage.l10n.reportAmbiguousDueTitle), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('report_ambiguous_back')));
+    await tester.pumpAndSettle();
+    expect(approved, isEmpty);
+
+    await tester.tap(find.byKey(const ValueKey('report_approve_item_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('report_ambiguous_confirm')));
+    await tester.pumpAndSettle();
+    expect(approved, ['item_1']);
+  });
+
+  testWidgets('an exact due date is approved without a question',
+      (tester) async {
+    final approved = await pumpTwoTasks(tester);
+    await tester
+        .ensureVisible(find.byKey(const ValueKey('report_approve_item_2')));
+    await tester.tap(find.byKey(const ValueKey('report_approve_item_2')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(approved, ['item_2']);
+  });
+
+  testWidgets('a duplicate stays listed and says what it repeats',
+      (tester) async {
+    await pumpTwoTasks(tester);
+    expect(
+        find.byKey(const ValueKey('report_duplicate_item_2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('report_duplicate_item_1')), findsNothing);
+    expect(find.byKey(const ValueKey('report_item_item_2')), findsOneWidget);
   });
 }
 
