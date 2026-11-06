@@ -3501,6 +3501,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoAdded => 'Added to the to-do list';
 
   @override
+  String get todoReminderTitle => 'Create a reminder?';
+
+  @override
+  String todoReminderBody(Object text, Object when) {
+    return '\"$text\" will be saved as a reminder in your calendar for $when. Nothing is created before you confirm.';
+  }
+
+  @override
+  String get todoReminderConfirm => 'Create reminder';
+
+  @override
+  String get todoReminderCreated => 'Reminder created';
+
+  @override
   String get reportUnconfirmed => 'Unconfirmed';
 
   @override

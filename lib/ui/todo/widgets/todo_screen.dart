@@ -73,6 +73,43 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
+  Future<void> _reminder(TodoItem item) async {
+    final l10n = UserStorage.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.background,
+        title: Text(l10n.todoReminderTitle),
+        content: Text(l10n.todoReminderBody(item.text, item.due)),
+        actions: [
+          TextButton(
+            key: const ValueKey('todo_reminder_cancel'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.sendBack),
+          ),
+          TextButton(
+            key: const ValueKey('todo_reminder_confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.todoReminderConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final outcome = await widget.viewModel.addReminder(item);
+    if (!mounted) return;
+    switch (outcome) {
+      case ReminderOutcome.created:
+        ToastHelper.showSuccess(context, l10n.todoReminderCreated);
+      case ReminderOutcome.permissionDenied:
+        ToastHelper.showError(
+            context, l10n.permissionRequired(l10n.reminders));
+      case ReminderOutcome.noExactTime:
+      case ReminderOutcome.failed:
+        ToastHelper.showError(context, l10n.writeToSystemFailed);
+    }
+  }
+
   void _openSource(TodoItem item) {
     Navigator.of(context).push(
       SessionReportScreen.route(
@@ -187,6 +224,13 @@ class _TodoScreenState extends State<TodoScreen> {
               tooltip: l10n.addToCalendar,
               icon: const Icon(Icons.event_outlined),
               onPressed: () => _calendar(item),
+            ),
+          if (!item.done && TodoViewModel.reminderTimeFor(item.due) != null)
+            IconButton(
+              key: ValueKey('todo_reminder_${item.id}'),
+              tooltip: l10n.addToReminders,
+              icon: const Icon(Icons.alarm_add_outlined),
+              onPressed: () => _reminder(item),
             ),
           IconButton(
             key: ValueKey('todo_remove_${item.id}'),

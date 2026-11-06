@@ -6255,6 +6255,30 @@ abstract class AppLocalizations {
   /// **'Added to the to-do list'**
   String get todoAdded;
 
+  /// No description provided for @todoReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a reminder?'**
+  String get todoReminderTitle;
+
+  /// No description provided for @todoReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{text}\" will be saved as a reminder in your calendar for {when}. Nothing is created before you confirm.'**
+  String todoReminderBody(Object text, Object when);
+
+  /// No description provided for @todoReminderConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Create reminder'**
+  String get todoReminderConfirm;
+
+  /// No description provided for @todoReminderCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder created'**
+  String get todoReminderCreated;
+
   /// No description provided for @reportUnconfirmed.
   ///
   /// In en, this message translates to:

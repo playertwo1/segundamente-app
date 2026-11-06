@@ -3535,6 +3535,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoAdded => 'Adicionado à lista de tarefas';
 
   @override
+  String get todoReminderTitle => 'Criar lembrete?';
+
+  @override
+  String todoReminderBody(Object text, Object when) {
+    return '\"$text\" será salvo como lembrete no seu calendário para $when. Nada é criado antes de você confirmar.';
+  }
+
+  @override
+  String get todoReminderConfirm => 'Criar lembrete';
+
+  @override
+  String get todoReminderCreated => 'Lembrete criado';
+
+  @override
   String get reportUnconfirmed => 'Não confirmado';
 
   @override

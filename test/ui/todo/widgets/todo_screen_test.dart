@@ -90,12 +90,16 @@ TodoItem _item(
 
 void main() {
   late List<String> calendarTitles;
+  late List<String> reminderTitles;
+  var permissionGranted = true;
 
   setUp(() async {
     AppFlavor.init('global');
     SharedPreferences.setMockInitialValues({});
     await UserStorage.initL10n();
     calendarTitles = [];
+    reminderTitles = [];
+    permissionGranted = true;
   });
 
   Future<_FakeRouter> pump(
@@ -116,6 +120,11 @@ void main() {
         allDay = false,
       }) async {
         calendarTitles.add(title);
+        return true;
+      },
+      ensureReminderPermission: () async => permissionGranted,
+      createReminder: ({required title, required dueDate, notes}) async {
+        reminderTitles.add(title);
         return true;
       },
     );
@@ -255,5 +264,36 @@ void main() {
     final firstY = tester.getTopLeft(find.text('Primeiro')).dy;
     final secondY = tester.getTopLeft(find.text('Segundo')).dy;
     expect(secondY, lessThan(firstY));
+  });
+
+  testWidgets('a reminder is created only after the user confirms',
+      (tester) async {
+    await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21 14:30')]);
+    await tester.tap(find.byKey(const ValueKey('todo_reminder_t1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('todo_reminder_cancel')));
+    await tester.pumpAndSettle();
+    expect(reminderTitles, isEmpty);
+
+    await tester.tap(find.byKey(const ValueKey('todo_reminder_t1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('todo_reminder_confirm')));
+    await tester.pumpAndSettle();
+    expect(reminderTitles, ['Ligar']);
+  });
+
+  testWidgets('a denied permission creates no reminder', (tester) async {
+    permissionGranted = false;
+    await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21 14:30')]);
+    await tester.tap(find.byKey(const ValueKey('todo_reminder_t1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('todo_reminder_confirm')));
+    await tester.pumpAndSettle();
+    expect(reminderTitles, isEmpty);
+  });
+
+  testWidgets('a date without a time has no reminder button', (tester) async {
+    await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21')]);
+    expect(find.byKey(const ValueKey('todo_reminder_t1')), findsNothing);
   });
 }
