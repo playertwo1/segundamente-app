@@ -39,6 +39,8 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-033 | 2026-11-05 | `daedalus-echo` só como referência; F7-02 passa a medir IA no aparelho, não Ollama | ACCEPTED |
 | D-037 | 2026-11-05 | F10 detalhada por questionário; exportador com biblioteca de PDF entra já na F4 | ACCEPTED |
 | D-038 | 2026-11-05 | Critério 7 sem segunda confirmação para anexos do chat; critério 6 sem prova de troca de modelo | ACCEPTED |
+| D-039 | 2026-11-06 | Busca semântica local com MiniLM-L12 int8, opcional e baixada sob demanda | ACCEPTED |
+| D-040 | 2026-11-06 | Fechar a F6 sem auditoria própria; abrir a F7-02 (medição do modelo local no S25) | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -237,3 +239,9 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Desenho aceito para a F6-01: busca textual primeiro; a semântica só complementa quando o texto acha pouco, com corte de nota; recurso opcional e desligado por padrão. O modelo não vai no repositório nem no APK: é baixado sob demanda do repositório público `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, em revisão fixa, com conferência de SHA-256; depois disso roda só no aparelho, sem enviar texto a ninguém. Dependência nova: `flutter_onnxruntime` (MIT, compatível com GPL-3.0).
 - Limites: o corte de nota depende do corpus (no corpus sintético da F6-10 o resultado dos dois modelos foi o inverso), então o valor inicial é só um ponto de partida e precisa ser conferido no S25 com as notas do dono. O índice fica em memória no início (sem persistência). Bateria, tokenizador sobre texto fora do ASCII/NFKC e notas muito longas (truncadas em 128 tokens) seguem como limites conhecidos.
 - Evidência: implementação e testes locais em STATE.md; convivência dos runtimes, busca no app e calibração do corte no S25 permanecem `NOT_RUN`.
+
+## D-040 — Fechar a F6 e abrir a F7-02 (2026-11-06)
+- Contexto: os 12 itens da F6 estão `DONE` com prova no S25 (F6-01 fechada hoje). O texto do portão F6 não exige auditoria própria, ao contrário da F5. O dono pediu: "feche o f06 e avance para o f07". A F7 estava `BLOCKED`; só a F7-01 (pesquisa) tinha sido aberta (D-031) e a F7-02 tinha plano (D-034).
+- Decisão: F6 `DONE` sem auditoria dedicada; limites declarados continuam valendo (corte 0,42 provisório, índice só em memória, tempos e bateria não medidos). F7: abrir somente a F7-02 (sonda de modelo local no S25, método da F6-10, app separado em `tools/`). F7-03 e F7-06 seguem `BLOCKED`; F7-04 e F7-05 seguem `CANCELLED`.
+- Limites: nenhum modelo é baixado antes de o dono confirmar o download do Gemma 3 1B (~529 MB) e liberar o S25 por cerca de uma hora. O Gemma nunca vai empacotado no APK nem no repositório (Termos de Uso exigem repassar as restrições a quem recebe os pesos; risco de conflito com a GPL-3.0). Resumo dos Termos lido em 2026-11-06, não é parecer jurídico.
+- Evidência: `ROADMAP.md`, `docs/F7-02-plano-de-medicao.md`.
