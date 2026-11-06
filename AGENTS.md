@@ -170,3 +170,5 @@ Access all strings via `UserStorage.l10n` (static, initialized in `main()`).
 ## Segunda Mente (fork) — retomada do trabalho
 
 Este repositório é o fork **Segunda Mente** do Memex. Antes de agir: leia `STATE.md` (próxima ação) e `ROADMAP.md` (fases, subfases, evidência exigida). Escopo em `PROJECT.md`, decisões em `docs/DECISIONS.md`. Regras de execução: `docs/WATCHDOG.md`; auditoria antes de fechar fase: `docs/AUDIT.md`. Subfase só é `DONE` com evidência; não executado é `NOT_RUN`. Segredos, chaves e tokens nunca entram no repositório. Este arquivo continua sendo a regra de código.
+
+**Remotos git:** `origin` = `https://github.com/playertwo1/segundamente-app.git` (privado) é o único destino de push. `upstream` = `memex-lab/memex`, só para buscar atualizações do projeto original; nunca enviar para ele. O fork público `playertwo1/segundamente` foi arquivado em 2026-11-05 e não deve receber push (o `STATE.md` e os documentos trazem dados do uso pessoal do dono).
