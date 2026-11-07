@@ -360,24 +360,37 @@ CharacterModel? pickNextDebater(
   return candidates.isEmpty ? null : candidates.first;
 }
 
+/// How many personas may pass in one debate before it ends (each pass costs a
+/// model call).
+const maxPersonaSkipsPerDebate = 2;
+
 /// Lets other personas answer each other after the user's reply, at most
-/// [remainingPersonaTurns] times. Stops when someone skips (nothing to add),
-/// no other persona is available, or the last comment is not from a persona.
-/// Returns how many turns were added.
+/// [remainingPersonaTurns] times. A persona with nothing to add is passed over
+/// and another one is tried, up to [maxPersonaSkipsPerDebate] passes. Stops
+/// when no other persona is available or the last comment is not from a
+/// persona. Returns how many turns were added.
 Future<int> runPersonaDebate({
   required Future<List<CardComment>> Function() loadComments,
   required Future<List<CharacterModel>> Function() loadCharacters,
   required Future<void> Function(CharacterModel next, String replyToId) speak,
 }) async {
   var turns = 0;
+  final passed = <String>{};
   while (true) {
     final comments = await loadComments();
     if (comments.isEmpty || !comments.last.isAi) break;
     if (remainingPersonaTurns(comments) <= 0) break;
-    final next = pickNextDebater(await loadCharacters(), comments);
+    final candidates = (await loadCharacters())
+        .where((c) => !passed.contains(c.id))
+        .toList();
+    final next = pickNextDebater(candidates, comments);
     if (next == null) break;
     await speak(next, comments.last.id);
-    if ((await loadComments()).length <= comments.length) break;
+    if ((await loadComments()).length <= comments.length) {
+      passed.add(next.id);
+      if (passed.length >= maxPersonaSkipsPerDebate) break;
+      continue;
+    }
     turns++;
   }
   return turns;

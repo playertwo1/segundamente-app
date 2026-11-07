@@ -26,6 +26,7 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/chat_session_storage.dart';
 import 'package:memex/data/services/local_task_executor.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:memex/utils/share_service.dart';
 import 'package:memex/utils/time_context.dart';
 import 'package:memex/domain/models/agent_definitions.dart';
 import 'package:memex/utils/user_storage.dart';
@@ -966,6 +967,11 @@ class ChatService {
         final data = base64Encode(await File(path).readAsBytes());
         userContentParts.add(TextPart('Attached file: ${file['name'] ?? path}'));
         userContentParts.add(DocumentPart(data, mime));
+        if (mime == 'application/pdf') {
+          final reminder =
+              await _savePdfAttachment(userId, path, file['name']);
+          if (reminder != null) userContentParts.add(TextPart(reminder));
+        }
       }
       final inlinedImageFileNames = <String>[];
       for (var i = 0; i < preparedImages.length; i++) {
@@ -1053,6 +1059,37 @@ class ChatService {
       sourcePath: image.path,
       originalName: originalName,
     );
+  }
+
+  /// Keeps the PDF with the user's assets and tells the agent its `fs://` id,
+  /// so a card made from it lists the file and it can be discussed later.
+  Future<String?> _savePdfAttachment(
+    String userId,
+    String sourcePath,
+    String? originalName,
+  ) async {
+    try {
+      final (fsFilename, relativePath) = await FileSystemService.instance
+          .saveAssetFromFile(
+              userId: userId, sourcePath: sourcePath, assetType: 'pdf');
+      // A copy where the user can see it and delete it when space runs short.
+      final name = (originalName ?? '').trim().isEmpty
+          ? fsFilename
+          : originalName!.split(RegExp(r'[\\/]')).last;
+      await ShareService.saveToDownloads(
+        path: FileSystemService.instance.toAbsolutePath(relativePath),
+        mimeType: 'application/pdf',
+        name: name,
+      );
+      return '<system-reminder>\n'
+          'The PDF above is saved as fs://$fsFilename. '
+          'When you create a record from it, put "fs://$fsFilename" in the '
+          "card's assets so the original stays with the record.\n"
+          '</system-reminder>';
+    } catch (e) {
+      _logger.warning('Failed to keep the attached PDF: $e');
+      return null;
+    }
   }
 
   List<Map<String, dynamic>> _buildSessionUserContent(

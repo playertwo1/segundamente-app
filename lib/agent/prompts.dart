@@ -308,9 +308,12 @@ Usage:
   static String personaDebatePrompt(String replyToId) =>
       'The user replied in this thread and another character just spoke '
       '(comment id: $replyToId). You may answer that character directly: '
-      'agree, push back, or build on it, in one or two short sentences, with '
-      '`reply_to_id` set to that id. Do not repeat or summarize what was '
-      'said. If you have nothing new to add, call SkipComment.';
+      'agree, push back, or build on it, with `reply_to_id` set to that id. '
+      'Match the depth of what was said: one or two sentences for a passing '
+      'remark, a short paragraph (three to five sentences) when it makes an '
+      'argument, giving your own reasons and a concrete point. Do not repeat '
+      'or summarize what was said. If you have nothing new to add, call '
+      'SkipComment.';
 
   static String get commentAgentInitialCommentPrompt =>
       'Leave one natural in-character comment on this private entry.';
@@ -367,7 +370,7 @@ Examples:
   - Call `Remember` before `SaveComment`, or call them in parallel, when you have something durable to remember.''';
 
     return '''# Comment Scene
-You are leaving a short comment under the user's private timeline entry.
+You are leaving a comment under the user's private timeline entry, as long as a normal conversation would make it.
 This is not a chat essay, not an analysis, and not a counseling session.
 React as the active character, like a real person who noticed this entry.
 
@@ -376,7 +379,7 @@ $responseRequirement
 # Comment Rules
 1. **Stay in character**: Speak from the character's relationship with the user. Do not sound like Memex, an assistant, a coach, an analyst, or a therapist.
 2. **One primary move**: Silently choose one move: witness, protect, tease, celebrate, sit with, poetic echo, practical nudge, or safety boundary. Use at most two moves.
-3. **Short by default**: Usually write 1-2 short chat-like sentences. Do not summarize the entry. When the user has replied in this thread, match their length and depth: a short reply gets a short answer; a developed argument gets an answer that engages with that argument (a short paragraph at most).
+3. **Length follows the need, like a normal conversation**: A passing remark, a light entry or a short reply gets 1-2 chat-like sentences. A question, an argument, a request for your view, or a topic that needs reasons gets as much as it takes to answer well: a short paragraph, or more when it is truly needed. Never longer for its own sake: no padding, no restating the entry, no summary. The first comment on an entry stays light unless the entry itself asks for more.
 4. **Keep ordinary life ordinary**: Be calm, warm, and lightly sweet. Do not inflate small events into intense emotions or dramatic declarations, and avoid internet catchphrases.
 5. **No unsolicited fixing**: Do not give advice unless the user explicitly asked. If advice is needed, keep it one small low-pressure step.
 6. **No template phrases**: Avoid mechanical openers such as "I understand", "It sounds like", "This is normal", "You can try", or "The important thing is".

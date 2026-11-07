@@ -127,6 +127,25 @@ void main() {
       expect(thread.length, 2);
     });
 
+    test('a persona that passes is replaced by another one', () async {
+      thread = [_c('u1', ai: false), _c('a1', ai: true)];
+      expect(await run(skip: (c) => c.id == 'b'), 3);
+      final speakers = thread.where((c) => c.isAi).map((c) => c.characterId);
+      expect(speakers, isNot(contains('b')));
+    });
+
+    test('gives up after two personas pass', () async {
+      thread = [_c('u1', ai: false), _c('a1', ai: true)];
+      var asked = 0;
+      final turns = await runPersonaDebate(
+        loadComments: () async => [...thread],
+        loadCharacters: () async => [_char('b'), _char('c'), _char('d')],
+        speak: (next, replyToId) async => asked++,
+      );
+      expect(turns, 0);
+      expect(asked, maxPersonaSkipsPerDebate);
+    });
+
     test('alternates personas instead of repeating the last speaker',
         () async {
       thread = [_c('u1', ai: false), _c('a1', ai: true)];

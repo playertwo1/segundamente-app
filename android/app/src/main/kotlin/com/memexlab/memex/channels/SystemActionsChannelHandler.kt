@@ -48,6 +48,7 @@ class SystemActionsChannelHandler(private val activity: Activity) {
         val args = arguments as? Map<*, *>
         val path = args?.get("path") as? String
         val mimeType = args?.get("mimeType") as? String
+        val name = (args?.get("name") as? String)?.takeIf { it.isNotBlank() }
         if (path == null || mimeType == null) {
             result.error("INVALID_ARGUMENTS", "Invalid arguments for saveToDownloads", null)
             return
@@ -60,7 +61,7 @@ class SystemActionsChannelHandler(private val activity: Activity) {
             val source = File(path)
             val folder = "${Environment.DIRECTORY_DOWNLOADS}/SegundaMente"
             val values = ContentValues().apply {
-                put(MediaStore.Downloads.DISPLAY_NAME, source.name)
+                put(MediaStore.Downloads.DISPLAY_NAME, name ?: source.name)
                 put(MediaStore.Downloads.MIME_TYPE, mimeType)
                 put(MediaStore.Downloads.RELATIVE_PATH, folder)
             }
@@ -70,7 +71,7 @@ class SystemActionsChannelHandler(private val activity: Activity) {
             resolver.openOutputStream(uri)!!.use { out ->
                 source.inputStream().use { it.copyTo(out) }
             }
-            result.success("$folder/${source.name}")
+            result.success("$folder/${name ?: source.name}")
         } catch (e: Exception) {
             result.error("SAVE_ERROR", e.message, null)
         }

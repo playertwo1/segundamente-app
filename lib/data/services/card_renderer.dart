@@ -263,7 +263,8 @@ Future<Map<String, dynamic>> extractAssetsAndRawText(
       userId: userId,
       reference: ref,
     );
-    if (asset == null) continue;
+    // A PDF is discussed through its page text, not shown as media.
+    if (asset == null || asset.type == AssetReferenceType.pdf) continue;
 
     final url =
         await FileSystemService.convertFsToLocalHttp(asset.fsUri, userId);

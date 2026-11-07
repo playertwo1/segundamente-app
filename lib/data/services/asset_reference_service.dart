@@ -4,7 +4,7 @@ import 'package:memex/data/services/asset_safety_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:path/path.dart' as p;
 
-enum AssetReferenceType { image, audio }
+enum AssetReferenceType { image, audio, pdf }
 
 class AssetReference {
   const AssetReference({
@@ -22,6 +22,7 @@ class AssetReference {
   String get markdownRef => switch (type) {
         AssetReferenceType.image => '![image]($fsUri)',
         AssetReferenceType.audio => '[audio]($fsUri)',
+        AssetReferenceType.pdf => '[pdf]($fsUri)',
       };
 }
 
@@ -137,6 +138,7 @@ class AssetReferenceService {
   static final Set<String> _supportedExtensions = {
     ...AssetSafetyService.imageExtensions,
     ...AssetSafetyService.audioExtensions,
+    '.pdf',
   };
 
   static AssetReferenceType? _typeForFileName(String fileName) {
@@ -147,6 +149,7 @@ class AssetReferenceService {
     if (AssetSafetyService.audioExtensions.contains(extension)) {
       return AssetReferenceType.audio;
     }
+    if (extension == '.pdf') return AssetReferenceType.pdf;
     return null;
   }
 }

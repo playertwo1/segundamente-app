@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_agent_core/dart_agent_core.dart';
+import 'package:memex/data/services/asset_reference_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/domain/models/pdf_pages.dart';
@@ -66,7 +67,15 @@ class CardPdfService {
   /// The record's own PDF assets that exist on disk.
   Future<List<String>> pdfAssets(String userId, CardData card) async {
     final found = <String>[];
-    for (final asset in card.assets) {
+    for (final entry in card.assets) {
+      // Cards hold `[pdf](fs://name.pdf)`; a plain relative path also works.
+      final ref = await AssetReferenceService.resolveExisting(
+        userId: userId,
+        reference: entry,
+      );
+      final asset = ref != null && ref.type == AssetReferenceType.pdf
+          ? _files.toRelativePath(ref.absolutePath)
+          : entry;
       final cache = _files.pdfPagesCachePath(userId, asset);
       if (cache == null) continue;
       if (await File(_files.toAbsolutePath(asset)).exists()) found.add(asset);

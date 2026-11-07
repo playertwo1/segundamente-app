@@ -185,11 +185,12 @@ class ShareService {
   static Future<String?> saveToDownloads({
     required String path,
     required String mimeType,
+    String? name,
   }) async {
     try {
       return await _actions.invokeMethod<String>(
         'saveToDownloads',
-        {'path': path, 'mimeType': mimeType},
+        {'path': path, 'mimeType': mimeType, if (name != null) 'name': name},
       );
     } on PlatformException {
       return null;

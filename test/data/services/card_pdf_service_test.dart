@@ -95,6 +95,25 @@ void main() {
     expect(await service.pdfAssets(userId, card), [pdf]);
   });
 
+  test('a card that holds the PDF as an fs:// marker lists it', () async {
+    final file = File(p.join(
+      FileSystemService.instance.getAssetsPath(userId),
+      'marker.pdf',
+    ))
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(fixture('c36'));
+    final pdf = p.relative(file.path, from: tempDir.path);
+    final card = CardData(
+      factId: '2026/11/06.md#ts_1',
+      timestamp: 0,
+      status: 'completed',
+      tags: const [],
+      uiConfigs: const [],
+      assets: ['[pdf](fs://marker.pdf)', '[pdf](fs://ausente.pdf)'],
+    );
+    expect(await service.pdfAssets(userId, card), [pdf]);
+  });
+
   test('first discussion asks the model once and keeps the original', () async {
     final bytes = fixture('c36');
     final asset = addAsset('a.pdf', bytes);
