@@ -60,7 +60,8 @@ class _FakeRouter implements MemexRouter {
   }
 
   @override
-  Future<Result<String>> renderThreadDocument(String markdown) async =>
+  Future<Result<String>> renderThreadDocument(String markdown,
+          {String? cardId}) async =>
       Ok(markdown);
 
   var large = <({String asset, int bytes})>[];

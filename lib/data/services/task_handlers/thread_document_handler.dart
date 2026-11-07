@@ -16,7 +16,6 @@ import 'package:memex/utils/user_storage.dart';
 final _logger = Logger('ThreadDocumentHandler');
 
 const threadDocumentTaskType = 'thread_document';
-const _photoExtensions = {'jpg', 'jpeg', 'png'};
 
 /// Drafts (no `doc_id`) or revises (`doc_id` + `expected_latest`) a document.
 /// The task is retried after a restart, so both paths are idempotent: a draft
@@ -70,10 +69,7 @@ Future<void> handleThreadDocumentImpl(
       cardText: card.fact ?? card.title ?? '',
       comments: [for (final c in card.comments) if (snapshot.contains(c.id)) c],
       pages: pages,
-      imageAssets: [
-        for (final a in card.assets)
-          if (_photoExtensions.contains(a.split('.').last.toLowerCase())) a,
-      ],
+      imageAssets: await ThreadDocumentService().recordPhotos(userId, card),
       related: await _relatedRecords(
         userId,
         [for (final id in payload['related_ids'] as List? ?? const []) '$id'],

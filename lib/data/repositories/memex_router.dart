@@ -1504,9 +1504,12 @@ class MemexRouter {
   }
 
   /// Document text with charts and record photos drawn in, for display.
-  Future<Result<String>> renderThreadDocument(String markdown) {
+  Future<Result<String>> renderThreadDocument(
+    String markdown, {
+    String? cardId,
+  }) {
     return runResult(() async => ThreadDocumentService()
-        .render(await _reportUserId(), markdown));
+        .render(await _reportUserId(), markdown, cardId: cardId));
   }
 
   Future<Result<void>> deleteThreadDocument(String id) {

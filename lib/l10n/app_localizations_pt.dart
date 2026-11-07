@@ -3544,6 +3544,14 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get documentCitationYou => 'seu comentário';
+
+  @override
+  String documentCitationFrom(String name) {
+    return 'comentário de $name';
+  }
+
+  @override
   String get todoReminderTitle => 'Criar lembrete?';
 
   @override

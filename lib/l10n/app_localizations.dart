@@ -6267,6 +6267,18 @@ abstract class AppLocalizations {
   /// **'Saved to {path}'**
   String exportSavedTo(String path);
 
+  /// No description provided for @documentCitationYou.
+  ///
+  /// In en, this message translates to:
+  /// **'your comment'**
+  String get documentCitationYou;
+
+  /// No description provided for @documentCitationFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'comment by {name}'**
+  String documentCitationFrom(String name);
+
   /// No description provided for @todoReminderTitle.
   ///
   /// In en, this message translates to:

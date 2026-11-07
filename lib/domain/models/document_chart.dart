@@ -135,6 +135,18 @@ List<ImageBlock> findImageBlocks(String markdown) {
 
 /// `image:invalid` for an unreadable block, `image:<asset>` for a picture the
 /// record does not hold.
+/// The model sometimes writes a photo as `![caption](path)` instead of the
+/// ```image block. When the path is one of the record's photos it becomes the
+/// block (which is what draws and checks it); any other target is left alone.
+String imageMarkdownToBlocks(String markdown, Set<String> recordImages) {
+  return markdown.replaceAllMapped(RegExp(r'!\[([^\]]*)\]\(([^)\s]+)\)'), (m) {
+    final path = m[2]!;
+    if (!recordImages.contains(path)) return m[0]!;
+    final json = jsonEncode({'asset': path, 'caption': m[1]!});
+    return '```image\n$json\n```';
+  });
+}
+
 List<String> unverifiedImages(String markdown, Set<String> recordImages) {
   final bad = <String>[];
   for (final b in findImageBlocks(markdown)) {

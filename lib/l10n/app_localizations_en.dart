@@ -3510,6 +3510,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get documentCitationYou => 'your comment';
+
+  @override
+  String documentCitationFrom(String name) {
+    return 'comment by $name';
+  }
+
+  @override
   String get todoReminderTitle => 'Create a reminder?';
 
   @override

@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
+import 'package:path/path.dart' as p;
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_asset_server.dart';
 import 'package:memex/data/services/thread_document_service.dart';
@@ -272,6 +274,58 @@ void main() {
         .firstWhere((f) => f.name == 'word/document.xml')
         .content as List<int>;
     expect(String.fromCharCodes(xml), contains('Texto novo.'));
+  });
+
+  test('the exported file is named after the document and its version',
+      () async {
+    final doc = await make(md: '# Proposta: custos/2026\n\nTexto.');
+    final file = await docs.export(
+      userId: userId,
+      id: doc.id,
+      version: 1,
+      format: ReportExportFormat.markdown,
+    );
+    expect(file.uri.pathSegments.last, 'Proposta_custos_2026-v1.md');
+  });
+
+  test('a citation reads as who said it, and an unknown id is left as is',
+      () async {
+    await FileSystemService.instance.updateCardFile(
+      userId,
+      '2026/11/06.md#ts_1',
+      createIfNotExists: true,
+      (card) => card.copyWith(comments: comments),
+    );
+    final text = await docs.render(
+      userId,
+      'a [c:k1] b [c:k2] c [c:zz] d [p.2]',
+      cardId: '2026/11/06.md#ts_1',
+    );
+    expect(text, contains('[comment by ana]'));
+    expect(text, contains('[your comment]'));
+    expect(text, contains('[c:zz]'));
+    expect(text, contains('[p.2]'));
+    expect(await docs.render(userId, '[c:k1]'), '[c:k1]');
+  });
+
+  test('a record photo held as an fs:// marker can be placed in a document',
+      () async {
+    final photo = File(p.join(
+      FileSystemService.instance.getAssetsPath(userId),
+      'foto.jpg',
+    ))
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(img.encodeJpg(img.Image(width: 8, height: 8)));
+    final card = CardData(
+      factId: '2026/11/06.md#ts_1',
+      timestamp: 0,
+      status: 'completed',
+      tags: const [],
+      uiConfigs: const [],
+      assets: ['![image](fs://foto.jpg)', '[pdf](fs://a.pdf)', '![image](fs://sumiu.jpg)'],
+    );
+    expect(await docs.recordPhotos(userId, card),
+        [p.relative(photo.path, from: tempDir.path)]);
   });
 
   test('exporting a missing version is refused', () async {

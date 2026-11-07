@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:memex/data/services/asset_reference_service.dart';
+import 'package:memex/data/services/character_service.dart';
 import 'package:memex/data/services/document_chart_renderer.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/session_report_export_service.dart';
+import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/domain/models/session_report_export.dart';
 import 'package:memex/domain/models/thread_document.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:memex/utils/user_storage.dart';
 import 'package:path/path.dart' as p;
 
 /// Stores F10 documents as `<id>/document.json`. Writes go to a temporary file
@@ -180,8 +184,16 @@ class ThreadDocumentService {
       });
 
   /// The document text with its charts and record photos drawn in.
-  Future<String> render(String userId, String markdown) => expandDocument(
-        markdown,
+  ///
+  /// With [cardId], a `[c:ID]` citation reads as who said it instead of the
+  /// raw comment id; the stored version keeps the id.
+  Future<String> render(
+    String userId,
+    String markdown, {
+    String? cardId,
+  }) async =>
+      expandDocument(
+        await _nameCitations(userId, cardId, markdown),
         readImage: (asset) async {
           if (!await _files.isUserImageAsset(
               userId: userId, relativePath: asset)) {
@@ -191,6 +203,58 @@ class ThreadDocumentService {
               userId: userId, relativePath: asset);
         },
       );
+
+  /// Photos of the record a document may place, as paths inside the user's
+  /// assets. A card holds `![image](fs://name.jpg)` markers; a plain relative
+  /// path is accepted too.
+  Future<List<String>> recordPhotos(String userId, CardData card) async {
+    const photoExtensions = {'.jpg', '.jpeg', '.png'};
+    final found = <String>[];
+    for (final entry in card.assets) {
+      final ref = await AssetReferenceService.resolveExisting(
+        userId: userId,
+        reference: entry,
+      );
+      final path = ref != null && ref.type == AssetReferenceType.image
+          ? _files.toRelativePath(ref.absolutePath)
+          : entry;
+      if (photoExtensions.contains(p.extension(path).toLowerCase()) &&
+          await _files.isUserImageAsset(userId: userId, relativePath: path)) {
+        found.add(path);
+      }
+    }
+    return found;
+  }
+
+  /// An id the record does not hold stays as written, so a citation the
+  /// sources cannot back is still visible as one.
+  Future<String> _nameCitations(
+    String userId,
+    String? cardId,
+    String markdown,
+  ) async {
+    if (cardId == null || !markdown.contains('[c:')) return markdown;
+    CardData? card;
+    try {
+      card = await _files.readCardFile(userId, cardId);
+    } catch (_) {} // a record that cannot be read leaves the ids as written
+    if (card == null) return markdown;
+    var names = <String, String>{};
+    try {
+      names = {
+        for (final c in await CharacterService.instance.getAllCharacters(userId))
+          c.id: c.name,
+      };
+    } catch (_) {} // no character list: the id of the persona is shown
+    final byId = {for (final c in card.comments) c.id: c};
+    return markdown.replaceAllMapped(RegExp(r'\[c:([^\]]+)\]'), (m) {
+      final c = byId[m[1]!.trim()];
+      if (c == null) return m[0]!;
+      if (!c.isAi) return '[${UserStorage.l10n.documentCitationYou}]';
+      final who = names[c.characterId] ?? c.characterId ?? 'IA';
+      return '[${UserStorage.l10n.documentCitationFrom(who)}]';
+    });
+  }
 
   /// Writes one version in Markdown, PDF or DOCX. The same text goes to every
   /// format, and an older version can be exported as long as it is named.
@@ -204,7 +268,7 @@ class ThreadDocumentService {
     final v = doc?.version(version);
     if (doc == null || v == null) throw StateError('version missing');
     final bytes = await exportMarkdownBytes(
-      markdown: await render(userId, v.content),
+      markdown: await render(userId, v.content, cardId: doc.cardId),
       format: format,
       fonts: format == ReportExportFormat.pdf ? await _loadFonts() : null,
     );
@@ -213,7 +277,13 @@ class ThreadDocumentService {
       ReportExportFormat.pdf: 'pdf',
       ReportExportFormat.docx: 'docx',
     }[format]!;
-    final file = File(p.join(_dir(userId, id).path, 'exports', 'v$version.$ext'));
+    // Named after the document so the copy a user finds in Downloads says what it is.
+    var name = doc.title.replaceAll(RegExp(r'[\\/:*?"<>|\s]+'), '_');
+    if (name.length > 60) name = name.substring(0, 60);
+    if (name.isEmpty) name = 'documento';
+    final file = File(
+      p.join(_dir(userId, id).path, 'exports', '$name-v$version.$ext'),
+    );
     await file.parent.create(recursive: true);
     await file.writeAsBytes(bytes, flush: true);
     return file;

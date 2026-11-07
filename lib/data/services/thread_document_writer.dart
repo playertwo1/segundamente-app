@@ -129,11 +129,14 @@ class ThreadDocumentWriter {
     required Future<String> Function(String system, String user) ask,
     String fallbackTitle = 'Document',
   }) async {
-    final markdown = (await ask(
-      documentSystemPrompt(languageInstruction),
-      '${documentSourcesText(sources)}\nRequest: ${instruction.trim()}',
-    ))
-        .trim();
+    final markdown = imageMarkdownToBlocks(
+      (await ask(
+        documentSystemPrompt(languageInstruction),
+        '${documentSourcesText(sources)}\nRequest: ${instruction.trim()}',
+      ))
+          .trim(),
+      sources.imageAssets.toSet(),
+    );
     if (markdown.isEmpty) throw StateError('empty document');
     return _documents.create(
       userId: userId,
@@ -172,14 +175,17 @@ class ThreadDocumentWriter {
     if (doc.latest.number != expectedLatest) {
       throw StaleDocumentEdit(expectedLatest, doc.latest.number);
     }
-    final markdown = (await ask(
-      documentSystemPrompt(languageInstruction),
-      '${documentSourcesText(sources)}\n<current_version>\n'
-      '${doc.latest.content}\n</current_version>\n'
-      'Revise the current version. Change only what this request asks and '
-      'keep everything else as written: ${instruction.trim()}',
-    ))
-        .trim();
+    final markdown = imageMarkdownToBlocks(
+      (await ask(
+        documentSystemPrompt(languageInstruction),
+        '${documentSourcesText(sources)}\n<current_version>\n'
+        '${doc.latest.content}\n</current_version>\n'
+        'Revise the current version. Change only what this request asks and '
+        'keep everything else as written: ${instruction.trim()}',
+      ))
+          .trim(),
+      sources.imageAssets.toSet(),
+    );
     if (markdown.isEmpty) throw StateError('empty document');
     return _documents.addVersion(
       userId: userId,

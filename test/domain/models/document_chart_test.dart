@@ -52,4 +52,13 @@ void main() {
       ['image:b/2.jpg', 'image:invalid'],
     );
   });
+
+  test('a photo written as markdown becomes the image block, others stay', () {
+    const md = 'a\n![Quadro](Facts/assets/a.jpg)\n![x](http://x/y.png)\n';
+    final out = imageMarkdownToBlocks(md, {'Facts/assets/a.jpg'});
+    expect(findImageBlocks(out).single.asset, 'Facts/assets/a.jpg');
+    expect(findImageBlocks(out).single.caption, 'Quadro');
+    expect(out, contains('![x](http://x/y.png)'));
+    expect(unverifiedImages(out, {'Facts/assets/a.jpg'}), isEmpty);
+  });
 }
