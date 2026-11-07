@@ -440,13 +440,18 @@ void main() {
   test('only a non-exact due date is ambiguous', () {
     for (final exact in [
       '2026-11-21',
-      '21/11',
       '21/11/2026',
-      '21 de novembro'
+      '21/11/2026 14:30',
     ]) {
       expect(isAmbiguousDue(exact), isFalse, reason: exact);
     }
-    for (final loose in ['sexta', 'semana que vem', 'antes do dia 30']) {
+    for (final loose in [
+      'sexta',
+      'semana que vem',
+      'antes do dia 30',
+      '21/11',
+      '21 de novembro',
+    ]) {
       expect(isAmbiguousDue(loose), isTrue, reason: loose);
     }
     expect(isAmbiguousDue(reportDueUnknown), isFalse);

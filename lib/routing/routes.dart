@@ -27,6 +27,9 @@ abstract final class AppRoutes {
   /// Memory.
   static const String memory = '/memory';
   static const String todo = '/todo';
+
+  /// Document made from a comment thread; push as '/document/$id'.
+  static const String threadDocument = '/document';
   static const String tags = '/tags';
   static const String topics = '/topics';
   static const String savedViews = '/views';

@@ -12,6 +12,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/memory/view_models/memory_viewmodel.dart';
+import 'package:memex/ui/thread_document/view_models/thread_document_viewmodel.dart';
+import 'package:memex/ui/thread_document/widgets/thread_document_screen.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_screen.dart';
 import 'package:memex/ui/memory/widgets/memory_screen.dart';
@@ -79,6 +81,15 @@ GoRouter createAppRouter(
           viewModel:
               AgentActivityViewModel(router: context.read<MemexRouter>()),
           onBackToTimeline: () => context.go(AppRoutes.home),
+        ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.threadDocument}/:id',
+        builder: (context, state) => ThreadDocumentScreen(
+          viewModel: ThreadDocumentViewModel(
+            router: context.read<MemexRouter>(),
+            docId: state.pathParameters['id']!,
+          ),
         ),
       ),
       GoRoute(

@@ -141,7 +141,10 @@ MemeX stylized
           n: true,
         );
 
-        expect(result, contains('/allowed.md:1:Memex mixed case'));
+        expect(
+          result,
+          contains('${p.join(tempDir.path, 'allowed.md')}:1:Memex mixed case'),
+        );
       },
       skip: ripgrepExecutable == null ? 'ripgrep is not available' : false,
     );
@@ -159,8 +162,8 @@ MemeX stylized
           ),
         );
 
-        expect(result, contains('/allowed.md'));
-        expect(result, isNot(contains('/blocked.md')));
+        expect(result, contains(p.join(tempDir.path, 'allowed.md')));
+        expect(result, isNot(contains(p.join(tempDir.path, 'blocked.md'))));
         expect(result, isNot(contains('secret')));
       },
       skip: ripgrepExecutable == null ? 'ripgrep is not available' : false,

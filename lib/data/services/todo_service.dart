@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/utils/logger.dart';
 import 'package:path/path.dart' as p;
 
 /// The personal Todo list: one JSON file in the user's workspace. Only the
@@ -14,18 +15,31 @@ class TodoService {
       : _files = fileService ?? FileSystemService.instance;
 
   final FileSystemService _files;
+  final _logger = getLogger('TodoService');
 
   Future<List<TodoItem>> load(String userId) async {
     final file = _file(userId);
     if (!await file.exists()) return const [];
-    final raw = jsonDecode(await file.readAsString());
-    if (raw is! Map || raw['items'] is! List) {
-      throw const FormatException('todo file is malformed');
+    try {
+      final raw = jsonDecode(await file.readAsString());
+      if (raw is! Map || raw['items'] is! List) {
+        throw const FormatException('todo file is malformed');
+      }
+      return [
+        for (final item in raw['items'] as List)
+          TodoItem.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    } on FormatException catch (error, stackTrace) {
+      await _preserveCorrupt(file);
+      _logger.warning(
+          'Ignoring corrupt Todo file for $userId', error, stackTrace);
+      return const [];
+    } on TypeError catch (error, stackTrace) {
+      await _preserveCorrupt(file);
+      _logger.warning(
+          'Ignoring corrupt Todo file for $userId', error, stackTrace);
+      return const [];
     }
-    return [
-      for (final item in raw['items'] as List)
-        TodoItem.fromJson((item as Map).cast<String, dynamic>()),
-    ];
   }
 
   Future<TodoItem> add({
@@ -118,7 +132,7 @@ class TodoService {
     ]);
   }
 
-  /// Deleting a session also removes the Todo items that came from its report.
+  /// Deleting a session removes open copies and detaches completed ones.
   Future<void> deleteForSession({
     required String userId,
     required String sessionId,
@@ -126,9 +140,32 @@ class TodoService {
     final items = await load(userId);
     final kept = [
       for (final item in items)
-        if (item.source?.sessionId != sessionId) item,
+        if (item.source?.sessionId != sessionId)
+          item
+        else if (item.done)
+          item.copyWith(clearSource: true),
     ];
     if (kept.length != items.length) await _write(userId, kept);
+  }
+
+  Future<void> markReportItemStale({
+    required String userId,
+    required String sessionId,
+    required String itemId,
+  }) async {
+    final items = await load(userId);
+    if (!items.any((item) =>
+        item.source?.sessionId == sessionId &&
+        item.source?.itemId == itemId &&
+        !item.sourceStale)) {
+      return;
+    }
+    await _write(userId, [
+      for (final item in items)
+        item.source?.sessionId == sessionId && item.source?.itemId == itemId
+            ? item.copyWith(sourceStale: true)
+            : item,
+    ]);
   }
 
   Future<void> _change(
@@ -156,12 +193,26 @@ class TodoService {
   Future<void> _write(String userId, List<TodoItem> items) async {
     final file = _file(userId);
     await file.parent.create(recursive: true);
-    await file.writeAsString(
-      const JsonEncoder.withIndent('  ').convert({
-        'schema_version': todoSchemaVersion,
-        'items': [for (final item in items) item.toJson()],
-      }),
-      flush: true,
+    final temp =
+        File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
+    try {
+      await temp.writeAsString(
+        const JsonEncoder.withIndent('  ').convert({
+          'schema_version': todoSchemaVersion,
+          'items': [for (final item in items) item.toJson()],
+        }),
+        flush: true,
+      );
+      await temp.rename(file.path);
+    } finally {
+      if (await temp.exists()) await temp.delete();
+    }
+  }
+
+  Future<void> _preserveCorrupt(File file) async {
+    final backup = File(
+      '${file.path}.corrupt-${DateTime.now().microsecondsSinceEpoch}',
     );
+    await file.rename(backup.path);
   }
 }

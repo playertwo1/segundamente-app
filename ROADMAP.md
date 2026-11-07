@@ -2,7 +2,7 @@
 
 **Visão e escopo:** [PROJECT.md](PROJECT.md) · **Design aprovado:** [DESIGN.md](DESIGN.md) · **Índice e pranchas:** [docs/INDEX.md](docs/INDEX.md) · **Estado e próxima ação:** [STATE.md](STATE.md) · **Decisões:** [docs/DECISIONS.md](docs/DECISIONS.md) · **Regras de execução:** [docs/WATCHDOG.md](docs/WATCHDOG.md) · **Auditoria:** [docs/AUDIT.md](docs/AUDIT.md)
 
-**Atualização deste mapa:** 2026-11-05. Para evidência posterior, use a entrada datada mais recente de STATE.md e o estado atual do repositório. Se o resumo inicial de STATE.md divergir de uma evidência posterior, prevalece a evidência datada mais recente; atualize o resumo quando STATE.md for revisado.
+**Atualização deste mapa:** 2026-11-06. F9 está ativa por D-042 e pelo pedido atual do dono; veja STATE.md para a próxima ação e a evidência mais recente. Se um resumo divergir de uma evidência datada posterior, prevalece a evidência posterior.
 
 ## Como ler e executar este roadmap
 
@@ -45,21 +45,21 @@
 | F3 — Extração e relatório | Relatório editável, fiel às fontes e com itens não confirmados por padrão | F2; aberta antecipadamente por decisão do dono | IN_PROGRESS | Critério 6, extração real do modelo e amostra longa comprovados |
 | F4 — Exportação | O mesmo relatório em Markdown, PDF e DOCX | F3 | DONE | Critério 5 e compartilhamento verificados no fixture e no S25 |
 | F5 — Fechamento do MVP | Aceite integral, privacidade, desempenho e auditoria | F0–F4 | DONE | Fechado em 2026-11-05: sete critérios no S25 (1–3 aprovados pelo dono), F5-03 medida e AUDIT RESULT: PASS |
-| F5V — Redesign visual | Aplicação da direção AMOLED aprovada nas telas existentes | D-022 permite execução em paralelo à F5 | IN_PROGRESS; fase ativa | Interações, acessibilidade e validação visual comprovadas |
+| F5V — Redesign visual | Aplicação da direção AMOLED aprovada nas telas existentes | D-022 permite execução em paralelo à F5 | IN_PROGRESS | Interações, acessibilidade e validação visual comprovadas |
 | F6 — Memória longitudinal | Busca, encaminhamentos, histórico de mudanças, tópicos e agenda | D-010 permite avançar antes do fechamento do MVP | DONE | Busca semântica, tópicos, justificativas e encaminhamentos verificados |
 | F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas | BLOCKED (F7-02 adiada, D-041) | Portão F7 |
 | F8 — NotebookLM | Exportação opt-in e integração somente se suportada e aprovada | MVP e exportação estáveis; termos e destino aprovados | BLOCKED | Portão F8 |
-| F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | IN_PROGRESS | Portão F9 |
-| F10 — Criação nos comentários | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; começa após o fechamento do MVP | BACKLOG | Portão F10 |
+| F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | IN_PROGRESS; fase ativa por D-042 e pedido do dono | Portão F9 |
+| F10 — Criação nos comentários | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; MVP fechado | IN_PROGRESS (F10-01 iniciada em paralelo à F9, pedido do dono em 2026-11-06) | Portão F10 |
 
-**Exceções vigentes:** D-010 permite avançar F6 enquanto o MVP está aberto. D-022 permite executar F5V em paralelo à F5. Nenhuma delas declara pronto o MVP nem libera F7, F8 ou F9.
+**Exceções vigentes:** D-010 permitiu avançar F6 antes do fechamento do MVP. D-022 permite executar F5V em paralelo à F5. D-042 abriu F9 após o fechamento do MVP e limita seu escopo atual a Android; não fecha a fase nem reduz seu checklist.
 
 ## Ordem de trabalho vigente
 
-1. **F5V:** concluir o detalhe de cartão e a comparação visual da F5V-02; depois, terminar os itens pendentes de conversa/personagem e F5V-04. F5V-05 continua NOT_RUN até completar a revisão de acessibilidade e a validação indicada em STATE.md.
-2. **Em paralelo, quando o S25 estiver disponível:** seguir F5-01/02/03 e provar as pendências de F2-03, F2-09, F2-10 e F1-07. Não substituir amostras reais por fixtures sintéticas.
-3. **Depois da F5V:** retomar os itens READY de F6 e a ordem das tarefas adicionais descrita ao fim das fases F2, F3 e F6.
-4. F7, F8 e F9 continuam bloqueadas até seus critérios de abertura. A ordem entre elas deve ser revista depois do MVP.
+1. **F9-03:** executar o corpus pelo caminho real do app em rodadas repetidas, definir o limite de aceitação e melhorar a cobertura antes de fechar a subfase.
+2. **F9-07/08/09:** no S25, conferir a renderização dos formatos exportados e completar a revisão de acessibilidade; manter desktop adiado por D-042. Não apagar artefatos sintéticos sem autorização.
+3. **F5V:** continua IN_PROGRESS; retomar suas pendências registradas em STATE.md depois da F9 ou quando o dono mudar a prioridade.
+4. F7 e F8 permanecem BLOCKED pelas decisões e dependências de seus portões.
 
 ## F0 — Fundação
 
@@ -270,12 +270,12 @@
 |---|---|---:|---|---|---|
 | F9-01 | Mapear F3/F4/F6, SystemActionService, TaskCard e destinos; decidir PDF/OCR/outros formatos, Todo/agenda/lembretes, imagens, IA e sistema desktop | P0 | F5 fechado; F3-02/04/05, F4-01/02/03, F6-02/11 | DONE | Matriz requisito → recurso existente/lacuna, fluxo de dados e decisões aceitas antes do código; fila de agentes separada da Todo |
 | F9-02 | Criar corpus de 40 exemplos fictícios e fixtures de PDF com saída esperada e fontes | P0 | F9-01 | DONE | Casos positivos/negativos cobrem tarefa clara, hipótese, fato passado, duplicata, dono ausente, data ambígua, PDF selecionável e evidência por página; sem dados pessoais reais |
-| F9-03 | Gerar relatório editorial organizado e incluir imagens relacionadas quando houver fonte aprovada, reutilizando categorias existentes e provedor autorizado | P0 | F3-01 a F3-05, F9-02 | IN_PROGRESS | Itens apontam para timestamp ou página; confiança avaliada no corpus; imagens têm proveniência e são ilustrativas, nunca evidência; sem IA não há síntese inventada; hipótese fica separada de decisão |
-| F9-04 | Revisar cada sugestão individualmente: editar, confirmar, descartar e resolver ambiguidade/duplicata | P0 | F9-03 | IN_PROGRESS | Evidência e confiança visíveis; data ambígua exige confirmação; descarte não chega aos destinos; duplicata é sinalizada, nunca removida em silêncio |
-| F9-05 | Definir origem das imagens e produzir prancha de referência para relatório e Todo antes da UI | P1 | F9-01 | BLOCKED | Prancha alinhada a DESIGN.md e listada em docs/INDEX.md; cada imagem tem origem/licença; imagem existente 04-report-followups.png é reutilizada como referência quando suficiente |
-| F9-06 | Criar página Todo pessoal no menu existente, com itens aprovados, estado, prazo, busca e vínculo à fonte; encaminhar sob escolha para calendário/lembrete | P0 | F9-04, F6-02, F6-11 | IN_PROGRESS | Criar/editar/concluir/reabrir/buscar; manter ligação ao relatório; encaminhamento individual confirmado; permissões solicitadas no momento adequado; sem tarefas internas de agentes ou barra inferior persistente |
-| F9-07 | Exportar relatório organizado em Markdown/PDF/DOCX e acrescentar JSON/ICS apenas se F9-01 confirmar a necessidade | P1 | F9-03 a F9-06, F4-01 a F4-04 | BLOCKED | Hierarquia, acentos, fontes e imagens preservadas; JSON conserva proveniência; ICS válido usa America/Sao_Paulo e inclui apenas ações confirmadas |
-| F9-08 | Entregar os fluxos local-first no Android e no sistema desktop escolhido | P1 | F9-01, F9-05 a F9-07 | BLOCKED | Build e fluxos de captura, revisão, Todo, exclusão e exportação validados nas duas plataformas; sem sincronização externa implícita |
+| F9-03 | Gerar relatório editorial organizado e incluir imagens relacionadas quando houver fonte aprovada, reutilizando categorias existentes e provedor autorizado | P0 | F3-01 a F3-05, F9-02 | IN_PROGRESS | Imagens próprias registram mensagem/horário; a leitura do relatório filtra caminhos fora dos assets do usuário; UI e exportações explicam que são referências visuais e informam quando nenhuma imagem relacionada existe; JSON marca illustrative_only e omite o caminho local. Testes de serviço, widget e exportação passam. Qualidade ainda bloqueia: corpus PC no tipo Livre 13/20 tarefas, 1 falsa; a rodada Reunião anterior marcou 16/20 (tipos diferentes, sem comparação direta). |
+| F9-04 | Revisar cada sugestão individualmente: editar, confirmar, descartar e resolver ambiguidade/duplicata | P0 | F9-03 | DONE | S25 pediu confirmação para `sexta` e aprovou após "Confirmar assim"; testes cobrem edição, descarte, bloqueio na Todo e duplicata visível sem remoção automática. |
+| F9-05 | Definir origem das imagens e produzir prancha de referência para relatório e Todo antes da UI | P1 | F9-01 | DONE | D-042 limita imagens do relatório a imagens próprias, com proveniência; `04-report-followups.png` já existia antes da UI da F9, está em `docs/INDEX.md` e o README registra prancha sintética e fontes de inspiração sem capturas copiadas. |
+| F9-06 | Criar página Todo pessoal no menu existente, com itens aprovados, estado, prazo, busca e vínculo à fonte; encaminhar sob escolha para calendário/lembrete | P0 | F9-04, F6-02, F6-11 | DONE | S25: item de teste aparece, busca sem acento e estado vazio funcionam, concluir/reabrir restaura o estado, fonte abre o relatório; lembrete pede confirmação e cria horário local. Permissão já concedida no aparelho; negação coberta por widget. Sem tarefas de agentes na lista. |
+| F9-07 | Exportar relatório organizado em Markdown/PDF/DOCX e acrescentar JSON/ICS apenas se F9-01 confirmar a necessidade | P1 | F9-03 a F9-06, F4-01 a F4-04 | IN_PROGRESS | JSON UTF-8 exporta itens selecionados e proveniência, sem caminho local de imagem; Markdown/PDF/DOCX incluem imagem própria, origem e aviso ilustrativo, e informam o estado sem imagem. Testes focados e suíte completa (1471 passaram, 2 pulados), build Android e abertura do app no S25 passam. A renderização dos arquivos exportados no aparelho ainda não foi conferida; nenhum destino externo foi escolhido. ICS dispensado por D-042. |
+| F9-08 | Entregar os fluxos local-first no Android | P1 | F9-01, F9-05 a F9-07 | BLOCKED | Build e fluxos de captura, revisão, Todo, exclusão e exportação validados no Android; desktop fica adiado por D-042; sem sincronização externa implícita |
 | F9-09 | Fechar qualidade, privacidade, acessibilidade e auditoria da fase | P0 | F9-02 a F9-08 | BLOCKED | Checklist abaixo concluído; provas em STATE.md; auditoria em docs/AUDIT.md sem bloqueios |
 
 ### Checklist de aceite da F9
@@ -295,7 +295,7 @@
 - [ ] Exclusão permanente remove relatório e derivados associados, sem deixar cópia inesperada.
 - [ ] Markdown, PDF e DOCX preservam estrutura, acentos, fontes e imagens; JSON mantém proveniência; ICS respeita America/Sao_Paulo.
 - [ ] Imagens externas só entram após escolha/consentimento e têm origem e licença registradas; sem fonte aprovada, o relatório informa que não há imagem relacionada disponível.
-- [ ] Android e sistema desktop escolhido passam pelo fluxo completo local-first e pela revisão de acessibilidade.
+- [ ] Android passa pelo fluxo local-first e pela revisão de acessibilidade; desktop permanece adiado por D-042.
 - [ ] Os 40 exemplos e PDFs sintéticos cobrem positivos, falsos positivos, ambiguidades e evidência; testes unitários, de widget e integração cobrem extração, revisão, destinos, armazenamento, exclusão e exportação.
 
 **Portão F9:** MVP fechado; decisões F9-01 aceitas; todos os itens confirmados seguem pelo fluxo revisável; exclusão, exportação e acessibilidade comprovadas; auditoria sem bloqueios. O que não foi executado continua NOT_RUN em STATE.md.
@@ -334,7 +334,7 @@ Ideias já avaliadas e distribuídas em tarefas ficam nas decisões D-014, D-016
 
 ## F10 — Criação a partir das conversas nos comentários
 
-**Estado:** BACKLOG. Desenho decidido em D-036/D-037 ([questionário](docs/questionario/2026-11-05-f10-criacao-nos-comentarios.md)). Começa só depois do fechamento do MVP, na ordem abaixo. O exportador compartilhado foi antecipado como F4-05.
+**Estado:** IN_PROGRESS desde 2026-11-06 (F10-01, pedido do dono, em paralelo à F9 ainda aberta). Desenho decidido em D-036/D-037 ([questionário](docs/questionario/2026-11-05-f10-criacao-nos-comentarios.md)). MVP fechado; segue a ordem abaixo. O exportador compartilhado foi antecipado como F4-05.
 
 **Objetivo:** aprofundar as conversas que nascem dos comentários das personas e, por pedido do usuário na própria conversa, produzir e revisar documentos vinculados às fontes. Responder continua opcional. Sem pedido não começa produção; conversa casual não reescreve documento.
 
@@ -342,11 +342,11 @@ Ideias já avaliadas e distribuídas em tarefas ficam nas decisões D-014, D-016
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F10-01 | Respostas proporcionais ao usuário e debate entre personas (só após resposta do usuário; máx. 4 falas por mensagem dele); contexto pelo fio | P0 | MVP fechado | BLOCKED | Resposta curta continua curta; argumento recebe argumento; debate para em 4 falas; comentário inicial sem debate; S25 com modelo real |
-| F10-02 | Guardar o PDF anexado no registro e transcrever por página pelo modelo do chat na primeira discussão, com confirmação acima do limite de páginas; aviso quando o modelo não lê PDF | P0 | F10-01 | BLOCKED | Original preservado após reinício; texto por página reaproveitado sem nova chamada; Gemini OAuth gera aviso em vez de descarte silencioso; custo e tempo medidos no S25 |
-| F10-03 | Documento por texto ou botão, a partir do fio; voz neutra com créditos; busca de registros relacionados com lista confirmada; cartão no fio e tela própria | P0 | F10-02 | BLOCKED | Tarefa persistente sem duplicata em retry; citações conferidas contra a fonte; sugestão não vira decisão; nada extra enviado sem confirmação |
-| F10-04 | Versões, revisão pelo fio ou pela tela, edição manual, exclusão da origem e exportação pela F4-05 | P0 | F10-03, F4-05 | BLOCKED | Versão anterior intacta; edição concorrente não sobrescreve; exclusão pergunta; mesma versão em MD/PDF/DOCX; PDF e DOCX no S25 |
-| F10-05 | Imagens e relatório ilustrado | P1 | F10-04; questionário próprio | BLOCKED | Decisões de provedor, custo e origem das imagens antes do código |
+| F10-01 | Respostas proporcionais ao usuário e debate entre personas (só após resposta do usuário; máx. 4 falas por mensagem dele); contexto pelo fio | P0 | MVP fechado | IN_PROGRESS | Resposta curta continua curta; argumento recebe argumento; debate para em 4 falas; comentário inicial sem debate; S25 com modelo real. Feito: freio (`remainingPersonaTurns`), escolha da próxima persona (`pickNextDebater`), laço do debate (`runPersonaDebate`, 12 testes com funções injetadas), ligação em `handleProcessAiReplyImpl` (só com 2+ personas nos comentários e sem @menção) e regra de proporção no prompt. Falta: prova com modelo real no S25 (build, instalação, 2 personas, PDF fictício) |
+| F10-02 | Guardar o PDF anexado no registro e transcrever por página pelo modelo do chat na primeira discussão, com confirmação acima do limite de páginas; aviso quando o modelo não lê PDF | P0 | F10-01 | IN_PROGRESS | Original preservado após reinício; texto por página reaproveitado sem nova chamada; Gemini OAuth gera aviso em vez de descarte silencioso; custo e tempo medidos no S25 |
+| F10-03 | Documento por texto ou botão, a partir do fio; voz neutra com créditos; busca de registros relacionados com lista confirmada; cartão no fio e tela própria | P0 | F10-02 | IN_PROGRESS | Tarefa persistente sem duplicata em retry; citações conferidas contra a fonte; sugestão não vira decisão; nada extra enviado sem confirmação |
+| F10-04 | Versões, revisão pelo fio ou pela tela, edição manual, exclusão da origem e exportação pela F4-05 | P0 | F10-03, F4-05 | IN_PROGRESS | Versão anterior intacta; edição concorrente não sobrescreve; exclusão pergunta; mesma versão em MD/PDF/DOCX; PDF e DOCX no S25 |
+| F10-05 | Imagens e relatório ilustrado | P1 | F10-04; questionário próprio | IN_PROGRESS | Decisões de provedor, custo e origem das imagens antes do código |
 | F10-06 | Validar qualidade, privacidade, acessibilidade e fluxo completo | P0 | F10-04 (textual), F10-05 (ilustrado) | BLOCKED | Testes, análise, build, modelo real, S25 e auditoria sem bloqueios |
 
 **Portão F10:** discussão nos comentários produz materiais revisáveis com fontes, preserva original e versões, exporta texto e relatório ilustrado e passa a validação indicada. Primeira entrega textual não fecha a fase ilustrada. Não depende de F7/F8 ou da F9 inteira.

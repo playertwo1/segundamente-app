@@ -1,7 +1,9 @@
+import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:logging/logging.dart';
 import 'package:memex/agent/comment_agent/comment_agent.dart';
 import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/domain/models/card_model.dart';
+import 'package:memex/data/services/card_pdf_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/character_execution_coordinator.dart';
 import 'package:memex/utils/user_storage.dart';
@@ -142,6 +144,7 @@ Future<void> processAICommentReply({
   DateTime? inputDateTime,
   bool withMemoryManagement = false,
   bool forceReply = false,
+  bool readAttachedPdfs = false,
 }) async {
   _logger.info(
     'PostCommentEndpoint: processAICommentReply called: cardId=$cardId, userId=$userId',
@@ -243,6 +246,11 @@ Future<void> processAICommentReply({
       existingCommentsContext = buf.toString();
     }
 
+    if (readAttachedPdfs) {
+      existingCommentsContext +=
+          await _attachedPdfContext(userId, cardData, resources);
+    }
+
     // 7. Run the comment agent. Failures must propagate so LocalTaskExecutor
     // retries process_ai_reply / comment_agent_task instead of marking success.
     Future<void> runComment() async {
@@ -285,4 +293,32 @@ Future<void> processAICommentReply({
     _logger.severe('Failed to process AI comment reply for card $cardId: $e');
     rethrowIfNonRetryable(e);
   }
+}
+
+/// Page text of the record's PDFs for the agent (F10-02): cached after the
+/// first model call, a stated limit when the model cannot read the file.
+Future<String> _attachedPdfContext(
+  String userId,
+  CardData card,
+  ({LLMClient client, ModelConfig modelConfig}) resources,
+) async {
+  final service = CardPdfService();
+  final results = <CardPdfResult>[];
+  for (final asset in await service.pdfAssets(userId, card)) {
+    try {
+      results.add(
+        await service.ensurePages(
+          userId: userId,
+          asset: asset,
+          modelReadsPdf: modelCarriesPdf(resources.client),
+          confirmedLarge: false,
+          askPdf: (system, pdf) => askModelForPdfPages(resources, system, pdf),
+        ),
+      );
+    } catch (e) {
+      _logger.warning('PDF pages unavailable for $asset: $e');
+      results.add(CardPdfResult(asset, CardPdfStatus.failed));
+    }
+  }
+  return pdfContextBlock(results);
 }

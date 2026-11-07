@@ -1,6 +1,6 @@
 # F10 — Criação a partir das conversas nos comentários
 
-Data: 2026-11-05. Direção de produto aceita pelo dono; desenho fechado no [questionário](questionario/2026-11-05-f10-criacao-nos-comentarios.md). Implementação: BACKLOG, começa após o fechamento do MVP. Decisões: D-036 e D-037. MVP e fase ativa preservados.
+Data: 2026-11-05. Direção de produto aceita pelo dono; desenho fechado no [questionário](questionario/2026-11-05-f10-criacao-nos-comentarios.md). Implementação: IN_PROGRESS (F10-01 iniciada em 2026-11-06, em paralelo à F9 ainda aberta). Decisões: D-036 e D-037. MVP e fase ativa preservados.
 
 ## Objetivo e experiência
 

@@ -3495,6 +3495,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoOpenSource => 'Source';
 
   @override
+  String get todoSourceChanged =>
+      'The report changed; check the source before relying on this copy.';
+
+  @override
   String get todoAddFromReport => 'Add to to-do list';
 
   @override
@@ -3587,7 +3591,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportExportPdf => 'PDF';
 
   @override
+  String get reportExportJson => 'JSON';
+
+  @override
   String get reportExportDocx => 'DOCX';
+
+  @override
+  String get reportImagesTitle => 'Images attached by you';
+
+  @override
+  String get reportImagesDisclaimer =>
+      'These images are visual references only; they do not prove report items.';
+
+  @override
+  String get reportImagesUnavailable => 'No related image is available.';
+
+  @override
+  String reportImageSource(Object index, Object timestamp) {
+    return 'Source: message $index $timestamp';
+  }
 
   @override
   String get followUpsTitle => 'Follow-ups';
@@ -4180,4 +4202,122 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savedViewPickProps => 'Or mark what the card must be:';
+
+  @override
+  String get threadDocsSection => 'Documents';
+
+  @override
+  String get threadDocCreate => 'Create document';
+
+  @override
+  String get threadDocCreateTitle =>
+      'Create a document from this conversation?';
+
+  @override
+  String get threadDocCreateBody =>
+      'The comments so far and the record text go to your chat model. Nothing is created before you confirm.';
+
+  @override
+  String get threadDocInstructionHint =>
+      'What should it be? (proposal, summary...)';
+
+  @override
+  String get threadDocInstructionDefault =>
+      'Put this conversation together in a document';
+
+  @override
+  String get threadDocPreparing => 'Preparing the document...';
+
+  @override
+  String threadDocVersion(Object n) {
+    return 'Version $n';
+  }
+
+  @override
+  String get threadDocByModel => 'Written by the model';
+
+  @override
+  String get threadDocByUser => 'Edited by you';
+
+  @override
+  String threadDocWarnings(Object list) {
+    return 'Citations that could not be checked: $list';
+  }
+
+  @override
+  String get threadDocOriginDeleted => 'The original record was deleted.';
+
+  @override
+  String get threadDocRevise => 'Ask for a change';
+
+  @override
+  String get threadDocReviseHint => 'e.g. change only the conclusion';
+
+  @override
+  String get threadDocEdit => 'Edit by hand';
+
+  @override
+  String get threadDocSaveVersion => 'Save as new version';
+
+  @override
+  String get threadDocStale =>
+      'The document changed while you were editing. Reload it before saving again.';
+
+  @override
+  String get threadDocExport => 'Export this version';
+
+  @override
+  String get threadDocDelete => 'Delete document';
+
+  @override
+  String get threadDocDeleteMessage =>
+      'Delete this document and all its versions? The record is not changed.';
+
+  @override
+  String get threadDocFailed => 'Could not finish. Try again.';
+
+  @override
+  String get threadDocRelatedFind => 'Find related records';
+
+  @override
+  String get threadDocRelatedNone => 'No related records found.';
+
+  @override
+  String get threadDocRelatedNote =>
+      'Only the ticked records are sent to the model.';
+
+  @override
+  String threadDocLargePdf(Object size) {
+    return 'The PDF is large ($size MB) and the AI has not read it yet. Sending it may take time and cost.';
+  }
+
+  @override
+  String get threadDocLargePdfSend => 'Send PDF to the model';
+
+  @override
+  String get threadDocKeepTitle => 'This record has documents';
+
+  @override
+  String threadDocKeepBody(Object count) {
+    return '$count document(s) were made from this record. Keep them, marked as \"original deleted\", or delete them together?';
+  }
+
+  @override
+  String get threadDocKeepYes => 'Keep documents';
+
+  @override
+  String get threadDocKeepNo => 'Delete together';
+
+  @override
+  String get threadDocFromTextTitle => 'Create a document?';
+
+  @override
+  String get threadDocFromTextBody =>
+      'It looks like you asked for a document. Create it from this conversation? Nothing is sent before you confirm.';
+
+  @override
+  String get threadDocFromTextYes => 'Create document';
+
+  @override
+  String get threadDocFromTextNo => 'Just comment';
 }

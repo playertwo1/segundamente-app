@@ -12,12 +12,13 @@ void main() {
   late TodoService todos;
 
   ReportItem reportItem({
+    String id = 'item_1',
     ReportItemKind kind = ReportItemKind.task,
     ReportItemStatus status = ReportItemStatus.approved,
     String due = '2026-11-21',
   }) =>
       ReportItem(
-        id: 'item_1',
+        id: id,
         kind: kind,
         text: 'Enviar a proposta',
         status: status,
@@ -120,9 +121,19 @@ void main() {
     );
   });
 
-  test('deleting a session removes only the items that came from it', () async {
+  test('deleting a session removes open copies and keeps completed history',
+      () async {
+    final completed = await todos.addFromReport(
+      userId: userId,
+      sessionId: 'pdf_1',
+      item: reportItem(),
+    );
+    await todos.setDone(userId: userId, id: completed.id, done: true);
     await todos.addFromReport(
-        userId: userId, sessionId: 'pdf_1', item: reportItem());
+      userId: userId,
+      sessionId: 'pdf_1',
+      item: reportItem(id: 'item_2'),
+    );
     await todos.addFromReport(
         userId: userId, sessionId: 'pdf_2', item: reportItem());
     await todos.add(userId: userId, text: 'Item manual');
@@ -130,7 +141,52 @@ void main() {
     await todos.deleteForSession(userId: userId, sessionId: 'pdf_1');
 
     final left = await todos.load(userId);
-    expect(left.map((t) => t.source?.sessionId), ['pdf_2', null]);
+    expect(left, hasLength(3));
+    expect(left.first.done, isTrue);
+    expect(left.first.source, isNull);
+    expect(left[1].source?.sessionId, 'pdf_2');
+    expect(left.last.source, isNull);
+  });
+
+  test('corrupt files are preserved and do not block a new list', () async {
+    final path = FileSystemService.instance.getTodoPath(userId);
+    final file = File('$path/todo.json');
+    await file.parent.create(recursive: true);
+    await file.writeAsString('{broken');
+
+    expect(await todos.load(userId), isEmpty);
+    final backups = await Directory(path)
+        .list()
+        .where((entry) => entry.path.contains('.corrupt-'))
+        .toList();
+    expect(backups, hasLength(1));
+    expect(await File(backups.single.path).readAsString(), '{broken');
+
+    await todos.add(userId: userId, text: 'Tarefa nova');
+    expect((await todos.load(userId)).single.text, 'Tarefa nova');
+    final temps = await Directory(path)
+        .list()
+        .where((entry) => entry.path.contains('.tmp-'))
+        .toList();
+    expect(temps, isEmpty);
+  });
+
+  test('report edits mark linked Todo copies as stale', () async {
+    final item = await todos.addFromReport(
+      userId: userId,
+      sessionId: 'pdf_1',
+      item: reportItem(),
+    );
+
+    await todos.markReportItemStale(
+      userId: userId,
+      sessionId: 'pdf_1',
+      itemId: 'item_1',
+    );
+
+    final loaded = (await todos.load(userId)).single;
+    expect(loaded.id, item.id);
+    expect(loaded.sourceStale, isTrue);
   });
 
   test('search ignores accents and case; open items sort before done ones',

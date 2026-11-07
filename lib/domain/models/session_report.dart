@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/glossary.dart';
 
 const sessionReportSchemaVersion = 1;
@@ -43,6 +44,34 @@ class ReportSource {
   final String segmentId;
   final String excerpt;
   final String? clock;
+}
+
+class ReportImage {
+  const ReportImage({
+    required this.relativePath,
+    required this.name,
+    required this.messageIndex,
+    this.messageTimestamp,
+  });
+
+  final String relativePath;
+  final String name;
+  final int messageIndex;
+  final String? messageTimestamp;
+
+  Map<String, dynamic> toJson() => {
+        'relative_path': relativePath,
+        'name': name,
+        'message_index': messageIndex,
+        'message_timestamp': messageTimestamp,
+      };
+
+  static ReportImage fromJson(Map<String, dynamic> json) => ReportImage(
+        relativePath: _requiredText(json['relative_path']),
+        name: _requiredText(json['name']),
+        messageIndex: (json['message_index'] as num?)?.toInt() ?? 0,
+        messageTimestamp: json['message_timestamp']?.toString(),
+      );
 }
 
 class ReportItem {
@@ -96,6 +125,7 @@ class SessionReport {
     required this.title,
     required this.sections,
     required this.items,
+    this.images = const [],
     this.customTitle,
   });
 
@@ -106,8 +136,12 @@ class SessionReport {
   final String? customTitle;
   final List<ReportItemKind> sections;
   final List<ReportItem> items;
+  final List<ReportImage> images;
 
-  SessionReport copyWith({List<ReportItem>? items}) {
+  SessionReport copyWith({
+    List<ReportItem>? items,
+    List<ReportImage>? images,
+  }) {
     return SessionReport(
       schemaVersion: schemaVersion,
       sessionId: sessionId,
@@ -116,6 +150,7 @@ class SessionReport {
       customTitle: customTitle,
       sections: sections,
       items: items ?? this.items,
+      images: images ?? this.images,
     );
   }
 }
@@ -133,21 +168,11 @@ ReportConfidence reportConfidence(ReportItem item) {
   return hasOwner && hasDue ? ReportConfidence.high : ReportConfidence.medium;
 }
 
-// shortcut: only the numeric and "12 de março" forms count as exact dates;
-// anything else the user typed ("sexta", "semana que vem") asks for a
-// confirmation before a task is approved. Widen if real dates get flagged.
-final _exactDue = RegExp(
-  r'^(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}(/\d{2,4})?|'
-  r'\d{1,2} de [\p{L}]+( de \d{4})?)$',
-  unicode: true,
-  caseSensitive: false,
-);
-
 /// True when a due date was given but is not an exact calendar date.
 bool isAmbiguousDue(String due) {
   final value = due.trim();
   if (value.isEmpty || value == reportDueUnknown) return false;
-  return !_exactDue.hasMatch(value);
+  return parseExplicitDue(value) == null;
 }
 
 bool isDefinitiveTask(ReportItem item) {
@@ -251,6 +276,18 @@ SessionReport draftSessionReport({
     sections: sections,
     items: items,
   );
+}
+
+List<ReportImage> _reportImages(Object? raw) {
+  if (raw == null) return const [];
+  if (raw is! List) throw const FormatException('images are not a list');
+  return [
+    for (final item in raw)
+      if (item is Map)
+        ReportImage.fromJson(item.cast<String, dynamic>())
+      else
+        throw const FormatException('image is not an object'),
+  ];
 }
 
 /// A model reply may suggest a person, a date, or a confirmed status.
@@ -494,6 +531,7 @@ SessionReport sessionReportFromStorage(Map<String, dynamic> json) {
     customTitle: custom,
     sections: sections,
     items: items,
+    images: _reportImages(migrated['images']),
   );
 }
 
@@ -505,6 +543,8 @@ Map<String, dynamic> sessionReportToJson(SessionReport report) {
     'title': report.title,
     'custom_title': report.customTitle,
     'sections': report.sections.map((section) => section.name).toList(),
+    if (report.images.isNotEmpty)
+      'images': [for (final image in report.images) image.toJson()],
     'items': [
       for (final item in report.items)
         {

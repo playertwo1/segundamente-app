@@ -43,12 +43,14 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:memex/data/services/chat_service.dart';
 import 'package:memex/data/services/chat_session_storage.dart';
 import 'package:memex/data/services/session_report_export_service.dart';
+import 'package:memex/data/services/card_pdf_service.dart';
+import 'package:memex/data/services/task_handlers/thread_document_handler.dart';
+import 'package:memex/data/services/thread_document_service.dart';
+import 'package:memex/domain/models/thread_document.dart';
 import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
 import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/domain/models/todo_item.dart';
-import 'package:memex/llm_client/codex_responses_client.dart';
-import 'package:memex/llm_client/fallback_llm_client.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
 import 'package:memex/data/services/saved_view_service.dart';
@@ -63,6 +65,7 @@ import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/session_report_export.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_task_executor.dart';
+import 'package:uuid/uuid.dart';
 import 'package:memex/data/services/global_event_bus.dart';
 import 'package:memex/data/services/knowledge_insight_trigger_service.dart';
 import 'package:memex/data/services/task_handlers/fts_index_handler.dart';
@@ -441,6 +444,11 @@ class MemexRouter {
       concurrencyPolicy: TaskConcurrencyPolicy.byUser(),
     );
     executor.registerHandler('process_ai_reply', handleProcessAiReplyImpl);
+    executor.registerHandler(
+      threadDocumentTaskType,
+      handleThreadDocumentImpl,
+      concurrencyPolicy: TaskConcurrencyPolicy.byUser(),
+    );
     executor.registerHandler(
       insightTaskType,
       handleKnowledgeInsightImpl,
@@ -1230,10 +1238,7 @@ class MemexRouter {
         AgentDefinitions.chatAgent,
         defaultClientKey: LLMConfig.defaultClientKey,
       );
-      final client = resources.client;
-      final first =
-          client is FallbackLLMClient ? client.candidates.first.client : client;
-      if (first is! CodexResponsesClient) throw const PdfModelUnsupported();
+      if (!modelCarriesPdf(resources.client)) throw const PdfModelUnsupported();
       final sessionId = 'pdf_${DateTime.now().millisecondsSinceEpoch}';
       final outcome = await PdfImportService().importPdf(
         userId: userId,
@@ -1241,20 +1246,7 @@ class MemexRouter {
         pdfBytes: bytes,
         confirmed: true,
         confirmedLarge: confirmedLarge,
-        askPdf: (system, pdf) async {
-          final response = await resources.client.generate(
-            [
-              SystemMessage(system),
-              UserMessage([
-                TextPart('Copy the text of this PDF page by page.'),
-                DocumentPart(base64Encode(pdf), 'application/pdf'),
-              ]),
-            ],
-            modelConfig: resources.modelConfig,
-            jsonOutput: true,
-          );
-          return response.textOutput ?? '';
-        },
+        askPdf: (system, pdf) => askModelForPdfPages(resources, system, pdf),
       );
       return (outcome: outcome, sessionId: sessionId);
     });
@@ -1384,6 +1376,142 @@ class MemexRouter {
         itemIds: itemIds,
       );
       return file.path;
+    });
+  }
+
+  // --- F10: documents made from a comment thread -------------------------
+
+  /// Queues a draft (or, with [docId], a revision) from the thread as it is
+  /// now. Comments that arrive later do not enter this work.
+  Future<Result<String>> requestThreadDocument({
+    required String cardId,
+    required String instruction,
+    String? docId,
+    int? expectedLatest,
+    List<String> relatedIds = const [],
+  }) {
+    return runResult(() async {
+      final userId = await _reportUserId();
+      final card = await FileSystemService.instance.readCardFile(userId, cardId);
+      if (card == null) throw StateError('record missing');
+      final requestId = const Uuid().v4();
+      await LocalTaskExecutor.instance.enqueueTask(
+        userId: userId,
+        taskType: threadDocumentTaskType,
+        payload: {
+          'card_id': cardId,
+          'request_id': requestId,
+          'instruction': instruction,
+          'comment_ids': [for (final c in card.comments) c.id],
+          if (relatedIds.isNotEmpty) 'related_ids': relatedIds,
+          if (docId != null) 'doc_id': docId,
+          if (expectedLatest != null) 'expected_latest': expectedLatest,
+        },
+        bizId: docId ?? requestId,
+      );
+      return requestId;
+    });
+  }
+
+  Future<Result<List<ThreadDocument>>> listThreadDocuments(String cardId) {
+    return runResult(() async => ThreadDocumentService()
+        .listForCard(await _reportUserId(), cardId));
+  }
+
+  Future<Result<ThreadDocument?>> loadThreadDocument(String id) {
+    return runResult(
+        () async => ThreadDocumentService().load(await _reportUserId(), id));
+  }
+
+  /// Manual edit: saved as a new version by the user; refused when the
+  /// document moved on since [expectedLatest].
+  Future<Result<ThreadDocument>> editThreadDocument({
+    required String id,
+    required int expectedLatest,
+    required String content,
+  }) {
+    return runResult(() async => ThreadDocumentService().addVersion(
+          userId: await _reportUserId(),
+          id: id,
+          expectedLatest: expectedLatest,
+          author: DocumentAuthor.user,
+          content: content,
+          now: DateTime.now(),
+        ));
+  }
+
+  Future<Result<String>> exportThreadDocument({
+    required String id,
+    required int version,
+    required ReportExportFormat format,
+  }) {
+    return runResult(() async {
+      final file = await ThreadDocumentService().export(
+        userId: await _reportUserId(),
+        id: id,
+        version: version,
+        format: format,
+      );
+      return file.path;
+    });
+  }
+
+  /// Records that may help the document, found by search. Nothing is sent
+  /// until the user ticks them in the confirmation.
+  Future<Result<List<({String id, String title})>>> findRelatedRecords(
+    String cardId,
+    String query,
+  ) {
+    return runResult(() async {
+      final hits = await searchCards(query, limit: 8);
+      return hits.when(
+        onOk: (cards) => [
+          for (final c in cards)
+            if (c.id != cardId)
+              (id: c.id, title: (c.title ?? c.rawText ?? c.id).trim()),
+        ],
+        onError: (e, _) => throw e,
+      );
+    });
+  }
+
+  /// The record being deleted: keep its documents or delete them with it.
+  Future<Result<void>> resolveThreadDocumentsOnDelete(
+    String cardId, {
+    required bool keep,
+  }) {
+    return runResult(() async {
+      await ThreadDocumentService()
+          .resolveOrigin(await _reportUserId(), cardId, keep: keep);
+    });
+  }
+
+  Future<Result<List<({String asset, int bytes})>>> largePdfsAwaiting(
+    String cardId,
+  ) {
+    return runResult(() async {
+      final userId = await _reportUserId();
+      final card = await FileSystemService.instance.readCardFile(userId, cardId);
+      if (card == null) return [];
+      return CardPdfService().largeAwaitingConfirmation(userId, card);
+    });
+  }
+
+  Future<Result<void>> confirmLargePdf(String asset) {
+    return runResult(() async {
+      await CardPdfService().confirmLarge(await _reportUserId(), asset);
+    });
+  }
+
+  /// Document text with charts and record photos drawn in, for display.
+  Future<Result<String>> renderThreadDocument(String markdown) {
+    return runResult(() async => ThreadDocumentService()
+        .render(await _reportUserId(), markdown));
+  }
+
+  Future<Result<void>> deleteThreadDocument(String id) {
+    return runResult(() async {
+      await ThreadDocumentService().delete(await _reportUserId(), id);
     });
   }
 

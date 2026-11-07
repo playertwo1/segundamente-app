@@ -102,8 +102,7 @@ class _TodoScreenState extends State<TodoScreen> {
       case ReminderOutcome.created:
         ToastHelper.showSuccess(context, l10n.todoReminderCreated);
       case ReminderOutcome.permissionDenied:
-        ToastHelper.showError(
-            context, l10n.permissionRequired(l10n.reminders));
+        ToastHelper.showError(context, l10n.permissionRequired(l10n.reminders));
       case ReminderOutcome.noExactTime:
       case ReminderOutcome.failed:
         ToastHelper.showError(context, l10n.writeToSystemFailed);
@@ -188,10 +187,13 @@ class _TodoScreenState extends State<TodoScreen> {
     final source = item.source;
     return ListTile(
       key: ValueKey('todo_${item.id}'),
-      leading: Checkbox(
-        key: ValueKey('todo_done_${item.id}'),
-        value: item.done,
-        onChanged: (_) => widget.viewModel.toggleDone(item),
+      leading: Semantics(
+        label: item.text,
+        child: Checkbox(
+          key: ValueKey('todo_done_${item.id}'),
+          value: item.done,
+          onChanged: (_) => widget.viewModel.toggleDone(item),
+        ),
       ),
       title: Text(
         item.text,
@@ -211,6 +213,11 @@ class _TodoScreenState extends State<TodoScreen> {
                 '${l10n.todoOpenSource}: ${source.clock ?? ''} '
                 '"${source.excerpt}"',
               ),
+            ),
+          if (item.sourceStale)
+            Text(
+              l10n.todoSourceChanged,
+              key: ValueKey('todo_source_stale_${item.id}'),
             ),
         ],
       ),

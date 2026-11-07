@@ -1,16 +1,21 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:math' as math;
 
 import 'package:archive/archive.dart';
+import 'package:image/image.dart' as image_codec;
 import 'package:memex/domain/models/session_report.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-enum ReportExportFormat { markdown, pdf, docx }
+enum ReportExportFormat { markdown, pdf, docx, json }
 
 const reportExportDateLabel = 'Data';
 const reportExportSourceLabel = 'Fonte';
 const reportExportClockLabel = 'Relógio';
+const reportExportImageDisclaimer =
+    'These images are visual references only; they do not prove report items.';
+const reportExportNoImagesMessage = 'No related image is available.';
 
 String reportExportFileName(ReportExportFormat format) {
   switch (format) {
@@ -20,6 +25,8 @@ String reportExportFileName(ReportExportFormat format) {
       return 'relatorio.pdf';
     case ReportExportFormat.docx:
       return 'relatorio.docx';
+    case ReportExportFormat.json:
+      return 'relatorio.json';
   }
 }
 
@@ -31,6 +38,8 @@ String reportExportMimeType(ReportExportFormat format) {
       return 'application/pdf';
     case ReportExportFormat.docx:
       return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    case ReportExportFormat.json:
+      return 'application/json';
   }
 }
 
@@ -40,12 +49,31 @@ String formatReportExportDate(DateTime value) {
       '${two(value.hour)}:${two(value.minute)}';
 }
 
+class ReportExportImage {
+  const ReportExportImage({
+    required this.name,
+    required this.bytes,
+    required this.mimeType,
+    required this.messageIndex,
+    this.messageTimestamp,
+  });
+
+  final String name;
+  final Uint8List bytes;
+  final String mimeType;
+  final int messageIndex;
+  final String? messageTimestamp;
+}
+
 /// [itemIds] null keeps every item that was not discarded.
 /// A set keeps only those ids, including a discarded item the user checked.
 String reportExportMarkdown({
   required SessionReport report,
   required DateTime exportedAt,
   Set<String>? itemIds,
+  List<ReportExportImage> images = const [],
+  String imageDisclaimer = reportExportImageDisclaimer,
+  String noImagesMessage = reportExportNoImagesMessage,
 }) {
   final chosen = _chosenItems(report, itemIds);
   final buffer = StringBuffer()
@@ -73,7 +101,59 @@ String reportExportMarkdown({
       buffer.writeln();
     }
   }
+  if (images.isNotEmpty) {
+    buffer
+      ..writeln('## Imagens anexadas')
+      ..writeln()
+      ..writeln(imageDisclaimer)
+      ..writeln();
+    for (final image in images) {
+      final alt = image.name.replaceAll(RegExp(r'[\[\]]'), ' ');
+      buffer
+        ..writeln(
+          '![$alt](data:${image.mimeType};base64,${base64Encode(image.bytes)})',
+        )
+        ..writeln(
+          '$reportExportSourceLabel: mensagem ${image.messageIndex} '
+          '${image.messageTimestamp ?? ''}',
+        )
+        ..writeln();
+    }
+  } else {
+    buffer
+      ..writeln('## Imagens relacionadas')
+      ..writeln()
+      ..writeln(noImagesMessage)
+      ..writeln();
+  }
   return buffer.toString();
+}
+
+/// Same item selection as the Markdown export. Each item keeps its source
+/// (segment, excerpt, clock/page) so the data can be traced back.
+String reportExportJson({
+  required SessionReport report,
+  required DateTime exportedAt,
+  Set<String>? itemIds,
+}) {
+  final chosen = _chosenItems(report, itemIds).map((item) => item.id).toSet();
+  final map = sessionReportToJson(report);
+  final images = map['images'];
+  if (images is List) {
+    map['images'] = [
+      for (final image in images)
+        if (image is Map)
+          Map<String, dynamic>.from(image)
+            ..remove('relative_path')
+            ..['illustrative_only'] = true,
+    ];
+  }
+  map['items'] = [
+    for (final item in map['items'] as List)
+      if (chosen.contains((item as Map)['id'])) item,
+  ];
+  map['exported_at'] = exportedAt.toIso8601String();
+  return const JsonEncoder.withIndent('  ').convert(map);
 }
 
 /// TrueType fonts embedded in the PDF. Loaded by the data layer (assets), so
@@ -91,11 +171,23 @@ Future<List<int>> exportSessionReportBytes({
   required ReportExportFormat format,
   Set<String>? itemIds,
   ReportExportFonts? fonts,
-}) {
+  List<ReportExportImage> images = const [],
+  String imageDisclaimer = reportExportImageDisclaimer,
+  String noImagesMessage = reportExportNoImagesMessage,
+}) async {
+  if (format == ReportExportFormat.json) {
+    return utf8.encode(
+      reportExportJson(
+          report: report, exportedAt: exportedAt, itemIds: itemIds),
+    );
+  }
   final markdown = reportExportMarkdown(
     report: report,
     exportedAt: exportedAt,
     itemIds: itemIds,
+    images: images,
+    imageDisclaimer: imageDisclaimer,
+    noImagesMessage: noImagesMessage,
   );
   return exportMarkdownBytes(markdown: markdown, format: format, fonts: fonts);
 }
@@ -115,6 +207,8 @@ Future<List<int>> exportMarkdownBytes({
       return _pdf(markdown, fonts);
     case ReportExportFormat.docx:
       return _docx(markdown);
+    case ReportExportFormat.json:
+      throw ArgumentError('json is built from the report, not from markdown');
   }
 }
 
@@ -181,6 +275,21 @@ Future<List<int>> _pdf(String markdown, ReportExportFonts fonts) {
 
 pw.Widget _pdfBlock(ExportBlock block) {
   if (block.kind == ExportBlockKind.blank) return pw.SizedBox(height: 6);
+  if (block.kind == ExportBlockKind.image) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 8),
+      child: pw.Center(
+        child: pw.SizedBox(
+          width: 480,
+          height: 300,
+          child: pw.Image(
+            pw.MemoryImage(block.imageBytes!),
+            fit: pw.BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
   final heading = block.kind == ExportBlockKind.heading;
   final size = heading ? const [11.0, 18.0, 14.0, 12.0][block.level] : 11.0;
   final text = pw.RichText(
@@ -214,13 +323,35 @@ pw.Widget _pdfBlock(ExportBlock block) {
 }
 
 List<int> _docx(String markdown) {
-  final document = utf8.encode(_documentXml(markdown));
+  final blocks = parseExportMarkdown(markdown);
+  final images = blocks
+      .where((block) => block.kind == ExportBlockKind.image)
+      .toList(growable: false);
+  final document = utf8.encode(_documentXmlBlocks(blocks));
   final types = utf8.encode(_contentTypes);
   final rels = utf8.encode(_rels);
+  final documentRels = _documentRelationships(images);
   final archive = Archive()
     ..addFile(ArchiveFile('[Content_Types].xml', types.length, types))
     ..addFile(ArchiveFile('_rels/.rels', rels.length, rels))
-    ..addFile(ArchiveFile('word/document.xml', document.length, document));
+    ..addFile(ArchiveFile('word/document.xml', document.length, document))
+    ..addFile(
+      ArchiveFile(
+        'word/_rels/document.xml.rels',
+        documentRels.length,
+        documentRels,
+      ),
+    );
+  var imageIndex = 0;
+  for (final image in images) {
+    imageIndex++;
+    final media = image.imageBytes!;
+    archive.addFile(ArchiveFile(
+      'word/media/report-image-$imageIndex.${_imageExtension(image.imageMimeType!)}',
+      media.length,
+      media,
+    ));
+  }
   return ZipEncoder().encode(archive);
 }
 
@@ -228,6 +359,8 @@ const _contentTypes = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
 <Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="jpg" ContentType="image/jpeg"/>
+<Default Extension="png" ContentType="image/png"/>
 <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
 </Types>
 ''';
@@ -238,9 +371,28 @@ const _rels = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </Relationships>
 ''';
 
-String _documentXml(String markdown) {
-  final paragraphs = parseExportMarkdown(markdown).map((block) {
+Uint8List _documentRelationships(List<ExportBlock> images) =>
+    Uint8List.fromList(
+      utf8.encode(
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '${[
+          for (var i = 0; i < images.length; i++)
+            '<Relationship Id="rIdImg${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/report-image-${i + 1}.${_imageExtension(images[i].imageMimeType!)}"/>'
+        ].join()}'
+        '</Relationships>',
+      ),
+    );
+
+String _imageExtension(String mimeType) =>
+    mimeType == 'image/png' ? 'png' : 'jpg';
+
+String _documentXmlBlocks(List<ExportBlock> blocks) {
+  var imageIndex = 0;
+  final paragraphs = blocks.map((block) {
     if (block.kind == ExportBlockKind.blank) return '<w:p/>';
+    if (block.kind == ExportBlockKind.image) {
+      return _docxImage(block, ++imageIndex);
+    }
     final heading = block.kind == ExportBlockKind.heading;
     final size =
         heading ? '<w:sz w:val="${const [22, 36, 28, 24][block.level]}"/>' : '';
@@ -261,8 +413,33 @@ String _documentXml(String markdown) {
     return '<w:p>$indent$runs</w:p>';
   }).join();
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+      'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+      'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+      'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'
       '<w:body>$paragraphs<w:sectPr/></w:body></w:document>';
+}
+
+String _docxImage(ExportBlock block, int index) {
+  final image = image_codec.decodeImage(block.imageBytes!);
+  final width = image?.width ?? 1600;
+  final height = image?.height ?? 1000;
+  const maxWidthEmu = 4_572_000.0;
+  const maxHeightEmu = 2_743_200.0;
+  final scale = math.min(maxWidthEmu / width, maxHeightEmu / height);
+  final cx = (width * scale).round();
+  final cy = (height * scale).round();
+  final name = _xmlAttribute(block.imageName ?? 'image-$index.jpg');
+  return '<w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'
+      '<wp:extent cx="$cx" cy="$cy"/><wp:docPr id="$index" name="$name" descr="$name"/>'
+      '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
+      '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+      '<pic:pic><pic:nvPicPr><pic:cNvPr id="$index" name="$name"/><pic:cNvPicPr/></pic:nvPicPr>'
+      '<pic:blipFill><a:blip r:embed="rIdImg$index"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="$cx" cy="$cy"/></a:xfrm>'
+      '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>'
+      '</a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
 }
 
 String _xml(String value) {
@@ -272,7 +449,10 @@ String _xml(String value) {
       .replaceAll('>', '&gt;');
 }
 
-enum ExportBlockKind { heading, paragraph, item, blank }
+String _xmlAttribute(String value) =>
+    _xml(value).replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+
+enum ExportBlockKind { heading, paragraph, item, blank, image }
 
 class ExportRun {
   const ExportRun(this.text, {this.bold = false});
@@ -284,12 +464,23 @@ class ExportRun {
 /// One Markdown line ready for PDF/DOCX: heading level 1-3, list item with its
 /// marker ("•" or "1."), paragraph or blank line. `**text**` becomes bold.
 class ExportBlock {
-  const ExportBlock(this.kind, this.runs, {this.level = 0, this.marker});
+  const ExportBlock(
+    this.kind,
+    this.runs, {
+    this.level = 0,
+    this.marker,
+    this.imageBytes,
+    this.imageName,
+    this.imageMimeType,
+  });
 
   final ExportBlockKind kind;
   final List<ExportRun> runs;
   final int level;
   final String? marker;
+  final Uint8List? imageBytes;
+  final String? imageName;
+  final String? imageMimeType;
 
   String get text => runs.map((run) => run.text).join();
 }
@@ -297,12 +488,28 @@ class ExportBlock {
 final _headingPattern = RegExp(r'^(#{1,3}) (.*)$');
 final _bulletPattern = RegExp(r'^\s*[-*•] (.*)$');
 final _numberPattern = RegExp(r'^\s*(\d+[.)]) (.*)$');
+final _inlineImagePattern = RegExp(
+  r'^!\[([^\]]*)\]\(data:(image/jpeg|image/png);base64,([A-Za-z0-9+/=]+)\)$',
+);
 
 /// shortcut: tables, links, italics and nested lists stay as plain text.
 /// Upgrade when F10 documents need them (tables first).
 List<ExportBlock> parseExportMarkdown(String markdown) {
   final blocks = <ExportBlock>[];
   for (final line in const LineSplitter().convert(markdown)) {
+    final inlineImage = _inlineImagePattern.firstMatch(line);
+    if (inlineImage != null) {
+      blocks.add(
+        ExportBlock(
+          ExportBlockKind.image,
+          const [],
+          imageName: inlineImage.group(1),
+          imageMimeType: inlineImage.group(2),
+          imageBytes: base64Decode(inlineImage.group(3)!),
+        ),
+      );
+      continue;
+    }
     if (line.trim().isEmpty) {
       blocks.add(const ExportBlock(ExportBlockKind.blank, []));
       continue;

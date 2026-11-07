@@ -8,6 +8,7 @@ import 'package:memex/data/services/character_service.dart';
 import 'package:memex/data/services/comment_settings_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/domain/models/card_model.dart';
+import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/utils/mention_parser.dart';
 import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
 import 'package:memex/utils/user_storage.dart';
@@ -194,10 +195,14 @@ Future<void> handleProcessAiReplyImpl(
       _logger.warning('Failed to resolve reply target character: $e');
     }
   }
-  targetCharacterId ??= await _resolveMentionedCharacterId(
-    userId: userId,
-    content: content,
-  );
+  var routedByMention = false;
+  if (targetCharacterId == null) {
+    targetCharacterId = await _resolveMentionedCharacterId(
+      userId: userId,
+      content: content,
+    );
+    routedByMention = targetCharacterId != null;
+  }
 
   await processAICommentReply(
     cardId: cardId,
@@ -209,7 +214,46 @@ Future<void> handleProcessAiReplyImpl(
     locationContextReminder: locationContextReminder,
     withMemoryManagement: true,
     forceReply: targetCharacterId != null,
+    readAttachedPdfs: true,
   );
+
+  // An @mention calls exactly one persona; otherwise others may join in (F10-01).
+  if (!routedByMention) {
+    await _debateAfterReply(userId: userId, cardId: cardId);
+  }
+}
+
+/// Best-effort: the user's reply is already answered, so a failure here must
+/// not make the task retry and answer it twice.
+Future<void> _debateAfterReply({
+  required String userId,
+  required String cardId,
+}) async {
+  try {
+    final settings = await CommentSettingsService.load(userId);
+    if (!settings.enableCharacterComment ||
+        settings.maxCommentCharacters <= 1) {
+      return;
+    }
+    final turns = await runPersonaDebate(
+      loadComments: () async =>
+          (await FileSystemService.instance.readCardFile(userId, cardId))
+              ?.comments ??
+          const [],
+      loadCharacters: () => CharacterService.instance.getAllCharacters(userId),
+      speak: (next, replyToId) => processAICommentReply(
+        cardId: cardId,
+        userId: userId,
+        userContent: Prompts.personaDebatePrompt(replyToId),
+        characterId: next.id,
+        withMemoryManagement: true,
+        readAttachedPdfs: true,
+      ),
+    );
+    _logger.info('Persona debate on $cardId added $turns turn(s)');
+  } catch (e, stack) {
+    _logger.warning('Persona debate failed for $cardId: $e', e, stack);
+  }
 }
 
 Future<String?> _resolveMentionedCharacterId({
@@ -273,4 +317,68 @@ String? resolveReplyTargetCharacterId(
     current = byId[nextId];
   }
   return null;
+}
+
+/// Most persona turns allowed after one user message, replies included (D-037).
+const maxPersonaTurnsPerUserMessage = 4;
+
+/// How many more persona turns may follow the latest comment (F10-01).
+///
+/// Personas only talk to each other after the user has answered: a thread
+/// without a user comment (the initial persona comment) allows none. Every AI
+/// comment after the user's last message counts, the direct reply included.
+int remainingPersonaTurns(
+  List<CardComment> comments, {
+  int max = maxPersonaTurnsPerUserMessage,
+}) {
+  final lastUser = comments.lastIndexWhere((c) => !c.isAi);
+  if (lastUser < 0) return 0;
+  final spoken = comments.length - 1 - lastUser;
+  return spoken >= max ? 0 : max - spoken;
+}
+
+/// Next persona for the debate: enabled, not the one who just spoke, and the
+/// one with the fewest comments in the thread (ties by id).
+CharacterModel? pickNextDebater(
+  List<CharacterModel> characters,
+  List<CardComment> comments,
+) {
+  final last = comments.isEmpty ? null : comments.last;
+  final lastSpeaker = last != null && last.isAi ? last.characterId : null;
+  final spoken = <String, int>{};
+  for (final c in comments) {
+    final id = c.characterId;
+    if (c.isAi && id != null) spoken[id] = (spoken[id] ?? 0) + 1;
+  }
+  final candidates = characters
+      .where((c) => c.enabled && c.id != lastSpeaker)
+      .toList()
+    ..sort((a, b) {
+      final byCount = (spoken[a.id] ?? 0).compareTo(spoken[b.id] ?? 0);
+      return byCount != 0 ? byCount : a.id.compareTo(b.id);
+    });
+  return candidates.isEmpty ? null : candidates.first;
+}
+
+/// Lets other personas answer each other after the user's reply, at most
+/// [remainingPersonaTurns] times. Stops when someone skips (nothing to add),
+/// no other persona is available, or the last comment is not from a persona.
+/// Returns how many turns were added.
+Future<int> runPersonaDebate({
+  required Future<List<CardComment>> Function() loadComments,
+  required Future<List<CharacterModel>> Function() loadCharacters,
+  required Future<void> Function(CharacterModel next, String replyToId) speak,
+}) async {
+  var turns = 0;
+  while (true) {
+    final comments = await loadComments();
+    if (comments.isEmpty || !comments.last.isAi) break;
+    if (remainingPersonaTurns(comments) <= 0) break;
+    final next = pickNextDebater(await loadCharacters(), comments);
+    if (next == null) break;
+    await speak(next, comments.last.id);
+    if ((await loadComments()).length <= comments.length) break;
+    turns++;
+  }
+  return turns;
 }

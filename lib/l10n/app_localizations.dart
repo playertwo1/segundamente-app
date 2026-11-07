@@ -6243,6 +6243,12 @@ abstract class AppLocalizations {
   /// **'Source'**
   String get todoOpenSource;
 
+  /// No description provided for @todoSourceChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The report changed; check the source before relying on this copy.'**
+  String get todoSourceChanged;
+
   /// No description provided for @todoAddFromReport.
   ///
   /// In en, this message translates to:
@@ -6423,11 +6429,41 @@ abstract class AppLocalizations {
   /// **'PDF'**
   String get reportExportPdf;
 
+  /// No description provided for @reportExportJson.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON'**
+  String get reportExportJson;
+
   /// No description provided for @reportExportDocx.
   ///
   /// In en, this message translates to:
   /// **'DOCX'**
   String get reportExportDocx;
+
+  /// No description provided for @reportImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Images attached by you'**
+  String get reportImagesTitle;
+
+  /// No description provided for @reportImagesDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'These images are visual references only; they do not prove report items.'**
+  String get reportImagesDisclaimer;
+
+  /// No description provided for @reportImagesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No related image is available.'**
+  String get reportImagesUnavailable;
+
+  /// No description provided for @reportImageSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: message {index} {timestamp}'**
+  String reportImageSource(Object index, Object timestamp);
 
   /// No description provided for @followUpsTitle.
   ///
@@ -7418,6 +7454,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Or mark what the card must be:'**
   String get savedViewPickProps;
+
+  /// No description provided for @threadDocsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get threadDocsSection;
+
+  /// No description provided for @threadDocCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create document'**
+  String get threadDocCreate;
+
+  /// No description provided for @threadDocCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a document from this conversation?'**
+  String get threadDocCreateTitle;
+
+  /// No description provided for @threadDocCreateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The comments so far and the record text go to your chat model. Nothing is created before you confirm.'**
+  String get threadDocCreateBody;
+
+  /// No description provided for @threadDocInstructionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What should it be? (proposal, summary...)'**
+  String get threadDocInstructionHint;
+
+  /// No description provided for @threadDocInstructionDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Put this conversation together in a document'**
+  String get threadDocInstructionDefault;
+
+  /// No description provided for @threadDocPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the document...'**
+  String get threadDocPreparing;
+
+  /// No description provided for @threadDocVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {n}'**
+  String threadDocVersion(Object n);
+
+  /// No description provided for @threadDocByModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Written by the model'**
+  String get threadDocByModel;
+
+  /// No description provided for @threadDocByUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited by you'**
+  String get threadDocByUser;
+
+  /// No description provided for @threadDocWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Citations that could not be checked: {list}'**
+  String threadDocWarnings(Object list);
+
+  /// No description provided for @threadDocOriginDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'The original record was deleted.'**
+  String get threadDocOriginDeleted;
+
+  /// No description provided for @threadDocRevise.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a change'**
+  String get threadDocRevise;
+
+  /// No description provided for @threadDocReviseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. change only the conclusion'**
+  String get threadDocReviseHint;
+
+  /// No description provided for @threadDocEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit by hand'**
+  String get threadDocEdit;
+
+  /// No description provided for @threadDocSaveVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as new version'**
+  String get threadDocSaveVersion;
+
+  /// No description provided for @threadDocStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The document changed while you were editing. Reload it before saving again.'**
+  String get threadDocStale;
+
+  /// No description provided for @threadDocExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export this version'**
+  String get threadDocExport;
+
+  /// No description provided for @threadDocDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete document'**
+  String get threadDocDelete;
+
+  /// No description provided for @threadDocDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this document and all its versions? The record is not changed.'**
+  String get threadDocDeleteMessage;
+
+  /// No description provided for @threadDocFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not finish. Try again.'**
+  String get threadDocFailed;
+
+  /// No description provided for @threadDocRelatedFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Find related records'**
+  String get threadDocRelatedFind;
+
+  /// No description provided for @threadDocRelatedNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No related records found.'**
+  String get threadDocRelatedNone;
+
+  /// No description provided for @threadDocRelatedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the ticked records are sent to the model.'**
+  String get threadDocRelatedNote;
+
+  /// No description provided for @threadDocLargePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF is large ({size} MB) and the AI has not read it yet. Sending it may take time and cost.'**
+  String threadDocLargePdf(Object size);
+
+  /// No description provided for @threadDocLargePdfSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send PDF to the model'**
+  String get threadDocLargePdfSend;
+
+  /// No description provided for @threadDocKeepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This record has documents'**
+  String get threadDocKeepTitle;
+
+  /// No description provided for @threadDocKeepBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} document(s) were made from this record. Keep them, marked as \"original deleted\", or delete them together?'**
+  String threadDocKeepBody(Object count);
+
+  /// No description provided for @threadDocKeepYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep documents'**
+  String get threadDocKeepYes;
+
+  /// No description provided for @threadDocKeepNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete together'**
+  String get threadDocKeepNo;
+
+  /// No description provided for @threadDocFromTextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a document?'**
+  String get threadDocFromTextTitle;
+
+  /// No description provided for @threadDocFromTextBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It looks like you asked for a document. Create it from this conversation? Nothing is sent before you confirm.'**
+  String get threadDocFromTextBody;
+
+  /// No description provided for @threadDocFromTextYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Create document'**
+  String get threadDocFromTextYes;
+
+  /// No description provided for @threadDocFromTextNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Just comment'**
+  String get threadDocFromTextNo;
 }
 
 class _AppLocalizationsDelegate

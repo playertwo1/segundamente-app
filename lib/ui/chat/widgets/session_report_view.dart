@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/session_report_export.dart';
+import 'package:memex/ui/core/widgets/local_image.dart';
 import 'package:memex/utils/user_storage.dart';
 
 class SessionReportView extends StatefulWidget {
@@ -206,6 +208,53 @@ class _SessionReportViewState extends State<SessionReportView> {
           ),
         if (report != null)
           Text(report.title, key: const ValueKey('report_stored_title')),
+        if (report != null && report.images.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            l10n.reportImagesTitle,
+            key: const ValueKey('report_images_title'),
+          ),
+          Text(
+            l10n.reportImagesDisclaimer,
+            key: const ValueKey('report_images_disclaimer'),
+          ),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final image in report.images)
+                SizedBox(
+                  width: 180,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LocalImage(
+                          url: FileSystemService.instance
+                              .toAbsolutePath(image.relativePath),
+                          width: 180,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          semanticLabel: image.name,
+                        ),
+                      ),
+                      Text(image.name),
+                      Text(l10n.reportImageSource(
+                        image.messageIndex,
+                        image.messageTimestamp ?? '',
+                      )),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+        if (report != null && report.images.isEmpty)
+          Text(
+            l10n.reportImagesUnavailable,
+            key: const ValueKey('report_images_unavailable'),
+          ),
         if (report != null)
           for (final section in report.sections) ...[
             Text(
@@ -243,6 +292,8 @@ class _SessionReportViewState extends State<SessionReportView> {
         return l10n.reportExportPdf;
       case ReportExportFormat.docx:
         return l10n.reportExportDocx;
+      case ReportExportFormat.json:
+        return l10n.reportExportJson;
     }
   }
 
@@ -325,10 +376,13 @@ class _ReportItemTile extends StatelessWidget {
       children: [
         ListTile(
           key: ValueKey('report_item_${item.id}'),
-          leading: Checkbox(
-            key: ValueKey('report_export_item_${item.id}'),
-            value: selected,
-            onChanged: (value) => onSelected(value ?? false),
+          leading: Semantics(
+            label: item.text,
+            child: Checkbox(
+              key: ValueKey('report_export_item_${item.id}'),
+              value: selected,
+              onChanged: (value) => onSelected(value ?? false),
+            ),
           ),
           title: Text(item.text),
           subtitle: Column(

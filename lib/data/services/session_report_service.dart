@@ -6,6 +6,7 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/semantic_search_model_service.dart';
 import 'package:memex/data/services/transcript_correction_service.dart';
+import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/domain/models/pdf_pages.dart';
 import 'package:memex/domain/models/report_memory.dart';
 import 'package:memex/domain/models/semantic_similarity.dart';
@@ -24,13 +25,17 @@ class SessionReportService {
     FileSystemService? fileService,
     ChatSessionStorage? sessions,
     SemanticSearchModelManager? semanticSearch,
+    TodoService? todos,
   })  : _files = fileService ?? FileSystemService.instance,
         _sessions = sessions ?? ChatSessionStorage.instance,
-        _semanticSearch = semanticSearch ?? SemanticSearchModelService.instance;
+        _semanticSearch = semanticSearch ?? SemanticSearchModelService.instance,
+        _todos = todos ??
+            TodoService(fileService: fileService ?? FileSystemService.instance);
 
   final FileSystemService _files;
   final ChatSessionStorage _sessions;
   final SemanticSearchModelManager _semanticSearch;
+  final TodoService _todos;
   final _glossary = GlossaryService();
   final _logger = getLogger('SessionReportService');
 
@@ -43,7 +48,19 @@ class SessionReportService {
     if (!await file.exists()) return null;
     final raw = jsonDecode(await file.readAsString());
     if (raw is! Map) throw const FormatException('report is not an object');
-    final report = sessionReportFromStorage(raw.cast<String, dynamic>());
+    var report = sessionReportFromStorage(raw.cast<String, dynamic>());
+    final safeImages = <ReportImage>[];
+    for (final image in report.images) {
+      if (await _files.isUserImageAsset(
+        userId: userId,
+        relativePath: image.relativePath,
+      )) {
+        safeImages.add(image);
+      }
+    }
+    if (safeImages.length != report.images.length) {
+      report = report.copyWith(images: safeImages);
+    }
     if (report.schemaVersion != raw['schema_version']) {
       await _write(file, report);
     }
@@ -60,11 +77,14 @@ class SessionReportService {
     if (existing != null && reportHasApprovedItem(existing)) {
       throw StateError('approved items keep this report');
     }
-    final report = draftSessionReport(
+    final draft = draftSessionReport(
       sessionId: sessionId,
       kind: kind,
       customTitle: customTitle,
       segments: await _segments(userId, sessionId),
+    );
+    final report = draft.copyWith(
+      images: await _attachedImages(userId, sessionId),
     );
     await _archivePrevious(userId, sessionId);
     await _write(_reportFile(userId, sessionId), report);
@@ -122,12 +142,15 @@ class SessionReportService {
     if (existing != null && reportHasApprovedItem(existing)) {
       throw StateError('approved items keep this report');
     }
-    final report = sessionReportFromModelJson(
+    final extracted = sessionReportFromModelJson(
       sessionId: sessionId,
       kind: kind,
       customTitle: customTitle,
       segments: await _segments(userId, sessionId),
       json: json,
+    );
+    final report = extracted.copyWith(
+      images: await _attachedImages(userId, sessionId),
     );
     await _archivePrevious(userId, sessionId);
     await _write(_reportFile(userId, sessionId), report);
@@ -151,6 +174,11 @@ class SessionReportService {
       text: text,
       assignee: assignee,
       due: due,
+    );
+    await _todos.markReportItemStale(
+      userId: userId,
+      sessionId: sessionId,
+      itemId: itemId,
     );
     await _write(_reportFile(userId, sessionId), next);
     await _appendRevisions(
@@ -177,6 +205,11 @@ class SessionReportService {
       current,
       itemId: itemId,
       status: status,
+    );
+    await _todos.markReportItemStale(
+      userId: userId,
+      sessionId: sessionId,
+      itemId: itemId,
     );
     await _write(_reportFile(userId, sessionId), next);
     await _appendRevisions(
@@ -477,6 +510,47 @@ class SessionReportService {
       }
     }
     return buffer.toString();
+  }
+
+  Future<List<ReportImage>> _attachedImages(
+    String userId,
+    String sessionId,
+  ) async {
+    final messages = await _sessions.loadMessages(userId, sessionId);
+    final images = <ReportImage>[];
+    final seen = <String>{};
+    for (var index = 0; index < messages.length; index++) {
+      final message = messages[index];
+      if (message['role'] != 'user' || message['content'] is! List) continue;
+      for (final block in message['content'] as List) {
+        if (block is! Map || block['type'] != 'image_url') continue;
+        final imageUrl = block['image_url'];
+        if (imageUrl is! Map) continue;
+        final relativePath = imageUrl['filePath']?.toString();
+        if (relativePath == null ||
+            relativePath.isEmpty ||
+            !seen.add(relativePath) ||
+            !await _files.isUserImageAsset(
+              userId: userId,
+              relativePath: relativePath,
+            )) {
+          continue;
+        }
+        final path = p.basename(relativePath);
+        final originalName = block['name']?.toString().trim();
+        images.add(
+          ReportImage(
+            relativePath: relativePath,
+            name: originalName == null || originalName.isEmpty
+                ? path
+                : originalName,
+            messageIndex: index + 1,
+            messageTimestamp: message['timestamp']?.toString(),
+          ),
+        );
+      }
+    }
+    return images;
   }
 }
 

@@ -31,6 +31,7 @@ void main() {
     final file = File(path);
     if (!await file.exists()) {
       markTestSkipped('F6-10 tokenizer.json is not downloaded on this machine');
+      return;
     }
 
     final tokenizer = await UnigramTokenizer.fromFile(path);

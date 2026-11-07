@@ -76,6 +76,7 @@ TodoItem _item(
   String text, {
   String due = reportDueUnknown,
   bool done = false,
+  bool sourceStale = false,
   int minute = 0,
   TodoSource? source,
 }) =>
@@ -86,6 +87,7 @@ TodoItem _item(
       done: done,
       createdAt: DateTime(2026, 11, 6, 0, minute).toIso8601String(),
       source: source,
+      sourceStale: sourceStale,
     );
 
 void main() {
@@ -212,6 +214,25 @@ void main() {
     expect(calendarTitles, ['Enviar a proposta']);
   });
 
+  testWidgets('shows when the report source changed after adding the Todo',
+      (tester) async {
+    await pump(tester, [
+      _item(
+        't1',
+        'Enviar a proposta',
+        source: const TodoSource(
+          sessionId: 'pdf_1',
+          itemId: 'item_1',
+          excerpt: 'Carlos envia a proposta',
+        ),
+        sourceStale: true,
+      ),
+    ]);
+
+    expect(find.byKey(const ValueKey('todo_source_stale_t1')), findsOneWidget);
+    expect(find.text(UserStorage.l10n.todoSourceChanged), findsOneWidget);
+  });
+
   testWidgets('a loose date or a done item has no calendar button',
       (tester) async {
     await pump(tester, [
@@ -295,5 +316,28 @@ void main() {
   testWidgets('a date without a time has no reminder button', (tester) async {
     await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21')]);
     expect(find.byKey(const ValueKey('todo_reminder_t1')), findsNothing);
+  });
+
+  group('accessibility', () {
+    final items = [
+      _item('t1', 'Ligar', due: '2026-11-21 14:30'),
+      _item('t2', 'Enviar resumo', done: true, minute: 1),
+      _item('t3', 'Revisar', sourceStale: true, minute: 2),
+    ];
+
+    testWidgets('tap targets are large and labeled', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, items);
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      handle.dispose();
+    });
+
+    testWidgets('large text does not overflow', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await pump(tester, items);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

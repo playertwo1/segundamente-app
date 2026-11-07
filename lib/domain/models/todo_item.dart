@@ -40,6 +40,7 @@ class TodoItem {
     required this.createdAt,
     this.doneAt,
     this.source,
+    this.sourceStale = false,
   });
 
   final String id;
@@ -51,9 +52,18 @@ class TodoItem {
   final String createdAt;
   final String? doneAt;
   final TodoSource? source;
+  final bool sourceStale;
 
-  TodoItem copyWith({String? text, String? due, bool? done, String? doneAt}) {
+  TodoItem copyWith({
+    String? text,
+    String? due,
+    bool? done,
+    String? doneAt,
+    bool? sourceStale,
+    bool clearSource = false,
+  }) {
     final nextDone = done ?? this.done;
+    final nextSource = clearSource ? null : source;
     return TodoItem(
       id: id,
       text: text ?? this.text,
@@ -61,7 +71,8 @@ class TodoItem {
       done: nextDone,
       createdAt: createdAt,
       doneAt: nextDone ? (doneAt ?? this.doneAt) : null,
-      source: source,
+      source: nextSource,
+      sourceStale: nextSource == null ? false : sourceStale ?? this.sourceStale,
     );
   }
 
@@ -73,6 +84,7 @@ class TodoItem {
         'created_at': createdAt,
         'done_at': doneAt,
         if (source != null) 'source': source!.toJson(),
+        if (sourceStale) 'source_stale': true,
       };
 
   static TodoItem fromJson(Map<String, dynamic> json) {
@@ -86,6 +98,7 @@ class TodoItem {
       createdAt: _text(json['created_at']),
       doneAt: json['done_at']?.toString(),
       source: source is Map ? TodoSource.fromJson(source.cast()) : null,
+      sourceStale: source is Map && json['source_stale'] == true,
     );
   }
 }

@@ -82,6 +82,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('report_export_pdf')), findsOneWidget);
 
+    await tester
+        .ensureVisible(find.byKey(const ValueKey('report_edit_item_1')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('report_edit_item_1')));
     await tester.pumpAndSettle();
     expect(

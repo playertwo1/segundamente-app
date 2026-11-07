@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:path/path.dart' as path;
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:yaml/yaml.dart';
 import 'package:synchronized/synchronized.dart';
@@ -268,6 +269,47 @@ class FileSystemService {
   ///   assetsdirectory path（absolute path）
   String getAssetsPath(String userId) {
     return path.join(getFactsPath(userId), 'assets');
+  }
+
+  Future<bool> isUserImageAsset({
+    required String userId,
+    required String relativePath,
+  }) async {
+    final absolute = _userImageAssetPath(userId, relativePath);
+    return absolute != null && await FileSystemEntity.isFile(absolute);
+  }
+
+  Future<Uint8List> readUserImageAssetBytes({
+    required String userId,
+    required String relativePath,
+  }) async {
+    final absolute = _userImageAssetPath(userId, relativePath);
+    if (absolute == null) throw ArgumentError.value(relativePath, 'relativePath');
+    return Uint8List.fromList(await File(absolute).readAsBytes());
+  }
+
+  /// Where the page text of a record's PDF asset is cached (`<file>.pages.json`),
+  /// or null when [relativePath] is not a PDF inside the user's assets.
+  String? pdfPagesCachePath(String userId, String relativePath) {
+    if (path.isAbsolute(relativePath)) return null;
+    final absolute = path.normalize(toAbsolutePath(relativePath));
+    if (!path.isWithin(path.normalize(getAssetsPath(userId)), absolute) ||
+        path.extension(absolute).toLowerCase() != '.pdf') {
+      return null;
+    }
+    return '$absolute.pages.json';
+  }
+
+  String? _userImageAssetPath(String userId, String relativePath) {
+    if (path.isAbsolute(relativePath)) return null;
+    final absolute = path.normalize(toAbsolutePath(relativePath));
+    final assetsRoot = path.normalize(getAssetsPath(userId));
+    if (!path.isWithin(assetsRoot, absolute) ||
+        !const {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'}
+            .contains(path.extension(absolute).toLowerCase())) {
+      return null;
+    }
+    return absolute;
   }
 
   /// GetCardsdirectory path
@@ -1902,6 +1944,11 @@ class FileSystemService {
   /// Derived session reports. The transcript original stays elsewhere.
   String getSessionReportsPath(String userId) {
     return path.join(getWorkspacePath(userId), 'SessionReports');
+  }
+
+  /// Documents made from comment threads (F10): `<id>/document.json`.
+  String getThreadDocumentsPath(String userId) {
+    return path.join(getWorkspacePath(userId), 'ThreadDocuments');
   }
 
   /// Folder of the personal Todo list file.

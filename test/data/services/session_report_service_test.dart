@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as image_codec;
 import 'package:memex/data/repositories/chat.dart';
 import 'package:memex/data/services/chat_session_storage.dart';
 import 'package:memex/data/services/file_system_service.dart';
@@ -14,6 +16,7 @@ import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
 import 'package:memex/data/services/saved_view_service.dart';
 import 'package:memex/data/services/topic_service.dart';
+import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/data/services/transcript_correction_service.dart';
 import 'package:memex/data/services/transcript_import_service.dart';
 import 'package:memex/domain/models/report_memory.dart';
@@ -69,6 +72,37 @@ void main() {
         '0',
         'original.bin',
       ),
+    );
+  }
+
+  Future<String> storeImageAsset() async {
+    final source = File(p.join(tempDir.path, 'report-image.png'));
+    await source.writeAsBytes(
+      image_codec.encodePng(image_codec.Image(width: 8, height: 8)),
+    );
+    return (await FileSystemService.instance.saveAssetFromFile(
+      userId: userId,
+      sourcePath: source.path,
+      assetType: 'img',
+    ))
+        .$2;
+  }
+
+  Future<void> storeChatSessionWithImage(String relativePath) async {
+    await ChatSessionStorage.instance.appendMessage(
+      userId: userId,
+      sessionId: sessionId,
+      message: {
+        'role': 'user',
+        'timestamp': '2026-11-02T15:01:00.000',
+        'content': [
+          {
+            'type': 'image_url',
+            'name': 'meeting.png',
+            'image_url': {'filePath': relativePath},
+          },
+        ],
+      },
     );
   }
 
@@ -130,6 +164,145 @@ void main() {
     expect(applied.items.single.assignee, reportAssigneeUnknown);
     expect(applied.items.single.due, reportDueUnknown);
     expect(await original.readAsBytes(), bytes);
+  });
+
+  test('report images only include valid images attached by the user',
+      () async {
+    await storeTranscript();
+    final relativePath = await storeImageAsset();
+    await ChatSessionStorage.instance.appendMessage(
+      userId: userId,
+      sessionId: sessionId,
+      message: {
+        'role': 'user',
+        'timestamp': '2026-11-02T15:01:00.000',
+        'content': [
+          {
+            'type': 'image_url',
+            'name': 'meeting.png',
+            'image_url': {'filePath': relativePath},
+          },
+          {
+            'type': 'image_url',
+            'image_url': {'filePath': 'workspace/_other/Facts/assets/x.png'},
+          },
+          {
+            'type': 'image_url',
+            'image_url': {'url': 'https://example.invalid/image.png'},
+          },
+        ],
+      },
+    );
+    await ChatSessionStorage.instance.appendMessage(
+      userId: userId,
+      sessionId: sessionId,
+      message: {
+        'role': 'assistant',
+        'timestamp': '2026-11-02T15:02:00.000',
+        'content': [
+          {
+            'type': 'image_url',
+            'image_url': {'filePath': relativePath},
+          },
+        ],
+      },
+    );
+
+    final report = await service.draft(
+      userId: userId,
+      sessionId: sessionId,
+      kind: ReportKind.reuniao,
+      customTitle: null,
+    );
+
+    expect(report.images, hasLength(1));
+    expect(report.images.single.relativePath, relativePath);
+    expect(report.images.single.name, 'meeting.png');
+    expect(report.images.single.messageIndex, 2);
+    expect(report.images.single.messageTimestamp, '2026-11-02T15:01:00.000');
+  });
+
+  test('loading a report hides image paths outside the owner assets', () async {
+    await storeTranscript();
+    final relativePath = await storeImageAsset();
+    await storeChatSessionWithImage(relativePath);
+    await service.draft(
+      userId: userId,
+      sessionId: sessionId,
+      kind: ReportKind.reuniao,
+      customTitle: null,
+    );
+
+    final outsideImage = File(p.join(tempDir.path, 'private.png'));
+    await outsideImage.writeAsBytes(
+      await FileSystemService.instance.readUserImageAssetBytes(
+        userId: userId,
+        relativePath: relativePath,
+      ),
+    );
+    final reportFile = File(p.join(
+      FileSystemService.instance.getSessionReportsPath(userId),
+      sessionId,
+      'report.json',
+    ));
+    final stored = jsonDecode(await reportFile.readAsString()) as Map;
+    final image = Map<String, dynamic>.from(
+      (stored['images'] as List).single as Map,
+    );
+    stored['images'] = [
+      image,
+      {...image, 'relative_path': outsideImage.path, 'name': 'private.png'},
+    ];
+    await reportFile.writeAsString(jsonEncode(stored));
+
+    final loaded = await service.load(userId: userId, sessionId: sessionId);
+    expect(loaded!.images.map((image) => image.relativePath), [relativePath]);
+  });
+
+  test('editing a report task marks its copied Todo source as stale', () async {
+    await storeTranscript();
+    var report = await service.applyModelJson(
+      userId: userId,
+      sessionId: sessionId,
+      kind: ReportKind.reuniao,
+      customTitle: null,
+      json: {
+        'schema_version': 1,
+        'items': [
+          {
+            'kind': 'task',
+            'text': 'Mandar o resumo',
+            'segment_id': 'seg_1',
+            'excerpt': 'mandar o resumo',
+            'clock': '00:00:02',
+            'assignee': 'Rafael',
+            'due': '2026-11-21',
+          },
+        ],
+      },
+    );
+    report = await service.setStatus(
+      userId: userId,
+      sessionId: sessionId,
+      itemId: report.items.single.id,
+      status: ReportItemStatus.approved,
+    );
+    await TodoService().addFromReport(
+      userId: userId,
+      sessionId: sessionId,
+      item: report.items.single,
+    );
+
+    await service.editItem(
+      userId: userId,
+      sessionId: sessionId,
+      itemId: report.items.single.id,
+      text: 'Mandar o resumo revisado',
+      assignee: 'Rafael',
+      due: '2026-11-21',
+    );
+
+    expect((await TodoService().load(userId)).single.sourceStale, isTrue);
   });
 
   test('an approved item blocks a new draft', () async {
@@ -370,9 +543,11 @@ void main() {
     );
   });
 
-  test('export writes the three files and delete removes them', () async {
+  test('export writes every format and delete removes the files', () async {
     final original = await storeTranscript();
     final bytes = await original.readAsBytes();
+    final imagePath = await storeImageAsset();
+    await storeChatSessionWithImage(imagePath);
     await service.draft(
       userId: userId,
       sessionId: sessionId,
@@ -394,6 +569,32 @@ void main() {
       written.add(file.path);
       expect(await file.exists(), isTrue);
       expect(file.path, endsWith(reportExportFileName(format)));
+      if (format == ReportExportFormat.markdown) {
+        final markdown = await file.readAsString();
+        expect(markdown, contains('![meeting.png](data:image/png;base64,'));
+        expect(markdown, contains(UserStorage.l10n.reportImagesDisclaimer));
+        expect(markdown, contains('Fonte: mensagem 2 2026-11-02T15:01:00.000'));
+      } else if (format == ReportExportFormat.pdf) {
+        expect(latin1.decode(await file.readAsBytes()),
+            contains('/Subtype/Image'));
+      } else if (format == ReportExportFormat.docx) {
+        final archive = ZipDecoder().decodeBytes(await file.readAsBytes());
+        expect(archive.findFile('word/media/report-image-1.png'), isNotNull);
+        final document = utf8.decode(
+          archive.findFile('word/document.xml')!.content as List<int>,
+        );
+        expect(document, contains(UserStorage.l10n.reportImagesDisclaimer));
+        expect(document, contains('Fonte: mensagem 2 2026-11-02T15:01:00.000'));
+      } else if (format == ReportExportFormat.json) {
+        final json = jsonDecode(await file.readAsString()) as Map;
+        final images = json['images'] as List;
+        expect(images, hasLength(1));
+        expect(images.single['name'], 'meeting.png');
+        expect(images.single['message_index'], 2);
+        expect(images.single['message_timestamp'], '2026-11-02T15:01:00.000');
+        expect(images.single['illustrative_only'], isTrue);
+        expect(images.single.containsKey('relative_path'), isFalse);
+      }
     }
     expect(await original.readAsBytes(), bytes);
 
@@ -403,6 +604,27 @@ void main() {
       expect(await File(path).exists(), isFalse);
     }
     expect(await original.readAsBytes(), bytes);
+  });
+
+  test('Markdown export states when no related images are available', () async {
+    await storeTranscript();
+    await service.draft(
+      userId: userId,
+      sessionId: sessionId,
+      kind: ReportKind.reuniao,
+      customTitle: null,
+    );
+    final file = await SessionReportExportService().write(
+      userId: userId,
+      sessionId: sessionId,
+      format: ReportExportFormat.markdown,
+      exportedAt: DateTime(2026, 11, 2, 15, 4),
+    );
+
+    expect(
+      await file.readAsString(),
+      contains(UserStorage.l10n.reportImagesUnavailable),
+    );
   });
 
   test('follow-ups, text search and revisions stay beside the report',

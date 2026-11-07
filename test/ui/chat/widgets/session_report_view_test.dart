@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/config/app_flavor.dart';
+import 'package:memex/data/services/file_system_service.dart';
+import 'package:memex/data/services/local_asset_server.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/session_report_export.dart';
 import 'package:memex/l10n/app_localizations.dart';
@@ -93,6 +97,13 @@ void main() {
         find.byKey(const ValueKey('report_section_decision')), findsOneWidget);
     expect(find.byKey(const ValueKey('report_section_question')), findsNothing);
     expect(find.text('Relatório de reunião'), findsOneWidget);
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(SessionReportView)),
+    )!;
+    expect(
+      find.text(l10n.reportImagesUnavailable),
+      findsOneWidget,
+    );
 
     final study = draftSessionReport(
       sessionId: 's',
@@ -167,6 +178,48 @@ void main() {
         find.byKey(const ValueKey('report_item_clock_item_1')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('report_definitive_item_1')), findsNothing);
+  });
+
+  group('accessibility', () {
+    SessionReport sample() => sessionReportFromModelJson(
+          sessionId: 's',
+          kind: ReportKind.reuniao,
+          customTitle: null,
+          segments: segments,
+          json: {
+            'schema_version': 1,
+            'items': [
+              {
+                'kind': 'task',
+                'text': 'mandar o resumo',
+                'segment_id': 'seg_1',
+                'excerpt': 'mandar o resumo',
+                'clock': '00:00:02',
+              },
+            ],
+          },
+        );
+
+    testWidgets('tap targets are large and labeled', (tester) async {
+      final handle = tester.ensureSemantics();
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_Host(initial: sample()).wrap());
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      handle.dispose();
+    });
+
+    testWidgets('large text does not overflow', (tester) async {
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(_Host(initial: sample()).wrap());
+      expect(tester.takeException(), isNull);
+    });
   });
 
   testWidgets('a task becomes definitive only after approval', (tester) async {
@@ -320,6 +373,43 @@ void main() {
     expect(ids, {'item_2'});
   });
 
+  testWidgets('json export button passes only the checked items',
+      (tester) async {
+    final report = draftSessionReport(
+      sessionId: 's',
+      kind: ReportKind.reuniao,
+      customTitle: null,
+      segments: segments,
+    );
+    Set<String>? ids;
+    ReportExportFormat? format;
+    await pump(
+      tester,
+      report,
+      onDraft: (_, __) async {},
+      onEdit: ({
+        required itemId,
+        required text,
+        required assignee,
+        required due,
+        reason,
+      }) async {},
+      onSetStatus: ({required itemId, required status, reason}) async {},
+      onExport: (nextFormat, nextIds) async {
+        format = nextFormat;
+        ids = nextIds;
+      },
+    );
+
+    await tester.tap(find.byKey(const ValueKey('report_export_item_item_1')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('report_export_json')));
+    await tester.pump();
+
+    expect(format, ReportExportFormat.json);
+    expect(ids, {'item_2'});
+  });
+
   SessionReport twoTasks() => SessionReport(
         schemaVersion: sessionReportSchemaVersion,
         sessionId: 's',
@@ -346,7 +436,7 @@ void main() {
             text: 'Enviar a proposta',
             status: ReportItemStatus.unconfirmed,
             assignee: reportAssigneeUnknown,
-            due: '21/11',
+            due: '2026-11-21',
             duplicateOf: 'item_1',
             source: ReportSource(
               segmentId: 'seg_0',
@@ -472,6 +562,55 @@ void main() {
         find.byKey(const ValueKey('report_duplicate_item_2')), findsOneWidget);
     expect(find.byKey(const ValueKey('report_duplicate_item_1')), findsNothing);
     expect(find.byKey(const ValueKey('report_item_item_2')), findsOneWidget);
+  });
+
+  testWidgets('attached report images are labeled as visual references',
+      (tester) async {
+    final tempDir = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('report_image_ui_'),
+    ))!;
+    addTearDown(() async {
+      await LocalAssetServer.stopServer();
+      if (await tempDir.exists()) await tempDir.delete(recursive: true);
+    });
+    await tester.runAsync(() => FileSystemService.init(tempDir.path));
+    final report = SessionReport(
+      schemaVersion: sessionReportSchemaVersion,
+      sessionId: 's',
+      kind: ReportKind.reuniao,
+      title: 'Relatório',
+      sections: sectionsFor(ReportKind.reuniao),
+      items: const [],
+      images: const [
+        ReportImage(
+          relativePath: 'workspace/_test/Facts/assets/reference.png',
+          name: 'reference.png',
+          messageIndex: 2,
+          messageTimestamp: '2026-11-02T15:01:00.000',
+        ),
+      ],
+    );
+    await pump(
+      tester,
+      report,
+      onDraft: (_, __) async {},
+      onEdit: ({
+        required itemId,
+        required text,
+        required assignee,
+        required due,
+        reason,
+      }) async {},
+      onSetStatus: ({required itemId, required status, reason}) async {},
+    );
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(SessionReportView)),
+    )!;
+    expect(find.text(l10n.reportImagesDisclaimer), findsOneWidget);
+    expect(
+      find.text(l10n.reportImageSource(2, '2026-11-02T15:01:00.000')),
+      findsOneWidget,
+    );
   });
 }
 

@@ -7,6 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/routing/routes.dart';
 import 'package:intl/intl.dart';
+import 'package:memex/domain/models/document_request.dart';
+import 'package:memex/utils/result.dart';
+import 'package:memex/ui/thread_document/widgets/thread_document_prompts.dart';
+import 'package:memex/ui/thread_document/widgets/thread_documents_section.dart';
 import 'package:memex/ui/timeline/widgets/location_picker_page.dart';
 import 'package:memex/ui/calendar/view_models/calendar_viewmodel.dart';
 import 'package:provider/provider.dart';
@@ -62,6 +66,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   late final MemexRouter _memexRouter;
+  final _docsRefresh = ValueNotifier<int>(0);
   String _userName = '';
   String? _userAvatar;
   double? _firstImageAspectRatio;
@@ -97,6 +102,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
     if (message is CardDetailUpdatedMessage &&
         message.cardId == widget.cardId &&
         mounted) {
+      _docsRefresh.value++;
       _fetchDetail();
     }
   }
@@ -137,6 +143,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
 
   @override
   void dispose() {
+    _docsRefresh.dispose();
     _memexRouter.unregisterCardDetailForeground(widget.cardId);
     EventBusService.instance.removeHandler(
       EventBusMessageType.cardDetailUpdated,
@@ -431,11 +438,26 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
       ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
+
+    final docs = (await _memexRouter.listThreadDocuments(widget.cardId))
+        .when(onOk: (list) => list.length, onError: (_, __) => 0);
+    bool? keepDocs;
+    if (docs > 0) {
+      if (!mounted) return;
+      keepDocs = await askKeepDocuments(context, docs);
+      if (keepDocs == null) return;
+    }
 
     try {
       // call delete API
       await _memexRouter.deleteCard(widget.cardId);
+      if (keepDocs != null) {
+        await _memexRouter.resolveThreadDocumentsOnDelete(
+          widget.cardId,
+          keep: keepDocs,
+        );
+      }
 
       if (mounted) {
         ToastHelper.showSuccess(context, UserStorage.l10n.deleteSuccess);
@@ -1212,6 +1234,11 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
 
                                   // Display Comments
                                   _buildCommentsList(detail),
+                                  ThreadDocumentsSection(
+                                    router: _memexRouter,
+                                    cardId: widget.cardId,
+                                    refresh: _docsRefresh,
+                                  ),
 
                                   const SizedBox(
                                     height: 100,
@@ -2319,6 +2346,13 @@ class _CommentInputWidgetState extends State<_CommentInputWidget> {
     final content = _controller.text.trim();
     if (content.isEmpty || _isPosting) return;
 
+    var wantsDocument = false;
+    if (looksLikeDocumentRequest(content)) {
+      final answer = await askCreateFromText(context);
+      if (answer == null || !mounted) return;
+      wantsDocument = answer;
+    }
+
     setState(() {
       _isPosting = true;
     });
@@ -2332,6 +2366,15 @@ class _CommentInputWidgetState extends State<_CommentInputWidget> {
       );
 
       _controller.clear();
+      if (wantsDocument) {
+        final queued = await memexRouter.requestThreadDocument(
+          cardId: widget.cardId,
+          instruction: content,
+        );
+        if (queued.isOk && mounted) {
+          ToastHelper.showSuccess(context, UserStorage.l10n.threadDocPreparing);
+        }
+      }
       widget.onCommentPosted();
 
       if (mounted) {

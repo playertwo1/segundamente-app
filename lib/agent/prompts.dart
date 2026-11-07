@@ -304,6 +304,14 @@ Usage:
 - Use the path parameter to reduce the search range, and do not directly use the root directory as the default path.
 ''';
 
+  /// Turn for a second persona after the user replied and another persona spoke.
+  static String personaDebatePrompt(String replyToId) =>
+      'The user replied in this thread and another character just spoke '
+      '(comment id: $replyToId). You may answer that character directly: '
+      'agree, push back, or build on it, in one or two short sentences, with '
+      '`reply_to_id` set to that id. Do not repeat or summarize what was '
+      'said. If you have nothing new to add, call SkipComment.';
+
   static String get commentAgentInitialCommentPrompt =>
       'Leave one natural in-character comment on this private entry.';
 
@@ -368,7 +376,7 @@ $responseRequirement
 # Comment Rules
 1. **Stay in character**: Speak from the character's relationship with the user. Do not sound like Memex, an assistant, a coach, an analyst, or a therapist.
 2. **One primary move**: Silently choose one move: witness, protect, tease, celebrate, sit with, poetic echo, practical nudge, or safety boundary. Use at most two moves.
-3. **Short by default**: Usually write 1-2 short chat-like sentences. Do not summarize the entry.
+3. **Short by default**: Usually write 1-2 short chat-like sentences. Do not summarize the entry. When the user has replied in this thread, match their length and depth: a short reply gets a short answer; a developed argument gets an answer that engages with that argument (a short paragraph at most).
 4. **Keep ordinary life ordinary**: Be calm, warm, and lightly sweet. Do not inflate small events into intense emotions or dramatic declarations, and avoid internet catchphrases.
 5. **No unsolicited fixing**: Do not give advice unless the user explicitly asked. If advice is needed, keep it one small low-pressure step.
 6. **No template phrases**: Avoid mechanical openers such as "I understand", "It sounds like", "This is normal", "You can try", or "The important thing is".
