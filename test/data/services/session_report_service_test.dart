@@ -519,10 +519,9 @@ void main() {
     expect(after.last.sessionIds, isEmpty);
   });
 
-  test('deleting the session removes the report and keeps the original',
+  test('deleting the session removes the report and the imported original',
       () async {
     final original = await storeTranscript();
-    final bytes = await original.readAsBytes();
     await service.draft(
       userId: userId,
       sessionId: sessionId,
@@ -536,7 +535,7 @@ void main() {
       await service.load(userId: userId, sessionId: sessionId),
       isNull,
     );
-    expect(await original.readAsBytes(), bytes);
+    expect(await original.exists(), isFalse);
     expect(
       await ChatSessionStorage.instance.sessionExists(userId, sessionId),
       isFalse,
@@ -585,15 +584,6 @@ void main() {
         );
         expect(document, contains(UserStorage.l10n.reportImagesDisclaimer));
         expect(document, contains('Fonte: mensagem 2 2026-11-02T15:01:00.000'));
-      } else if (format == ReportExportFormat.json) {
-        final json = jsonDecode(await file.readAsString()) as Map;
-        final images = json['images'] as List;
-        expect(images, hasLength(1));
-        expect(images.single['name'], 'meeting.png');
-        expect(images.single['message_index'], 2);
-        expect(images.single['message_timestamp'], '2026-11-02T15:01:00.000');
-        expect(images.single['illustrative_only'], isTrue);
-        expect(images.single.containsKey('relative_path'), isFalse);
       }
     }
     expect(await original.readAsBytes(), bytes);
@@ -603,7 +593,7 @@ void main() {
     for (final path in written) {
       expect(await File(path).exists(), isFalse);
     }
-    expect(await original.readAsBytes(), bytes);
+    expect(await original.exists(), isFalse);
   });
 
   test('Markdown export states when no related images are available', () async {
@@ -627,10 +617,9 @@ void main() {
     );
   });
 
-  test('follow-ups, text search and revisions stay beside the report',
+  test('text search and revisions stay beside the report',
       () async {
     final original = await storeTranscript();
-    final bytes = await original.readAsBytes();
     const otherId = 'txt_other';
     await TranscriptImportService().saveIfConfirmed(
       userId: userId,
@@ -654,7 +643,6 @@ void main() {
       customTitle: null,
     );
     final followUp = meeting.items[1];
-    expect(followUp.kind, ReportItemKind.followUp);
 
     await service.setStatus(
       userId: userId,
@@ -663,11 +651,6 @@ void main() {
       status: ReportItemStatus.approved,
       at: '2026-11-02T15:04:00',
     );
-    final panel = await service.approvedFollowUps(userId: userId);
-    expect(panel, hasLength(1));
-    expect(panel.single.sessionId, sessionId);
-    expect(panel.single.item.text, 'mandar o resumo');
-
     final found = await service.search(userId: userId, query: 'escopo');
     expect(found.single.sessionId, sessionId);
     expect(
@@ -731,7 +714,7 @@ void main() {
     expect(await revisions.exists(), isTrue);
     await service.deleteDerivatives(userId: userId, sessionId: sessionId);
     expect(await revisions.exists(), isFalse);
-    expect(await original.readAsBytes(), bytes);
+    expect(await original.exists(), isFalse);
   });
 
   test('model draft keeps verified items and fails over to the local draft',

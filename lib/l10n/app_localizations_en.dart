@@ -3505,6 +3505,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoAdded => 'Added to the to-do list';
 
   @override
+  String exportSavedTo(String path) {
+    return 'Saved to $path';
+  }
+
+  @override
   String get todoReminderTitle => 'Create a reminder?';
 
   @override
@@ -3591,9 +3596,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportExportPdf => 'PDF';
 
   @override
-  String get reportExportJson => 'JSON';
-
-  @override
   String get reportExportDocx => 'DOCX';
 
   @override
@@ -3612,22 +3614,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get followUpsTitle => 'Follow-ups';
-
-  @override
-  String get openFollowUps => 'Follow-ups';
-
-  @override
-  String get followUpsEmpty => 'No approved follow-ups';
-
-  @override
-  String get followUpsNoResults => 'No follow-ups match this search';
-
-  @override
   String get addToCalendarFailed => 'No calendar app could open the new event.';
-
-  @override
-  String get followUpsSearchHint => 'Search reports';
 
   @override
   String get addAttachment => 'Attach';

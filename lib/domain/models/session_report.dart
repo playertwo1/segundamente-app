@@ -16,6 +16,9 @@ enum ReportItemKind {
   opportunity,
   decision,
   task,
+
+  /// Legacy: follow-ups and tasks are one thing now. Old reports and model
+  /// replies that say follow-up are read as [task]; nothing creates this.
   followUp,
   question,
 }
@@ -184,13 +187,15 @@ List<ReportItemKind> sectionsFor(ReportKind kind) {
   switch (kind) {
     case ReportKind.livre:
     case ReportKind.custom:
-      return ReportItemKind.values;
+      return [
+        for (final k in ReportItemKind.values)
+          if (k != ReportItemKind.followUp) k,
+      ];
     case ReportKind.reuniao:
       return const [
         ReportItemKind.summary,
         ReportItemKind.decision,
         ReportItemKind.task,
-        ReportItemKind.followUp,
       ];
     case ReportKind.brainstorm:
       return const [
@@ -442,9 +447,10 @@ String reportExtractionSystemPrompt(
       'excerpt is an exact, verbatim substring of that segment. '
       'Never invent facts, people or dates. Do not output assignees, '
       'due dates or status. Use summary for the main point and decision, '
-      'task, followUp, idea, opportunity or question only when the '
+      'task, idea, opportunity or question only when the '
       'transcript clearly says so. A task is a future commitment someone '
-      'accepts or is asked to do. Narration, opinions, hypotheses and facts '
+      'accepts or is asked to do, including something to ask, check or '
+      'come back with later. Narration, opinions, hypotheses and facts '
       'already done are never tasks. Emit each item once; do not repeat an '
       'item with different words. When the transcript is in Portuguese, '
       'write every text in Brazilian Portuguese, keep names, numbers, '
@@ -664,7 +670,7 @@ ReportItemKind _bodyKind(ReportKind kind) {
     case ReportKind.estudo:
       return ReportItemKind.question;
     case ReportKind.reuniao:
-      return ReportItemKind.followUp;
+      return ReportItemKind.summary;
     case ReportKind.brainstorm:
       return ReportItemKind.opportunity;
     case ReportKind.livre:
@@ -746,6 +752,7 @@ ReportKind _reportKind(Object? value) {
 
 ReportItemKind _itemKind(Object? value) {
   final name = value?.toString();
+  if (name == ReportItemKind.followUp.name) return ReportItemKind.task;
   for (final kind in ReportItemKind.values) {
     if (kind.name == name) return kind;
   }
@@ -764,7 +771,7 @@ List<ReportItemKind> _sections(Object? value) {
   if (value is! List || value.isEmpty) {
     throw FormatException('sections missing');
   }
-  return [for (final name in value) _itemKind(name)];
+  return {for (final name in value) _itemKind(name)}.toList();
 }
 
 ReportKind _legacyKind(String? type) {
@@ -799,7 +806,7 @@ ReportItemKind _legacyItemKind(String? type) {
     case 'task':
       return ReportItemKind.task;
     case 'follow_up':
-      return ReportItemKind.followUp;
+      return ReportItemKind.task;
     case 'question':
       return ReportItemKind.question;
     default:

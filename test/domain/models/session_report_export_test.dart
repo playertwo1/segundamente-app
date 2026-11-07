@@ -240,29 +240,6 @@ void main() {
       throwsArgumentError,
     );
   });
-
-  test('json export keeps provenance for the checked items', () async {
-    final report = sample();
-    final first = report.items.first;
-    final bytes = await exportSessionReportBytes(
-      report: report,
-      exportedAt: exportedAt,
-      format: ReportExportFormat.json,
-      itemIds: {first.id},
-    );
-    final map = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
-    final items = map['items'] as List;
-    expect(items, hasLength(1));
-    expect((items.single as Map)['id'], first.id);
-    final source = (items.single as Map)['source'] as Map;
-    expect(source['segment_id'], first.source.segmentId);
-    expect(source['excerpt'], first.source.excerpt);
-    expect(source['clock'], first.source.clock);
-    expect(map['exported_at'], exportedAt.toIso8601String());
-    expect(map['session_id'], 's');
-    expect(reportExportFileName(ReportExportFormat.json), 'relatorio.json');
-    expect(reportExportMimeType(ReportExportFormat.json), 'application/json');
-  });
 }
 
 String _docxText(List<int> bytes) {

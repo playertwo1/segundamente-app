@@ -27,6 +27,11 @@ def goto_history():
     for _ in range(6):
         r = dump()
         if r is None: time.sleep(1); continue
+        w = find(r, 'Enviar o PDF para ler')
+        if w:  # confirmacao de um envio anterior que ficou aberta: cancela
+            v = find(r, 'Voltar', exact=True)
+            if v: tap(v[0], v[1])
+            time.sleep(1.5); continue
         f = find(r, 'Histórico de chat')
         if f and f[1] < 300: return True
         if find(r, 'Gerar com o modelo'):
@@ -51,13 +56,12 @@ def importa(cid):
     if not goto_history(): return False
     if not tap_text('Importar transcri'): return False
     time.sleep(2)
-    if not tap_text_scroll('f9corpus', rounds=4):
-        back_to_app(); return False
+    tap_text('f9corpus', tries=2)  # o seletor costuma reabrir dentro da pasta: entao nao ha o que tocar
     time.sleep(1.5)
     if not tap_text_scroll(f'f9c_{cid}.{ext}'):
         back_to_app(); return False
     time.sleep(2)
-    if not tap_text('Enviar', tries=4): return False  # 'Enviar agora' / 'Enviar PDF'
+    if not tap_text('Enviar PDF' if ext == 'pdf' else 'Enviar', tries=4, exact=(ext == 'pdf')): return False  # 'Enviar agora' / 'Enviar PDF'
     time.sleep(8 if ext == 'pdf' else 3)
     return abre_relatorio(0)
 def gera(sid):
@@ -85,6 +89,8 @@ def score(cid, rep):
 out = open(r'C:\Users\notefael\projetos\segundamente\docs\medicoes\f9-03\app_rodadas.jsonl', 'a', encoding='utf-8')
 REUSE = dict(x.split(':') for x in (sys.argv[4].split(',') if len(sys.argv) > 4 else []))
 for cid in IDS:
+    adb('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '0'); adb('shell', 'settings', 'put', 'system', 'user_rotation', '1')  # o driver so conhece a tela em paisagem
+    back_to_app()
     if left() < 70: print('sem tempo antes de', cid); break
     ok = abre_relatorio(int(REUSE[cid])) if cid in REUSE and goto_history() else importa(cid)
     print(cid, 'relatorio aberto', ok, round(time.time() - t0))

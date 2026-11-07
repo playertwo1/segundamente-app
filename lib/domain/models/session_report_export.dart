@@ -8,7 +8,7 @@ import 'package:memex/domain/models/session_report.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-enum ReportExportFormat { markdown, pdf, docx, json }
+enum ReportExportFormat { markdown, pdf, docx }
 
 const reportExportDateLabel = 'Data';
 const reportExportSourceLabel = 'Fonte';
@@ -25,8 +25,6 @@ String reportExportFileName(ReportExportFormat format) {
       return 'relatorio.pdf';
     case ReportExportFormat.docx:
       return 'relatorio.docx';
-    case ReportExportFormat.json:
-      return 'relatorio.json';
   }
 }
 
@@ -38,8 +36,6 @@ String reportExportMimeType(ReportExportFormat format) {
       return 'application/pdf';
     case ReportExportFormat.docx:
       return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    case ReportExportFormat.json:
-      return 'application/json';
   }
 }
 
@@ -129,33 +125,6 @@ String reportExportMarkdown({
   return buffer.toString();
 }
 
-/// Same item selection as the Markdown export. Each item keeps its source
-/// (segment, excerpt, clock/page) so the data can be traced back.
-String reportExportJson({
-  required SessionReport report,
-  required DateTime exportedAt,
-  Set<String>? itemIds,
-}) {
-  final chosen = _chosenItems(report, itemIds).map((item) => item.id).toSet();
-  final map = sessionReportToJson(report);
-  final images = map['images'];
-  if (images is List) {
-    map['images'] = [
-      for (final image in images)
-        if (image is Map)
-          Map<String, dynamic>.from(image)
-            ..remove('relative_path')
-            ..['illustrative_only'] = true,
-    ];
-  }
-  map['items'] = [
-    for (final item in map['items'] as List)
-      if (chosen.contains((item as Map)['id'])) item,
-  ];
-  map['exported_at'] = exportedAt.toIso8601String();
-  return const JsonEncoder.withIndent('  ').convert(map);
-}
-
 /// TrueType fonts embedded in the PDF. Loaded by the data layer (assets), so
 /// this file stays free of Flutter.
 class ReportExportFonts {
@@ -175,12 +144,6 @@ Future<List<int>> exportSessionReportBytes({
   String imageDisclaimer = reportExportImageDisclaimer,
   String noImagesMessage = reportExportNoImagesMessage,
 }) async {
-  if (format == ReportExportFormat.json) {
-    return utf8.encode(
-      reportExportJson(
-          report: report, exportedAt: exportedAt, itemIds: itemIds),
-    );
-  }
   final markdown = reportExportMarkdown(
     report: report,
     exportedAt: exportedAt,
@@ -207,8 +170,6 @@ Future<List<int>> exportMarkdownBytes({
       return _pdf(markdown, fonts);
     case ReportExportFormat.docx:
       return _docx(markdown);
-    case ReportExportFormat.json:
-      throw ArgumentError('json is built from the report, not from markdown');
   }
 }
 

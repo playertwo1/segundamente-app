@@ -3539,6 +3539,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoAdded => 'Adicionado à lista de tarefas';
 
   @override
+  String exportSavedTo(String path) {
+    return 'Salvo em $path';
+  }
+
+  @override
   String get todoReminderTitle => 'Criar lembrete?';
 
   @override
@@ -3626,9 +3631,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get reportExportPdf => 'PDF';
 
   @override
-  String get reportExportJson => 'JSON';
-
-  @override
   String get reportExportDocx => 'DOCX';
 
   @override
@@ -3648,23 +3650,8 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get followUpsTitle => 'Encaminhamentos';
-
-  @override
-  String get openFollowUps => 'Encaminhamentos';
-
-  @override
-  String get followUpsEmpty => 'Nenhum encaminhamento aprovado';
-
-  @override
-  String get followUpsNoResults => 'Nenhum encaminhamento para essa busca';
-
-  @override
   String get addToCalendarFailed =>
       'Nenhum app de agenda conseguiu abrir o novo evento.';
-
-  @override
-  String get followUpsSearchHint => 'Buscar nos relatórios';
 
   @override
   String get addAttachment => 'Anexar';

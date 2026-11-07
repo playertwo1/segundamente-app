@@ -274,7 +274,7 @@ void main() {
     expect(String.fromCharCodes(xml), contains('Texto novo.'));
   });
 
-  test('exporting a missing version or json is refused', () async {
+  test('exporting a missing version is refused', () async {
     final doc = await make();
     await expectLater(
       docs.export(
@@ -283,14 +283,6 @@ void main() {
           version: 5,
           format: ReportExportFormat.markdown),
       throwsStateError,
-    );
-    await expectLater(
-      docs.export(
-          userId: userId,
-          id: doc.id,
-          version: 1,
-          format: ReportExportFormat.json),
-      throwsArgumentError,
     );
   });
 

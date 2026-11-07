@@ -274,12 +274,6 @@ class SessionReportService {
     }
   }
 
-  Future<List<ReportHit>> approvedFollowUps({
-    required String userId,
-  }) async {
-    return approvedFollowUpHits(await loadAll(userId));
-  }
-
   Future<Map<String, ReportRevision>> latestTextChanges({
     required String userId,
   }) async {
@@ -308,6 +302,13 @@ class SessionReportService {
     );
     if (await dir.exists()) {
       await dir.delete(recursive: true);
+    }
+    // The imported original goes with the conversation: deleting is final.
+    final original = Directory(
+      p.join(_files.getTranscriptImportsPath(userId), sessionId),
+    );
+    if (await original.exists()) {
+      await original.delete(recursive: true);
     }
   }
 

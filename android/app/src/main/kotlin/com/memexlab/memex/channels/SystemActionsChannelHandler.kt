@@ -4,6 +4,10 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ContentValues
 import android.content.Intent
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import java.io.File
 import android.provider.CalendarContract
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -29,9 +33,46 @@ class SystemActionsChannelHandler(private val activity: Activity) {
                         "addCalendarEvent" -> handler.addCalendarEvent(call.arguments, result)
                         "addReminder" -> handler.addReminder(call.arguments, result)
                         "openCalendarInsert" -> handler.openCalendarInsert(call.arguments, result)
+                        "saveToDownloads" -> handler.saveToDownloads(call.arguments, result)
                         else -> result.notImplemented()
                     }
                 }
+        }
+    }
+
+    /**
+     * Copies an app file to Download/SegundaMente through MediaStore (no
+     * permission needed from Android 10). Replies with the visible path.
+     */
+    private fun saveToDownloads(arguments: Any?, result: MethodChannel.Result) {
+        val args = arguments as? Map<*, *>
+        val path = args?.get("path") as? String
+        val mimeType = args?.get("mimeType") as? String
+        if (path == null || mimeType == null) {
+            result.error("INVALID_ARGUMENTS", "Invalid arguments for saveToDownloads", null)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            result.error("UNSUPPORTED", "Needs Android 10 or newer", null)
+            return
+        }
+        try {
+            val source = File(path)
+            val folder = "${Environment.DIRECTORY_DOWNLOADS}/SegundaMente"
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, source.name)
+                put(MediaStore.Downloads.MIME_TYPE, mimeType)
+                put(MediaStore.Downloads.RELATIVE_PATH, folder)
+            }
+            val resolver = activity.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw IllegalStateException("Could not create the file in Downloads")
+            resolver.openOutputStream(uri)!!.use { out ->
+                source.inputStream().use { it.copyTo(out) }
+            }
+            result.success("$folder/${source.name}")
+        } catch (e: Exception) {
+            result.error("SAVE_ERROR", e.message, null)
         }
     }
 

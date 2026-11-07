@@ -1,11 +1,12 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:memex/ui/core/widgets/share_poster_decorator.dart';
 import 'package:memex/ui/core/widgets/share_preview_dialog.dart';
+import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
 
 class ShareService {
@@ -177,11 +178,38 @@ class ShareService {
     );
   }
 
+  static const _actions = MethodChannel('com.memexlab.memex/system_actions');
+
+  /// Copies [path] to Download/SegundaMente. Null when the platform cannot
+  /// (iOS, Android < 10) or the copy fails: the share sheet still works.
+  static Future<String?> saveToDownloads({
+    required String path,
+    required String mimeType,
+  }) async {
+    try {
+      return await _actions.invokeMethod<String>(
+        'saveToDownloads',
+        {'path': path, 'mimeType': mimeType},
+      );
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
+  /// Saves the export where the user can find it, says where, then opens the
+  /// share sheet.
   static Future<void> shareExistingFile(
     BuildContext context, {
     required String path,
     required String mimeType,
   }) async {
+    final saved = await saveToDownloads(path: path, mimeType: mimeType);
+    if (saved != null && context.mounted) {
+      ToastHelper.showSuccess(context, UserStorage.l10n.exportSavedTo(saved));
+    }
+    if (!context.mounted) return;
     final box = context.findRenderObject() as RenderBox?;
     final sharePositionOrigin = box != null
         ? box.localToGlobal(Offset.zero) & box.size

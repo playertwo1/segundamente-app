@@ -428,3 +428,51 @@
 ## F9-03 — critério aprovado (2026-11-07)
 - O dono aprovou o critério de `docs/F9-03-corpus.md` como está: por tipo de relatório, em ≥5 rodadas completas pelo app, mediana ≥ 17/20 tarefas, nenhuma rodada abaixo de 14/20, ≤ 1 tarefa falsa por rodada e ≥ 95% de respostas válidas.
 - Nada foi medido de novo: a medição pelo app segue parcial (9/39 casos, 2/5 rodadas, só texto), a auditoria continua `FAIL` e F9-03 segue `IN_PROGRESS`. Faltam janelas de até 10 min no S25.
+
+## F9-03 — série completa pelo app (2026-11-07)
+- 5 rodadas × 40 casos (c07 com 2 rodadas; c39 recusa esperada) no S25 pelo caminho do app. Resultado vs critério aprovado: tarefas achadas mediana 17/20 (atende), mínimo 16 (atende), válidas ≥95% (atende), **falsas ≤1 por rodada NÃO atende** (1,3,2,2,3: follow-ups c34/c35 viram tarefa). Detalhes em `docs/F9-03-corpus.md`.
+- F9-03 segue `IN_PROGRESS`, auditoria `FAIL` (agora por medida). Decisão do dono pendente: ajustar o prompt (follow-up vs tarefa) e repetir, ou aceitar o limite.
+- Rotação do aparelho restaurada (`accelerometer_rotation=1`). Efeito colateral declarado: um cartão fictício e uma conversa de teste no S25 (ver doc). Limpeza só com autorização.
+
+## D-043 — follow-up e tarefa fundidos; F9-03 refeita (2026-11-07)
+- Código: o modelo só emite `task`; `followUp` fica só para ler dados antigos (relatórios salvos e respostas do modelo viram tarefa); tela "Encaminhamentos" e seu botão removidos (`follow_ups_*`, `approvedFollowUps`, `approvedFollowUpHits`, chaves de texto). Testes novos: prompt sem follow-up, seções sem follow-up, relatório salvo com follow-up lido como tarefa. `flutter analyze` sem erros; suíte completa ver abaixo.
+- Série pelo app (S25, APK novo): 40 casos × 5 rodadas, tarefas 21/22, 20/22, 20/22, 21/22, 21/22, falsas 1,1,0,1,1, válidas 39/40. **Critério aprovado atendido**; mudança de definição registrada (não é melhoria de modelo). F9-03 segue `IN_PROGRESS` (fechar é do dono). Piores casos: `c40` perdido 5/5.
+- S25 restaurado (rotação automática). Artefatos sintéticos e o cartão fictício do erro do `c07` continuam no aparelho; limpeza só com autorização.
+
+## F9-03 fechada (2026-11-07)
+- O dono pediu "feche a f09-03". ROADMAP: F9-03 `DONE` com a evidência da série pelo app (critério aprovado atendido, D-043). Risco 7 de `docs/RISCOS-F9.md` passou de ALTO a MÉDIO (mitigado; resta `c40`).
+- F9 continua `IN_PROGRESS`: F9-07 e F9-08/09 seguem como antes (F9-08/09 `BLOCKED`); a auditoria geral da F9 não foi refeita.
+
+## JSON retirado da exportação (2026-11-07, D-044)
+- Removidos: valor `json` de `ReportExportFormat`, `reportExportJson`, rótulo e chave de texto `reportExportJson`, o ramo de JSON no serviço de exportação e os testes dele. Testes de `test/domain`, `test/ui/chat` e dos serviços de relatório e documento passam; `flutter analyze` sem erros.
+- F9-07 segue `IN_PROGRESS`: falta só conferir a renderização dos arquivos exportados no S25.
+
+## F9-07/F9-08 — provas no S25 (2026-11-07)
+- Exportação: Markdown, PDF e DOCX de relatório sintético gerados no S25 e conferidos no PC. F9-07 segue `IN_PROGRESS`: sem leitor no aparelho e sem caso com imagem no aparelho.
+- Exclusão (sessão sintética própria): relatório e conversa somem do disco; **`TranscriptImports/<id>/` (texto original importado) permanece** e **a cópia exportada em `cache/share_plus` permanece**. O teste atual afirma de propósito "mantém o original", mas o diálogo diz "não pode ser desfeito". Achado de privacidade MÉDIO, aberto: decisão do dono (apagar original e cache junto com a conversa?). Tarefas (Todo) ficam por desenho.
+- F9-08 e F9-09 seguem `BLOCKED`; revisão de acessibilidade (TalkBack) segue `NOT_RUN` por decisão do dono. Rotação/tela do S25 restaurados. Nada de dados sintéticos apagado.
+
+## Exportação salva em Downloads (2026-11-07)
+- A exportação (relatório e documento de comentários) agora também copia o arquivo para `Download/SegundaMente/` (MediaStore, Android 10+, sem permissão) e avisa o caminho; a folha de compartilhar abre como antes. Falha da cópia não bloqueia o compartilhamento.
+- S25: exportar Markdown criou `Download/SegundaMente/relatorio.md`. O aviso na tela não foi visto na prova (conferido só o arquivo). Teste de unidade do canal. Android < 10 e iOS: sem cópia (só compartilhar).
+- Arquivo sintético `relatorio.md` ficou em Downloads do S25; apagar só com autorização.
+
+## Exclusão apaga o original importado (2026-11-07, decisão do dono)
+- Excluir a conversa agora apaga também `TranscriptImports/<id>/` (texto original) e a pasta `share_plus` do cache. Tarefas (Todo) continuam por desenho. Testes de `session_report_service_test` ajustados (o original some). `NOT_RUN`: repetir a prova de exclusão no S25 com o APK novo (APK instalado é anterior a esta mudança).
+- Para a prova de F9-07 pelo dono: `Download/SegundaMente/relatorio-teste.pdf` e `relatorio-teste.docx` (gerados pelo app no S25, copiados por ADB), mais `relatorio.md`. Sintéticos; apagar só com autorização.
+
+## F9-07 fechada (2026-11-07)
+- O dono abriu o PDF e o DOCX no aparelho (Download/SegundaMente) e aprovou. ROADMAP: F9-07 `DONE`. Ressalva: imagem em exportação só tem teste unitário. F9-08 e F9-09 seguem `BLOCKED`.
+
+## F9-08 fechada; F9-09 iniciada (2026-11-07)
+- Prova de exclusão no S25 (APK novo): importei `c01` (sessão `file_1794067806119`), apaguei pelo histórico com a confirmação; depois `TranscriptImports`, `ChatSessions` e `SessionReports` da sessão sumiram e `cache/share_plus` ficou vazio (antes tinha `relatorio.md`). Corrige o achado MÉDIO anterior.
+- Resto de `TranscriptImports/file_1794066267551` (sobra da sonda anterior, feita com o APK antigo) ainda está no aparelho: sintético, apagar só com autorização.
+- F9-08 `DONE`. F9-09 `IN_PROGRESS`: falta suíte completa, análise, checklist e revisão com `AUDIT RESULT`; TalkBack `NOT_RUN` (decisão do dono).
+
+## Limpeza dos artefatos sintéticos do S25 (2026-11-07, autorizada pelo dono)
+- Apagados no aparelho (conferidos pelo conteúdo contra o corpus F9-02): 99 conversas de teste com original importado e relatório (`ChatSessions`, `TranscriptImports`, `SessionReports`: 88 de texto do corpus, 10 PDFs do corpus, 1 sonda de exclusão), o item de Todo vindo de uma delas (lista agora vazia), e em Download: `f9corpus/` (40 arquivos), `f9_c36.pdf`, `f9_c39.pdf`, `SegundaMente/` (3 arquivos de teste).
+- Mantidos por não serem provadamente meus: 12 conversas antigas (3-5/11: "MS Defender", "Participante 1", "Clientes", "planejamento do lançamento", "maturidade em modelos"), cartões (nenhum cartão do c07 foi achado em disco; o último é `06_ts_2`), `Projeto-Atlas-ata.pdf`, `reuniao_teste.txt`, `teste_legenda.*` e demais arquivos de Download. Estados de agente em `_System/state_dir` e logs de eventos não foram mexidos.
+- App reaberto no S25 depois da limpeza.
+
+## F9-09 — auditoria técnica (2026-11-07)
+- Revisão `docs/reviews/F9-2026-11-07.md`: `AUDIT RESULT: PASS` (sem CRITICAL/HIGH). `flutter test` 1524 passam, 4 pulados; `flutter analyze` 0 erros (150 infos/warnings antigos); build APK e S25 ok. F9 segue `IN_PROGRESS`: TalkBack `NOT_RUN`, imagem em exportação só em teste unitário, aceite do dono pendente.

@@ -1659,13 +1659,6 @@ class MemexRouter {
     });
   }
 
-  Future<Result<List<ReportHit>>> loadApprovedFollowUps() {
-    return runResult(() async {
-      final userId = await _reportUserId();
-      return SessionReportService().approvedFollowUps(userId: userId);
-    });
-  }
-
   Future<Result<Map<String, ReportRevision>>> loadReportTextChanges() {
     return runResult(() async {
       final userId = await _reportUserId();

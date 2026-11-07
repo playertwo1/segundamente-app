@@ -73,6 +73,10 @@ void main() {
 
   testWidgets('a meeting and a study report show different sections',
       (tester) async {
+    // Tall enough that the lazy list builds every section header.
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final meeting = draftSessionReport(
       sessionId: 's',
       kind: ReportKind.reuniao,
@@ -403,10 +407,10 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('report_export_item_item_1')));
     await tester.pump();
-    await tester.tap(find.byKey(const ValueKey('report_export_json')));
+    await tester.tap(find.byKey(const ValueKey('report_export_docx')));
     await tester.pump();
 
-    expect(format, ReportExportFormat.json);
+    expect(format, ReportExportFormat.docx);
     expect(ids, {'item_2'});
   });
 

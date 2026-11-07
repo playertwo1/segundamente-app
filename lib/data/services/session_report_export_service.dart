@@ -42,9 +42,7 @@ class SessionReportExportService {
   }) async {
     final report = await _reports.load(userId: userId, sessionId: sessionId);
     if (report == null) throw StateError('report missing');
-    final List<ReportExportImage> images = format == ReportExportFormat.json
-        ? const []
-        : await _exportImages(userId, report.images);
+    final images = await _exportImages(userId, report.images);
     final bytes = await exportSessionReportBytes(
       report: report,
       exportedAt: exportedAt,

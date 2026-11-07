@@ -292,8 +292,6 @@ class _SessionReportViewState extends State<SessionReportView> {
         return l10n.reportExportPdf;
       case ReportExportFormat.docx:
         return l10n.reportExportDocx;
-      case ReportExportFormat.json:
-        return l10n.reportExportJson;
     }
   }
 

@@ -200,9 +200,6 @@ class ThreadDocumentService {
     required int version,
     required ReportExportFormat format,
   }) async {
-    if (format == ReportExportFormat.json) {
-      throw ArgumentError('documents export as markdown, pdf or docx');
-    }
     final doc = await load(userId, id);
     final v = doc?.version(version);
     if (doc == null || v == null) throw StateError('version missing');

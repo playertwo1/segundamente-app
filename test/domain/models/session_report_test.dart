@@ -67,7 +67,7 @@ void main() {
     expect(meeting.sections, isNot(contains(ReportItemKind.question)));
     expect(study.sections, contains(ReportItemKind.question));
     expect(study.sections, isNot(contains(ReportItemKind.decision)));
-    expect(meeting.items[1].kind, ReportItemKind.followUp);
+    expect(meeting.items[1].kind, ReportItemKind.summary);
     expect(study.items[1].kind, ReportItemKind.question);
     expect(meeting.items.every((item) => !isDefinitiveTask(item)), isTrue);
   });
@@ -386,12 +386,49 @@ void main() {
           (ReportItemKind.task, 'item_1', null),
           (ReportItemKind.task, 'item_2', 'item_1'),
           (ReportItemKind.task, 'item_3', 'item_1'),
-          (ReportItemKind.followUp, 'item_4', null),
+          (ReportItemKind.task, 'item_4', 'item_1'),
         ],
       );
       final stored = sessionReportFromStorage(sessionReportToJson(report));
       expect(stored.items[1].duplicateOf, 'item_1');
       expect(stored.items[0].duplicateOf, isNull);
+    });
+
+    test('follow-up and task are one thing', () {
+      final prompt = reportExtractionSystemPrompt(ReportKind.livre);
+      expect(prompt, isNot(contains('followUp')));
+      expect(prompt, contains('come back with later'));
+      for (final kind in ReportKind.values) {
+        expect(sectionsFor(kind), isNot(contains(ReportItemKind.followUp)));
+      }
+    });
+
+    test('a stored report with follow-up items reads them as tasks', () {
+      final stored = sessionReportFromStorage({
+        'schema_version': sessionReportSchemaVersion,
+        'session_id': 'sess',
+        'kind': 'reuniao',
+        'title': 'Relatório',
+        'sections': ['summary', 'decision', 'task', 'followUp'],
+        'items': [
+          {
+            'id': 'item_1',
+            'kind': 'followUp',
+            'text': 'Perguntar ao Rui',
+            'status': 'approved',
+            'assignee': reportAssigneeUnknown,
+            'due': reportDueUnknown,
+            'source': {'segment_id': 'seg_0', 'excerpt': 'Perguntar ao Rui'},
+          },
+        ],
+      });
+      expect(stored.items.single.kind, ReportItemKind.task);
+      expect(stored.items.single.status, ReportItemStatus.approved);
+      expect(stored.sections, [
+        ReportItemKind.summary,
+        ReportItemKind.decision,
+        ReportItemKind.task,
+      ]);
     });
 
     test('the prompt states what a task is', () {

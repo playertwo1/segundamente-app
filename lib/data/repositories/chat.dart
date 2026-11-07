@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:memex/data/services/chat_session_storage.dart';
@@ -7,6 +11,16 @@ import 'package:memex/data/services/topic_service.dart';
 import 'package:memex/domain/models/topic.dart';
 import 'package:memex/data/services/api_exception.dart';
 import 'package:memex/utils/time_context.dart';
+
+/// share_plus keeps a copy of every shared export; none may outlive the
+/// conversation it came from. Best effort: the cache is not user data.
+Future<void> _clearShareCache() async {
+  try {
+    final cache = (await getTemporaryDirectory()).path;
+    final dir = Directory(p.join(cache, 'share_plus'));
+    if (await dir.exists()) await dir.delete(recursive: true);
+  } catch (_) {}
+}
 
 final _logger = getLogger('ChatEndpoint');
 ChatSessionStorage get _chatStorage => ChatSessionStorage.instance;
@@ -200,6 +214,7 @@ Future<bool> deleteChatSessionEndpoint(String sessionId) async {
       sessionId: sessionId,
     );
     await TodoService().deleteForSession(userId: userId, sessionId: sessionId);
+    await _clearShareCache();
     await TopicService().update(userId, (t) => forgetSession(t, sessionId));
     _logger.info('Session physically deleted: $sessionId');
     return true;

@@ -85,35 +85,6 @@ void main() {
     expect(searchReports([obra, other], 'CASA'), hasLength(1));
   });
 
-  test('only an approved follow-up enters the panel', () {
-    final hits = approvedFollowUpHits([
-      report('a', [
-        item(
-          id: '1',
-          text: 'mandar o resumo',
-          kind: ReportItemKind.followUp,
-          status: ReportItemStatus.approved,
-        ),
-        item(
-          id: '2',
-          text: 'ainda aberto',
-          kind: ReportItemKind.followUp,
-        ),
-      ]),
-      report('b', [
-        item(
-          id: '3',
-          text: 'decisão',
-          kind: ReportItemKind.decision,
-          status: ReportItemStatus.approved,
-        ),
-      ]),
-    ]);
-
-    expect(hits, hasLength(1));
-    expect(hits.single.item.text, 'mandar o resumo');
-  });
-
   test('a text or status change is a revision and assignee is not', () {
     final before = item(id: '1', text: 'fechar o escopo');
     final renamed = before.copyWith(text: 'fechar depois');

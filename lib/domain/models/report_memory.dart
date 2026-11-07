@@ -54,19 +54,6 @@ List<ReportHit> searchReports(List<SessionReport> reports, String query) {
   return hits;
 }
 
-List<ReportHit> approvedFollowUpHits(List<SessionReport> reports) {
-  final hits = <ReportHit>[];
-  for (final report in reports) {
-    for (final item in report.items) {
-      if (item.kind == ReportItemKind.followUp &&
-          item.status == ReportItemStatus.approved) {
-        hits.add(ReportHit(sessionId: report.sessionId, item: item));
-      }
-    }
-  }
-  return hits;
-}
-
 List<ReportRevision> revisionsForChange({
   required ReportItem before,
   required ReportItem after,

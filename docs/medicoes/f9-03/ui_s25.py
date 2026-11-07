@@ -38,17 +38,17 @@ def has(sub):
 def swipe_up():
     adb('shell', 'input', 'swipe', '700', '2400', '700', '900', '350')
 
-def tap_text_scroll(sub, rounds=10, exact=False):
+def tap_text_scroll(sub, rounds=24, exact=False):
     """Like tap_text, but scrolls the list down when the text is not on screen."""
     for _ in range(rounds):
         r = dump()
         if r is not None:
             f = find(r, sub, exact)
-            if f:
+            if f and 330 < f[1] < 1250:  # rows at the screen edges are tapped wrongly
                 tap(f[0], f[1]); return True
             if find(r, 'Abrir de'):  # picker drawer is open over the list
                 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK'); time.sleep(1); continue
-        adb('shell', 'input', 'swipe', '1600', '1150', '1600', '450', '400')
+        adb('shell', 'input', 'swipe', '1600', '1150', '1600', '750', '500')
         time.sleep(1)
     return False
 def back_to_app(pkg='app.segundamente.dev'):

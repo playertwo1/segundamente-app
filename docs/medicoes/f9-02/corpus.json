@@ -533,7 +533,7 @@
    "texto": "[00:25:00] Carlos: Depois eu volto com o preço do frete e a gente confirma.",
    "esperado": [
     {
-     "tipo": "followup",
+     "tipo": "tarefa",
      "texto": "Voltar com o preço do frete e confirmar",
      "responsavel": "Carlos",
      "prazo": "não informado",
@@ -550,7 +550,7 @@
    "texto": "Perguntar ao Rui se o prazo mudou.",
    "esperado": [
     {
-     "tipo": "followup",
+     "tipo": "tarefa",
      "texto": "Perguntar ao Rui se o prazo mudou",
      "responsavel": "o próprio autor",
      "prazo": "não informado",

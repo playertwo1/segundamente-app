@@ -6261,6 +6261,12 @@ abstract class AppLocalizations {
   /// **'Added to the to-do list'**
   String get todoAdded;
 
+  /// No description provided for @exportSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {path}'**
+  String exportSavedTo(String path);
+
   /// No description provided for @todoReminderTitle.
   ///
   /// In en, this message translates to:
@@ -6429,12 +6435,6 @@ abstract class AppLocalizations {
   /// **'PDF'**
   String get reportExportPdf;
 
-  /// No description provided for @reportExportJson.
-  ///
-  /// In en, this message translates to:
-  /// **'JSON'**
-  String get reportExportJson;
-
   /// No description provided for @reportExportDocx.
   ///
   /// In en, this message translates to:
@@ -6465,41 +6465,11 @@ abstract class AppLocalizations {
   /// **'Source: message {index} {timestamp}'**
   String reportImageSource(Object index, Object timestamp);
 
-  /// No description provided for @followUpsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow-ups'**
-  String get followUpsTitle;
-
-  /// No description provided for @openFollowUps.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow-ups'**
-  String get openFollowUps;
-
-  /// No description provided for @followUpsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No approved follow-ups'**
-  String get followUpsEmpty;
-
-  /// No description provided for @followUpsNoResults.
-  ///
-  /// In en, this message translates to:
-  /// **'No follow-ups match this search'**
-  String get followUpsNoResults;
-
   /// No description provided for @addToCalendarFailed.
   ///
   /// In en, this message translates to:
   /// **'No calendar app could open the new event.'**
   String get addToCalendarFailed;
-
-  /// No description provided for @followUpsSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search reports'**
-  String get followUpsSearchHint;
 
   /// No description provided for @addAttachment.
   ///

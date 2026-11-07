@@ -99,9 +99,9 @@ case("duvida", "conversa", "[00:24:00] Paulo: Qual é o limite de gasto? [00:24:
 
 # 9. follow-up (2)
 case("followup", "conversa", "[00:25:00] Carlos: Depois eu volto com o preço do frete e a gente confirma.",
-     [item("followup", "Voltar com o preço do frete e confirmar", "Carlos", NI, "00:25:00")])
+     [item("tarefa", "Voltar com o preço do frete e confirmar", "Carlos", NI, "00:25:00")])
 case("followup", "nota", "Perguntar ao Rui se o prazo mudou.",
-     [item("followup", "Perguntar ao Rui se o prazo mudou", "o próprio autor", NI, "nota")])
+     [item("tarefa", "Perguntar ao Rui se o prazo mudou", "o próprio autor", NI, "nota")])
 
 # 10. PDF com texto selecionável: evidência por página (5)
 case("pdf_pagina", "pdf", "[p.1] Ata da reunião de 12/09. Presentes: Ana, Rui, Paulo. [p.2] Ficou decidido que o orçamento será revisado. Paulo envia a versão final até 20/09.",
