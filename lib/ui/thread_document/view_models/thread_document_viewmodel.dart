@@ -97,13 +97,15 @@ class ThreadDocumentViewModel extends ChangeNotifier {
     return result.when(onOk: (text) => text, onError: (_, __) => content);
   }
 
-  /// Saves a manual edit of the latest version as a new version.
-  Future<bool> saveEdit(String content) async {
+  /// Saves a manual edit as a new version. [basedOn] is the version the editor
+  /// was opened on, not the latest now: a revision that finished meanwhile must
+  /// refuse the edit instead of being overwritten by it.
+  Future<bool> saveEdit(String content, {required int basedOn}) async {
     final current = doc;
     if (current == null || content.trim().isEmpty) return false;
     final result = await _router.editThreadDocument(
       id: current.id,
-      expectedLatest: current.latest.number,
+      expectedLatest: basedOn,
       content: content,
     );
     var saved = false;

@@ -52,7 +52,10 @@ class _FakeRouter implements MemexRouter {
     required int expectedLatest,
     required String content,
   }) async {
-    if (staleOnEdit) return Error(StaleDocumentEdit(expectedLatest, 9));
+    final latest = docs.single.latest.number;
+    if (staleOnEdit || expectedLatest != latest) {
+      return Error(StaleDocumentEdit(expectedLatest, latest));
+    }
     final doc = docs.single.withVersion(_version(2, content,
         author: DocumentAuthor.user));
     docs = [doc];
@@ -126,18 +129,19 @@ void main() {
     await UserStorage.initL10n();
   });
 
-  Future<void> pumpScreen(WidgetTester tester, _FakeRouter router) async {
+  Future<ThreadDocumentViewModel> pumpScreen(
+      WidgetTester tester, _FakeRouter router) async {
     tester.view.physicalSize = const Size(800, 2000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    final vm = ThreadDocumentViewModel(router: router, docId: 'doc_1');
     await tester.pumpWidget(MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: ThreadDocumentScreen(
-        viewModel: ThreadDocumentViewModel(router: router, docId: 'doc_1'),
-      ),
+      home: ThreadDocumentScreen(viewModel: vm),
     ));
     await tester.pumpAndSettle();
+    return vm;
   }
 
   testWidgets('shows the text, the warnings and the origin note', (tester) async {
@@ -184,6 +188,20 @@ void main() {
     );
     semantics.dispose();
     expect(find.textContaining('Texto original.'), findsOneWidget);
+  });
+
+  testWidgets('a revision that lands while the editor is open refuses the edit',
+      (tester) async {
+    final router = _FakeRouter([_doc()]);
+    final vm = await pumpScreen(tester, router);
+    await tester.tap(find.byKey(const ValueKey('thread_doc_edit')));
+    await tester.pumpAndSettle();
+    router.docs = [router.docs.single.withVersion(_version(2, 'Revisado.'))];
+    await vm.load(); // the revision polling reloads the document
+    await tester.tap(find.byKey(const ValueKey('thread_doc_save')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('thread_doc_stale')), findsOneWidget);
+    expect(router.docs.single.latest.number, 2);
   });
 
   testWidgets('revising queues a request for this document', (tester) async {

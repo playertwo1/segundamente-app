@@ -35,6 +35,7 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
 
   Future<void> _edit() async {
     final vm = widget.viewModel;
+    final basedOn = vm.doc!.latest.number;
     final controller = TextEditingController(text: vm.doc!.latest.content);
     final l10n = UserStorage.l10n;
     final text = await showDialog<String>(
@@ -61,7 +62,7 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
         ],
       ),
     );
-    if (text != null) await vm.saveEdit(text);
+    if (text != null) await vm.saveEdit(text, basedOn: basedOn);
   }
 
   Future<void> _export(ReportExportFormat format) async {
