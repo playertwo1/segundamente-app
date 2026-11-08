@@ -54,8 +54,9 @@ void main() {
     String id = 'c36',
     bool reads = true,
     bool large = false,
+    CardPdfService? using,
   }) =>
-      service.ensurePages(
+      (using ?? service).ensurePages(
         userId: userId,
         asset: asset,
         modelReadsPdf: reads,
@@ -72,7 +73,8 @@ void main() {
     await UserStorage.saveUser(userId);
     tempDir = await Directory.systemTemp.createTemp('memex_card_pdf_');
     await FileSystemService.init(tempDir.path);
-    service = CardPdfService();
+    // The model path is under test here; the device reader has its own tests.
+    service = CardPdfService(readLocal: (_) async => null);
     modelCalls = 0;
   });
 
@@ -195,6 +197,37 @@ void main() {
         .writeAsStringSync('{not json');
     expect((await ensure(asset)).status, CardPdfStatus.ready);
     expect(modelCalls, 1);
+  });
+
+  test('the text layer is read on the device: no model, even one without PDF',
+      () async {
+    final asset = addAsset('a.pdf', fixture('c38'));
+    final result = await ensure(asset, reads: false, using: CardPdfService());
+    expect(result.status, CardPdfStatus.ready);
+    expect(result.pages!.pages[1].text, contains('120 unidades'));
+    expect(modelCalls, 0);
+    expect(await service.cachedPages(userId, asset), isNotNull);
+  });
+
+  test('a large PDF with a text layer needs no confirmation', () async {
+    final asset = addAsset('big.pdf', [
+      ...'%PDF-1.4\n'.codeUnits,
+      ...List.filled(pdfConfirmBytes, 0),
+    ]);
+    final local = CardPdfService(
+      readLocal: (_) async => PdfPages([const PdfPage(number: 1, text: 'x')]),
+    );
+    final card = CardData(
+      factId: '2026/11/06.md#ts_1',
+      timestamp: 0,
+      status: 'completed',
+      tags: const [],
+      uiConfigs: const [],
+      assets: [asset],
+    );
+    expect(await local.largeAwaitingConfirmation(userId, card), isEmpty);
+    expect((await ensure(asset, using: local)).status, CardPdfStatus.ready);
+    expect(modelCalls, 0);
   });
 
   test('the context block quotes pages and marks them as data', () async {

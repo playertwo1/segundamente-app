@@ -1,0 +1,8 @@
+-dontwarn com.google.mlkit.vision.text.devanagari.**
+-dontwarn com.google.mlkit.vision.text.japanese.**
+-dontwarn com.google.mlkit.vision.text.korean.**
+-keep class ai.onnxruntime.** { *; }
+-keep class org.opencv.** { *; }
+-keep class com.paddle.** { *; }
+-keep class io.flutter.plugins.paddleocr.** { *; }
+-dontwarn ai.onnxruntime.**
