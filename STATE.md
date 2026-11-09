@@ -545,3 +545,6 @@
 - Busca de registros relacionados: a lista abre com caixas e o aviso "Só os registros marcados são enviados ao modelo". Não marquei nenhum porque todos os candidatos eram registros reais do dono (`NOT_RUN` o envio com marcados).
 - `NOT_RUN`: Gemini OAuth sem PDF (exigiria trocar o provedor do dono) e custo de tokens da transcrição (não há mais chamada de modelo no caminho de PDF com texto).
 - Limpeza: cartão apagado pela tela com "Apagar junto" (3 documentos saíram), PDFs/`pages.json`, pasta de teste e cópia em Downloads removidos, mensagens F10 retiradas do chat (backup no scratchpad), tela e rotação restauradas. Ficou só `last_message_preview` da sessão do chat citando o teste.
+
+## F10-02 — decisão do OCR (2026-11-08)
+- Decisão do dono: o OCR do app fica só com o ML Kit (já integrado, 0,23 s por página, sem peso novo no APK). PaddleOCR e Tesseract não entram, nem como releitura opcional. O app de sondagem `tools/ocr_probe` foi removido do repositório (continua no histórico do git, commit 2cc1b885) e o `app.segundamente.f610_probe` foi desinstalado do S25. Base: comparação no S25 em "F10-02 — OCR em documentos reais de teste". Se um documento real der erro de leitura que o ML Kit não resolve, a decisão volta ao dono.
