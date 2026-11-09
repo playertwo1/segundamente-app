@@ -126,7 +126,7 @@ class SpeechTranscriptionService {
     return SpeechTranscriptionResult(
       text: text,
       usage: null,
-      model: 'sensevoice-local',
+      model: 'parakeet-local',
     );
   }
 
@@ -137,7 +137,7 @@ class SpeechTranscriptionService {
     return SpeechTranscriptionResult(
       text: text,
       usage: null,
-      model: 'sensevoice-local',
+      model: 'parakeet-local',
     );
   }
 

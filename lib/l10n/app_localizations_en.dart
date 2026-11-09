@@ -2584,11 +2584,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechNoResult => 'No speech detected';
 
   @override
-  String get useLocalSpeechToTextTitle => 'Use local speech to text';
+  String get useLocalSpeechToTextTitle => 'On-device transcription';
 
   @override
   String get useLocalSpeechToTextDesc =>
-      'When enabled, audio is transcribed on-device before sending — useful for models that do not support audio input. When disabled, audio is transcribed by your configured cloud model (requires audio input support).';
+      'When enabled, Portuguese speech is transcribed on-device by Parakeet, without sending the audio (downloads a ~470 MB model on the first recording). When disabled, audio is transcribed by your configured cloud model.';
 
   @override
   String get pendingAiProcessingHint => 'Set up AI model to process';

@@ -4656,13 +4656,13 @@ abstract class AppLocalizations {
   /// No description provided for @useLocalSpeechToTextTitle.
   ///
   /// In en, this message translates to:
-  /// **'Use local speech to text'**
+  /// **'On-device transcription'**
   String get useLocalSpeechToTextTitle;
 
   /// No description provided for @useLocalSpeechToTextDesc.
   ///
   /// In en, this message translates to:
-  /// **'When enabled, audio is transcribed on-device before sending — useful for models that do not support audio input. When disabled, audio is transcribed by your configured cloud model (requires audio input support).'**
+  /// **'When enabled, Portuguese speech is transcribed on-device by Parakeet, without sending the audio (downloads a ~470 MB model on the first recording). When disabled, audio is transcribed by your configured cloud model.'**
   String get useLocalSpeechToTextDesc;
 
   /// No description provided for @pendingAiProcessingHint.

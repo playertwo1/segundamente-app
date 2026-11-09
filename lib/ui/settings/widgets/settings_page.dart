@@ -35,6 +35,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _currentLocaleTag = 'en';
   CommentSettings _commentSettings = const CommentSettings();
   bool _linkPreview = false;
+  bool _useLocalSpeechToText = false;
   late final SemanticSearchModelManager _semanticSearch;
   bool _semanticSearchEnabled = false;
   bool _semanticSearchBusy = false;
@@ -58,6 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final locale = await UserStorage.getLocale();
     final commentSettings = await MemexRouter().getCommentSettings();
     final linkPreview = await UserStorage.isLinkPreviewEnabled();
+    final useLocalSpeechToText = await UserStorage.getUseLocalSpeechToText();
     final semanticSearch = await UserStorage.isSemanticSearchEnabled();
     await _semanticSearch.refreshModelAvailability();
     if (semanticSearch) {
@@ -66,6 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) {
       setState(() {
         _linkPreview = linkPreview;
+        _useLocalSpeechToText = useLocalSpeechToText;
         _semanticSearchEnabled = semanticSearch;
         _currentLocaleTag = UserStorage.localeTag(
           UserStorage.resolveToSupportedLocale(locale),
@@ -102,6 +105,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _updateLinkPreview(bool value) async {
     await UserStorage.setLinkPreviewEnabled(value);
     if (mounted) setState(() => _linkPreview = value);
+  }
+
+  Future<void> _updateUseLocalSpeechToText(bool value) async {
+    await UserStorage.setUseLocalSpeechToText(value);
+    if (mounted) setState(() => _useLocalSpeechToText = value);
   }
 
   void _onSemanticSearchChanged() {
@@ -397,6 +405,44 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Local Whisper (Portuguese); the model downloads on first recording.
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.divider)),
+            ),
+            child: SwitchListTile(
+              key: const ValueKey('local-speech-switch'),
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(
+                Icons.mic_none,
+                color: AppColors.primary,
+                size: 22,
+              ),
+              title: Text(
+                UserStorage.l10n.useLocalSpeechToTextTitle,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  UserStorage.l10n.useLocalSpeechToTextDesc,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              value: _useLocalSpeechToText,
+              onChanged: _updateUseLocalSpeechToText,
             ),
           ),
           const SizedBox(height: 16),

@@ -32,3 +32,11 @@ Arquivos `.litertlm` oficiais (E2B 2.588.147.712 bytes; E4B 3.659.530.240 bytes)
 | Gemma 4 E4B | B | não terminou | — | — |
 - O E2B melhora muito sobre o Gemma 3 1B, mas ainda erra fato passado, dúvida e follow-up. O E4B não superou o E2B no prompt A.
 - Limites: sem comparação com o modelo remoto + regra da F3-07 (a regra é um filtro sobre a saída do modelo, não um classificador sozinho); velocidade medida em CPU de PC, não no S25; um só rodada por prompt.
+
+## Etapa 3 — Cactus no PC (2026-11-08)
+`cactus-compute` 4.1.0 (Apache-2.0) num venv fora do repositório, telemetria desligada (`CACTUS_TELEMETRY=0`). Modelo Needle 3 (~36 MB baixados), CPU do PC. Script: `docs/medicoes/f7-02/cactus_no_pc.py`.
+- **Transcrição (Whistle):** não testada porque não aceita português. Os idiomas estão fixos no código: en, de, fr, es, it, nl, pl.
+- **Extração (Needle 3), 40 casos, mesma regra de acerto:** 7/40, com 0/6 em `tarefa_clara`. Os acertos são coincidência de contagem: o texto dos itens sai como fragmentos ("do carro antes", "di"). Confiança do próprio modelo entre 0,001 e 0,03. Tempo de 0,9 s por caso, pico de RAM 119 MB.
+- **Controle em inglês:** as mesmas frases traduzidas saem certas ("send the revised proposal to Marina", dono Carlos, prazo "Friday the 21st"), com confiança ~0,27. O problema é o idioma, não o formato do pedido.
+- **Embeddings (dim. 3072):** em português, a paráfrase dá 0,971 e o texto não relacionado 0,966, então o modelo não distingue os dois. Em inglês: 0,977 contra 0,944.
+- **Conclusão:** não vale integrar (nem pelo plugin Flutter nem por FFI do `libcactus`). Os modelos são pequenos e rápidos, mas não entendem português. Reavaliar só se sair uma versão com pt-BR.

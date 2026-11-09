@@ -2609,11 +2609,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get speechNoResult => 'Nenhuma fala detectada';
 
   @override
-  String get useLocalSpeechToTextTitle => 'Usar speech to text local';
+  String get useLocalSpeechToTextTitle => 'Transcrição no aparelho';
 
   @override
   String get useLocalSpeechToTextDesc =>
-      'Quando ativado, o áudio é transcrito no dispositivo antes do envio — útil para modelos que não suportam entrada de áudio. Quando desativado, o áudio original é enviado diretamente ao modelo.';
+      'Quando ativado, a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixa um modelo de ~470 MB na primeira gravação). Quando desativado, o áudio é transcrito pelo modelo da nuvem configurado.';
 
   @override
   String get pendingAiProcessingHint => 'Configure o modelo AI para processar';

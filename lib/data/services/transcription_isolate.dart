@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:logging/logging.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 
@@ -21,9 +22,10 @@ class TranscriptionIsolate {
 
   /// Start the background isolate and initialize the recognizer.
   Future<void> start({
-    required String modelPath,
+    required String encoderPath,
+    required String decoderPath,
+    required String joinerPath,
     required String tokensPath,
-    String provider = 'cpu',
   }) async {
     if (_isolate != null) return;
 
@@ -34,9 +36,10 @@ class TranscriptionIsolate {
     _isolate = await Isolate.spawn(
       _isolateEntry,
       {
-        'modelPath': modelPath,
+        'encoderPath': encoderPath,
+        'decoderPath': decoderPath,
+        'joinerPath': joinerPath,
         'tokensPath': tokensPath,
-        'provider': provider,
         'replyPort': receivePort.sendPort,
       },
     );
@@ -91,28 +94,44 @@ class TranscriptionIsolate {
     _pending.clear();
   }
 
+  /// Parakeet TDT v3 (NeMo transducer). It picks the language itself among
+  /// its 25; there is no option to fix Portuguese. CPU only: NNAPI is not
+  /// proven for this model.
+  @visibleForTesting
+  static sherpa.OfflineRecognizerConfig parakeetConfig({
+    required String encoderPath,
+    required String decoderPath,
+    required String joinerPath,
+    required String tokensPath,
+  }) {
+    return sherpa.OfflineRecognizerConfig(
+      model: sherpa.OfflineModelConfig(
+        transducer: sherpa.OfflineTransducerModelConfig(
+          encoder: encoderPath,
+          decoder: decoderPath,
+          joiner: joinerPath,
+        ),
+        modelType: 'nemo_transducer',
+        tokens: tokensPath,
+        numThreads: 4,
+        debug: false,
+        provider: 'cpu',
+      ),
+    );
+  }
+
   /// Entry point for the background isolate.
   static void _isolateEntry(Map<String, dynamic> initConfig) {
-    final modelPath = initConfig['modelPath'] as String;
-    final tokensPath = initConfig['tokensPath'] as String;
-    final provider = initConfig['provider'] as String;
     final replyPort = initConfig['replyPort'] as SendPort;
 
     // Initialize sherpa-onnx in this isolate
     sherpa.initBindings();
 
-    final config = sherpa.OfflineRecognizerConfig(
-      model: sherpa.OfflineModelConfig(
-        senseVoice: sherpa.OfflineSenseVoiceModelConfig(
-          model: modelPath,
-          language: 'auto',
-          useInverseTextNormalization: true,
-        ),
-        tokens: tokensPath,
-        numThreads: 2,
-        debug: false,
-        provider: provider,
-      ),
+    final config = parakeetConfig(
+      encoderPath: initConfig['encoderPath'] as String,
+      decoderPath: initConfig['decoderPath'] as String,
+      joinerPath: initConfig['joinerPath'] as String,
+      tokensPath: initConfig['tokensPath'] as String,
     );
 
     final recognizer = sherpa.OfflineRecognizer(config);

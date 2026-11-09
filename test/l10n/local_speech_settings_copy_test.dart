@@ -8,5 +8,7 @@ void main() {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(l10n.useLocalSpeechToTextDesc, contains('transcribed by your configured cloud model'));
     expect(l10n.useLocalSpeechToTextDesc, isNot(contains('original audio is sent directly')));
+    expect(lookupAppLocalizations(const Locale('pt')).useLocalSpeechToTextDesc,
+        contains('português'));
   });
 }

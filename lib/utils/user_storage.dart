@@ -626,10 +626,16 @@ class UserStorage {
     }
   }
 
-  /// Always false: the only local model was SenseVoice (Alibaba), removed in
-  /// D-024. Transcription goes to the configured cloud model until F2-11 ships
-  /// a local Whisper.
-  static Future<bool> getUseLocalSpeechToText() async => false;
+  /// Off by default: transcription goes to the configured cloud model (D-011)
+  /// unless the user turns on the local Whisper in Portuguese (F2-11).
+  static Future<bool> getUseLocalSpeechToText() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_keyUseLocalSpeechToText) ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
 
   static Future<void> setUseLocalSpeechToText(bool value) async {
     try {

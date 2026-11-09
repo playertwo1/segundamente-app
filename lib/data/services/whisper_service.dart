@@ -1,4 +1,5 @@
-import 'dart:io' show File, Directory, Platform;
+import 'dart:io' show File, Directory;
+import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,9 +8,11 @@ import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/audio_converter.dart';
 import 'package:memex/data/services/transcription_isolate.dart';
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 
-/// Service for on-device speech-to-text using sherpa-onnx + SenseVoice.
+/// Service for on-device speech-to-text using sherpa-onnx + NVIDIA Parakeet
+/// TDT 0.6B v3 (25 European languages, Portuguese included; F2-11). The
+/// class keeps its old name so callers stay unchanged.
 ///
 /// Handles model download, caching, and transcription.
 class WhisperService {
@@ -19,25 +22,30 @@ class WhisperService {
 
   final Logger _logger = getLogger('WhisperService');
 
-  static const _modelDirName =
-      'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17';
-  static const _modelFileName = 'model.int8.onnx';
+  static const _modelDirName = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8';
+  static const _encoderFileName = 'encoder.int8.onnx';
+  static const _decoderFileName = 'decoder.int8.onnx';
+  static const _joinerFileName = 'joiner.int8.onnx';
   static const _tokensFileName = 'tokens.txt';
+  static const _modelFileNames = {
+    _encoderFileName,
+    _decoderFileName,
+    _joinerFileName,
+    _tokensFileName,
+  };
 
-  /// Download URLs
+  /// Earlier local models (SenseVoice without Portuguese, then Whisper
+  /// turbo); their files are removed when Parakeet is downloaded.
+  static const _legacyModelDirNames = [
+    'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17',
+    'sherpa-onnx-whisper-turbo',
+  ];
+
+  /// Download URL
   static const _downloadUrl =
-      'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2';
+      'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/$_modelDirName.tar.bz2';
 
-  sherpa.OfflineRecognizer? _recognizer; // kept for legacy, prefer bg isolate
   TranscriptionIsolate? _bgIsolate;
-
-  /// Pick the best available execution provider for the current platform.
-  static String get _provider {
-    if (Platform.isIOS) return 'coreml';
-    // NNAPI requires Android 8.1+ (API 27), older devices fallback to cpu
-    if (Platform.isAndroid) return 'nnapi';
-    return 'cpu';
-  }
 
   /// Model directory path.
   Future<String> _modelDir() async {
@@ -48,9 +56,7 @@ class WhisperService {
   /// Whether the model files exist locally.
   Future<bool> isModelDownloaded() async {
     final dir = await _modelDir();
-    final model = File('$dir/$_modelFileName');
-    final tokens = File('$dir/$_tokensFileName');
-    return model.existsSync() && tokens.existsSync();
+    return _modelFileNames.every((name) => File('$dir/$name').existsSync());
   }
 
   /// Delete any downloaded or partially downloaded local model files.
@@ -62,7 +68,7 @@ class WhisperService {
     if (!await dir.exists()) return false;
 
     await dir.delete(recursive: true);
-    _logger.info('Deleted SenseVoice model directory: $dirPath');
+    _logger.info('Deleted speech model directory: $dirPath');
     return true;
   }
 
@@ -75,7 +81,7 @@ class WhisperService {
     await Directory(dir).create(recursive: true);
 
     // Download tar.bz2 archive from GitHub
-    _logger.info('Downloading SenseVoice model from $_downloadUrl');
+    _logger.info('Downloading Parakeet model from $_downloadUrl');
     final tmpFile = File('$dir/model.tar.bz2');
     await _downloadFile(
       _downloadUrl,
@@ -83,27 +89,62 @@ class WhisperService {
       onProgress: (p) => onProgress(p * 0.9),
     );
 
-    // Extract
+    // Extract on disk in a background isolate: the archive is ~470 MB, too
+    // big to decompress in memory on the UI isolate.
     _logger.info('Extracting model archive...');
     onProgress(0.9);
-    final bytes = await tmpFile.readAsBytes();
-    final decompressed = BZip2Decoder().decodeBytes(bytes);
-    final archive = TarDecoder().decodeBytes(decompressed);
-
-    for (final file in archive) {
-      if (file.isFile) {
-        final name = file.name.split('/').last;
-        if (name == _modelFileName || name == _tokensFileName) {
-          final outFile = File('$dir/$name');
-          await outFile.writeAsBytes(file.content as List<int>);
-        }
-      }
-    }
-    // Clean up archive
+    final archivePath = tmpFile.path;
+    await Isolate.run(
+      () => extractModelFiles(archivePath, dir, _modelFileNames),
+    );
     if (tmpFile.existsSync()) await tmpFile.delete();
+
+    final support = (await getApplicationSupportDirectory()).path;
+    for (final name in _legacyModelDirNames) {
+      final legacy = Directory('$support/$name');
+      if (legacy.existsSync()) await legacy.delete(recursive: true);
+    }
     onProgress(1.0);
 
-    _logger.info('SenseVoice model downloaded to $dir');
+    _logger.info('Parakeet model downloaded to $dir');
+  }
+
+  /// Extracts the files named in [names] from the `.tar.bz2` at [archivePath]
+  /// into [outDir], streaming through a temporary `.tar` on disk. Each file is
+  /// written as `.part` and renamed, so an interrupted extraction never
+  /// leaves a truncated model that [isModelDownloaded] would accept.
+  @visibleForTesting
+  static void extractModelFiles(
+    String archivePath,
+    String outDir,
+    Set<String> names,
+  ) {
+    final tarPath = '$archivePath.tar';
+    final compressed = InputFileStream(archivePath);
+    final tarOut = OutputFileStream(tarPath);
+    try {
+      BZip2Decoder().decodeStream(compressed, tarOut);
+    } finally {
+      compressed.closeSync();
+      tarOut.closeSync();
+    }
+    final tarIn = InputFileStream(tarPath);
+    try {
+      for (final file in TarDecoder().decodeStream(tarIn)) {
+        final name = file.name.split('/').last;
+        if (!file.isFile || !names.contains(name)) continue;
+        final part = OutputFileStream('$outDir/$name.part');
+        try {
+          file.writeContent(part);
+        } finally {
+          part.closeSync();
+        }
+        File('$outDir/$name.part').renameSync('$outDir/$name');
+      }
+    } finally {
+      tarIn.closeSync();
+      File(tarPath).deleteSync();
+    }
   }
 
   Future<void> _downloadFile(
@@ -127,34 +168,6 @@ class WhisperService {
     await sink.close();
   }
 
-  /// Get or create the recognizer instance.
-  // ignore: unused_element
-  Future<sherpa.OfflineRecognizer> _getRecognizer() async {
-    if (_recognizer != null) return _recognizer!;
-
-    // Initialize sherpa-onnx bindings (must be called once before any usage)
-    sherpa.initBindings();
-
-    final dir = await _modelDir();
-    final config = sherpa.OfflineRecognizerConfig(
-      model: sherpa.OfflineModelConfig(
-        senseVoice: sherpa.OfflineSenseVoiceModelConfig(
-          model: '$dir/$_modelFileName',
-          language: 'auto',
-          useInverseTextNormalization: true,
-        ),
-        tokens: '$dir/$_tokensFileName',
-        numThreads: 2,
-        debug: false,
-        provider: _provider,
-      ),
-    );
-
-    _recognizer = sherpa.OfflineRecognizer(config);
-    _logger.info('SenseVoice recognizer initialized');
-    return _recognizer!;
-  }
-
   /// Max audio duration in seconds for transcription.
   /// Longer audio will be truncated to avoid OOM.
   static const int _maxAudioSeconds = 60;
@@ -166,7 +179,7 @@ class WhisperService {
       {bool skipLengthCheck = false}) async {
     try {
       if (!await isModelDownloaded()) {
-        _logger.warning('SenseVoice model not downloaded yet');
+        _logger.warning('Speech model not downloaded yet');
         return null;
       }
 
@@ -207,74 +220,96 @@ class WhisperService {
           ? Float32List.fromList(waveData.samples.sublist(0, maxSamples))
           : waveData.samples;
 
-      // Use background Isolate for transcription
-      // For long audio, split into chunks to avoid OOM
-      const chunkSeconds = 30;
-      const chunkSamples = 16000 * chunkSeconds;
-
-      if (samples.length <= chunkSamples) {
-        final text = await transcribeSamples(samples);
-        final preview = text?.substring(0, text.length.clamp(0, 100));
-        // Clean up converted temp file
-        if (wavPath != audioPath) {
-          try {
-            File(wavPath).deleteSync();
-          } catch (_) {}
-        }
-        _logger.info('Transcription complete: $preview');
-        return text;
-      }
-
-      // Split into 30-second chunks and transcribe each
-      final results = <String>[];
-      for (int offset = 0; offset < samples.length; offset += chunkSamples) {
-        final end = (offset + chunkSamples).clamp(0, samples.length);
-        final chunk = Float32List.fromList(samples.sublist(offset, end));
-        final text = await transcribeSamples(chunk);
-        if (text != null && text.isNotEmpty) {
-          results.add(text);
-        }
-      }
-
+      final text = await transcribeSamples(samples);
       // Clean up converted temp file
       if (wavPath != audioPath) {
         try {
           File(wavPath).deleteSync();
         } catch (_) {}
       }
-
-      final fullText = results.join(' ').trim();
       _logger.info(
-          'Transcription complete (${results.length} chunks): ${fullText.substring(0, fullText.length.clamp(0, 100))}');
-      return fullText.isEmpty ? null : fullText;
+          'Transcription complete: ${text?.substring(0, text.length.clamp(0, 100))}');
+      return text;
     } catch (e) {
       _logger.severe('Transcription failed: $e');
       return null;
     }
   }
 
-  /// Dispose the recognizer and background isolate.
+  /// Dispose the background isolate.
   void dispose() {
-    _recognizer?.free();
-    _recognizer = null;
     _bgIsolate?.dispose();
     _bgIsolate = null;
   }
 
-  /// Transcribe a speech segment (Float32List samples at 16kHz).
+  /// Parakeet has no 30 s limit, but on the owner's notes 30 s pieces
+  /// transcribed better than the whole 5 min at once (31% vs 38% distance to
+  /// Whisper large-v3, F2-11 section 7) and keep memory flat on long audio.
+  static const int _chunkSamples = 16000 * 30;
+
+  /// Pieces shorter than 0.1 s hold no word, and a few samples crashed the
+  /// native Whisper decoder (sherpa-onnx 1.13.2); kept as a cheap guard.
+  static const int _minChunkSamples = 1600;
+
+  /// Each cut is searched in the last 10 s before the 30 s mark.
+  static const int _searchSamples = 16000 * 10;
+
+  /// Splits [samples] into consecutive pieces of at most 30 s, cutting at the
+  /// quietest 0.1 s near each 30 s mark so a pause, not a word, is split.
+  /// A piece under 0.1 s is dropped.
+  /// shortcut: "quietest" is plain energy, so steady loud noise with no pause
+  /// still gets cut mid-word; upgrade to the Silero VAD if that shows up.
+  @visibleForTesting
+  static List<Float32List> splitAtPauses(Float32List samples) {
+    const frame = _minChunkSamples;
+    final pieces = <Float32List>[];
+    var start = 0;
+    while (samples.length - start > _chunkSamples) {
+      final from = start + _chunkSamples - _searchSamples;
+      final to = start + _chunkSamples;
+      // Prefix sums of squared samples give each frame's energy in O(1).
+      final energy = Float64List(to - from + 1);
+      for (var i = from; i < to; i++) {
+        energy[i - from + 1] = energy[i - from] + samples[i] * samples[i];
+      }
+      var best = to - frame;
+      var bestEnergy = double.infinity;
+      for (var f = from; f + frame <= to; f += frame ~/ 10) {
+        final e = energy[f + frame - from] - energy[f - from];
+        // `<=` keeps the latest of equally quiet frames: fewer, longer pieces.
+        if (e <= bestEnergy) {
+          bestEnergy = e;
+          best = f;
+        }
+      }
+      final cut = best + frame ~/ 2;
+      pieces.add(samples.sublist(start, cut));
+      start = cut;
+    }
+    if (samples.length - start >= _minChunkSamples) {
+      pieces.add(samples.sublist(start));
+    }
+    return pieces;
+  }
+
+  /// Transcribe speech (Float32List samples at 16kHz) of any length.
   /// Runs in a background Isolate so the UI thread is not blocked.
   Future<String?> transcribeSamples(Float32List samples) async {
     try {
       if (!await isModelDownloaded()) return null;
       await _ensureBgIsolate();
-      final text = await _bgIsolate!.transcribe(samples);
-      if (text != null) {
-        _logger.info(
-            'Segment transcribed (bg): ${text.substring(0, text.length.clamp(0, 80))}');
+      final parts = <String>[];
+      for (final chunk in splitAtPauses(samples)) {
+        final text = await _bgIsolate!.transcribe(chunk);
+        if (text != null && text.isNotEmpty) parts.add(text);
       }
+      final text = parts.join(' ').trim();
+      if (text.isEmpty) return null;
+      _logger.info(
+          'Transcribed (bg, ${parts.length} parts): ${text.substring(0, text.length.clamp(0, 80))}');
       return text;
     } catch (e) {
-      _logger.severe('Segment transcription failed: $e');
+      _logger.severe('Transcription failed: $e');
       return null;
     }
   }
@@ -282,15 +317,13 @@ class WhisperService {
   /// Ensure the background isolate is running.
   Future<void> _ensureBgIsolate() async {
     if (_bgIsolate != null && _bgIsolate!.isReady) return;
-    // Free main-thread recognizer to avoid double memory usage
-    _recognizer?.free();
-    _recognizer = null;
     _bgIsolate = TranscriptionIsolate();
     final dir = await _modelDir();
     await _bgIsolate!.start(
-      modelPath: '$dir/$_modelFileName',
+      encoderPath: '$dir/$_encoderFileName',
+      decoderPath: '$dir/$_decoderFileName',
+      joinerPath: '$dir/$_joinerFileName',
       tokensPath: '$dir/$_tokensFileName',
-      provider: _provider,
     );
   }
 
@@ -299,6 +332,6 @@ class WhisperService {
     sherpa.initBindings();
   }
 
-  /// Model download size in MB (approximate, int8 model).
-  static const double modelSizeMB = 230;
+  /// Model download size in MB (the release archive).
+  static const double modelSizeMB = 470;
 }

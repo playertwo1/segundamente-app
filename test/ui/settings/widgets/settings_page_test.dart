@@ -124,6 +124,22 @@ void main() {
     expect(find.text(UserStorage.l10n.linkPreviewDesc), findsOneWidget);
   });
 
+  testWidgets('on-device transcription starts off and the switch is remembered',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SettingsPage()));
+    await tester.pump();
+    final tile = find.byKey(const ValueKey('local-speech-switch'));
+    await tester.scrollUntilVisible(tile, 200);
+    expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+    expect(await UserStorage.getUseLocalSpeechToText(), isFalse);
+
+    await tester.tap(tile);
+    await tester.pump();
+    expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+    expect(await UserStorage.getUseLocalSpeechToText(), isTrue);
+    expect(find.text(UserStorage.l10n.useLocalSpeechToTextDesc), findsOneWidget);
+  });
+
   testWidgets('semantic search starts off and explains the local download',
       (tester) async {
     final semantic = _SemanticSearchManagerFake();
