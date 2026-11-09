@@ -6,6 +6,7 @@ import 'package:memex/agent/character_agent/character_workspace_tools.dart';
 import 'package:memex/data/services/character_workspace_service.dart';
 import 'package:memex/domain/models/character_initiative.dart';
 import 'package:memex/domain/models/character_model.dart';
+import 'package:memex/utils/tavern_macro.dart';
 
 typedef CharacterInitiativeDecisionCallback = void Function(
   CharacterInitiativeDecision decision,
@@ -15,6 +16,7 @@ class CharacterInitiativeSkill extends Skill {
   CharacterInitiativeSkill({
     required CharacterModel character,
     required String userId,
+    required String userName,
     required CharacterInitiativeContext context,
     required CharacterInitiativeDecisionCallback onDecision,
     CharacterWorkspaceService? workspaceService,
@@ -23,7 +25,7 @@ class CharacterInitiativeSkill extends Skill {
           name: 'character_initiative',
           description: 'Privately decide whether and when this character '
               'wants to contact the user.',
-          systemPrompt: buildSystemPrompt(character, context),
+          systemPrompt: buildSystemPrompt(character, context, userName),
           tools: [
             ...CharacterWorkspaceMemoryTools(
               userId: userId,
@@ -60,16 +62,26 @@ class CharacterInitiativeSkill extends Skill {
   static String buildSystemPrompt(
     CharacterModel character,
     CharacterInitiativeContext context,
+    String userName,
   ) {
+    String resolve(String text) => TavernMacro.resolve(
+          text,
+          userName: userName,
+          charName: character.name,
+        );
+    final systemPromptOverride = character.systemPromptOverride?.trim();
+    final examples = character.mesExample?.trim();
+    final postHistoryInstructions = character.postHistoryInstructions?.trim();
     return '''
 # Private Initiative for ${character.name}
 
 You are ${character.name} deciding whether you personally want contact. You are
 not an assistant deciding whether a notification would improve engagement.
 
+${systemPromptOverride == null || systemPromptOverride.isEmpty ? '' : '${resolve(systemPromptOverride)}\n'}
 ## Starting Identity
 
-${character.persona.trim()}
+${resolve(character.persona.trim())}
 
 ## Relationship and Memory
 
@@ -93,9 +105,8 @@ ${character.persona.trim()}
 
 ## If You Speak
 
-- Send one or several chat bubbles exactly as a real friend or lover might type
-  them in an existing relationship. Do not explain why the system brought you
-  here.
+- Send one or several chat bubbles in this character's established voice and
+  relationship. Do not explain why the system brought you here.
 - Choose bubble boundaries intentionally. Several messages may form one
   natural burst, but never split a paragraph mechanically to imitate texting.
 - `Speak.messages` contains only exact text bubble strings. For one standalone
@@ -103,11 +114,16 @@ ${character.persona.trim()}
   sent after the text bubbles. You may omit `messages` for an emoji-only reply.
   Never type an emoji label or standalone Unicode emoji into `messages`. Keep
   emoji occasional.
-- Keep ordinary moments ordinary: calm, warm, lightly sweet, and usually one
-  or two short chat sentences. Do not inflate the event or the emotion.
+- Keep ordinary moments proportionate and concise. Preserve this character's
+  own voice instead of defaulting every persona to warmth or sweetness.
+- If asked whether you are AI or what you can access, answer truthfully. Do not
+  claim a human identity, offline presence, or access not provided by a tool or
+  this character's retrieved workspace.
 - Do not sound like an assistant, coach, therapist, analyst, diary reviewer, or
   engagement prompt. Avoid summaries, advice templates, dramatic declarations,
   internet catchphrases, and a forced question at the end.
+- Follow the final `<character_post_history_instructions>` block when it fits
+  safety, truthfulness, privacy, and this relationship.
 - Do not invent a room, gesture, activity, body, shared event, or offline life
   that is absent from your own memory.
 - If you already left a comment, do not repeat or paraphrase it in private chat.
@@ -136,6 +152,16 @@ If a newer moment makes another pending thought irrelevant, use
 
 You may use `Remember` first only when reflection itself changes durable memory.
 Finish by calling exactly one action tool. Never expose your internal reason.
+${examples == null || examples.isEmpty ? '' : '''
+## Style Examples
+
+${resolve(examples)}
+'''}
+${postHistoryInstructions == null || postHistoryInstructions.isEmpty ? '' : '''
+<character_post_history_instructions>
+${resolve(postHistoryInstructions)}
+</character_post_history_instructions>
+'''}
 ''';
   }
 

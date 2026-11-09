@@ -14,13 +14,14 @@ import 'package:memex/utils/logger.dart';
 ///   should participate.
 class CharacterSelectionService {
   static final Logger _logger = getLogger('CharacterSelectionService');
+  static const double _minimumAffinityMargin = 2;
 
   // ---------------------------------------------------------------------------
   // Single-character selection (keyword-based, no LLM) — original logic
   // ---------------------------------------------------------------------------
 
   /// Select the best character for the given input content.
-  /// Falls back to weighted-random if no clear winner.
+  /// Falls back to the primary companion if no character has a clear match.
   static Future<CharacterModel?> selectCharacter({
     required String userId,
     required String inputContent,
@@ -32,44 +33,27 @@ class CharacterSelectionService {
     if (enabled.isEmpty) return null;
     if (enabled.length == 1) return enabled.first;
 
-    // Score each character against the input
-    final scores = <String, double>{};
-    for (final char in enabled) {
-      scores[char.id] = _scoreAffinity(char, inputContent);
-    }
-
-    // Find the max score
-    final maxScore = scores.values.reduce(max);
-
-    // If there's a clear winner (score > 0 and at least 2x the average),
-    // pick that character. Otherwise, do weighted-random.
-    final avgScore =
-        scores.values.reduce((a, b) => a + b) / scores.values.length;
-
-    if (maxScore > 0 && maxScore >= avgScore * 1.5) {
-      // Clear affinity match
-      final winnerId =
-          scores.entries.firstWhere((e) => e.value == maxScore).key;
-      final winner = enabled.firstWhere((c) => c.id == winnerId);
-      _logger
-          .info('Selected ${winner.name} (score: $maxScore) for fact $factId');
+    final winner = _bestMatch(enabled, inputContent);
+    if (winner != null) {
+      _logger.info(
+        'Selected ${winner.name} (score: '
+        '${scoreAffinity(winner, inputContent)}) for fact $factId',
+      );
       return winner;
     }
 
-    // Weighted random: higher scores = higher probability, but everyone
-    // has a chance. This prevents the same character from always winning.
-    return _weightedRandom(enabled, scores, factId);
+    return _primaryCompanion(enabled);
   }
 
   /// Score how well a character matches the input content.
-  /// Higher = better match. Uses tags + persona keywords.
-  static double _scoreAffinity(CharacterModel char, String content) {
-    final lower = content.toLowerCase();
+  /// Higher is better; uses tags, positive interests and emotional tone.
+  static double scoreAffinity(CharacterModel char, String content) {
+    final lower = _normalizeAffinityText(content);
     var score = 0.0;
 
     // 1. Tag matching (tags are the primary signal)
     for (final tag in char.tags) {
-      if (lower.contains(tag.toLowerCase())) {
+      if (_containsAffinityPhrase(lower, tag)) {
         score += 3.0;
       }
     }
@@ -83,7 +67,7 @@ class CharacterSelectionService {
           : char.persona,
     );
     for (final keyword in interestKeywords) {
-      if (lower.contains(keyword.toLowerCase())) {
+      if (_containsAffinityPhrase(lower, keyword)) {
         score += 2.0;
       }
     }
@@ -121,47 +105,132 @@ class CharacterSelectionService {
   }
 
   static List<String> _tokenizeInterestKeywords(String text) {
-    return text
-        .replaceAll(RegExp(r'[,;.!?()、，。；：！？（）]'), ' ')
-        .replaceAll('和', ' ')
-        .split(RegExp(r'\s+'))
+    // Default filters name excluded topics after "Ignore"; those are not matches.
+    final focusText = text
+        .split(
+          RegExp(
+            r'\b(?:ignore|do not focus on|não foque em|nao foque em)\b',
+            caseSensitive: false,
+          ),
+        )
+        .first;
+    return _normalizeAffinityText(focusText)
+        .split(' ')
         .where((w) => w.length > 1)
         .where((w) => !_stopWords.contains(w.toLowerCase()))
         .toList();
   }
 
+  static String _normalizeAffinityText(String text) => text
+      .toLowerCase()
+      .replaceAll('和', ' ')
+      .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+      .trim()
+      .replaceAll(RegExp(r'\s+'), ' ');
+
+  static bool _containsAffinityPhrase(String normalizedText, String phrase) {
+    final normalizedPhrase = _normalizeAffinityText(phrase);
+    return normalizedPhrase.isNotEmpty &&
+        (' $normalizedText ').contains(' $normalizedPhrase ');
+  }
+
+  static CharacterModel? _bestMatch(
+    List<CharacterModel> characters,
+    String content,
+  ) {
+    if (characters.isEmpty) return null;
+    final ranked = characters
+        .map((character) => (
+              character: character,
+              score: scoreAffinity(character, content),
+            ))
+        .toList()
+      ..sort((a, b) => b.score.compareTo(a.score));
+    final runnerUpScore = ranked.length > 1 ? ranked[1].score : 0.0;
+    if (ranked.first.score <= 0 ||
+        ranked.first.score - runnerUpScore < _minimumAffinityMargin) {
+      return null;
+    }
+    return ranked.first.character;
+  }
+
+  static CharacterModel? _primaryCompanion(List<CharacterModel> characters) {
+    for (final character in characters) {
+      if (character.isPrimaryCompanion) return character;
+    }
+    return null;
+  }
+
   /// Score emotional affinity between character and content tone.
   static double _emotionalAffinity(CharacterModel char, String lowerContent) {
-    final charLower = '${char.name} ${char.tags.join(' ')}'.toLowerCase();
+    final positiveInterests = _extractInterestKeywords(
+      char.interestFilter ?? '',
+    ).join(' ');
+    final charLower =
+        '${char.id} ${char.name} ${char.tags.join(' ')} $positiveInterests'
+            .toLowerCase();
     var score = 0.0;
 
     // Health/fatigue signals → caring characters
     if (_matchesAny(lowerContent, _healthSignals)) {
-      if (_matchesAny(charLower, ['care', 'health', 'warmth', '关心', '健康'])) {
+      if (_matchesAny(charLower, [
+        'care',
+        'health',
+        'warmth',
+        'energy',
+        'guardiao_energia',
+        'sono',
+        'cansaço',
+        'ritmo',
+        'saúde',
+        '关心',
+        '健康',
+      ])) {
         score += 4.0;
       }
     }
 
     // Venting/frustration signals → bestie characters
     if (_matchesAny(lowerContent, _ventingSignals)) {
-      if (_matchesAny(
-          charLower, ['bestie', 'venting', 'company', '闺蜜', '吐槽'])) {
+      if (_matchesAny(charLower, [
+        'bestie',
+        'venting',
+        'company',
+        'amigo_bar',
+        'informal',
+        'humor',
+        'desabafo',
+        'companhia',
+        '闺蜜',
+        '吐槽',
+      ])) {
         score += 4.0;
       }
     }
 
     // Reflective/philosophical signals → mentor characters
     if (_matchesAny(lowerContent, _reflectiveSignals)) {
-      if (_matchesAny(
-          charLower, ['wisdom', 'mentor', 'validation', '导师', '智慧'])) {
+      if (_matchesAny(charLower, [
+        'wisdom',
+        'mentor',
+        'validation',
+        '导师',
+        '智慧',
+      ])) {
         score += 4.0;
       }
     }
 
     // Emotional/nostalgic signals → poetic characters
     if (_matchesAny(lowerContent, _emotionalSignals)) {
-      if (_matchesAny(
-          charLower, ['beauty', 'nostalgia', 'distant', '诗意', '月光'])) {
+      if (_matchesAny(charLower, [
+        'beauty',
+        'nostalgia',
+        'distant',
+        'poetic',
+        '诗意',
+        '月光',
+      ])) {
         score += 4.0;
       }
     }
@@ -170,35 +239,10 @@ class CharacterSelectionService {
   }
 
   static bool _matchesAny(String text, List<String> patterns) {
-    return patterns.any((p) => text.contains(p));
-  }
-
-  /// Weighted random selection. Characters with higher scores are more
-  /// likely to be picked, but all enabled characters have a base chance.
-  static CharacterModel _weightedRandom(
-    List<CharacterModel> characters,
-    Map<String, double> scores,
-    String factId,
-  ) {
-    // Give everyone a base weight of 1.0 so no one is excluded
-    final weights = characters.map((c) {
-      return 1.0 + (scores[c.id] ?? 0.0);
-    }).toList();
-
-    final totalWeight = weights.reduce((a, b) => a + b);
-    final rng = Random(factId.hashCode);
-    var roll = rng.nextDouble() * totalWeight;
-
-    for (var i = 0; i < characters.length; i++) {
-      roll -= weights[i];
-      if (roll <= 0) {
-        _logger.info(
-            'Weighted-random selected ${characters[i].name} for fact $factId');
-        return characters[i];
-      }
-    }
-
-    return characters.last;
+    final normalizedText = _normalizeAffinityText(text);
+    return patterns.any(
+      (pattern) => _containsAffinityPhrase(normalizedText, pattern),
+    );
   }
 
   // --- Signal word lists ---
@@ -216,6 +260,17 @@ class CharacterSelectionService {
     'pain',
     'fever',
     'cold',
+    'cansado',
+    'cansada',
+    'cansaço',
+    'exausto',
+    'exausta',
+    'dorm',
+    'sono',
+    'insônia',
+    'febre',
+    'doente',
+    'madrugada',
     '累',
     '困',
     '生病',
@@ -244,6 +299,19 @@ class CharacterSelectionService {
     'done with',
     'fed up',
     'pissed',
+    'irritado',
+    'irritada',
+    'frustrado',
+    'frustrada',
+    'raiva',
+    'odeio',
+    'injusto',
+    'injusta',
+    'absurdo',
+    'absurda',
+    'de saco cheio',
+    'que saco',
+    'que droga',
     '烦',
     '气死',
     '无语',
@@ -270,6 +338,18 @@ class CharacterSelectionService {
     'meaning',
     'purpose',
     'goal',
+    'pensando sobre',
+    'refletindo',
+    'percebi',
+    'decisão',
+    'decidir',
+    'carreira',
+    'futuro',
+    'sentido',
+    'propósito',
+    'objetivo',
+    'escolha',
+    'rumo',
     '思考',
     '反思',
     '成长',
@@ -295,6 +375,18 @@ class CharacterSelectionService {
     'memory',
     'beautiful',
     'melancholy',
+    'saudade',
+    'lembrei',
+    'chuva',
+    'pôr do sol',
+    'música',
+    'sozinho',
+    'sozinha',
+    'silêncio',
+    'sonho',
+    'memória',
+    'tristeza',
+    'melancolia',
     '想念',
     '回忆',
     '孤独',
@@ -336,9 +428,41 @@ class CharacterSelectionService {
     'been',
     'focus',
     'ignore',
+    'on',
+    'to',
+    'as',
+    'at',
+    'of',
+    'in',
+    'or',
+    'by',
+    'be',
+    'is',
     'unless',
     'based',
     'user',
+    'de',
+    'do',
+    'da',
+    'dos',
+    'das',
+    'em',
+    'no',
+    'na',
+    'nos',
+    'nas',
+    'para',
+    'por',
+    'com',
+    'que',
+    'quando',
+    'uma',
+    'uns',
+    'umas',
+    'foco',
+    'foque',
+    'registros',
+    'assuntos',
   };
 
   // ---------------------------------------------------------------------------
@@ -376,16 +500,18 @@ class CharacterSelectionService {
         _logger.info(
             'LLM selected ${selected.length} characters for fact $factId: '
             '${selected.map((c) => c.name).join(', ')}');
-        return selected;
       }
+      return selected;
     } catch (e) {
       _logger.warning('LLM character selection failed, falling back: $e');
     }
 
-    // Fallback: pick the primary companion, or the first enabled character.
-    final primary = enabled.where((c) => c.isPrimaryCompanion).toList();
-    if (primary.isNotEmpty) return [primary.first];
-    return [enabled.first];
+    // A failed router still gets a profile only when the match is clear.
+    final bestMatch = _bestMatch(enabled, inputContent);
+    if (bestMatch != null) return [bestMatch];
+
+    final primary = _primaryCompanion(enabled);
+    return primary == null ? [] : [primary];
   }
 
   /// One-shot LLM call to pick which characters should respond.
@@ -403,22 +529,23 @@ class CharacterSelectionService {
       final interest = c.interestFilter != null && c.interestFilter!.isNotEmpty
           ? ' — ${c.interestFilter}'
           : '';
-      charDescriptions
-          .writeln('- id: "${c.id}", name: "${c.name}"$tags$interest');
+      final policy = _extractCommentPolicy(c.persona);
+      charDescriptions.writeln(
+        '- id: "${c.id}", name: "${c.name}"$tags$interest'
+        '${policy.isEmpty ? '' : '\n  comment policy: $policy'}',
+      );
     }
 
-    final truncatedInput = inputContent.length > 500
-        ? '${inputContent.substring(0, 500)}...'
-        : inputContent;
+    final truncatedInput = _selectionInputExcerpt(inputContent);
 
     final targetCount = min(maxCharacters, characters.length);
     final prompt = 'Pick which characters should comment on this user entry.\n'
-        'The user allows up to $targetCount character comments. This is a multi-character setting, so prefer selecting 2-$targetCount distinct voices when multiple characters can add meaningfully different reactions.\n'
-        'Do not pick only the single best fit by default. Pick one character only when the entry is clearly narrow, private, or would become repetitive with more voices.\n'
-        'Rank selected characters from strongest fit to weakest fit. Do not include characters whose response would be redundant or forced.\n\n'
+        'The user allows up to $targetCount character comments. Start with one; add another only when it contributes a clearly different and useful response. Never fill the allowance just because it exists.\n'
+        'Follow each character’s comment policy. Do not select a character whose policy says to stay quiet. Return no IDs when no character has a natural reason to respond.\n'
+        'Rank selected characters from strongest fit to weakest fit. Do not include redundant or forced voices.\n\n'
         'Characters:\n$charDescriptions\n'
         'User entry:\n"$truncatedInput"\n\n'
-        'Reply with ONLY comma-separated IDs, e.g. id1,id2. No explanation.';
+        'Reply with ONLY comma-separated IDs, e.g. id1,id2. Reply with an empty string if none fit. No explanation.';
 
     final selectionConfig = ModelConfig(
       model: modelConfig.model,
@@ -453,6 +580,26 @@ class CharacterSelectionService {
     }
 
     return selected.take(maxCharacters).toList();
+  }
+
+  static String _extractCommentPolicy(String persona) {
+    final heading = RegExp(
+      r'^\s*##\s*(?:Comment Policy|Política de comentários)\s*$',
+      caseSensitive: false,
+      multiLine: true,
+    ).firstMatch(persona);
+    if (heading == null) return '';
+    final body = persona.substring(heading.end);
+    final nextHeading = RegExp(r'^\s*##\s+', multiLine: true).firstMatch(body);
+    return body.substring(0, nextHeading?.start ?? body.length).trim();
+  }
+
+  static String _selectionInputExcerpt(String input) {
+    final runeCount = input.runes.length;
+    if (runeCount <= 500) return input;
+    final beginning = String.fromCharCodes(input.runes.take(350));
+    final ending = String.fromCharCodes(input.runes.skip(runeCount - 145));
+    return '$beginning\n…\n$ending';
   }
 
   /// Parse comma-separated IDs from LLM output.

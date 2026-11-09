@@ -28,6 +28,7 @@ class CharacterService {
     4: _personalCharacterIds,
   };
 
+  // Retired IDs stay here for the seed 5 portrait migration.
   static const List<String> _personalCharacterIds = [
     'socio_tecnico',
     'revisor_chato',
@@ -44,6 +45,7 @@ class CharacterService {
     'amigo_bar',
     'financas_burocracia',
     'curador',
+    'facilitador_execucao',
   ];
 
   /// The five original defaults were replaced in seed version 4. A file is

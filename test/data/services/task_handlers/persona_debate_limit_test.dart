@@ -3,20 +3,26 @@ import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/domain/models/character_model.dart';
 import 'package:test/test.dart';
 
-CardComment _c(String id, {required bool ai}) => CardComment(
+CardComment _c(String id, {required bool ai, String? content}) => CardComment(
       id: id,
-      content: id,
+      content: content ?? id,
       isAi: ai,
       timestamp: 0,
       characterId: ai ? 'char-$id' : null,
     );
 
-CharacterModel _char(String id, {bool enabled = true}) => CharacterModel(
+CharacterModel _char(
+  String id, {
+  bool enabled = true,
+  String? interestFilter,
+}) =>
+    CharacterModel(
       id: id,
       name: id,
       tags: const [],
       persona: '',
       enabled: enabled,
+      interestFilter: interestFilter,
     );
 
 void main() {
@@ -83,6 +89,24 @@ void main() {
       expect(pickNextDebater(chars, thread)?.id, 'a');
     });
 
+    test('prefers a persona matching the latest user message', () {
+      final thread = [
+        _c(
+          'u1',
+          ai: false,
+          content: 'Estou cansada e dormi mal essa noite.',
+        ),
+        _c('a1', ai: true),
+      ];
+      final chars = [
+        _char('amigo_bar', interestFilter: 'Focus on humor. Ignore sleep.'),
+        _char('guardiao_energia',
+            interestFilter: 'Focus on sleep and fatigue.'),
+      ];
+
+      expect(pickNextDebater(chars, thread)?.id, 'guardiao_energia');
+    });
+
     test('nobody is available', () {
       final thread = [_c('u1', ai: false), _c('a1', ai: true)];
       expect(pickNextDebater([_char('char-a1')], thread), isNull);
@@ -146,8 +170,7 @@ void main() {
       expect(asked, maxPersonaSkipsPerDebate);
     });
 
-    test('alternates personas instead of repeating the last speaker',
-        () async {
+    test('alternates personas instead of repeating the last speaker', () async {
       thread = [_c('u1', ai: false), _c('a1', ai: true)];
       await run();
       final speakers =

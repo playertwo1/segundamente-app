@@ -567,6 +567,289 @@ void main() {
       expect(await insightTasks(), isEmpty);
     });
   });
+
+  group('periodic analysis', () {
+    Future<void> lastRanAt(int seconds) async {
+      final id = await executor.enqueueTask(
+        userId: userId,
+        taskType: insightTaskType,
+        payload: const {},
+        bizId: insightManualBatchKey(userId),
+      );
+      await (db.update(db.tasks)..where((t) => t.id.equals(id))).write(
+        TasksCompanion(
+          status: const Value('completed'),
+          completedAt: Value(seconds),
+        ),
+      );
+    }
+
+    test('runs when a week passed and records arrived since', () async {
+      await saveRecord('registro');
+      await lastRanAt(1762300000); // long ago; the record is newer
+      expect(await requestPeriodicInsightAnalysis(userId, executor: executor),
+          isTrue);
+      final latest = (await insightTasks()).last;
+      expect((jsonDecode(latest.payload!) as Map)['periodic'], isTrue);
+    });
+
+    test('waits when the last run is recent or nothing new arrived', () async {
+      await saveRecord('registro');
+      await lastRanAt(DateTime.now().millisecondsSinceEpoch ~/ 1000 - 3600);
+      expect(await requestPeriodicInsightAnalysis(userId, executor: executor),
+          isFalse);
+      expect(await insightTasks(), hasLength(1));
+    });
+
+    test('does not run again for records already seen by the last run',
+        () async {
+      await saveRecord('registro'); // timestamp 1762300001
+      await lastRanAt(1762300500); // a week+ ago, but after the record
+      expect(await requestPeriodicInsightAnalysis(userId, executor: executor),
+          isFalse);
+    });
+  });
+
+  group('tags and rejections', () {
+    test('tagsCanLinkRecords needs a tag (or its parent) on a second record',
+        () {
+      expect(
+        tagsCanLinkRecords([
+          ['a']
+        ], [
+          ['a'],
+          ['b']
+        ]),
+        isFalse,
+      );
+      expect(
+        tagsCanLinkRecords([
+          ['a']
+        ], [
+          ['a'],
+          ['a']
+        ]),
+        isTrue,
+      );
+      expect(
+        tagsCanLinkRecords([
+          ['area/obra']
+        ], [
+          ['area/obra'],
+          ['area/casa']
+        ]),
+        isTrue,
+        reason: 'they share the parent tag area',
+      );
+      expect(tagsCanLinkRecords([<String>[]], [<String>[], <String>[]]), isTrue,
+          reason: 'untagged records are left to the model');
+    });
+
+    test('words in common are a second chance when the tags differ', () {
+      expect(
+        textsShareTerms(['Concreto armado da laje do prédio'],
+            ['pedreiro cobrou o concreto armado da laje']),
+        isTrue,
+      );
+      expect(
+        textsShareTerms(['Concreto armado da laje do prédio'], ['passeio no parque']),
+        isFalse,
+      );
+      expect(textsShareTerms(['laje'], ['laje']), isFalse,
+          reason: 'one short word is not enough');
+      expect(evidenceOverlap(['a', 'b', 'c'], ['a', 'b']), 1.0);
+      expect(evidenceOverlap(['a', 'b'], ['b', 'c']), 0.5);
+    });
+
+    SuperAgentChildResult noOpResult() => const SuperAgentChildResult(
+          childName: 'knowledge_insight_auto',
+          status: SuperAgentChildStatus.noOp,
+          summary: 'no_op',
+        );
+
+    Future<void> runAuto(List<String> ids) async {
+      final taskId = await executor.enqueueTask(
+          userId: userId, taskType: insightTaskType, payload: const {});
+      await handleKnowledgeInsightImpl(
+        userId,
+        {'fact_ids': ids},
+        TaskContext(taskId: taskId, taskType: insightTaskType),
+      );
+    }
+
+    test('different tags but shared words still reach the model', () async {
+      KnowledgeInsightTaskDeps.resources = () async =>
+          (client: _ToolCallClient.none(), model: ModelConfig(model: 'fake'));
+      var calls = 0;
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async {
+        calls++;
+        return noOpResult();
+      };
+      await saveRecord('concreto armado da laje', tags: const ['obra']);
+      await saveRecord('pedreiro e concreto armado na laje', tags: const ['custos']);
+      await saveRecord('passeio no parque', tags: const ['lazer']);
+      final fresh = await saveRecord('ferragem, concreto armado e laje',
+          tags: const ['material']);
+
+      await runAuto([fresh]);
+
+      expect(calls, 1);
+    });
+
+    test('evidence that disappeared is pruned; pinned and chat insights stay',
+        () async {
+      final live1 = await saveRecord('a');
+      final live2 = await saveRecord('b');
+      final fs = FileSystemService.instance;
+      Future<void> put(String id, List<String> facts,
+              {String? source, bool pinned = false}) =>
+          fs.writeKnowledgeInsightCard(userId, id, {
+            'id': id,
+            'title': id,
+            'template_id': 'summary_card_v1',
+            'insight': 'x',
+            'data': {'insight_title': id},
+            'related_facts': facts,
+            'pinned': pinned,
+            if (source != null) 'source': source,
+          });
+      const gone = '2026/11/05.md#ts_404';
+      await put('auto_dead', [live1, gone], source: 'auto');
+      await put('auto_ok', [live1, live2, gone], source: 'auto');
+      await put('auto_pinned', [live1, gone], source: 'auto', pinned: true);
+      await put('chat_one', [live1, gone]);
+      await put('chat_none', [gone]);
+
+      expect(await pruneInsightEvidence(userId), 4);
+
+      Future<dynamic> facts(String id) async =>
+          (await fs.readKnowledgeInsightCard(userId, id))?['related_facts'];
+      expect(await fs.readKnowledgeInsightCard(userId, 'auto_dead'), isNull);
+      expect(await facts('auto_ok'), [live1, live2]);
+      expect(await facts('auto_pinned'), [live1]);
+      expect(await facts('chat_one'), [live1]);
+      expect(await facts('chat_none'), [gone],
+          reason: 'nothing to replace it with');
+    });
+
+    test('the brief shows what the user pinned', () async {
+      KnowledgeInsightTaskDeps.resources = () async =>
+          (client: _ToolCallClient.none(), model: ModelConfig(model: 'fake'));
+      final ids = [
+        await saveRecord('a'),
+        await saveRecord('b'),
+        await saveRecord('c'),
+      ];
+      await FileSystemService.instance
+          .writeKnowledgeInsightCard(userId, 'fav', {
+        'id': 'fav',
+        'title': 'Meu favorito',
+        'pinned': true,
+        'related_facts': [ids[0]],
+      });
+      String? brief;
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async {
+        brief = config.taskBrief;
+        return noOpResult();
+      };
+
+      await runAuto(ids);
+
+      expect(brief, contains('- Meu favorito'));
+    });
+
+    test('an unrelated new record ends without calling the model', () async {
+      KnowledgeInsightTaskDeps.resources = () async =>
+          (client: _ToolCallClient.none(), model: ModelConfig(model: 'fake'));
+      var calls = 0;
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async {
+        calls++;
+        return const SuperAgentChildResult(
+          childName: 'knowledge_insight_auto',
+          status: SuperAgentChildStatus.noOp,
+          summary: 'no_op',
+        );
+      };
+      await saveRecord('a', tags: const ['obra']);
+      await saveRecord('b', tags: const ['obra']);
+      await saveRecord('c', tags: const ['obra']);
+      final lone = await saveRecord('d', tags: const ['viagem']);
+      final taskId = await executor.enqueueTask(
+          userId: userId, taskType: insightTaskType, payload: const {});
+
+      await handleKnowledgeInsightImpl(
+        userId,
+        {
+          'fact_ids': [lone]
+        },
+        TaskContext(taskId: taskId, taskType: insightTaskType),
+      );
+      expect(calls, 0);
+
+      // The user asking for it is not second-guessed.
+      await handleKnowledgeInsightImpl(
+        userId,
+        {
+          'fact_ids': [lone],
+          'manual': true
+        },
+        TaskContext(taskId: taskId, taskType: insightTaskType),
+      );
+      expect(calls, 1);
+    });
+
+    test('the brief carries tags and what the user deleted', () async {
+      KnowledgeInsightTaskDeps.resources = () async =>
+          (client: _ToolCallClient.none(), model: ModelConfig(model: 'fake'));
+      final ids = [
+        await saveRecord('a', tags: const ['obra']),
+        await saveRecord('b', tags: const ['obra']),
+        await saveRecord('c', tags: const ['obra']),
+      ];
+      await FileSystemService.instance
+          .addRejectedInsight(userId, 'x', 'Custo da laje');
+      String? brief;
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async {
+        brief = config.taskBrief;
+        return const SuperAgentChildResult(
+          childName: 'knowledge_insight_auto',
+          status: SuperAgentChildStatus.noOp,
+          summary: 'no_op',
+        );
+      };
+      final taskId = await executor.enqueueTask(
+          userId: userId, taskType: insightTaskType, payload: const {});
+
+      await handleKnowledgeInsightImpl(
+        userId,
+        {'fact_ids': ids},
+        TaskContext(taskId: taskId, taskType: insightTaskType),
+      );
+
+      expect(brief, contains('#obra'));
+      expect(brief, contains('- Custo da laje'));
+    });
+  });
 }
 
 /// Scripted model: optionally calls one tool, then answers [finalText].

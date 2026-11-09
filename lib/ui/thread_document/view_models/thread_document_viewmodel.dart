@@ -93,7 +93,8 @@ class ThreadDocumentViewModel extends ChangeNotifier {
   /// The text to show: charts and record photos drawn in; the plain text when
   /// that fails.
   Future<String> render(String content) async {
-    final result = await _router.renderThreadDocument(content, cardId: doc?.cardId);
+    final result =
+        await _router.renderThreadDocument(content, cardId: doc?.cardId);
     return result.when(onOk: (text) => text, onError: (_, __) => content);
   }
 
@@ -125,11 +126,13 @@ class ThreadDocumentViewModel extends ChangeNotifier {
   }
 
   /// Path of the exported file for the version on screen, or null on failure.
-  Future<String?> export(ReportExportFormat format) async {
+  Future<String?> export(ReportExportFormat format,
+      {bool draft = false}) async {
     final result = await _router.exportThreadDocument(
       id: docId,
       version: selectedNumber,
       format: format,
+      draft: draft,
     );
     String? path;
     result.when(

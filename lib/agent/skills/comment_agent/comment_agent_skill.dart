@@ -7,7 +7,7 @@ import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/utils/tavern_macro.dart';
 import 'package:memex/utils/user_storage.dart';
 
-/// Skill for Comment Agent - generates warm, empathetic comments for user's private tree hole entries
+/// Skill for in-character responses to the user's private timeline entries.
 class CommentAgentSkill extends Skill {
   CommentAgentSkill({
     CharacterModel? character,
@@ -101,6 +101,20 @@ class CommentAgentSkill extends Skill {
           charName: charName,
         ),
       );
+    }
+
+    final postHistoryInstructions = character?.postHistoryInstructions?.trim();
+    if (character != null && postHistoryInstructions?.isNotEmpty == true) {
+      b.writeln('');
+      b.writeln('<character_post_history_instructions>');
+      b.writeln(
+        TavernMacro.resolve(
+          postHistoryInstructions!,
+          userName: userName,
+          charName: character.name,
+        ),
+      );
+      b.writeln('</character_post_history_instructions>');
     }
 
     return b.toString();

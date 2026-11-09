@@ -13,6 +13,7 @@ class DocumentChart {
     required this.title,
     required this.labels,
     required this.values,
+    this.unit,
   });
 
   static const maxPoints = 12;
@@ -20,6 +21,7 @@ class DocumentChart {
   final String title;
   final List<String> labels;
   final List<double> values;
+  final String? unit;
 
   /// Null when the block is not a usable chart.
   static DocumentChart? tryParse(String json) {
@@ -28,7 +30,13 @@ class DocumentChart {
       if (map is! Map) return null;
       final labels = map['labels'];
       final values = map['values'];
+      final rawUnit = map['unit'];
       if (labels is! List || values is! List) return null;
+      if (rawUnit != null && rawUnit is! String) return null;
+      final unit = (rawUnit as String?)?.trim();
+      if (unit != null && (unit.length > 24 || unit.contains('\n'))) {
+        return null;
+      }
       if (labels.isEmpty ||
           labels.length != values.length ||
           labels.length > maxPoints) {
@@ -39,6 +47,7 @@ class DocumentChart {
         title: '${map['title'] ?? ''}'.trim(),
         labels: [for (final l in labels) '$l'],
         values: [for (final v in values) (v as num).toDouble()],
+        unit: unit?.isEmpty == true ? null : unit,
       );
     } on FormatException {
       return null;
@@ -63,7 +72,7 @@ class DocumentChart {
 String formatValue(double v) =>
     v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 
-final _chartBlock = RegExp(r'```chart[ \t]*\n(.*?)\n```', dotAll: true);
+final _chartBlock = RegExp(r'```chart[ \t]*\r?\n(.*?)\r?\n```', dotAll: true);
 
 class ChartBlock {
   const ChartBlock(this.start, this.end, this.chart);
@@ -112,7 +121,7 @@ class ImageBlock {
   final String caption;
 }
 
-final _imageBlock = RegExp(r'```image[ \t]*\n(.*?)\n```', dotAll: true);
+final _imageBlock = RegExp(r'```image[ \t]*\r?\n(.*?)\r?\n```', dotAll: true);
 
 List<ImageBlock> findImageBlocks(String markdown) {
   final blocks = <ImageBlock>[];

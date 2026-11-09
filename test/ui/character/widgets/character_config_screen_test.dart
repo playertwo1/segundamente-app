@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/repositories/memex_router.dart';
+import 'package:memex/domain/models/character_editor.dart';
 import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/character/view_models/character_edit_viewmodel.dart';
@@ -128,6 +129,44 @@ void main() {
     expect(AppColors.textSecondary, isNot(Colors.red[300]));
   });
 
+  testWidgets('edits and saves the automatic selection interest filter',
+      (tester) async {
+    final existing = curador.copyWith(
+      interestFilter: 'artigos, livros e referências',
+    );
+    final router = _FakeRouter([existing]);
+    final viewModel = CharacterEditViewModel(
+      router: router,
+      character: existing,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('pt'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        home: CharacterEditPage(viewModel: viewModel),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final filter = find.byKey(const ValueKey('character_interest_filter'));
+    expect(filter, findsOneWidget);
+    expect(
+      tester.widget<TextFormField>(filter).controller!.text,
+      'artigos, livros e referências',
+    );
+
+    await tester.ensureVisible(filter);
+    await tester.enterText(filter, 'decisões e arquitetura');
+    await tester.tap(find.text(UserStorage.l10n.save));
+    await tester.pumpAndSettle();
+
+    expect(router.savedDraft?.interestFilter, 'decisões e arquitetura');
+  });
+
   testWidgets('entry delete buttons are neutral 48dp targets with a label',
       (tester) async {
     tester.view.physicalSize = const Size(1080, 4000);
@@ -135,7 +174,11 @@ void main() {
     addTearDown(tester.view.reset);
     final viewModel = CharacterEditViewModel(router: _FakeRouter([]))
       ..worldEntries = [
-        {'content': 'Mundo', 'keys': ['a'], 'comment': 'c'}
+        {
+          'content': 'Mundo',
+          'keys': ['a'],
+          'comment': 'c'
+        }
       ]
       ..memoryEntries = [
         {'label': 'Memoria', 'content': 'm'}
@@ -195,6 +238,7 @@ class _FakeRouter implements MemexRouter {
   final List<CharacterModel> characters;
   final enabledCalls = <(String, bool)>[];
   final deleted = <String>[];
+  CharacterDraft? savedDraft;
 
   @override
   Future<Result<List<CharacterModel>>> fetchCharacters() async =>
@@ -210,6 +254,26 @@ class _FakeRouter implements MemexRouter {
   Future<Result<bool>> deleteCharacter(String id) async {
     deleted.add(id);
     return const Ok(true);
+  }
+
+  @override
+  Future<Result<CharacterEditorData>> loadCharacterEditor(
+    CharacterModel character,
+  ) async =>
+      const Ok(CharacterEditorData(worldEntries: [], memoryEntries: []));
+
+  @override
+  Future<Result<CharacterModel>> saveCharacterDraft(
+    CharacterDraft draft,
+  ) async {
+    savedDraft = draft;
+    final character = characters.firstWhere((c) => c.id == draft.characterId);
+    return Ok(character.copyWith(
+      name: draft.name,
+      tags: draft.tags,
+      persona: draft.persona,
+      interestFilter: draft.interestFilter,
+    ));
   }
 
   @override

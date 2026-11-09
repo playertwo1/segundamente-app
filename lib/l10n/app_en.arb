@@ -1651,6 +1651,8 @@
   "reportExportMarkdown": "Markdown",
   "reportExportPdf": "PDF",
   "reportExportDocx": "DOCX",
+  "exportPdfNotTagged": "The PDF is not tagged for screen readers. Use DOCX or Markdown for assistive reading.",
+  "exportPdfDraft": "Draft PDF",
   "reportImagesTitle": "Images attached by you",
   "reportImagesDisclaimer": "These images are visual references only; they do not prove report items.",
   "reportImagesUnavailable": "No related image is available.",

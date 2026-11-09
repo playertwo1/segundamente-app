@@ -77,7 +77,10 @@ class ThreadDocumentService {
     String userId,
     String cardId,
   ) async =>
-      [for (final d in await listAll(userId)) if (d.cardId == cardId) d];
+      [
+        for (final d in await listAll(userId))
+          if (d.cardId == cardId) d
+      ];
 
   /// Creates the first version. A repeated [requestId] (a retry after a
   /// restart) returns the document already made instead of a second one.
@@ -242,7 +245,8 @@ class ThreadDocumentService {
     var names = <String, String>{};
     try {
       names = {
-        for (final c in await CharacterService.instance.getAllCharacters(userId))
+        for (final c
+            in await CharacterService.instance.getAllCharacters(userId))
           c.id: c.name,
       };
     } catch (_) {} // no character list: the id of the persona is shown
@@ -256,6 +260,22 @@ class ThreadDocumentService {
     });
   }
 
+  ExportMeta _exportMeta(String createdAt, int version, {bool draft = false}) {
+    final pt = UserStorage.localeNotifier.value.languageCode == 'pt';
+    final at = DateTime.tryParse(createdAt)?.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return ExportMeta(
+      kindLabel: pt ? 'Documento' : 'Document',
+      date: at == null
+          ? null
+          : pt
+              ? '${two(at.day)}/${two(at.month)}/${at.year}'
+              : '${at.year}-${two(at.month)}-${two(at.day)}',
+      version: pt ? 'versão $version' : 'version $version',
+      draftLabel: draft ? (pt ? 'Rascunho' : 'Draft') : null,
+    );
+  }
+
   /// Writes one version in Markdown, PDF or DOCX. The same text goes to every
   /// format, and an older version can be exported as long as it is named.
   Future<File> export({
@@ -263,6 +283,7 @@ class ThreadDocumentService {
     required String id,
     required int version,
     required ReportExportFormat format,
+    bool draft = false,
   }) async {
     final doc = await load(userId, id);
     final v = doc?.version(version);
@@ -271,6 +292,8 @@ class ThreadDocumentService {
       markdown: await render(userId, v.content, cardId: doc.cardId),
       format: format,
       fonts: format == ReportExportFormat.pdf ? await _loadFonts() : null,
+      languageCode: UserStorage.localeNotifier.value.languageCode,
+      meta: _exportMeta(v.createdAt, version, draft: draft),
     );
     final ext = const {
       ReportExportFormat.markdown: 'md',

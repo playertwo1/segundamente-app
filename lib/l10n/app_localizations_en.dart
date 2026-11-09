@@ -3615,6 +3615,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportExportDocx => 'DOCX';
 
   @override
+  String get exportPdfNotTagged =>
+      'The PDF is not tagged for screen readers. Use DOCX or Markdown for assistive reading.';
+
+  @override
+  String get exportPdfDraft => 'Draft PDF';
+
+  @override
   String get reportImagesTitle => 'Images attached by you';
 
   @override

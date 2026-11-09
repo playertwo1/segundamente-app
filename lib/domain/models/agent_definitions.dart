@@ -5,6 +5,9 @@ class AgentDefinitions {
   // the consolidation from CompanionAgent to CharacterAgent.
   static const String characterAgent = 'companion_agent';
   static const String profileAgent = 'profile_agent';
+  // Optional: a cheaper model for the background insight analysis. Unset, the
+  // analysis uses the chat model.
+  static const String insightAgent = 'insight_agent';
 
   /// Order here drives the display order in the agent configuration screen.
   static const Map<String, String> displayNames = {
@@ -12,6 +15,7 @@ class AgentDefinitions {
     commentAgent: 'Comments',
     characterAgent: 'Companion',
     profileAgent: 'Memory',
+    insightAgent: 'Insights',
   };
 
   /// Agent IDs exposed in the model configuration screen.

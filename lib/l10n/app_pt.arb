@@ -1644,6 +1644,8 @@
   "reportExportMarkdown": "Markdown",
   "reportExportPdf": "PDF",
   "reportExportDocx": "DOCX",
+  "exportPdfNotTagged": "O PDF não é marcado para leitores de tela. Use DOCX ou Markdown para leitura assistiva.",
+  "exportPdfDraft": "PDF rascunho",
   "reportImagesTitle": "Imagens anexadas por você",
   "reportImagesDisclaimer": "Estas imagens são referências visuais; não comprovam itens do relatório.",
   "reportImagesUnavailable": "Nenhuma imagem relacionada disponível.",

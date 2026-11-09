@@ -92,7 +92,7 @@ Future<void> handleCommentAgentImpl(
       );
 
       if (selectedChar == null) {
-        _logger.info("No enabled characters, skipping comment agent");
+        _logger.info("No clear character match, skipping comment agent");
         return;
       }
 
@@ -127,7 +127,7 @@ Future<void> handleCommentAgentImpl(
       );
 
       if (selectedChars.isEmpty) {
-        _logger.info("No enabled characters, skipping comment agent");
+        _logger.info("No character selected, skipping comment agent");
         return;
       }
 
@@ -337,26 +337,37 @@ int remainingPersonaTurns(
   return spoken >= max ? 0 : max - spoken;
 }
 
-/// Next persona for the debate: enabled, not the one who just spoke, and the
-/// one with the fewest comments in the thread (ties by id).
+/// Next persona for the debate: most relevant to the latest user message,
+/// then the one with the fewest comments in the thread (ties by id).
 CharacterModel? pickNextDebater(
   List<CharacterModel> characters,
   List<CardComment> comments,
 ) {
   final last = comments.isEmpty ? null : comments.last;
   final lastSpeaker = last != null && last.isAi ? last.characterId : null;
+  final lastUserIndex = comments.lastIndexWhere((comment) => !comment.isAi);
+  final latestUserContent =
+      lastUserIndex < 0 ? null : comments[lastUserIndex].content;
   final spoken = <String, int>{};
   for (final c in comments) {
     final id = c.characterId;
     if (c.isAi && id != null) spoken[id] = (spoken[id] ?? 0) + 1;
   }
-  final candidates = characters
-      .where((c) => c.enabled && c.id != lastSpeaker)
-      .toList()
-    ..sort((a, b) {
-      final byCount = (spoken[a.id] ?? 0).compareTo(spoken[b.id] ?? 0);
-      return byCount != 0 ? byCount : a.id.compareTo(b.id);
-    });
+  final candidates =
+      characters.where((c) => c.enabled && c.id != lastSpeaker).toList()
+        ..sort((a, b) {
+          if (latestUserContent != null) {
+            final byRelevance = CharacterSelectionService.scoreAffinity(
+              b,
+              latestUserContent,
+            ).compareTo(
+              CharacterSelectionService.scoreAffinity(a, latestUserContent),
+            );
+            if (byRelevance != 0) return byRelevance;
+          }
+          final byCount = (spoken[a.id] ?? 0).compareTo(spoken[b.id] ?? 0);
+          return byCount != 0 ? byCount : a.id.compareTo(b.id);
+        });
   return candidates.isEmpty ? null : candidates.first;
 }
 
@@ -380,9 +391,8 @@ Future<int> runPersonaDebate({
     final comments = await loadComments();
     if (comments.isEmpty || !comments.last.isAi) break;
     if (remainingPersonaTurns(comments) <= 0) break;
-    final candidates = (await loadCharacters())
-        .where((c) => !passed.contains(c.id))
-        .toList();
+    final candidates =
+        (await loadCharacters()).where((c) => !passed.contains(c.id)).toList();
     final next = pickNextDebater(candidates, comments);
     if (next == null) break;
     await speak(next, comments.last.id);

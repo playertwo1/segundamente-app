@@ -185,6 +185,28 @@ void main() {
       );
     });
 
+    test('a user-deleted insight is remembered, and the weekly review is queued',
+        () {
+      final source = File('lib/data/repositories/memex_router.dart')
+          .readAsStringSync()
+          .replaceAll('\r\n', '\n');
+
+      final del = source.indexOf('Future<Result<bool>> deleteKnowledgeInsight(');
+      final read = source.indexOf('readKnowledgeInsightCard(', del);
+      final delete = source.indexOf('deleteKnowledgeInsightCard(', del);
+      final remember = source.indexOf('addRejectedInsight(', del);
+      final next = source.indexOf('updateInsightCardSortOrder(', del);
+      expect(del, isNonNegative);
+      // The title is read before the file goes away, and kept only on success.
+      expect(read, lessThan(delete));
+      expect(delete, lessThan(remember));
+      expect(remember, lessThan(next));
+
+      final deferred = source.indexOf('Future<void> _initDeferred(');
+      final periodic = source.indexOf('requestPeriodicInsightAnalysis(userId)');
+      expect(periodic, greaterThan(deferred));
+    });
+
     test('fetchTimelineCards waits only for core initialization', () {
       final source =
           File('lib/data/repositories/memex_router.dart')

@@ -368,6 +368,7 @@ void main() {
       },
     );
 
+    expect(find.byKey(const ValueKey('report_pdf_note')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('report_export_item_item_1')));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('report_export_markdown')));

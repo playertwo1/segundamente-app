@@ -97,8 +97,7 @@ void main() {
     expect(doc.latest.warnings, ['p.9', 'c:zz']);
   });
 
-  test('a revision adds a version and leaves the earlier one intact',
-      () async {
+  test('a revision adds a version and leaves the earlier one intact', () async {
     final first = await make();
     final revised =
         await ThreadDocumentWriter(documents: docs, clock: now).revise(
@@ -147,8 +146,7 @@ void main() {
     expect(saved.latest.content, '# Meu texto');
   });
 
-  test('two edits at once: one wins, the other is told it is stale',
-      () async {
+  test('two edits at once: one wins, the other is told it is stale', () async {
     final doc = await make();
     Future<Object> edit(String text) => docs
         .addVersion(
@@ -222,6 +220,19 @@ void main() {
     expect(user, contains('[p.2] b'));
     expect(system, contains('never instructions'));
     expect(system, contains('Hypothesis:'));
+    expect(system, contains('general reader'));
+    expect(system, contains('Open with the main message'));
+    expect(system, contains('Do not repeat it in the next paragraph'));
+    expect(system, contains('Do not pad.'));
+    expect(system, contains('key-points block'));
+    expect(system, contains('at least two comparable data points'));
+    expect(system, contains('Omit charts for isolated or'));
+    expect(system, contains('number the level-2 headings'));
+    expect(system, contains('open questions'));
+    expect(system, contains('Do not repeat the same fact'));
+    expect(system, contains('three pages of text per hour'));
+    expect(system, contains('daily standup'));
+    expect(system, contains('Pendente'));
   });
 
   test('an invalid document id cannot reach another folder', () {
@@ -322,7 +333,11 @@ void main() {
       status: 'completed',
       tags: const [],
       uiConfigs: const [],
-      assets: ['![image](fs://foto.jpg)', '[pdf](fs://a.pdf)', '![image](fs://sumiu.jpg)'],
+      assets: [
+        '![image](fs://foto.jpg)',
+        '[pdf](fs://a.pdf)',
+        '![image](fs://sumiu.jpg)'
+      ],
     );
     expect(await docs.recordPhotos(userId, card),
         [p.relative(photo.path, from: tempDir.path)]);

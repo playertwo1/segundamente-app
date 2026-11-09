@@ -14,6 +14,49 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  test('post-history instructions follow conversation evidence', () {
+    final now = DateTime.parse('2026-07-15T10:00:00+08:00');
+    final character = CharacterModel(
+      id: 'curador',
+      name: 'Curador',
+      tags: const [],
+      persona: 'Conecta ideias.',
+      enabled: true,
+      postHistoryInstructions: 'Fale com {{user}} como {{char}}.',
+    );
+    final context = CharacterConversationContext(
+      sourceEventId: 'private_chat:1',
+      now: now,
+      incomingMessages: [
+        CharacterConversationTurn(
+          content: 'Quero retomar aquele artigo.',
+          isFromCharacter: false,
+          timestamp: now,
+        ),
+      ],
+    );
+
+    final prompt = CharacterConversationSkill.buildConversationPrompt(
+      context: context,
+      character: character,
+      userName: 'Rafael',
+    );
+
+    expect(
+      prompt.indexOf('</interaction_evidence>'),
+      lessThan(prompt.indexOf('<character_post_history_instructions>')),
+    );
+    expect(prompt, contains('Fale com Rafael como Curador.'));
+
+    final withoutInstructions =
+        CharacterConversationSkill.buildConversationPrompt(
+      context: context,
+      character: character.copyWith(postHistoryInstructions: '  '),
+      userName: 'Rafael',
+    );
+    expect(withoutInstructions, isNot(contains('character_post_history')));
+  });
+
   test('conversation skill treats several bubbles as one agent decision',
       () async {
     SharedPreferences.setMockInitialValues({});
@@ -67,6 +110,8 @@ void main() {
     expect(skill.systemPrompt, contains('New messages can cross'));
     expect(skill.systemPrompt, contains('exact text bubble strings'));
     expect(skill.systemPrompt, contains('Speak.emoji'));
+    expect(
+        skill.systemPrompt, contains('Do not turn a disclosure into a plan'));
     final speak = skill.tools!.singleWhere((tool) => tool.name == 'Speak');
     final properties = speak.parameters['properties'] as Map;
     expect((properties['messages'] as Map)['items'], {'type': 'string'});

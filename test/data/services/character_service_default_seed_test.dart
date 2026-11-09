@@ -80,7 +80,10 @@ enabled: true
     expect(ids, isNot(contains('3')));
     expect(ids, contains('5'));
     expect(ids, containsAll(['socio_tecnico', 'amigo_bar', 'curador']));
-    expect(ids, hasLength(16));
+    expect(ids, contains('facilitador_execucao'));
+    expect(ids, isNot(contains('gerente_escopo')));
+    expect(ids, isNot(contains('parceiro_foco')));
+    expect(ids, hasLength(15));
   });
 
   test('seed 5 swaps the seed avatar for the bundled portrait only', () async {
@@ -130,13 +133,13 @@ enabled: true
     }
   });
 
-  test('new users get exactly the 15 personal characters', () async {
+  test('new users get exactly the 14 personal characters', () async {
     final userId = 'fresh_user_${DateTime.now().microsecondsSinceEpoch}';
     final ids = (await CharacterService.instance.getAllCharacters(userId))
         .map((c) => c.id)
         .toList();
 
-    expect(ids, hasLength(15));
+    expect(ids, hasLength(14));
     expect(ids, isNot(contains('counselor')));
   });
 
@@ -192,7 +195,7 @@ enabled: true
     expect(messages.single.characterId, 'socio_tecnico');
   });
 
-  test('multi-character routing nudges multiple voices without forcing fill',
+  test('multi-character routing includes policy and only adds distinct voices',
       () async {
     final userId = 'selection_user_${DateTime.now().microsecondsSinceEpoch}';
     final client = _CapturingTextClient('amigo_bar');
@@ -208,11 +211,165 @@ enabled: true
 
     expect(selected, hasLength(1));
     expect(selected.first.id, 'amigo_bar');
-    expect(client.lastPrompt, contains('prefer selecting 2-5'));
+    expect(client.lastPrompt, contains('Start with one'));
     expect(
       client.lastPrompt,
-      contains('Do not pick only the single best fit by default'),
+      contains('Return no IDs when no character has a natural reason'),
     );
+    expect(client.lastPrompt, contains('comment policy:'));
+    expect(
+      client.lastPrompt,
+      anyOf(contains('Pule quando:'), contains('Skip when:')),
+    );
+  });
+
+  test('Portuguese fatigue and frustration route to matching personas',
+      () async {
+    final userId = 'affinity_user_${DateTime.now().microsecondsSinceEpoch}';
+    final tired = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: 'Estou exausta, dormi pouco e não consigo pensar.',
+      factId: '2026/05/29.md#ts_2',
+    );
+    final frustrated = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: 'Estou de saco cheio e irritada com isso.',
+      factId: '2026/05/29.md#ts_3',
+    );
+
+    expect(tired?.id, 'guardiao_energia');
+    expect(frustrated?.id, 'amigo_bar');
+  });
+
+  test('no affinity returns no character unless a primary companion is set',
+      () async {
+    final userId = 'no_affinity_user_${DateTime.now().microsecondsSinceEpoch}';
+    const input = 'xyzzy qwvz';
+
+    expect(
+      await CharacterSelectionService.selectCharacter(
+        userId: userId,
+        inputContent: input,
+        factId: '2026/05/29.md#ts_no_match',
+      ),
+      isNull,
+    );
+
+    await CharacterService.instance.setPrimaryCompanion(
+      userId,
+      'socio_tecnico',
+    );
+    final fallback = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: input,
+      factId: '2026/05/29.md#ts_primary_fallback',
+    );
+
+    expect(fallback?.id, 'socio_tecnico');
+  });
+
+  test('a substring inside an unrelated word does not attract a persona',
+      () async {
+    final userId = 'substring_user_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: 'O relatório foi adiado.',
+      factId: '2026/05/29.md#ts_substring',
+    );
+
+    expect(selected, isNull);
+  });
+
+  test('a tie between day-focused personas does not depend on ID order',
+      () async {
+    final userId = 'affinity_tie_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: 'Meu dia foi tranquilo.',
+      factId: '2026/05/29.md#ts_affinity_tie',
+    );
+
+    expect(selected, isNull);
+  });
+
+  test('multi-character selection leaves unmatched entries unanswered',
+      () async {
+    final userId = 'no_match_multi_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: 'xyzzy qwvz',
+      factId: '2026/05/29.md#ts_no_match_multi',
+      client: _CapturingTextClient(''),
+      modelConfig: ModelConfig(model: 'test-model'),
+    );
+
+    expect(selected, isEmpty);
+
+    final failedRoute =
+        await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: 'xyzzy qwvz',
+      factId: '2026/05/29.md#ts_failed_no_match',
+      client: _CapturingTextClient('')..fail = true,
+      modelConfig: ModelConfig(model: 'test-model'),
+    );
+    expect(failedRoute, isEmpty);
+
+    await CharacterService.instance.setPrimaryCompanion(
+      userId,
+      'curador',
+    );
+    final primaryFallback =
+        await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: 'xyzzy qwvz',
+      factId: '2026/05/29.md#ts_primary_multi_fallback',
+      client: _CapturingTextClient('')..fail = true,
+      modelConfig: ModelConfig(model: 'test-model'),
+    );
+    expect(primaryFallback.single.id, 'curador');
+  });
+
+  test('excluded topics in an interest filter do not attract a persona',
+      () async {
+    final userId =
+        'excluded_interest_user_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: 'Fui ao hospital hoje.',
+      factId: '2026/05/29.md#ts_6',
+    );
+
+    expect(selected?.id, 'guardiao_energia');
+  });
+
+  test('selection failure chooses a clearly better keyword match', () async {
+    final userId = 'fallback_user_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: 'Estou exausta e dormi muito pouco.',
+      factId: '2026/05/29.md#ts_4',
+      client: _CapturingTextClient('')..fail = true,
+      modelConfig: ModelConfig(model: 'test-model'),
+    );
+
+    expect(selected.single.id, 'guardiao_energia');
+  });
+
+  test('long entry excerpt keeps its ending for persona selection', () async {
+    final userId =
+        'long_selection_user_${DateTime.now().microsecondsSinceEpoch}';
+    final client = _CapturingTextClient('amigo_bar');
+
+    await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: '${'x' * 700} FINAL_SELECTION_MARKER',
+      factId: '2026/05/29.md#ts_5',
+      client: client,
+      modelConfig: ModelConfig(model: 'test-model'),
+    );
+
+    expect(client.lastPrompt, contains('FINAL_SELECTION_MARKER'));
   });
 }
 
@@ -221,6 +378,7 @@ class _CapturingTextClient extends LLMClient {
 
   final String text;
   String lastPrompt = '';
+  bool fail = false;
 
   @override
   Future<ModelMessage> generate(
@@ -237,6 +395,7 @@ class _CapturingTextClient extends LLMClient {
         .whereType<TextPart>()
         .map((part) => part.text)
         .join('\n');
+    if (fail) throw StateError('selection unavailable');
     return ModelMessage(model: modelConfig.model, textOutput: text);
   }
 

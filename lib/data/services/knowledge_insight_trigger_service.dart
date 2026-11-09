@@ -76,6 +76,7 @@ Future<bool> requestManualInsightAnalysis(
   String userId, {
   LocalTaskExecutor? executor,
   FileSystemService? files,
+  bool periodic = false,
 }) async {
   final exec = executor ?? LocalTaskExecutor.instance;
   final fs = files ?? FileSystemService.instance;
@@ -89,6 +90,20 @@ Future<bool> requestManualInsightAnalysis(
     return false;
   }
   final rows = await AppDatabase.instance.cardDao.getCards(limit: 100);
+  if (periodic) {
+    // Only when a week passed since the last run and something new was saved.
+    final lastRun = latest?.completedAt ?? latest?.createdAt;
+    final newest = rows
+        .where((r) => !r.tags.contains('"insight"'))
+        .map((r) => r.timestamp)
+        .fold<int>(0, (a, b) => a > b ? a : b);
+    if (lastRun != null &&
+        (DateTime.now().millisecondsSinceEpoch ~/ 1000 - lastRun <
+                insightPeriodicInterval.inSeconds ||
+            newest <= lastRun)) {
+      return false;
+    }
+  }
   final factIds = <String>[];
   for (final row in rows) {
     final card = await fs.readCardFile(userId, row.factId);
@@ -99,11 +114,31 @@ Future<bool> requestManualInsightAnalysis(
   await exec.enqueueTask(
     userId: userId,
     taskType: insightTaskType,
-    payload: {'fact_ids': factIds, 'manual': true},
+    payload: {'fact_ids': factIds, periodic ? 'periodic' : 'manual': true},
     bizId: insightManualBatchKey(userId),
     maxRetries: 1,
   );
   return true;
+}
+
+/// Weekly fresh look at the latest records, checked when the app starts.
+/// Never throws: a failure here must not break startup.
+Future<bool> requestPeriodicInsightAnalysis(
+  String userId, {
+  LocalTaskExecutor? executor,
+  FileSystemService? files,
+}) async {
+  try {
+    return await requestManualInsightAnalysis(
+      userId,
+      executor: executor,
+      files: files,
+      periodic: true,
+    );
+  } catch (e) {
+    _logger.warning('Periodic insight analysis not queued: $e');
+    return false;
+  }
 }
 
 /// Subscribes the trigger to saved records on [bus]. A sync subscriber, because

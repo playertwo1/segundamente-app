@@ -6465,6 +6465,18 @@ abstract class AppLocalizations {
   /// **'DOCX'**
   String get reportExportDocx;
 
+  /// No description provided for @exportPdfNotTagged.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF is not tagged for screen readers. Use DOCX or Markdown for assistive reading.'**
+  String get exportPdfNotTagged;
+
+  /// No description provided for @exportPdfDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft PDF'**
+  String get exportPdfDraft;
+
   /// No description provided for @reportImagesTitle.
   ///
   /// In en, this message translates to:

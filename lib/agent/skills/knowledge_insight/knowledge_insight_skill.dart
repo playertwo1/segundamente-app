@@ -10,25 +10,32 @@ import 'package:memex/data/services/event_bus_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/timeline_card_event_publisher.dart';
 import 'package:memex/data/services/user_stats_service.dart';
+import 'package:memex/db/app_database.dart';
 import 'package:memex/domain/models/card_model.dart';
+import 'package:memex/domain/models/insight_trigger.dart';
 import 'package:memex/domain/models/user_stats_model.dart';
 import 'package:memex/utils/user_storage.dart';
 import '../../../utils/logger.dart';
 
 class KnowledgeInsightSkill extends Skill {
-  KnowledgeInsightSkill({super.forceActivate})
+  /// [auto] is the analysis the app starts by itself: a short prompt and a
+  /// stricter save (two records of evidence, nothing the user deleted).
+  KnowledgeInsightSkill({super.forceActivate, bool auto = false})
       : super(
           name: "update_knowledge_insight",
           description:
               "Creates, updates, or removes Knowledge Insight cards: the chart-style visualizations (trends, breakdowns, recaps, comparisons) that surface patterns across many of the user's Timeline Cards, each rendered from a template and backed by the `card.fact` records it draws on. "
               "Use when the user wants a cross-record insight, chart, recap, or trend, or when an existing insight card needs revising or deleting. "
               "Not for single-record timeline cards: use manage_timeline_card for those.",
-          systemPrompt: Prompts.knowledgeInsightSkillPrompt(
-            UserStorage.l10n.knowledgeInsightLanguageInstruction,
-          ),
+          systemPrompt: auto
+              ? Prompts.knowledgeInsightAutoSkillPrompt(
+                  UserStorage.l10n.knowledgeInsightLanguageInstruction)
+              : Prompts.knowledgeInsightSkillPrompt(
+                  UserStorage.l10n.knowledgeInsightLanguageInstruction,
+                ),
           tools: [
             buildGetExistsKnowledgeInsightCardsTool(),
-            buildSaveKnowledgeInsightCardsTool(),
+            buildSaveKnowledgeInsightCardsTool(auto: auto),
             buildDeleteKnowledgeInsightCardTool(),
             buildDeleteKnowledgeInsightTagsTool(),
             buildGetAvailableTemplatesTool(),
@@ -98,9 +105,15 @@ Tool buildGetExistsKnowledgeInsightCardsTool() {
     description: Prompts.knowledgeInsightToolGetKnowledgeInsightDataDescription,
     parameters: {
       'type': 'object',
-      'properties': {},
+      'properties': {
+        'id': {
+          'type': 'string',
+          'description':
+              'Optional. Id of one card to read in full, with its template data. Without it the list is compact (no template data).',
+        },
+      },
     },
-    executable: () async {
+    executable: (String? id) async {
       final logger = getLogger('KnowledgeInsightSkill');
       final fileSystem = FileSystemService.instance;
       final userId = AgentCallToolContext.current!.state.metadata['userId'];
@@ -110,7 +123,26 @@ Tool buildGetExistsKnowledgeInsightCardsTool() {
         if (cards.isEmpty) {
           return "No existing knowledge insight cards found.";
         }
-        return jsonEncode(cards);
+        if (id != null && id.isNotEmpty) {
+          final one = cards.where((c) => c['id'] == id);
+          return one.isEmpty ? 'No card with id $id.' : jsonEncode(one.first);
+        }
+        return jsonEncode([
+          for (final c in cards)
+            {
+              for (final k in const [
+                'id',
+                'title',
+                'template_id',
+                'insight',
+                'tags',
+                'related_facts',
+                'pinned',
+                'updated_at',
+              ])
+                if (c[k] != null) k: c[k],
+            },
+        ]);
       } catch (e, st) {
         logger.warning('Failed to get knowledge insight data', e, st);
         rethrow;
@@ -201,7 +233,7 @@ Tool buildDeleteKnowledgeInsightTagsTool() {
   );
 }
 
-Tool buildSaveKnowledgeInsightCardsTool() {
+Tool buildSaveKnowledgeInsightCardsTool({bool auto = false}) {
   return Tool(
     name: 'save_knowledge_insight_cards',
     description: Prompts.knowledgeInsightToolUpdateInsightChartsDescription,
@@ -292,6 +324,59 @@ Tool buildSaveKnowledgeInsightCardsTool() {
         }
       }
 
+      // Evidence must be real: every cited record exists, and the automatic
+      // analysis needs two of them (its prompt says so; here it is enforced).
+      final minEvidence = auto ? minRecordsForInsightEvidence : 1;
+      for (final chart in chartObjects) {
+        final cited = chart.relatedFacts?.toSet();
+        if (cited == null) continue;
+        if (cited.length < minEvidence) {
+          throw ArgumentError(
+              'Card ${chart.id} cites ${cited.length} record(s); at least $minEvidence different records must back it. Save nothing if you cannot cite them.');
+        }
+        final missing = <String>[
+          for (final id in cited)
+            if (await fileSystem.readCardFile(userId, id) == null) id,
+        ];
+        if (missing.isNotEmpty) {
+          throw ArgumentError(
+              'related_facts of card ${chart.id} name records that do not exist: ${missing.join(', ')}. Use the fact_id of records you read.');
+        }
+      }
+      // A new insight needs a title, the sentence that explains it, and data.
+      for (final chart in chartObjects.where((c) => c.type == 'add')) {
+        if ((chart.title ?? '').trim().isEmpty ||
+            (chart.insight ?? '').trim().isEmpty ||
+            chart.templateId == null ||
+            (chart.data ?? const {}).isEmpty) {
+          throw ArgumentError(
+              'New card ${chart.id} needs title, insight (the explanation), template_id and data.');
+        }
+      }
+      if (auto) {
+        final existing = await fileSystem.listKnowledgeInsightCards(userId);
+        for (final chart in chartObjects.where((c) => c.type == 'add')) {
+          for (final old in existing) {
+            final facts = (old['related_facts'] as List?)?.map((e) => '$e');
+            if (facts != null &&
+                evidenceOverlap(chart.relatedFacts ?? const [], facts) >=
+                    duplicateEvidenceShare) {
+              throw ArgumentError(
+                  'Card ${chart.id} rests on the same records as the existing "${old['title']}" (id ${old['id']}). Use type "update" on that id instead of adding a near-duplicate, or save nothing.');
+            }
+          }
+        }
+        final rejected = await fileSystem.readRejectedInsights(userId);
+        for (final chart in chartObjects.where((c) => c.type == 'add')) {
+          final hit =
+              rejectedMatch(rejected, chart.id ?? '', chart.title ?? '');
+          if (hit != null) {
+            throw ArgumentError(
+                'The user deleted the insight "${hit['title']}". Do not create it again; save nothing for this point.');
+          }
+        }
+      }
+
       final updatedIds = <String>[];
       final createdIds = <String>[];
       // Updates that would not change the stored insight: no write, no screen
@@ -377,6 +462,7 @@ Tool buildSaveKnowledgeInsightCardsTool() {
           }
 
           finalData['id'] = cardId; // Ensure ID is saved
+          if (isNew && auto) finalData['source'] = 'auto';
           if (!isNew && _sameInsight(existingData, finalData)) {
             updatedIds.remove(cardId);
             unchangedIds.add(cardId);
@@ -526,6 +612,46 @@ Future<void> _createInsightSummaryTimelineCard({
 
   final fileSystem = FileSystemService.instance;
   final now = DateTime.now();
+
+  // One announcement per day: later discoveries join today's card.
+  final today = await AppDatabase.instance.cardDao
+      .getCards(tags: ['insight'], dateFrom: now, dateTo: now, limit: 1);
+  final todays = today.isEmpty
+      ? null
+      : await fileSystem.readCardFile(userId, today.first.factId);
+  if (todays != null && isInsightSummaryCard(todays)) {
+    final data = todays.uiConfigs.first.data;
+    List<Map<String, dynamic>> listOf(String key) => [
+          for (final e in (data[key] as List? ?? const []))
+            Map<String, dynamic>.from(e as Map),
+        ];
+    final added = listOf('added_insight_cards');
+    final updated = listOf('updated_insight_cards');
+    for (final c in addedCards) {
+      added.removeWhere((e) => e['id'] == c['id']);
+      added.add(c);
+    }
+    for (final c in updatedCards) {
+      if (added.any((e) => e['id'] == c['id'])) continue; // still "new" today
+      updated.removeWhere((e) => e['id'] == c['id']);
+      updated.add(c);
+    }
+    final merged = todays.copyWith(uiConfigs: [
+      UiConfig(templateId: 'insight_summary', data: {
+        'added_insight_cards': added,
+        'updated_insight_cards': updated,
+      }),
+    ]);
+    if (await fileSystem.safeWriteCardFile(userId, merged.factId, merged)) {
+      await emitTimelineCardUpdated(
+        userId: userId,
+        cardId: merged.factId,
+        cardData: merged,
+      );
+      return;
+    }
+  }
+
   final timestamp = now.millisecondsSinceEpoch ~/ 1000;
   final factId = await fileSystem.allocateCardFactId(userId);
   final cardData = CardData(

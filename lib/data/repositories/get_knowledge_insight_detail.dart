@@ -46,27 +46,7 @@ Future<InsightDetailModel> getKnowledgeInsightDetail(String insightId) async {
     final cardTitle = cardData['title'] as String? ?? '';
     final cardTemplateId = cardData['template_id'] as String? ?? '';
 
-    // Infer icon from title or template_id
-    String icon = 'bar_chart'; // default icon
-    if (cardTitle.contains('expense') ||
-        cardTitle.contains('finance') ||
-        cardTemplateId.toLowerCase().contains('expense') ||
-        cardTemplateId.toLowerCase().contains('finance')) {
-      icon = 'account_balance_wallet';
-    } else if (cardTitle.contains('mood') ||
-        cardTemplateId.toLowerCase().contains('mood')) {
-      icon = 'mood';
-    } else if (cardTitle.contains('energy') ||
-        cardTemplateId.toLowerCase().contains('energy')) {
-      icon = 'battery_charging_full';
-    } else if (cardTitle.contains('word') ||
-        cardTemplateId.toLowerCase().contains('word')) {
-      icon = 'text_fields';
-    } else if (cardTitle.contains('map') ||
-        cardTitle.contains('location') ||
-        cardTemplateId.toLowerCase().contains('map')) {
-      icon = 'map';
-    }
+    final icon = _iconForTemplate(cardTemplateId);
 
     final insightInfo = InsightMetadataModel(
       id: insightId,
@@ -170,6 +150,22 @@ Future<InsightDetailModel> getKnowledgeInsightDetail(String insightId) async {
     _logger.severe('Failed to get knowledge insight detail $insightId: $e');
     rethrow;
   }
+}
+
+/// Icon by chart type; the title is in the user's language, so it cannot be
+/// matched against English words.
+String _iconForTemplate(String templateId) {
+  if (templateId.contains('route_map')) return 'route';
+  if (templateId.contains('map')) return 'map';
+  if (templateId.contains('trend')) return 'show_chart';
+  if (templateId.contains('composition')) return 'pie_chart';
+  if (templateId.contains('contrast')) return 'compare';
+  if (templateId.contains('highlight')) return 'format_quote';
+  if (templateId.contains('timeline')) return 'timeline';
+  if (templateId.contains('gallery')) return 'photo_library';
+  if (templateId.contains('bubble')) return 'bubble_chart';
+  if (templateId.contains('radar')) return 'radar';
+  return 'bar_chart';
 }
 
 Future<Map<String, dynamic>?> _readKnowledgeInsightCardById(

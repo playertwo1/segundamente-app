@@ -18,6 +18,7 @@ class CharacterDraft {
     required List<Map<String, dynamic>> memoryEntries,
     this.characterId,
     this.avatar,
+    this.interestFilter,
     this.firstMessage,
     this.systemPromptOverride,
     this.postHistoryInstructions,
@@ -38,6 +39,7 @@ class CharacterDraft {
   final String persona;
   final bool enabled;
   final String? avatar;
+  final String? interestFilter;
   final String? firstMessage;
   final String? systemPromptOverride;
   final String? postHistoryInstructions;
@@ -53,6 +55,7 @@ class CharacterDraft {
       'persona': persona.trim(),
       'enabled': enabled,
       'avatar': avatar,
+      'interest_filter': _nullableText(interestFilter),
       'first_message': _nullableText(firstMessage),
       'system_prompt_override': _nullableText(systemPromptOverride),
       'post_history_instructions': _nullableText(postHistoryInstructions),

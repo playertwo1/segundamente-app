@@ -23,4 +23,18 @@ void main() {
     expect(draft.worldEntries.single['content'], '旧书店在街角');
     expect(draft.memoryEntries.single['content'], '喜欢被叫姐姐');
   });
+
+  test('character draft saves a trimmed routing interest filter', () {
+    final draft = CharacterDraft(
+      name: '小安',
+      tags: const ['朋友'],
+      persona: '温柔的朋友',
+      enabled: true,
+      interestFilter: '  日常、轻松的聊天  ',
+      worldEntries: const [],
+      memoryEntries: const [],
+    );
+
+    expect(draft.toCharacterData()['interest_filter'], '日常、轻松的聊天');
+  });
 }

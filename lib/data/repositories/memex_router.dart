@@ -246,6 +246,7 @@ class MemexRouter {
 
       if (generation != _initGeneration) return;
       scheduleAutoBackupCheck(trigger: 'app_start');
+      await requestPeriodicInsightAnalysis(userId);
     } catch (e) {
       _logger.severe('Failed deferred MemexRouter init: $e');
       rethrow;
@@ -1039,11 +1040,19 @@ class MemexRouter {
         return false;
       }
       final cardFileName = '$id.yaml';
+      final title = (await fileSystemService.readKnowledgeInsightCard(
+          userId, cardFileName))?['title'];
       final success = await fileSystemService.deleteKnowledgeInsightCard(
         userId,
         cardFileName,
       );
       if (success) {
+        try {
+          await fileSystemService.addRejectedInsight(
+              userId, id, '${title ?? ''}');
+        } catch (e) {
+          _logger.warning('Failed to remember the deleted insight: $e');
+        }
         try {
           final cardPath = 'KnowledgeInsights/Cards/$cardFileName';
           await fileSystemService.eventLogService.logEvent(
@@ -1422,7 +1431,8 @@ class MemexRouter {
   }) {
     return runResult(() async {
       final userId = await _reportUserId();
-      final card = await FileSystemService.instance.readCardFile(userId, cardId);
+      final card =
+          await FileSystemService.instance.readCardFile(userId, cardId);
       if (card == null) throw StateError('record missing');
       final requestId = const Uuid().v4();
       await LocalTaskExecutor.instance.enqueueTask(
@@ -1444,8 +1454,8 @@ class MemexRouter {
   }
 
   Future<Result<List<ThreadDocument>>> listThreadDocuments(String cardId) {
-    return runResult(() async => ThreadDocumentService()
-        .listForCard(await _reportUserId(), cardId));
+    return runResult(() async =>
+        ThreadDocumentService().listForCard(await _reportUserId(), cardId));
   }
 
   Future<Result<ThreadDocument?>> loadThreadDocument(String id) {
@@ -1474,6 +1484,7 @@ class MemexRouter {
     required String id,
     required int version,
     required ReportExportFormat format,
+    bool draft = false,
   }) {
     return runResult(() async {
       final file = await ThreadDocumentService().export(
@@ -1481,6 +1492,7 @@ class MemexRouter {
         id: id,
         version: version,
         format: format,
+        draft: draft,
       );
       return file.path;
     });
@@ -1521,7 +1533,8 @@ class MemexRouter {
   ) {
     return runResult(() async {
       final userId = await _reportUserId();
-      final card = await FileSystemService.instance.readCardFile(userId, cardId);
+      final card =
+          await FileSystemService.instance.readCardFile(userId, cardId);
       if (card == null) return [];
       return CardPdfService().largeAwaitingConfirmation(userId, card);
     });

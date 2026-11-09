@@ -23,7 +23,8 @@ class _FakeRouter implements MemexRouter {
   var staleOnEdit = false;
 
   @override
-  Future<Result<List<ThreadDocument>>> listThreadDocuments(String cardId) async =>
+  Future<Result<List<ThreadDocument>>> listThreadDocuments(
+          String cardId) async =>
       Ok([...docs]);
 
   @override
@@ -56,8 +57,8 @@ class _FakeRouter implements MemexRouter {
     if (staleOnEdit || expectedLatest != latest) {
       return Error(StaleDocumentEdit(expectedLatest, latest));
     }
-    final doc = docs.single.withVersion(_version(2, content,
-        author: DocumentAuthor.user));
+    final doc = docs.single
+        .withVersion(_version(2, content, author: DocumentAuthor.user));
     docs = [doc];
     return Ok(doc);
   }
@@ -85,7 +86,8 @@ class _FakeRouter implements MemexRouter {
   @override
   Future<Result<List<({String id, String title})>>> findRelatedRecords(
           String cardId, String query) async =>
-      const Ok([(id: 'r1', title: 'Outra nota'), (id: 'r2', title: 'Mais uma')]);
+      const Ok(
+          [(id: 'r1', title: 'Outra nota'), (id: 'r2', title: 'Mais uma')]);
 
   @override
   Future<Result<void>> deleteThreadDocument(String id) async {
@@ -111,14 +113,17 @@ DocumentVersion _version(
       warnings: warnings,
     );
 
-ThreadDocument _doc({bool originDeleted = false, List<String> warnings = const []}) =>
+ThreadDocument _doc(
+        {bool originDeleted = false, List<String> warnings = const []}) =>
     ThreadDocument(
       id: 'doc_1',
       requestId: 'r1',
       cardId: 'card',
       title: 'Proposta',
       createdAt: DateTime(2026, 11, 6).toIso8601String(),
-      versions: [_version(1, '# Proposta\n\nTexto original.', warnings: warnings)],
+      versions: [
+        _version(1, '# Proposta\n\nTexto original.', warnings: warnings)
+      ],
       originDeleted: originDeleted,
     );
 
@@ -144,13 +149,17 @@ void main() {
     return vm;
   }
 
-  testWidgets('shows the text, the warnings and the origin note', (tester) async {
+  testWidgets('shows the text, the warnings and the origin note',
+      (tester) async {
     await pumpScreen(
-        tester, _FakeRouter([_doc(originDeleted: true, warnings: ['p.9'])]));
+        tester,
+        _FakeRouter([
+          _doc(originDeleted: true, warnings: ['p.9'])
+        ]));
     expect(find.textContaining('Texto original.'), findsOneWidget);
     expect(find.byKey(const ValueKey('thread_doc_warnings')), findsOneWidget);
-    expect(
-        find.byKey(const ValueKey('thread_doc_origin_deleted')), findsOneWidget);
+    expect(find.byKey(const ValueKey('thread_doc_origin_deleted')),
+        findsOneWidget);
   });
 
   testWidgets('a manual edit becomes version 2 and the old one stays',
@@ -171,7 +180,8 @@ void main() {
     expect(find.byKey(const ValueKey('thread_doc_edit')), findsNothing);
   });
 
-  testWidgets('a stale edit shows the message and keeps the text', (tester) async {
+  testWidgets('a stale edit shows the message and keeps the text',
+      (tester) async {
     final router = _FakeRouter([_doc()])..staleOnEdit = true;
     await pumpScreen(tester, router);
     await tester.tap(find.byKey(const ValueKey('thread_doc_edit')));
@@ -223,6 +233,9 @@ void main() {
     for (final f in ['markdown', 'pdf', 'docx']) {
       expect(find.byKey(ValueKey('thread_doc_export_$f')), findsOneWidget);
     }
+    expect(find.byKey(const ValueKey('thread_doc_pdf_note')), findsOneWidget);
+    expect(find.byKey(const ValueKey('thread_doc_export_pdf_draft')),
+        findsOneWidget);
   });
 
   testWidgets('delete asks first and only then removes', (tester) async {
@@ -237,9 +250,8 @@ void main() {
   });
 
   group('prompts', () {
-    Future<bool?> ask(
-        WidgetTester tester, Future<bool?> Function(BuildContext) open,
-        String tapKey) async {
+    Future<bool?> ask(WidgetTester tester,
+        Future<bool?> Function(BuildContext) open, String tapKey) async {
       bool? answer = true;
       await tester.pumpWidget(MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -260,15 +272,26 @@ void main() {
 
     testWidgets('deleting a record with documents: keep, delete or back out',
         (tester) async {
-      expect(await ask(tester, (c) => askKeepDocuments(c, 2), 'thread_doc_keep_yes'), isTrue);
-      expect(await ask(tester, (c) => askKeepDocuments(c, 2), 'thread_doc_keep_no'), isFalse);
-      expect(await ask(tester, (c) => askKeepDocuments(c, 2), 'thread_doc_keep_cancel'), isNull);
+      expect(
+          await ask(
+              tester, (c) => askKeepDocuments(c, 2), 'thread_doc_keep_yes'),
+          isTrue);
+      expect(
+          await ask(
+              tester, (c) => askKeepDocuments(c, 2), 'thread_doc_keep_no'),
+          isFalse);
+      expect(
+          await ask(
+              tester, (c) => askKeepDocuments(c, 2), 'thread_doc_keep_cancel'),
+          isNull);
     });
 
     testWidgets('a comment that asks for a document: create or just comment',
         (tester) async {
-      expect(await ask(tester, askCreateFromText, 'thread_doc_text_yes'), isTrue);
-      expect(await ask(tester, askCreateFromText, 'thread_doc_text_no'), isFalse);
+      expect(
+          await ask(tester, askCreateFromText, 'thread_doc_text_yes'), isTrue);
+      expect(
+          await ask(tester, askCreateFromText, 'thread_doc_text_no'), isFalse);
     });
   });
 
@@ -304,7 +327,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('thread_doc_create_confirm')));
       await tester.pump();
       expect(router.requests, hasLength(1));
-      expect(find.byKey(const ValueKey('thread_docs_preparing')), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('thread_docs_preparing')), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     });
 
@@ -334,7 +358,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('thread_doc_large_pdf_send')));
       await tester.pumpAndSettle();
       expect(router.confirmedPdfs, ['a/big.pdf']);
-      expect(find.byKey(const ValueKey('thread_doc_large_pdf_send')), findsNothing);
+      expect(find.byKey(const ValueKey('thread_doc_large_pdf_send')),
+          findsNothing);
     });
   });
 }

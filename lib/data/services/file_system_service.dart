@@ -1970,6 +1970,46 @@ class FileSystemService {
     return path.join(getSystemPath(userId), 'insight_tags.md');
   }
 
+  String getRejectedInsightsPath(String userId) =>
+      path.join(getSystemPath(userId), 'rejected_insights.jsonl');
+
+  /// Insights the user deleted (`{id, title}`, oldest first), so the engine
+  /// does not bring them back.
+  Future<List<Map<String, String>>> readRejectedInsights(String userId) async {
+    final file = getRejectedInsightsPath(userId);
+    if (!await _baseService.exists(file)) return [];
+    final out = <Map<String, String>>[];
+    for (final line in (await _baseService.readFile(file)).split('\n')) {
+      if (line.trim().isEmpty) continue;
+      try {
+        final m = jsonDecode(line) as Map;
+        out.add({'id': '${m['id'] ?? ''}', 'title': '${m['title'] ?? ''}'});
+      } on FormatException {
+        // A damaged line only means one rejection is forgotten.
+      }
+    }
+    return out;
+  }
+
+  /// Remembers a deleted insight; keeps the latest [keep] only.
+  Future<void> addRejectedInsight(
+    String userId,
+    String id,
+    String title, {
+    int keep = 30,
+  }) async {
+    final all = [
+      ...await readRejectedInsights(userId),
+      {'id': id.replaceAll(RegExp(r'\.yaml$'), ''), 'title': title},
+    ];
+    final file = getRejectedInsightsPath(userId);
+    await ensureDirectory(path.dirname(file));
+    await _baseService.writeFile(
+      file,
+      '${all.skip(all.length > keep ? all.length - keep : 0).map(jsonEncode).join('\n')}\n',
+    );
+  }
+
   /// Knowledge insight card file path
   String getKnowledgeInsightCardPath(String userId, String cardId) {
     final filename = cardId.endsWith('.yaml') ? cardId : '$cardId.yaml';

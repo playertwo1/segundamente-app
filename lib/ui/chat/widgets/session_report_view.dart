@@ -201,6 +201,12 @@ class _SessionReportViewState extends State<SessionReportView> {
                 ),
             ],
           ),
+        if (report != null)
+          Text(
+            UserStorage.l10n.exportPdfNotTagged,
+            key: const ValueKey('report_pdf_note'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         if (widget.errorMessage != null)
           Text(
             widget.errorMessage!,

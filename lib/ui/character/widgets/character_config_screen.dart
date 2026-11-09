@@ -332,6 +332,7 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _tagsController = TextEditingController();
+  final _interestFilterController = TextEditingController();
   final _personaController = TextEditingController();
   final _firstMessageController = TextEditingController();
   final _systemPromptController = TextEditingController();
@@ -356,6 +357,7 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
     if (_character != null) {
       _nameController.text = _character!.name;
       _tagsController.text = _character!.tags.join(', ');
+      _interestFilterController.text = _character!.interestFilter ?? '';
       _personaController.text = _character!.persona;
       _firstMessageController.text = _character!.firstMessage ?? '';
       _systemPromptController.text = _character!.systemPromptOverride ?? '';
@@ -406,6 +408,7 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
     _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _tagsController.dispose();
+    _interestFilterController.dispose();
     _personaController.dispose();
     _firstMessageController.dispose();
     _systemPromptController.dispose();
@@ -575,6 +578,7 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
         characterId: _character?.id,
         name: _nameController.text,
         tags: tags,
+        interestFilter: _interestFilterController.text,
         persona: _personaController.text,
         enabled: _character?.enabled ?? true,
         avatar: _avatarValueForSave.isEmpty ? null : _avatarValueForSave,
@@ -781,6 +785,15 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
                 controller: _tagsController,
                 style: const TextStyle(fontSize: 16),
                 decoration: _buildInputDecoration(UserStorage.l10n.tagsHint),
+              ),
+              const SizedBox(height: 24),
+              _buildLabel(UserStorage.l10n.characterInterestFilterLabel),
+              const SizedBox(height: 8),
+              _buildMultilineField(
+                key: const ValueKey('character_interest_filter'),
+                controller: _interestFilterController,
+                hint: UserStorage.l10n.characterInterestFilterHint,
+                minLines: 2,
               ),
               const SizedBox(height: 24),
               // Chat background image picker
@@ -1326,6 +1339,7 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildMultilineField({
+    Key? key,
     required TextEditingController controller,
     required String hint,
     int minLines = 3,
@@ -1337,6 +1351,7 @@ class _CharacterEditPageState extends State<CharacterEditPage> {
         border: Border.all(color: AppColors.divider),
       ),
       child: TextFormField(
+        key: key,
         controller: controller,
         decoration: InputDecoration(
           hintText: hint,

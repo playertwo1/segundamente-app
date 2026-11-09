@@ -65,8 +65,8 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
     if (text != null) await vm.saveEdit(text, basedOn: basedOn);
   }
 
-  Future<void> _export(ReportExportFormat format) async {
-    final path = await widget.viewModel.export(format);
+  Future<void> _export(ReportExportFormat format, {bool draft = false}) async {
+    final path = await widget.viewModel.export(format, draft: draft);
     if (path == null || !mounted) return;
     await ShareService.shareExistingFile(
       context,
@@ -133,7 +133,8 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
     );
   }
 
-  Widget _body(ThreadDocumentViewModel vm, ThreadDocument doc, AppLocalizations l10n) {
+  Widget _body(
+      ThreadDocumentViewModel vm, ThreadDocument doc, AppLocalizations l10n) {
     final shown = vm.shown!;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -171,8 +172,8 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
         if (vm.issue == ThreadDocumentIssue.stale)
           Semantics(
             liveRegion: true,
-            child:
-                Text(l10n.threadDocStale, key: const ValueKey('thread_doc_stale')),
+            child: Text(l10n.threadDocStale,
+                key: const ValueKey('thread_doc_stale')),
           ),
         if (vm.issue == ThreadDocumentIssue.failed)
           Semantics(
@@ -184,17 +185,17 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
           Semantics(
             liveRegion: true,
             child: Row(
-            key: const ValueKey('thread_doc_waiting'),
-            children: [
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              const SizedBox(width: 8),
-              Text(l10n.threadDocPreparing),
-            ],
-          ),
+              key: const ValueKey('thread_doc_waiting'),
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(l10n.threadDocPreparing),
+              ],
+            ),
           ),
         Wrap(
           spacing: 8,
@@ -206,10 +207,11 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
                 label: Text(l10n.threadDocEdit),
                 onPressed: _edit,
               ),
-            PopupMenuButton<ReportExportFormat>(
+            PopupMenuButton<_DocExport>(
               key: const ValueKey('thread_doc_export'),
               tooltip: l10n.threadDocExport,
-              onSelected: _export,
+              onSelected: (choice) =>
+                  _export(choice.format, draft: choice.draft),
               itemBuilder: (_) => [
                 for (final f in const [
                   ReportExportFormat.markdown,
@@ -218,9 +220,27 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
                 ])
                   PopupMenuItem(
                     key: ValueKey('thread_doc_export_${f.name}'),
-                    value: f,
-                    child: Text(f.name.toUpperCase()),
+                    value: _DocExport(f),
+                    child: f == ReportExportFormat.pdf
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(f.name.toUpperCase()),
+                              Text(
+                                l10n.exportPdfNotTagged,
+                                key: const ValueKey('thread_doc_pdf_note'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          )
+                        : Text(f.name.toUpperCase()),
                   ),
+                PopupMenuItem(
+                  key: const ValueKey('thread_doc_export_pdf_draft'),
+                  value: const _DocExport(ReportExportFormat.pdf, draft: true),
+                  child: Text(l10n.exportPdfDraft),
+                ),
               ],
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -236,7 +256,8 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
                 child: TextField(
                   key: const ValueKey('thread_doc_revise_text'),
                   controller: _revise,
-                  decoration: InputDecoration(hintText: l10n.threadDocReviseHint),
+                  decoration:
+                      InputDecoration(hintText: l10n.threadDocReviseHint),
                 ),
               ),
               TextButton(
@@ -255,6 +276,13 @@ class _ThreadDocumentScreenState extends State<ThreadDocumentScreen> {
       ],
     );
   }
+}
+
+class _DocExport {
+  const _DocExport(this.format, {this.draft = false});
+
+  final ReportExportFormat format;
+  final bool draft;
 }
 
 /// Markdown with its chart blocks drawn; the plain text shows until they are.

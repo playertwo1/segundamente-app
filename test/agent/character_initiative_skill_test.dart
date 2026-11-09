@@ -37,6 +37,7 @@ void main() {
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-1',
         now: DateTime.parse('2026-07-13T21:00:00+08:00'),
@@ -54,7 +55,9 @@ void main() {
     expect(names, isNot(contains('SaveComment')));
     expect(
         skill.systemPrompt, contains('original life record is deliberately'));
-    expect(skill.systemPrompt, contains('calm, warm, lightly sweet'));
+    expect(skill.systemPrompt, contains("Preserve this character's"));
+    expect(skill.systemPrompt, contains('own voice'));
+    expect(skill.systemPrompt, contains('answer truthfully'));
     expect(skill.systemPrompt, contains('never from a score or field'));
     expect(skill.systemPrompt, contains('never gates imposed by the system'));
     expect(skill.systemPrompt, contains('There is no system push'));
@@ -64,6 +67,7 @@ void main() {
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-2',
         now: DateTime.parse('2026-07-13T21:00:00+08:00'),
@@ -80,12 +84,40 @@ void main() {
     expect(skill.systemPrompt, contains('not a permanent shutdown'));
   });
 
+  test('applies post-history instructions to proactive character prompts', () {
+    final skill = CharacterInitiativeSkill(
+      character: character.copyWith(
+        systemPromptOverride: 'Mantenha {{char}} consistente.',
+        mesExample: 'Exemplo de {{char}} com {{user}}.',
+        postHistoryInstructions: 'Fale com {{user}} como {{char}}.',
+      ),
+      userId: 'user-1',
+      userName: 'Rafael',
+      context: CharacterInitiativeContext(
+        sourceEventId: 'event-post-history',
+        now: DateTime.parse('2026-07-13T21:00:00+08:00'),
+      ),
+      workspaceService: CharacterWorkspaceService(),
+      onDecision: (_) {},
+    );
+    final prompt = skill.systemPrompt;
+
+    expect(prompt, contains('Mantenha 瑶瑶 consistente.'));
+    expect(prompt, contains('Exemplo de 瑶瑶 com Rafael.'));
+    expect(prompt, contains('Fale com Rafael como 瑶瑶.'));
+    expect(
+      prompt.indexOf('## Choose One Action'),
+      lessThan(prompt.lastIndexOf('<character_post_history_instructions>')),
+    );
+  });
+
   test('Speak includes the character-selected next wake', () {
     final now = DateTime.parse('2026-07-13T21:00:00+08:00');
     CharacterInitiativeDecision? decision;
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-speak',
         now: now,
@@ -130,6 +162,7 @@ void main() {
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-legacy-emoji',
         now: now,
@@ -162,6 +195,7 @@ void main() {
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-emoji-only',
         now: now,
@@ -190,6 +224,7 @@ void main() {
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-sleep',
         now: now,
@@ -214,6 +249,7 @@ void main() {
     final skill = CharacterInitiativeSkill(
       character: character,
       userId: 'user-1',
+      userName: 'Rafael',
       context: CharacterInitiativeContext(
         sourceEventId: 'event-3',
         now: now,

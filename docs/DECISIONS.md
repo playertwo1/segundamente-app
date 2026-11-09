@@ -43,6 +43,8 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-040 | 2026-11-06 | Fechar a F6 sem auditoria própria; abrir a F7-02 (medição do modelo local no S25) | ACCEPTED |
 | D-041 | 2026-11-06 | Adiar a F7-02 (modelo local) e guardar como reserva; nada implementado | ACCEPTED |
 | D-042 | 2026-11-06 | F9 aberta: PDF lido pelo modelo (ChatGPT), Todo própria, só imagens do dono, JSON sim e ICS só sob pedido, só Android | ACCEPTED |
+| D-043 | 2026-11-07 | Follow-up e tarefa viram uma coisa só | ACCEPTED |
+| D-044 | 2026-11-07 | Retirar a exportação em JSON do relatório | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.

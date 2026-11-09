@@ -3650,6 +3650,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get reportExportDocx => 'DOCX';
 
   @override
+  String get exportPdfNotTagged =>
+      'O PDF não é marcado para leitores de tela. Use DOCX ou Markdown para leitura assistiva.';
+
+  @override
+  String get exportPdfDraft => 'PDF rascunho';
+
+  @override
   String get reportImagesTitle => 'Imagens anexadas por você';
 
   @override
