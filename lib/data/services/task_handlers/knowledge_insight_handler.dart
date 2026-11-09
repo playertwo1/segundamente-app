@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:memex/agent/prompts.dart';
 import 'package:memex/agent/skills/knowledge_insight/knowledge_insight_skill.dart';
@@ -56,7 +58,14 @@ Future<void> handleKnowledgeInsightImpl(
   TaskContext context,
 ) async {
   final requested = (payload['fact_ids'] as List?)?.cast<String>() ?? const [];
+  final manual = payload['manual'] == true;
   final files = FileSystemService.instance;
+
+  Future<void> finish(InsightOutcome outcome, [String detail = '']) =>
+      LocalTaskExecutor.instance.updateTaskResult(
+        context.taskId,
+        jsonEncode({'outcome': outcome.name, 'detail': detail}),
+      );
 
   final factIds = <String>[];
   for (final id in requested) {
@@ -65,6 +74,7 @@ Future<void> handleKnowledgeInsightImpl(
   }
   if (factIds.isEmpty) {
     _logger.info('No readable new record for the insight analysis, skipping');
+    await finish(InsightOutcome.noRecord);
     return;
   }
 
@@ -74,20 +84,29 @@ Future<void> handleKnowledgeInsightImpl(
       'Only $saved saved record(s), fewer than $minRecordsForInsights: '
       'no pattern can be supported yet',
     );
+    await finish(InsightOutcome.tooFewRecords, '$saved');
     return;
   }
 
   final model = await KnowledgeInsightTaskDeps.resources();
   if (model == null) {
     _logger.info('No LLM configured, skipping the insight analysis');
+    await finish(InsightOutcome.noModel);
     return;
   }
 
   final result = await KnowledgeInsightTaskDeps.runChild(
     config: SuperAgentChildConfig(
       childName: 'knowledge_insight_auto',
-      taskBrief: Prompts.knowledgeInsightAutoTaskBrief(factIds),
-      contextPacket: {'new_fact_ids': factIds, 'trigger': 'record_saved'},
+      taskBrief: Prompts.knowledgeInsightAutoTaskBrief(
+        factIds,
+        recentIndex: await _recentRecordIndex(userId),
+        manual: manual,
+      ),
+      contextPacket: {
+        'new_fact_ids': factIds,
+        'trigger': manual ? 'manual' : 'record_saved',
+      },
       skills: [KnowledgeInsightSkill(forceActivate: true)],
       toolProfile: ChildToolProfile.read,
     ),
@@ -102,6 +121,33 @@ Future<void> handleKnowledgeInsightImpl(
     );
   }
   _logger.info('Insight analysis ${result.status.name} for $factIds');
+  await finish(
+    result.status == SuperAgentChildStatus.completed
+        ? InsightOutcome.saved
+        : InsightOutcome.noPattern,
+    insightReason(result.summary),
+  );
+}
+
+/// The latest records as `path | date | title` lines, so the agent picks what
+/// to read instead of searching the workspace for it.
+Future<String> _recentRecordIndex(String userId) async {
+  final files = FileSystemService.instance;
+  final rows = await AppDatabase.instance.cardDao.getCards(limit: 40);
+  final lines = <String>[];
+  for (final row in rows) {
+    final card = await files.readCardFile(userId, row.factId);
+    if (card == null || isInsightSummaryCard(card)) continue;
+    final title = (card.title ?? card.fact ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final day = DateTime.fromMillisecondsSinceEpoch(row.timestamp * 1000)
+        .toIso8601String()
+        .substring(0, 10);
+    lines.add(
+      '${Prompts.cardFileOfFact(row.factId)} | $day | '
+      '${title.length > 80 ? '${title.substring(0, 80)}...' : title}',
+    );
+  }
+  return lines.join('\n');
 }
 
 /// Saved records that are not insight announcements.

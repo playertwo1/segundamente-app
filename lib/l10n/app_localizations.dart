@@ -2547,6 +2547,18 @@ abstract class AppLocalizations {
   /// **'Include persona, style guide, example dialogue, knowledge filters, etc.\nUse ## for section headers.'**
   String get characterPersonaHint;
 
+  /// No description provided for @characterInterestFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Interests for automatic selection'**
+  String get characterInterestFilterLabel;
+
+  /// No description provided for @characterInterestFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Topics that help the app choose this character to comment on an entry. Separate with commas.'**
+  String get characterInterestFilterHint;
+
   /// No description provided for @pleaseEnterCharacterPersona.
   ///
   /// In en, this message translates to:
@@ -6980,6 +6992,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Insights appear here on their own as you save records and the app finds patterns across them.'**
   String get insightEmptyBody;
+
+  /// No description provided for @insightAnalyzeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze now'**
+  String get insightAnalyzeNow;
+
+  /// No description provided for @insightAnalyzing.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing your records…'**
+  String get insightAnalyzing;
+
+  /// No description provided for @insightAnalyzeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not request the analysis.'**
+  String get insightAnalyzeFailed;
+
+  /// No description provided for @insightRunNoPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Last analysis, {when}: no pattern backed by two records. {reason}'**
+  String insightRunNoPattern(Object when, Object reason);
+
+  /// No description provided for @insightRunTooFew.
+  ///
+  /// In en, this message translates to:
+  /// **'Last analysis, {when}: too few records to compare yet ({count} of {min}).'**
+  String insightRunTooFew(Object when, Object count, Object min);
+
+  /// No description provided for @insightRunNoModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last analysis, {when}: no model configured.'**
+  String insightRunNoModel(Object when);
+
+  /// No description provided for @insightRunNoRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Last analysis, {when}: no readable record to analyze.'**
+  String insightRunNoRecord(Object when);
+
+  /// No description provided for @insightRunSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Last analysis, {when}: generated insights.'**
+  String insightRunSaved(Object when);
+
+  /// No description provided for @insightRunFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last analysis, {when}: did not finish. Try again.'**
+  String insightRunFailed(Object when);
 
   /// No description provided for @insightMapNoData.
   ///

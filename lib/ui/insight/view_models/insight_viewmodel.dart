@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:memex/domain/models/insight_trigger.dart';
 import 'package:memex/domain/models/knowledge_insight_card.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/event_bus_service.dart';
@@ -30,6 +31,17 @@ class InsightViewModel extends ChangeNotifier {
   final Set<String> _htmlLoadingIds = {};
   final Set<String> _htmlFailedIds = {};
   int _insightsGeneration = 0;
+
+  /// The latest analysis, as the empty state explains it.
+  InsightRunStatus? lastRun;
+  bool analyzing = false;
+  Timer? _runTimer;
+  bool _disposed = false;
+
+  /// How often, and how many times, to look at a requested analysis (the agent
+  /// takes about half a minute).
+  Duration pollEvery = const Duration(seconds: 3);
+  int maxPolls = 80;
 
   bool isHtmlLoading(String insightId) => _htmlLoadingIds.contains(insightId);
 
@@ -101,6 +113,44 @@ class InsightViewModel extends ChangeNotifier {
     _hasLoaded = true;
     isLoading = false;
     notifyListeners();
+    await loadRun();
+  }
+
+  Future<void> loadRun() async {
+    final result = await _router.latestInsightRun();
+    result.when(
+      onOk: (run) => lastRun = run,
+      onError: (_, __) {},
+    );
+    if (!_disposed) notifyListeners();
+  }
+
+  /// Asks for an analysis of the latest records now and waits for it to end,
+  /// then reloads the list. The screen shows why when nothing came out of it.
+  Future<void> analyzeNow() async {
+    if (analyzing) return;
+    analyzing = true;
+    notifyListeners();
+    final requested = await _router.requestInsightAnalysis();
+    if (requested.isError) {
+      analyzing = false;
+      errorMessage = UserStorage.l10n.insightAnalyzeFailed;
+      notifyListeners();
+      return;
+    }
+    var polls = 0;
+    _runTimer?.cancel();
+    _runTimer = Timer.periodic(pollEvery, (timer) async {
+      if (!analyzing) return;
+      polls++;
+      await loadRun();
+      if (_disposed) return;
+      if (lastRun?.running != true || polls >= maxPolls) {
+        timer.cancel();
+        analyzing = false;
+        await loadData();
+      }
+    });
   }
 
   Future<void> togglePin(KnowledgeInsightCard item) async {
@@ -181,6 +231,8 @@ class InsightViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _runTimer?.cancel();
     EventBusService.instance.removeHandler(
       EventBusMessageType.newInsight,
       _handleNewInsightEvent,

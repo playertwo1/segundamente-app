@@ -1420,6 +1420,14 @@ class AppLocalizationsPt extends AppLocalizations {
       'Inclua persona, guia de estilo, diálogo exemplo, filtros de conhecimento etc.\nUse ## para títulos de seção.';
 
   @override
+  String get characterInterestFilterLabel =>
+      'Interesses para seleção automática';
+
+  @override
+  String get characterInterestFilterHint =>
+      'Temas que ajudam o app a escolher esta persona para comentar em um registro. Separe por vírgula.';
+
+  @override
   String get pleaseEnterCharacterPersona => 'Insira a persona do personagem';
 
   @override
@@ -3953,6 +3961,45 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get insightEmptyBody =>
       'Os insights surgem aqui sozinhos, conforme você salva registros e o app encontra padrões entre eles.';
+
+  @override
+  String get insightAnalyzeNow => 'Analisar agora';
+
+  @override
+  String get insightAnalyzing => 'Analisando seus registros…';
+
+  @override
+  String get insightAnalyzeFailed => 'Não foi possível pedir a análise.';
+
+  @override
+  String insightRunNoPattern(Object when, Object reason) {
+    return 'Última análise, $when: nenhum padrão sustentado por dois registros. $reason';
+  }
+
+  @override
+  String insightRunTooFew(Object when, Object count, Object min) {
+    return 'Última análise, $when: ainda há poucos registros para comparar ($count de $min).';
+  }
+
+  @override
+  String insightRunNoModel(Object when) {
+    return 'Última análise, $when: nenhum modelo configurado.';
+  }
+
+  @override
+  String insightRunNoRecord(Object when) {
+    return 'Última análise, $when: nenhum registro legível para analisar.';
+  }
+
+  @override
+  String insightRunSaved(Object when) {
+    return 'Última análise, $when: gerou insights.';
+  }
+
+  @override
+  String insightRunFailed(Object when) {
+    return 'Última análise, $when: não terminou. Tente de novo.';
+  }
 
   @override
   String get insightMapNoData =>

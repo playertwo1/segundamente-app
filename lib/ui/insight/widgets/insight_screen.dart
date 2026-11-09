@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:memex/ui/core/themes/app_colors.dart';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import 'package:memex/domain/models/insight_trigger.dart';
 import 'package:memex/domain/models/knowledge_insight_card.dart';
 import 'package:memex/ui/insight/view_models/insight_viewmodel.dart';
 import 'insight_detail_page.dart';
@@ -361,66 +363,74 @@ class _InsightScreenState extends State<InsightScreen> {
         final vm = widget.viewModel;
         return LayoutBuilder(
           builder: (context, constraints) {
-            final content = Stack(
+            final content = Column(
               children: [
-                RefreshIndicator(
-                  onRefresh: vm.loadData,
-                  child: vm.isReordering
-                      ? ReorderableListView(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 72),
-                          onReorder: (oldIndex, newIndex) =>
-                              vm.moveItem(oldIndex, newIndex),
-                          header: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  if (!widget.isEmbedded)
-                                    Text(
-                                      UserStorage.l10n.knowledgeInsight,
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    )
-                                  else
-                                    const SizedBox.shrink(),
-                                  TextButton.icon(
-                                    onPressed: () => _saveSortOrder(vm),
-                                    icon: const Icon(Icons.check),
-                                    label: Text(UserStorage.l10n.completeSort),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                          children: (vm.insights ?? [])
-                              .map(
-                                (item) => Container(
-                                  key: ValueKey(item.id),
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  child: Stack(
-                                    children: [
-                                      _buildItemCard(vm, item),
-                                      // Maybe drag handle?
-                                      // ReorderableListView provides drag handle by default on long press or handle.
-                                    ],
-                                  ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: vm.loadData,
+                    child: vm.isReordering
+                        ? ReorderableListView(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 72),
+                            onReorder: (oldIndex, newIndex) =>
+                                vm.moveItem(oldIndex, newIndex),
+                            header: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    if (!widget.isEmbedded)
+                                      Text(
+                                        UserStorage.l10n.knowledgeInsight,
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      )
+                                    else
+                                      const SizedBox.shrink(),
+                                    TextButton.icon(
+                                      onPressed: () => _saveSortOrder(vm),
+                                      icon: const Icon(Icons.check),
+                                      label:
+                                          Text(UserStorage.l10n.completeSort),
+                                    ),
+                                  ],
                                 ),
-                              )
-                              .toList(),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 72),
-                          itemCount: _insightListItemCount(vm),
-                          itemBuilder: (context, index) =>
-                              _buildInsightListItem(context, vm, index),
-                        ),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                            children: (vm.insights ?? [])
+                                .map(
+                                  (item) => Container(
+                                    key: ValueKey(item.id),
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    child: Stack(
+                                      children: [
+                                        _buildItemCard(vm, item),
+                                        // Maybe drag handle?
+                                        // ReorderableListView provides drag handle by default on long press or handle.
+                                      ],
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 72),
+                            itemCount: _insightListItemCount(vm),
+                            itemBuilder: (context, index) =>
+                                _buildInsightListItem(context, vm, index),
+                          ),
+                  ),
                 ),
+                if (!vm.isReordering &&
+                    !vm.isLoading &&
+                    vm.errorMessage == null &&
+                    (vm.insights?.isNotEmpty ?? false))
+                  _buildAnalyzeControl(),
               ],
             );
 
@@ -437,6 +447,77 @@ class _InsightScreenState extends State<InsightScreen> {
         );
       },
     );
+  }
+
+  /// The "analyze now" button (or its progress note) and the reason the last
+  /// analysis gave; used on the empty state and in the pinned footer.
+  Widget _buildAnalyzeControl() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Column(
+        children: [
+          if (widget.viewModel.analyzing)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  UserStorage.l10n.insightAnalyzing,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            )
+          else
+            OutlinedButton.icon(
+              key: const ValueKey('insight_analyze_now'),
+              onPressed: widget.viewModel.analyzeNow,
+              icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+              label: Text(UserStorage.l10n.insightAnalyzeNow),
+            ),
+          if (_runMessage() case final message?) ...[
+            const SizedBox(height: 14),
+            Text(
+              message,
+              key: const ValueKey('insight_last_run'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// What the latest analysis decided, in words; null when none ran or one is
+  /// still running.
+  String? _runMessage() {
+    final run = widget.viewModel.lastRun;
+    if (run == null || run.running) return null;
+    final l10n = UserStorage.l10n;
+    final when =
+        run.at == null ? '' : DateFormat('dd/MM HH:mm').format(run.at!);
+    if (run.failed) return l10n.insightRunFailed(when);
+    return switch (run.outcome) {
+      InsightOutcome.noPattern => l10n.insightRunNoPattern(when, run.detail),
+      InsightOutcome.tooFewRecords =>
+        l10n.insightRunTooFew(when, run.detail, minRecordsForInsights),
+      InsightOutcome.noModel => l10n.insightRunNoModel(when),
+      InsightOutcome.noRecord => l10n.insightRunNoRecord(when),
+      InsightOutcome.saved => l10n.insightRunSaved(when),
+      null => null,
+    };
   }
 
   /// Preview cards shown when the user has no real insights yet.
@@ -471,6 +552,7 @@ class _InsightScreenState extends State<InsightScreen> {
               color: AppColors.textSecondary,
             ),
           ),
+          _buildAnalyzeControl(),
         ],
       ),
     );

@@ -853,6 +853,36 @@ class MemexRouter {
 
   // Native widget IDs are now dynamically loaded from nativeWidgets definition
 
+  /// Asks for an insight analysis of the latest records now. False when one is
+  /// already waiting or running.
+  Future<Result<bool>> requestInsightAnalysis() {
+    return runResult(() async {
+      await _ensureInitialized();
+      final userId = await UserStorage.getUserId();
+      if (userId == null) return false;
+      return requestManualInsightAnalysis(userId);
+    });
+  }
+
+  /// The latest insight analysis (waiting, running or finished), if any.
+  Future<Result<InsightRunStatus?>> latestInsightRun() {
+    return runResult(() async {
+      await _ensureInitialized();
+      final userId = await UserStorage.getUserId();
+      if (userId == null) return null;
+      final task = await LocalTaskExecutor.instance.latestTask(
+        insightTaskType,
+        bizIds: insightTaskBizIds(userId),
+      );
+      if (task == null) return null;
+      return InsightRunStatus.fromTask(
+        status: task.status,
+        resultJson: task.result,
+        completedAt: task.completedAt,
+      );
+    });
+  }
+
   Future<Result<List<KnowledgeInsightCard>>> fetchKnowledgeInsights() async {
     return runResult(() async {
       await _ensureInitialized();

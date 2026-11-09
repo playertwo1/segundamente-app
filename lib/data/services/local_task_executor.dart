@@ -372,6 +372,21 @@ class LocalTaskExecutor {
     return false;
   }
 
+  /// The most recent matching task, or null when none exists.
+  Future<Task?> latestTask(
+    String taskType, {
+    required Iterable<String> bizIds,
+  }) {
+    return (_db.select(_db.tasks)
+          ..where((t) => t.type.equals(taskType) & t.bizId.isIn(bizIds))
+          ..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Future<bool> hasActiveTask({
     required String taskType,
     required String bizId,

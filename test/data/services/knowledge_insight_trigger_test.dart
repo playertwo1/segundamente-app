@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memex/agent/prompts.dart';
 import 'package:memex/agent/super_agent/subagent/super_agent_child.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/global_event_bus.dart';
@@ -303,6 +304,108 @@ void main() {
       expect(task.retryCount, 1);
       expect(task.error, contains('model down'));
     });
+
+    Future<Map<String, dynamic>> runAndReadResult(
+      Map<String, dynamic> payload,
+    ) async {
+      final taskId = await executor.enqueueTask(
+        userId: userId,
+        taskType: insightTaskType,
+        payload: payload,
+      );
+      await handleKnowledgeInsightImpl(
+        userId,
+        payload,
+        TaskContext(taskId: taskId, taskType: insightTaskType),
+      );
+      final row = await (db.select(db.tasks)..where((t) => t.id.equals(taskId)))
+          .getSingle();
+      return jsonDecode(row.result!) as Map<String, dynamic>;
+    }
+
+    test('the outcome is kept in the task result so the screen can say why',
+        () async {
+      fakeModel();
+      final one = await saveRecord('so um registro');
+      expect(
+          await runAndReadResult({
+            'fact_ids': [one]
+          }),
+          {'outcome': 'tooFewRecords', 'detail': '1'});
+
+      await saveRecord('registro 2');
+      await saveRecord('registro 3');
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async =>
+          const SuperAgentChildResult(
+            childName: 'knowledge_insight_auto',
+            status: SuperAgentChildStatus.noOp,
+            summary: 'no_op - so ha um registro sobre o Atlas.',
+          );
+      expect(
+          await runAndReadResult({
+            'fact_ids': [one]
+          }),
+          {
+            'outcome': 'noPattern',
+            'detail': 'so ha um registro sobre o Atlas.'
+          });
+
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async =>
+          result(SuperAgentChildStatus.completed);
+      expect(
+          (await runAndReadResult({
+            'fact_ids': [one]
+          }))['outcome'],
+          'saved');
+
+      KnowledgeInsightTaskDeps.resources = () async => null;
+      expect(
+          (await runAndReadResult({
+            'fact_ids': [one]
+          }))['outcome'],
+          'noModel');
+      expect(
+          (await runAndReadResult({
+            'fact_ids': ['2026/11/05.md#ts_404']
+          }))['outcome'],
+          'noRecord');
+    });
+
+    test('the brief lists the latest records and a manual run says so',
+        () async {
+      fakeModel();
+      final ids = [
+        await saveRecord('cimento para a laje'),
+        await saveRecord('areia para o reboco'),
+        await saveRecord('tijolo para a parede'),
+      ];
+      String? brief;
+      KnowledgeInsightTaskDeps.runChild = ({
+        required config,
+        required client,
+        required modelConfig,
+        required userId,
+      }) async {
+        brief = config.taskBrief;
+        return result(SuperAgentChildStatus.noOp);
+      };
+
+      await runAndReadResult({'fact_ids': ids, 'manual': true});
+
+      expect(brief, contains('The user asked for an analysis'));
+      expect(brief, contains('${Prompts.cardFileOfFact(ids.first)} |'));
+      expect(brief, contains('cimento para a laje'));
+    });
   });
 
   group('capture to insight', () {
@@ -391,6 +494,77 @@ void main() {
       expect(await FileSystemService.instance.listKnowledgeInsightCards(userId),
           isEmpty);
       expect(await db.cardDao.getCards(tags: ['insight'], limit: 10), isEmpty);
+    });
+  });
+
+  group('manual analysis', () {
+    Future<List<String>> latestIds(Task task) async =>
+        ((jsonDecode(task.payload!) as Map)['fact_ids'] as List).cast<String>();
+
+    test('queues the latest readable records at once, once at a time',
+        () async {
+      for (var i = 0; i < 25; i++) {
+        await saveRecord('registro $i');
+      }
+      final summary = await saveRecord('',
+          ui: const [UiConfig(templateId: 'insight_summary', data: {})],
+          tags: const ['insight']);
+
+      expect(await requestManualInsightAnalysis(userId, executor: executor),
+          isTrue);
+      final task = (await insightTasks()).single;
+      expect((jsonDecode(task.payload!) as Map)['manual'], isTrue);
+      final ids = await latestIds(task);
+      expect(ids, hasLength(manualInsightRecords));
+      expect(ids, isNot(contains(summary)));
+      // No wait: it is due now (the debounce of an automatic run is not used).
+      expect(task.scheduledAt ?? 0,
+          lessThanOrEqualTo(DateTime.now().millisecondsSinceEpoch ~/ 1000));
+
+      expect(await requestManualInsightAnalysis(userId, executor: executor),
+          isFalse,
+          reason: 'one is already waiting');
+      expect(await insightTasks(), hasLength(1));
+    });
+
+    test('an active task belonging to another user does not block analysis',
+        () async {
+      await saveRecord('registro atual');
+      await executor.enqueueTask(
+        userId: 'another_user',
+        taskType: insightTaskType,
+        payload: const {},
+        bizId: insightManualBatchKey('another_user'),
+      );
+
+      expect(
+        await requestManualInsightAnalysis(userId, executor: executor),
+        isTrue,
+      );
+      expect(await insightTasks(), hasLength(2));
+    });
+
+    test('a waiting automatic analysis for this user blocks a manual one',
+        () async {
+      await saveRecord('registro atual');
+      await executor.enqueueTask(
+        userId: userId,
+        taskType: insightTaskType,
+        payload: const {},
+        bizId: insightBatchKey(userId),
+      );
+
+      expect(
+        await requestManualInsightAnalysis(userId, executor: executor),
+        isFalse,
+      );
+      expect(await insightTasks(), hasLength(1));
+    });
+
+    test('with no record it queues nothing', () async {
+      expect(await requestManualInsightAnalysis(userId, executor: executor),
+          isFalse);
+      expect(await insightTasks(), isEmpty);
     });
   });
 }

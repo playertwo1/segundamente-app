@@ -714,25 +714,42 @@ Please use the `get_available_insight_card_templates` tool to check for all avai
   static String get metadataNote =>
       '(For reference only, do not repeat this information in your output)';
 
-  /// Brief for the automatic insight analysis that runs after records are
-  /// saved. The worker has no chat: it reads, decides, and either saves or
-  /// reports `no_op`.
-  static String knowledgeInsightAutoTaskBrief(List<String> factIds) => '''
-New records were just saved and the user did not ask for anything. Decide
+  /// The workspace path of the card file of [factId] (`2026/11/07.md#ts_2` is
+  /// `/Cards/2026/11/07_ts_2.yaml`); the file tools cannot search by fact id.
+  static String cardFileOfFact(String factId) => factId.replaceFirstMapped(
+        RegExp(r'^(\d{4})/(\d{2})/(\d{2})\.md#(ts_\d+)$'),
+        (m) => '/Cards/${m[1]}/${m[2]}/${m[3]}_${m[4]}.yaml',
+      );
+
+  /// Brief for the insight analysis (after records are saved, or when the user
+  /// asks for one). The worker has no chat: it reads, decides, and either saves
+  /// or reports `no_op`. [recentIndex] lists the latest records (path, date,
+  /// title) so it does not have to search for them.
+  static String knowledgeInsightAutoTaskBrief(
+    List<String> factIds, {
+    String recentIndex = '',
+    bool manual = false,
+  }) =>
+      '''
+${manual ? "The user asked for an analysis of their latest records." : "New records were just saved and the user did not ask for anything."} Decide
 whether they, together with the user's earlier records and existing insights,
 support a Knowledge Insight.
 
-New record ids (fact_id): ${factIds.join(', ')}
-
+${manual ? 'Records to analyse' : 'New record ids'} (fact_id): ${factIds.join(', ')}
+Their files (read these first; earlier records are the other files under
+`/Cards/YYYY/MM/`): ${factIds.map(cardFileOfFact).join(', ')}
+${recentIndex.isEmpty ? '' : '\nLatest records, newest first (file | date | title):\n$recentIndex\n'}
 Procedure:
 1. Call `get_exists_knowledge_insight_cards` to see what already exists.
-2. Read the new records and look for earlier records that relate to them.
+2. Read the records above and the earlier ones they may relate to; use the
+   list of latest records to pick which files to read.
 3. Create or update an insight ONLY when at least two records back the same
    pattern, trend or comparison. Prefer updating an existing insight over
    creating a near-duplicate. Put every supporting fact_id in `related_facts`.
 4. Do not invent a pattern, a number or a correlation. One record alone, or
    unrelated records, is not evidence.
 5. If nothing is justified, save nothing and reply with the single word
-   `no_op` and one short sentence saying why.
+   `no_op` and one short sentence in Portuguese saying why, naming what you
+   compared.
 ''';
 }
