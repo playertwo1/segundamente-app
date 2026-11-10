@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-09 · **MVP:** PRONTO — portão da F5 fechado em 2026-11-05 (`docs/reviews/F5.md`: AUDIT RESULT: PASS) · **F6:** fechada em 2026-11-06 · **Fase ativa:** F9 — Meeting Decoder · **Estado:** IN_PROGRESS (F9-03 e F9-07 em andamento; F9-08 e F9-09 bloqueadas)
+**Atualizado:** 2026-11-10 · **MVP:** PRONTO — portão da F5 fechado em 2026-11-05 (`docs/reviews/F5.md`: AUDIT RESULT: PASS) · **F6:** fechada em 2026-11-06 · **Fase ativa:** F9 — Meeting Decoder · **Estado:** IN_PROGRESS (F9-03 e F9-07 em andamento; F9-08 e F9-09 bloqueadas)
 
 ## O que existe hoje (confirmado)
 - Fork de `memex-lab/memex` (Flutter, GPL-3.0) no repositório privado `playertwo1/segundamente-app` (remoto `origin`). O antigo fork público `playertwo1/segundamente` foi arquivado em 2026-11-05 e saiu dos remotos locais. Em `origin/main` estão incluídos os commits de OAuth do Gemini/Claude (`aa91a48`), fallback resiliente (`4eee5b4`), sobre as bases das fases F0-F6.
@@ -534,6 +534,7 @@
 - Alternativas medidas no PC (seção 7 do plano da F2-11): Parakeet v3 é 5× mais rápido que o turbo, com qualidade um pouco menor (plano B); Cohere é bom, mas ocupa 2,7 GB; FastConformer pt e Omnilingual são fracos. O turbo continua no app.
 - Troca para o Parakeet v3 (escolha do dono, por não ter limite de 30 s): modelo de ~470 MB, blocos de 30 s mantidos porque mediram melhor, idioma automático (não dá para fixar o pt). APK instalado no S25 em 2026-11-08 17:00. `NOT_RUN` no aparelho.
 - Corte nas pausas (escolha do dono): pedaços de até 30 s cortados no trecho mais silencioso dos 10 s antes de cada marca (`splitAtPauses`, com testes). Em 2 notas reais, os 20 cortes caíram em silêncio. APK instalado no S25 em 2026-11-08 17:12.
+- 2026-11-10: o dono relata que o microfone do chat termina sem texto com a transcrição local ligada; não sabe se o modelo já foi baixado. O caminho não verificava a presença do modelo antes de gravar, e `transcribeSamples` retorna `null` se os arquivos ainda não existem. Agora o chat pede confirmação e baixa o modelo antes da primeira gravação; é preciso tocar no microfone novamente depois do download. `NOT_RUN`: testes e reprodução no S25 após a correção; se o modelo já estiver presente, a causa do texto vazio ainda precisa ser investigada.
 
 ## F10 — provas no S25 sem modelo extra (2026-11-08)
 - Dados sintéticos "Zeta" (PDF escaneado de 8 páginas só com imagem, PDF de ruído de 39 MB, `c38`), cartão criado pelo chat com o PDF anexado.
