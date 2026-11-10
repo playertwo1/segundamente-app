@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:memex/domain/models/document_chart.dart';
 import 'package:memex/domain/models/pdf_pages.dart';
 
 /// Documents the user asks for inside a comment thread (F10-03/04). A version
@@ -185,4 +186,30 @@ List<String> unverifiedCitations(
     if (!ok && !bad.contains(ref)) bad.add(ref);
   }
   return bad;
+}
+
+/// Warnings for a manual edit. Photos are checked again against the record;
+/// a citation or chart number flagged in [previous] stays flagged while it is
+/// still in the text, since the edit has no sources to clear it.
+List<String> userEditWarnings(
+  String markdown, {
+  required List<String> previous,
+  required Set<String> recordImages,
+}) {
+  final charts = findChartBlocks(markdown);
+  final chartValues = {
+    for (final b in charts)
+      if (b.chart != null)
+        for (final v in b.chart!.values) formatValue(v),
+  };
+  final kept = <String>{
+    for (final w in previous)
+      if (w.startsWith('chart:')
+          ? w != 'chart:invalid' && chartValues.contains(w.substring(6))
+          : !w.startsWith('image:') && markdown.contains('[$w]'))
+        w,
+    if (charts.any((b) => b.chart == null)) 'chart:invalid',
+    ...unverifiedImages(markdown, recordImages),
+  };
+  return kept.toList();
 }

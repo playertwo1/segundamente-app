@@ -157,6 +157,36 @@ class ThreadDocumentService {
     });
   }
 
+  /// A manual edit, saved as the user's version with its photos checked
+  /// against the record and the earlier warnings that still apply.
+  Future<ThreadDocument> addUserEdit({
+    required String userId,
+    required String id,
+    required int expectedLatest,
+    required String content,
+    required DateTime now,
+  }) async {
+    final doc = await load(userId, id);
+    // Saved versions never change, so reading the base outside the lock is safe;
+    // addVersion still refuses the edit if the latest moved on.
+    final base = doc?.version(expectedLatest);
+    final card = doc == null ? null : await _readCard(userId, doc.cardId);
+    return addVersion(
+      userId: userId,
+      id: id,
+      expectedLatest: expectedLatest,
+      author: DocumentAuthor.user,
+      content: content,
+      now: now,
+      warnings: userEditWarnings(
+        content,
+        previous: base?.warnings ?? const [],
+        recordImages:
+            card == null ? const {} : (await recordPhotos(userId, card)).toSet(),
+      ),
+    );
+  }
+
   /// The record was deleted but the user kept the documents.
   Future<void> markOriginDeleted(String userId, String cardId) async {
     for (final doc in await listForCard(userId, cardId)) {
@@ -189,23 +219,33 @@ class ThreadDocumentService {
   /// The document text with its charts and record photos drawn in.
   ///
   /// With [cardId], a `[c:ID]` citation reads as who said it instead of the
-  /// raw comment id; the stored version keeps the id.
+  /// raw comment id; the stored version keeps the id. Only photos that record
+  /// holds are drawn; any other image block stays as written.
   Future<String> render(
     String userId,
     String markdown, {
     String? cardId,
-  }) async =>
-      expandDocument(
-        await _nameCitations(userId, cardId, markdown),
-        readImage: (asset) async {
-          if (!await _files.isUserImageAsset(
-              userId: userId, relativePath: asset)) {
-            return null;
-          }
-          return _files.readUserImageAssetBytes(
-              userId: userId, relativePath: asset);
-        },
-      );
+  }) async {
+    final card = await _readCard(userId, cardId);
+    final photos =
+        card == null ? const <String>{} : (await recordPhotos(userId, card)).toSet();
+    return expandDocument(
+      await _nameCitations(userId, card, markdown),
+      readImage: (asset) async => photos.contains(asset)
+          ? _files.readUserImageAssetBytes(userId: userId, relativePath: asset)
+          : null,
+    );
+  }
+
+  /// Null when there is no record or it cannot be read.
+  Future<CardData?> _readCard(String userId, String? cardId) async {
+    if (cardId == null) return null;
+    try {
+      return await _files.readCardFile(userId, cardId);
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Photos of the record a document may place, as paths inside the user's
   /// assets. A card holds `![image](fs://name.jpg)` markers; a plain relative
@@ -233,15 +273,11 @@ class ThreadDocumentService {
   /// sources cannot back is still visible as one.
   Future<String> _nameCitations(
     String userId,
-    String? cardId,
+    CardData? card,
     String markdown,
   ) async {
-    if (cardId == null || !markdown.contains('[c:')) return markdown;
-    CardData? card;
-    try {
-      card = await _files.readCardFile(userId, cardId);
-    } catch (_) {} // a record that cannot be read leaves the ids as written
-    if (card == null) return markdown;
+    // A record that cannot be read leaves the ids as written.
+    if (card == null || !markdown.contains('[c:')) return markdown;
     var names = <String, String>{};
     try {
       names = {

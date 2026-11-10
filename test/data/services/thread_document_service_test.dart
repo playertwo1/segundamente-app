@@ -343,6 +343,83 @@ void main() {
         [p.relative(photo.path, from: tempDir.path)]);
   });
 
+  group('photos outside the record', () {
+    const cardId = '2026/11/06.md#ts_1';
+    late String own;
+    late String other;
+
+    setUp(() async {
+      String photo(String name) {
+        final f = File(p.join(
+          FileSystemService.instance.getAssetsPath(userId),
+          name,
+        ))
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(img.encodeJpg(img.Image(width: 8, height: 8)));
+        return p.relative(f.path, from: tempDir.path);
+      }
+
+      own = photo('minha.jpg');
+      other = photo('de_outro.jpg');
+      await FileSystemService.instance.updateCardFile(
+        userId,
+        cardId,
+        createIfNotExists: true,
+        (card) => card.copyWith(assets: ['![image](fs://minha.jpg)']),
+      );
+    });
+
+    String block(String asset) =>
+        '```image\n${jsonEncode({'asset': asset, 'caption': 'x'})}\n```';
+
+    test('only the record photo is drawn; the rest stays as written',
+        () async {
+      final escape = '${p.dirname(own)}/../../glossary.json';
+      final text = await docs.render(
+        userId,
+        '${block(own)}\n\n${block(other)}\n\n${block(escape)}',
+        cardId: cardId,
+      );
+      expect('data:image/jpeg'.allMatches(text), hasLength(1));
+      expect(text, contains(block(other)));
+      expect(text, contains(block(escape)));
+      // Without a record no photo is drawn at all.
+      expect(await docs.render(userId, block(own)), block(own));
+    });
+
+    test('a manual edit keeps the warnings that still apply', () async {
+      final doc = await docs.create(
+        userId: userId,
+        requestId: 'r-photo',
+        cardId: cardId,
+        title: 'T',
+        content: 'a [p.9] ${block(other)}',
+        now: now(),
+        warnings: ['p.9', 'chart:77', 'image:$other'],
+      );
+      final edited = await docs.addUserEdit(
+        userId: userId,
+        id: doc.id,
+        expectedLatest: 1,
+        content: 'a [p.9] ${block(other)} ${block(own)}\n\n'
+            '```chart\n{"labels":["a"],"values":[3]}\n```',
+        now: now(),
+      );
+      expect(edited.latest.author, DocumentAuthor.user);
+      expect(edited.latest.warnings, ['p.9', 'image:$other']);
+      expect(edited.version(1)!.warnings, ['p.9', 'chart:77', 'image:$other']);
+
+      final cleaned = await docs.addUserEdit(
+        userId: userId,
+        id: doc.id,
+        expectedLatest: 2,
+        content: 'sem nada',
+        now: now(),
+      );
+      expect(cleaned.latest.warnings, isEmpty);
+    });
+  });
+
   test('exporting a missing version is refused', () async {
     final doc = await make();
     await expectLater(

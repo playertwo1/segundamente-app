@@ -1470,11 +1470,10 @@ class MemexRouter {
     required int expectedLatest,
     required String content,
   }) {
-    return runResult(() async => ThreadDocumentService().addVersion(
+    return runResult(() async => ThreadDocumentService().addUserEdit(
           userId: await _reportUserId(),
           id: id,
           expectedLatest: expectedLatest,
-          author: DocumentAuthor.user,
           content: content,
           now: DateTime.now(),
         ));
