@@ -3187,7 +3187,8 @@ class AppLocalizationsPt extends AppLocalizations {
       'Ignorado porque downloads somente por Wi-Fi estão ativados.';
 
   @override
-  String get earlyUpdateNoUpdate => 'Você já está na versão compatível mais recente.';
+  String get earlyUpdateNoUpdate =>
+      'Você já está na versão compatível mais recente.';
 
   @override
   String earlyUpdateFound(Object version, Object build) {

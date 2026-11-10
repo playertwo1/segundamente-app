@@ -657,3 +657,9 @@
 - Token fine-grained de leitura é inserido localmente e guardado no `SecretStorage`; a API de releases e o endpoint binário de assets recebem autenticação. O redirecionamento do download não carrega o token. Sem token, a checagem automática fica inativa e a tela orienta a configuração.
 - `git diff --check`: PASS. JSON ARB e paridade das dez novas chaves en/pt: PASS. `flutter gen-l10n`, testes direcionados de serviço/widget e `flutter analyze`: `NOT_RUN`, pois não há Flutter/Dart no PATH nem SDK encontrado nas pastas verificadas. Os arquivos de localização gerados foram sincronizados manualmente com os ARBs; precisam ser regenerados e validados com o SDK.
 - Token real, acesso autenticado às releases e instalação no S25: `NOT_RUN`. O app não recebeu nem persistiu token durante esta implementação.
+
+## Release v1.0.46+131 (2026-11-10)
+- Suíte completa `flutter test --no-pub --reporter compact`: 1.638 aprovados, 2 ignorados, 0 falhas. `flutter analyze --no-pub`: saída 1 com 151 diagnósticos no repositório; `dart analyze` nos arquivos Dart alterados: nenhum problema. `flutter gen-l10n`: PASS.
+- `flutter build apk --flavor global --release --no-pub`: PASS. APK `segundamente_global_1.0.46_131.apk`, pacote `app.segundamente`, versão `1.0.46`, `versionCode 131`, 119.942.665 bytes. Certificado verificado com `apksigner` e idêntico ao da v1.0.45. SHA-256 do APK: `d459a4119ddb77914ba6fc4f9353a664aa9525bc2e934a4ad4c55cff7b729458`.
+- A pasta de backup `secrets/segundamente-app` não foi encontrada no Drive. Com autorização do dono, foi usada a keystore local existente, após confirmar que seu certificado coincide com o APK da release anterior. A recuperação/backup dessa chave no Drive segue pendente.
+- `NOT_RUN`: instalar no S25; checar e baixar release usando um token real no app; publicar a release no GitHub.
