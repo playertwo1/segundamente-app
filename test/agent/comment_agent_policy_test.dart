@@ -51,6 +51,13 @@ void main() {
       expect(skill.systemPrompt, isNot(contains('call `SkipComment`')));
     });
 
+    test('substantive entries get a fuller first comment', () {
+      final skill = _buildSkill(forceReply: false, tempRoot: tempRoot);
+
+      expect(skill.systemPrompt, contains('including the first one'));
+      expect(skill.systemPrompt, contains('about 3-6 sentences'));
+    });
+
     test('every default persona includes a comment policy', () {
       final defaults = UserStorage.l10n.defaultCharacters;
       expect(defaults, hasLength(15));

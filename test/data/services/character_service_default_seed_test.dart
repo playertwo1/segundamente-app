@@ -310,6 +310,10 @@ enabled: true
         contains('usually select the best-fitting character'));
     expect(
       client.lastPrompt,
+      contains('Then add every other character, up to the allowance'),
+    );
+    expect(
+      client.lastPrompt,
       contains('Return no IDs only for a trivial or content-free entry'),
     );
     expect(client.lastPrompt, contains('comment policy:'));
