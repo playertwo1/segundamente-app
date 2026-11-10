@@ -1847,10 +1847,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                           insightViewModel: context.read<InsightViewModel>(),
                           personaAvatarViewModel:
                               context.read<PersonaAvatarViewModel>(),
-                          onInputTap: () {
-                            setState(() => _homeClipboardCandidate = null);
-                            _openSuperAgentDialog();
-                          },
                           onMenuTap: _handleMenuTap,
                           menuButtonKey: DemoService.instance.knowledgeTabKey,
                         ),

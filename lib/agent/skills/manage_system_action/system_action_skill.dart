@@ -42,8 +42,8 @@ report is not permission to create one.
   add button before Memex requests system permission and writes to the device.
 - Never claim the event or reminder is already in the device app after this
   tool succeeds. Say it is ready for confirmation in the attached card.
-- Do not create a Timeline record unless the user separately asks to capture
-  the information as a record.
+- The request is still something the user said: it is also captured as a
+  Timeline record, through the normal capture flow, in the same turn.
 ''';
 
   static List<Tool> _buildTools() {

@@ -43,7 +43,6 @@ class TimelineScreen extends StatefulWidget {
   final TimelineViewModel viewModel;
   final InsightViewModel insightViewModel;
   final PersonaAvatarViewModel personaAvatarViewModel;
-  final VoidCallback onInputTap;
   final VoidCallback? onRefreshAction;
   final VoidCallback? onMenuTap;
   final Key? menuButtonKey;
@@ -53,7 +52,6 @@ class TimelineScreen extends StatefulWidget {
     required this.viewModel,
     required this.insightViewModel,
     required this.personaAvatarViewModel,
-    required this.onInputTap,
     this.onRefreshAction,
     this.onMenuTap,
     this.menuButtonKey,
@@ -404,40 +402,12 @@ class TimelineScreenState extends State<TimelineScreen> {
     );
   }
 
-  /// Explicit way into the conversation (D-017), near the top of the timeline.
-  Widget _buildChatEntry() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border.symmetric(
-            horizontal: BorderSide(color: AppColors.divider, width: 0.5),
-          ),
-        ),
-        child: ListTile(
-          contentPadding: EdgeInsets.zero,
-          minTileHeight: 52,
-          leading:
-              const Icon(Icons.chat_bubble_outline, color: AppColors.primary),
-          title: Text(
-            UserStorage.l10n.chatWithSegundaMente,
-            style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
-          ),
-          trailing:
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-          onTap: widget.onInputTap,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _buildChromeHeader(),
         const SizedBox(height: 8),
-        _buildChatEntry(),
         Expanded(
           child: ListenableBuilder(
             listenable:

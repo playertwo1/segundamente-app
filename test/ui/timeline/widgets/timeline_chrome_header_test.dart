@@ -39,7 +39,6 @@ void main() {
             viewModel: timeline,
             insightViewModel: insight,
             personaAvatarViewModel: persona,
-            onInputTap: () {},
           ),
         ),
       ),
@@ -58,7 +57,7 @@ void main() {
     expect(find.byType(MemexBrandTitle), findsOneWidget);
   });
 
-  testWidgets('header menu and chat entry call their callbacks',
+  testWidgets('header menu calls its callback and there is no chat row',
       (tester) async {
     final timeline = TimelineViewModel.forTest(autoLoad: false);
     final insight = InsightViewModel(router: MemexRouter());
@@ -67,7 +66,6 @@ void main() {
     addTearDown(insight.dispose);
     addTearDown(persona.dispose);
     var menuTaps = 0;
-    var chatTaps = 0;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -76,7 +74,6 @@ void main() {
             viewModel: timeline,
             insightViewModel: insight,
             personaAvatarViewModel: persona,
-            onInputTap: () => chatTaps++,
             onMenuTap: () => menuTaps++,
           ),
         ),
@@ -84,11 +81,11 @@ void main() {
     );
 
     await tester.tap(find.byTooltip(UserStorage.l10n.navMenu));
-    await tester.tap(find.text(UserStorage.l10n.chatWithSegundaMente));
     await tester.pump();
 
     expect(menuTaps, 1);
-    expect(chatTaps, 1);
+    // The chat row is gone: the + button and the menu already open the chat.
+    expect(find.text(UserStorage.l10n.chatWithSegundaMente), findsNothing);
   });
 
   testWidgets('profile avatar is a labelled button with a 48dp touch target',
@@ -108,7 +105,6 @@ void main() {
             viewModel: timeline,
             insightViewModel: insight,
             personaAvatarViewModel: persona,
-            onInputTap: () {},
           ),
         ),
       ),

@@ -114,6 +114,15 @@ void main() {
       expect(superAgentSystemPrompt, contains('find_related_sessions'));
     });
 
+    test('capture is the default, including for reminder requests', () {
+      // Comments, insights and memory only run on saved records.
+      expect(superAgentSystemPrompt, contains('capture is the default'));
+      expect(
+        superAgentSystemPrompt,
+        isNot(contains('Do not create a Timeline record')),
+      );
+    });
+
     test('allows generic LS for read-only filesystem access', () {
       expect(SuperAgent.isQuickQueryToolAllowed('LS'), isTrue);
     });

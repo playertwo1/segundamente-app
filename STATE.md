@@ -638,3 +638,10 @@
 - flutter build apk --debug --flavor globalDev --no-pub: PASS; pacote app.segundamente.dev, versão 1.0.41+126.
 - Instalação por adb install -r no S25 Ultra SM-S938B (RQCY10934YV): Success; dumpsys confirma versionCode 126 e versionName 1.0.41. Não foi feita conversa com modelo real depois da instalação.
 - F10-01 a F10-04 seguem REVIEW para teste do dono; F10-05 IN_PROGRESS; F10-06 BLOCKED.
+
+## Cards voltam a ser gerados; personas mais falantes (2026-11-10, v1.0.45+130)
+- Causa vista no log do S25 (build de depuração assinada com a chave do app, instalada por cima da 1.0.44): em 7 turnos do dia o SuperAgent (`gpt-6-luna`) nunca chamou `delegate_to_subagent`; o card reservado era apagado no fim do turno. Nos dois turnos com conteúdo ele só criou lembrete, porque o prompt mandava não criar registro em pedido de lembrete. O motor de cards não tinha defeito.
+- Correção: `superAgentSystemPrompt` e a skill de lembretes tratam a captura como padrão (inclusive em lembrete); teste em `super_agent_permissions_test.dart`. Prova no S25: nota de teste virou o card `2026/11/10.md#ts_1`, entrou no PKM e recebeu comentários.
+- Personas: comentário de 3 a 6 frases em registro com conteúdo e seleção de todas as vozes com ângulo próprio até o limite. `NOT_RUN` com modelo real.
+- Timeline: removida a linha "Conversar com a Segunda Mente".
+- Suíte completa sem falhas; testes de agente, personas e comentários repetidos depois do ajuste: 229 passaram.

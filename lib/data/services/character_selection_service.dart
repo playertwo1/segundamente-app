@@ -546,7 +546,7 @@ class CharacterSelectionService {
 
     final targetCount = min(maxCharacters, characters.length);
     final prompt = 'Pick which characters should comment on this user entry.\n'
-        'The user allows up to $targetCount character comments. For a substantive entry, usually select the best-fitting character when a natural reply is possible, even if the user did not ask a direct question. Add a second only when it contributes a clearly different and useful response; never fill the allowance just because it exists.\n'
+        'The user allows up to $targetCount character comments. For a substantive entry, usually select the best-fitting character when a natural reply is possible, even if the user did not ask a direct question. Then add every other character, up to the allowance, that brings a different and useful angle: the user wants to hear more than one voice. Leave out only a voice that would repeat another or has nothing of its own to say.\n'
         'Follow each character’s comment policy, using its reply occasions as guidance for when it fits. Do not select a character whose policy says to stay quiet. Return no IDs only for a trivial or content-free entry, when a reply would feel intrusive, or when no character has a natural reason to respond.\n'
         'Rank selected characters from strongest fit to weakest fit. Do not include redundant or forced voices.\n\n'
         'Characters:\n$charDescriptions\n'

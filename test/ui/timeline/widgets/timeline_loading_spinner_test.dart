@@ -39,7 +39,6 @@ void main() {
             viewModel: timeline,
             insightViewModel: insight,
             personaAvatarViewModel: persona,
-            onInputTap: () {},
           ),
         ),
       ),
