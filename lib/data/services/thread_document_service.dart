@@ -227,11 +227,12 @@ class ThreadDocumentService {
     String? cardId,
   }) async {
     final card = await _readCard(userId, cardId);
-    final photos =
-        card == null ? const <String>{} : (await recordPhotos(userId, card)).toSet();
+    final photos = card == null
+        ? const <String>{}
+        : {for (final f in await recordPhotos(userId, card)) p.normalize(f)};
     return expandDocument(
       await _nameCitations(userId, card, markdown),
-      readImage: (asset) async => photos.contains(asset)
+      readImage: (asset) async => photos.contains(p.normalize(asset))
           ? _files.readUserImageAssetBytes(userId: userId, relativePath: asset)
           : null,
     );

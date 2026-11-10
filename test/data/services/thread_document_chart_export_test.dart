@@ -67,11 +67,20 @@ void main() {
         ..createSync(recursive: true)
         ..writeAsBytesSync(img.encodePng(img.Image(width: 8, height: 8)));
       final rel = p.relative(photo.path, from: dir.path).replaceAll(r'\', '/');
+      const cardId = '2026/11/06.md#ts_1';
+      await FileSystemService.instance.updateCardFile(
+        userId,
+        cardId,
+        createIfNotExists: true,
+        (card) => card.copyWith(assets: [rel]),
+      );
       final docs = ThreadDocumentService(loadFonts: testReportExportFonts);
+      const markdown = '# T\n```image\n{"asset":"REL","caption":"Quadro"}\n```\n'
+          '```image\n{"asset":"../fora.png"}\n```';
       final text = await docs.render(
         userId,
-        '# T\n```image\n{"asset":"$rel","caption":"Quadro"}\n```\n'
-        '```image\n{"asset":"../fora.png"}\n```',
+        markdown.replaceFirst('REL', rel),
+        cardId: cardId,
       );
       expect(text, contains('![Quadro](data:image/jpeg;base64,'));
       expect(text, contains('```image\n{"asset":"../fora.png"}\n```'));
