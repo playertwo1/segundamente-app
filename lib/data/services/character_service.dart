@@ -17,7 +17,7 @@ class CharacterService {
 
   /// Bump this whenever new default characters need to be seeded to existing users.
   /// New users get all characters from l10n.defaultCharacters at once.
-  static const int _currentSeedVersion = 5;
+  static const int _currentSeedVersion = 6;
   static const String _seedVersionFile = '.characters_seed_version';
 
   /// Migrations: version -> list of character IDs to seed for existing users.
@@ -26,6 +26,7 @@ class CharacterService {
   static const Map<int, List<String>> _migrations = {
     1: ['counselor'],
     4: _personalCharacterIds,
+    6: ['memoria_projeto', 'observador_progresso', 'escuta_atenta'],
   };
 
   // Retired IDs stay here for the seed 5 portrait migration.
@@ -46,6 +47,8 @@ class CharacterService {
     'financas_burocracia',
     'curador',
     'facilitador_execucao',
+    'observador_progresso',
+    'escuta_atenta',
   ];
 
   /// The five original defaults were replaced in seed version 4. A file is
@@ -57,6 +60,10 @@ class CharacterService {
     '4': ['pessoa tranquila e contida', 'quiet, restrained person'],
     '5': ['amigo próximo do usuário', "user's familiar friend"],
     'counselor': ['ouvinte mais estável', 'steadier listener'],
+    'diario_bordo': [
+      'Organiza relatos em feito, travado e próximo passo',
+      'Organizes a day into done, stuck and next step',
+    ],
   };
 
   static const Map<String, List<String>> _legacyDefaultPersonaMarkers = {
@@ -65,6 +72,10 @@ class CharacterService {
     '4': ['求而不得', 'distant moonlight'],
     '5': ['帮亲不帮理', 'ride-or-die bestie'],
     'counselor': ['心理咨询师型陪伴者', 'psychological counselor-style companion'],
+    'memoria_projeto': [
+      'Recupera decisões, motivos e tentativas anteriores',
+      'Retrieves earlier decisions, reasons and attempts',
+    ],
   };
 
   final Logger _logger = getLogger('CharacterService');
@@ -251,6 +262,10 @@ class CharacterService {
       }
       if (v == 5) {
         await _useBundledPortraits(userId, charsPath);
+      }
+      if (v == 6) {
+        await _refreshLegacyDefaultCharacters(userId, charsPath);
+        await _removeRetiredDefaultCharacters(userId, charsPath);
       }
     }
 

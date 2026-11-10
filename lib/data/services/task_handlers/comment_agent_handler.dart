@@ -339,6 +339,8 @@ int remainingPersonaTurns(
 
 /// Next persona for the debate: most relevant to the latest user message,
 /// then the one with the fewest comments in the thread (ties by id).
+/// A persona that has not spoken in the thread joins only when it has
+/// affinity with the user's message, so unrelated voices don't cost a call.
 CharacterModel? pickNextDebater(
   List<CharacterModel> characters,
   List<CardComment> comments,
@@ -347,28 +349,28 @@ CharacterModel? pickNextDebater(
   final lastSpeaker = last != null && last.isAi ? last.characterId : null;
   final lastUserIndex = comments.lastIndexWhere((comment) => !comment.isAi);
   final latestUserContent =
-      lastUserIndex < 0 ? null : comments[lastUserIndex].content;
+      lastUserIndex < 0 ? '' : comments[lastUserIndex].content;
   final spoken = <String, int>{};
   for (final c in comments) {
     final id = c.characterId;
     if (c.isAi && id != null) spoken[id] = (spoken[id] ?? 0) + 1;
   }
-  final candidates =
-      characters.where((c) => c.enabled && c.id != lastSpeaker).toList()
-        ..sort((a, b) {
-          if (latestUserContent != null) {
-            final byRelevance = CharacterSelectionService.scoreAffinity(
-              b,
-              latestUserContent,
-            ).compareTo(
-              CharacterSelectionService.scoreAffinity(a, latestUserContent),
-            );
-            if (byRelevance != 0) return byRelevance;
-          }
-          final byCount = (spoken[a.id] ?? 0).compareTo(spoken[b.id] ?? 0);
-          return byCount != 0 ? byCount : a.id.compareTo(b.id);
-        });
-  return candidates.isEmpty ? null : candidates.first;
+  final scored = [
+    for (final c in characters)
+      if (c.enabled && c.id != lastSpeaker)
+        (
+          character: c,
+          score: CharacterSelectionService.scoreAffinity(c, latestUserContent),
+          count: spoken[c.id] ?? 0,
+        ),
+  ].where((e) => e.count > 0 || e.score > 0).toList()
+    ..sort((a, b) {
+      final byRelevance = b.score.compareTo(a.score);
+      if (byRelevance != 0) return byRelevance;
+      final byCount = a.count.compareTo(b.count);
+      return byCount != 0 ? byCount : a.character.id.compareTo(b.character.id);
+    });
+  return scored.isEmpty ? null : scored.first.character;
 }
 
 /// How many personas may pass in one debate before it ends (each pass costs a

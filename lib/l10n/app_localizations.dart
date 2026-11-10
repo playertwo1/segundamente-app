@@ -4872,7 +4872,7 @@ abstract class AppLocalizations {
   /// No description provided for @maxCommentCharactersDesc.
   ///
   /// In en, this message translates to:
-  /// **'How many characters can comment on each record.'**
+  /// **'How many characters can comment on each record. By default, up to two voices can respond when they add something useful.'**
   String get maxCommentCharactersDesc;
 
   /// No description provided for @replyTo.

@@ -73,9 +73,15 @@ void main() {
   });
 
   group('pickNextDebater', () {
+    // The user comment's text is its id ('u1'), so an interest filter of 'u1'
+    // gives a persona affinity with it.
     test('skips the last speaker and disabled personas', () {
       final thread = [_c('u1', ai: false), _c('a1', ai: true)];
-      final chars = [_char('char-a1'), _char('b', enabled: false), _char('c')];
+      final chars = [
+        _char('char-a1'),
+        _char('b', enabled: false, interestFilter: 'u1'),
+        _char('c', interestFilter: 'u1'),
+      ];
       expect(pickNextDebater(chars, thread)?.id, 'c');
     });
 
@@ -85,8 +91,23 @@ void main() {
         _c('x', ai: true),
         _c('y', ai: true),
       ];
-      final chars = [_char('char-x'), _char('z'), _char('a')];
+      final chars = [
+        _char('char-x', interestFilter: 'u1'),
+        _char('z', interestFilter: 'u1'),
+        _char('a', interestFilter: 'u1'),
+      ];
       expect(pickNextDebater(chars, thread)?.id, 'a');
+    });
+
+    test('a persona outside the thread needs affinity to join', () {
+      final thread = [
+        _c('u1', ai: false, content: 'Comprei pão hoje.'),
+        _c('x', ai: true),
+        _c('y', ai: true),
+      ];
+      final chars = [_char('char-x'), _char('z'), _char('a')];
+      expect(pickNextDebater(chars, thread)?.id, 'char-x');
+      expect(pickNextDebater([_char('z'), _char('a')], thread), isNull);
     });
 
     test('prefers a persona matching the latest user message', () {
@@ -115,7 +136,11 @@ void main() {
 
   group('runPersonaDebate', () {
     late List<CardComment> thread;
-    final chars = [_char('char-a1'), _char('b'), _char('c')];
+    final chars = [
+      _char('char-a1'),
+      _char('b', interestFilter: 'u1'),
+      _char('c', interestFilter: 'u1'),
+    ];
 
     Future<int> run({bool Function(CharacterModel)? skip}) => runPersonaDebate(
           loadComments: () async => [...thread],
@@ -163,7 +188,9 @@ void main() {
       var asked = 0;
       final turns = await runPersonaDebate(
         loadComments: () async => [...thread],
-        loadCharacters: () async => [_char('b'), _char('c'), _char('d')],
+        loadCharacters: () async => [
+          for (final id in ['b', 'c', 'd']) _char(id, interestFilter: 'u1'),
+        ],
         speak: (next, replyToId) async => asked++,
       );
       expect(turns, 0);

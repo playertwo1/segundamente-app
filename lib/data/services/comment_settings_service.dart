@@ -9,12 +9,15 @@ import 'package:memex/utils/logger.dart';
 /// Fields:
 /// - `show_insight_text` (bool, default true): show insight as pinned comment
 /// - `enable_character_comment` (bool, default true): auto-generate character comments
-/// - `max_comment_characters` (int, default 1): max characters that comment per record
+/// - `max_comment_characters` (int, default 2): max characters that comment per record
 ///
 /// When `max_comment_characters` == 1, the original single-character selection
 /// is used (keyword-based, no LLM call). When > 1, an LLM call decides which
 /// characters participate.
 class CommentSettings {
+  static const int _version = 2;
+  static const int _defaultMaxCommentCharacters = 2;
+
   final bool showInsightText;
   final bool enableCharacterComment;
   final int maxCommentCharacters;
@@ -22,19 +25,25 @@ class CommentSettings {
   const CommentSettings({
     this.showInsightText = true,
     this.enableCharacterComment = true,
-    this.maxCommentCharacters = 1,
+    this.maxCommentCharacters = _defaultMaxCommentCharacters,
   });
 
   factory CommentSettings.fromYaml(Map yaml) {
+    final version = yaml['version'] as int? ?? 0;
+    final maxCharacters =
+        yaml['max_comment_characters'] as int? ?? _defaultMaxCommentCharacters;
     return CommentSettings(
       showInsightText: yaml['show_insight_text'] as bool? ?? true,
       enableCharacterComment: yaml['enable_character_comment'] as bool? ?? true,
-      maxCommentCharacters: yaml['max_comment_characters'] as int? ?? 1,
+      maxCommentCharacters: version < _version && maxCharacters == 1
+          ? _defaultMaxCommentCharacters
+          : maxCharacters,
     );
   }
 
   String toYaml() {
-    return 'show_insight_text: $showInsightText\n'
+    return 'version: $_version\n'
+        'show_insight_text: $showInsightText\n'
         'enable_character_comment: $enableCharacterComment\n'
         'max_comment_characters: $maxCommentCharacters\n';
   }

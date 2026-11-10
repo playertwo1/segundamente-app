@@ -53,7 +53,7 @@ void main() {
 
     test('every default persona includes a comment policy', () {
       final defaults = UserStorage.l10n.defaultCharacters;
-      expect(defaults, hasLength(14));
+      expect(defaults, hasLength(15));
       for (final character in defaults) {
         final persona = character['persona'] as String;
 
@@ -99,9 +99,9 @@ void main() {
           ),
         );
         expect(
-          defaults['diario_bordo']!['persona'],
+          defaults['memoria_projeto']!['persona'],
           anyOf(
-            contains('não repete o registro'),
+            contains('não repete a entrada'),
             contains('does not repeat the entry'),
           ),
         );
@@ -182,7 +182,7 @@ void main() {
         final facilitator = defaults['facilitador_execucao']!;
         final persona = facilitator['persona'] as String;
 
-        expect(characters, hasLength(14));
+        expect(characters, hasLength(15));
         expect(defaults.keys, isNot(contains('gerente_escopo')));
         expect(defaults.keys, isNot(contains('parceiro_foco')));
         expect(
@@ -197,6 +197,48 @@ void main() {
           anyOf(
             contains('reduzir o plano ou escolher por onde começar'),
             contains('reduce the plan or choose where to start'),
+          ),
+        );
+      }
+    });
+
+    test('merged context and new voices have distinct comment roles', () {
+      final locales = [
+        AppLocalizationsExtPt().defaultCharacters,
+        AppLocalizationsExtEn().defaultCharacters,
+      ];
+      for (final characters in locales) {
+        final defaults = {
+          for (final character in characters)
+            character['id'] as String: character,
+        };
+
+        expect(
+            defaults.keys,
+            containsAll([
+              'memoria_projeto',
+              'observador_progresso',
+              'escuta_atenta',
+            ]));
+        expect(defaults.keys, isNot(contains('diario_bordo')));
+        expect(
+          defaults['memoria_projeto']!['persona'],
+          anyOf(
+              contains('Comment Policy'), contains('Política de comentários')),
+        );
+        expect(
+          defaults['observador_progresso']!['persona'],
+          anyOf(contains('Reply when:'), contains('Responda quando:')),
+        );
+        expect(
+          defaults['escuta_atenta']!['persona'],
+          anyOf(contains('Reply when:'), contains('Responda quando:')),
+        );
+        expect(
+          defaults['escuta_atenta']!['persona'],
+          anyOf(
+            contains('sem atuar como terapeuta'),
+            contains('without acting as a therapist'),
           ),
         );
       }

@@ -35,10 +35,7 @@ class CharacterSelectionService {
 
     final winner = _bestMatch(enabled, inputContent);
     if (winner != null) {
-      _logger.info(
-        'Selected ${winner.name} (score: '
-        '${scoreAffinity(winner, inputContent)}) for fact $factId',
-      );
+      _logger.info('Selected ${winner.name} for fact $factId');
       return winner;
     }
 
@@ -221,9 +218,14 @@ class CharacterSelectionService {
       }
     }
 
-    // Emotional/nostalgic signals → poetic characters
+    // Explicit emotional signals → attentive listener; retain poetic routing
+    // for legacy custom profiles that still use that role.
     if (_matchesAny(lowerContent, _emotionalSignals)) {
       if (_matchesAny(charLower, [
+        'escuta_atenta',
+        'attentive listener',
+        'apoio',
+        'support',
         'beauty',
         'nostalgia',
         'distant',
@@ -500,18 +502,20 @@ class CharacterSelectionService {
         _logger.info(
             'LLM selected ${selected.length} characters for fact $factId: '
             '${selected.map((c) => c.name).join(', ')}');
+        return selected;
       }
-      return selected;
+
+      // An empty router answer should not suppress a clear policy/keyword fit.
+      final bestMatch = _bestMatch(enabled, inputContent);
+      return bestMatch == null ? [] : [bestMatch];
     } catch (e) {
       _logger.warning('LLM character selection failed, falling back: $e');
     }
 
-    // A failed router still gets a profile only when the match is clear.
-    final bestMatch = _bestMatch(enabled, inputContent);
-    if (bestMatch != null) return [bestMatch];
-
-    final primary = _primaryCompanion(enabled);
-    return primary == null ? [] : [primary];
+    // A failed router falls back to a clear match, then the primary companion.
+    final fallback =
+        _bestMatch(enabled, inputContent) ?? _primaryCompanion(enabled);
+    return fallback == null ? [] : [fallback];
   }
 
   /// One-shot LLM call to pick which characters should respond.
@@ -526,10 +530,12 @@ class CharacterSelectionService {
     final charDescriptions = StringBuffer();
     for (final c in characters) {
       final tags = c.tags.isNotEmpty ? ' [${c.tags.join(', ')}]' : '';
-      final interest = c.interestFilter != null && c.interestFilter!.isNotEmpty
+      // The policy already says when to reply or skip; the interest filter
+      // repeats it, so it is sent only for profiles without a policy.
+      final policy = _extractCommentPolicy(c.persona);
+      final interest = policy.isEmpty && (c.interestFilter ?? '').isNotEmpty
           ? ' — ${c.interestFilter}'
           : '';
-      final policy = _extractCommentPolicy(c.persona);
       charDescriptions.writeln(
         '- id: "${c.id}", name: "${c.name}"$tags$interest'
         '${policy.isEmpty ? '' : '\n  comment policy: $policy'}',
@@ -540,8 +546,8 @@ class CharacterSelectionService {
 
     final targetCount = min(maxCharacters, characters.length);
     final prompt = 'Pick which characters should comment on this user entry.\n'
-        'The user allows up to $targetCount character comments. Start with one; add another only when it contributes a clearly different and useful response. Never fill the allowance just because it exists.\n'
-        'Follow each character’s comment policy. Do not select a character whose policy says to stay quiet. Return no IDs when no character has a natural reason to respond.\n'
+        'The user allows up to $targetCount character comments. For a substantive entry, usually select the best-fitting character when a natural reply is possible, even if the user did not ask a direct question. Add a second only when it contributes a clearly different and useful response; never fill the allowance just because it exists.\n'
+        'Follow each character’s comment policy, using its reply occasions as guidance for when it fits. Do not select a character whose policy says to stay quiet. Return no IDs only for a trivial or content-free entry, when a reply would feel intrusive, or when no character has a natural reason to respond.\n'
         'Rank selected characters from strongest fit to weakest fit. Do not include redundant or forced voices.\n\n'
         'Characters:\n$charDescriptions\n'
         'User entry:\n"$truncatedInput"\n\n'

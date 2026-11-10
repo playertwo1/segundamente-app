@@ -2731,7 +2731,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get maxCommentCharactersDesc =>
-      'Quantos personagens podem comentar em cada registro.';
+      'Quantos personagens podem comentar em cada registro. O padrão permite até duas vozes quando há algo útil a acrescentar.';
 
   @override
   String replyTo(String name) {

@@ -83,7 +83,7 @@ enabled: true
     expect(ids, contains('facilitador_execucao'));
     expect(ids, isNot(contains('gerente_escopo')));
     expect(ids, isNot(contains('parceiro_foco')));
-    expect(ids, hasLength(15));
+    expect(ids, hasLength(16));
   });
 
   test('seed 5 swaps the seed avatar for the bundled portrait only', () async {
@@ -133,14 +133,109 @@ enabled: true
     }
   });
 
-  test('new users get exactly the 14 personal characters', () async {
+  test('new users get exactly the 15 personal characters', () async {
     final userId = 'fresh_user_${DateTime.now().microsecondsSinceEpoch}';
     final ids = (await CharacterService.instance.getAllCharacters(userId))
         .map((c) => c.id)
         .toList();
 
-    expect(ids, hasLength(14));
+    expect(ids, hasLength(15));
     expect(ids, isNot(contains('counselor')));
+  });
+
+  test('seed 6 fuses default diary into memory and preserves custom personas',
+      () async {
+    final userId = 'merge_user_${DateTime.now().microsecondsSinceEpoch}';
+    final charsPath = CharacterService.instance.getCharactersPath(userId);
+    await Directory(charsPath).create(recursive: true);
+    await File(p.join(charsPath, '.characters_seed_version'))
+        .writeAsString('5');
+    await File(p.join(charsPath, 'memoria_projeto.yaml')).writeAsString(
+      '''
+name: Memória do projeto
+tags: []
+persona: "Recupera decisões, motivos e tentativas anteriores dos registros."
+avatar: "asset://characters/memoria_projeto.png"
+enabled: true
+''',
+    );
+    await File(p.join(charsPath, 'diario_bordo.yaml')).writeAsString(
+      '''
+name: Diário de bordo
+tags: []
+persona: "Organiza relatos em feito, travado e próximo passo quando solicitado."
+avatar: "asset://characters/diario_bordo.png"
+enabled: true
+''',
+    );
+    final legacyNote = File(p.join(
+      FileSystemService.instance.getCharacterWorkspacePath(
+        userId,
+        'diario_bordo',
+      ),
+      'Journal',
+      'note.md',
+    ));
+    await legacyNote.parent.create(recursive: true);
+    await legacyNote.writeAsString('registro privado');
+
+    final ids = (await CharacterService.instance.getAllCharacters(userId))
+        .map((character) => character.id)
+        .toSet();
+
+    expect(
+        ids,
+        containsAll([
+          'memoria_projeto',
+          'observador_progresso',
+          'escuta_atenta',
+        ]));
+    expect(ids, isNot(contains('diario_bordo')));
+    expect(await legacyNote.readAsString(), 'registro privado');
+    expect(
+      (await CharacterService.instance.getCharacter(userId, 'memoria_projeto'))!
+          .persona,
+      anyOf(
+        contains('organiza o dia em feito'),
+        contains('organizes a day into done'),
+      ),
+    );
+
+    final customUserId =
+        'custom_merge_user_${DateTime.now().microsecondsSinceEpoch}';
+    final customPath =
+        CharacterService.instance.getCharactersPath(customUserId);
+    await Directory(customPath).create(recursive: true);
+    await File(p.join(customPath, '.characters_seed_version'))
+        .writeAsString('5');
+    await File(p.join(customPath, 'memoria_projeto.yaml')).writeAsString(
+      '''
+name: Minha memória
+tags: [pessoal]
+persona: "Perfil escrito e ajustado por mim."
+avatar: "mine.png"
+enabled: true
+''',
+    );
+    await File(p.join(customPath, 'diario_bordo.yaml')).writeAsString(
+      '''
+name: Diário de bordo
+tags: []
+persona: "Organiza relatos em feito, travado e próximo passo quando solicitado."
+avatar: "asset://characters/diario_bordo.png"
+enabled: true
+''',
+    );
+
+    final customCharacters =
+        await CharacterService.instance.getAllCharacters(customUserId);
+    final customIds = customCharacters.map((character) => character.id).toSet();
+
+    expect(customIds, contains('memoria_projeto'));
+    expect(customIds, isNot(contains('diario_bordo')));
+    expect(
+        customCharacters.firstWhere((c) => c.id == 'memoria_projeto').persona,
+        'Perfil escrito e ajustado por mim.');
   });
 
   test('resolves imported HEIC avatar paths when loading characters', () async {
@@ -211,15 +306,38 @@ enabled: true
 
     expect(selected, hasLength(1));
     expect(selected.first.id, 'amigo_bar');
-    expect(client.lastPrompt, contains('Start with one'));
+    expect(client.lastPrompt,
+        contains('usually select the best-fitting character'));
     expect(
       client.lastPrompt,
-      contains('Return no IDs when no character has a natural reason'),
+      contains('Return no IDs only for a trivial or content-free entry'),
     );
     expect(client.lastPrompt, contains('comment policy:'));
     expect(
       client.lastPrompt,
       anyOf(contains('Pule quando:'), contains('Skip when:')),
+    );
+    // Profiles with a policy don't repeat their interest filter.
+    expect(client.lastPrompt, isNot(contains(' — Foque em')));
+    expect(client.lastPrompt, isNot(contains(' — Focus on')));
+  });
+
+  test('multi-character selection respects the configured cap', () async {
+    final userId = 'selection_cap_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: 'Consegui terminar o teste e o resultado abriu no celular.',
+      factId: '2026/05/29.md#ts_selection_cap',
+      client: _CapturingTextClient(
+        'amigo_bar,observador_progresso,escuta_atenta',
+      ),
+      modelConfig: ModelConfig(model: 'test-model'),
+      maxCharacters: 2,
+    );
+
+    expect(
+      selected.map((character) => character.id),
+      ['amigo_bar', 'observador_progresso'],
     );
   });
 
@@ -236,9 +354,15 @@ enabled: true
       inputContent: 'Estou de saco cheio e irritada com isso.',
       factId: '2026/05/29.md#ts_3',
     );
+    final sad = await CharacterSelectionService.selectCharacter(
+      userId: userId,
+      inputContent: 'Fiquei triste e com saudade depois da conversa.',
+      factId: '2026/05/29.md#ts_3b',
+    );
 
     expect(tired?.id, 'guardiao_energia');
     expect(frustrated?.id, 'amigo_bar');
+    expect(sad?.id, 'escuta_atenta');
   });
 
   test('no affinity returns no character unless a primary companion is set',
@@ -328,6 +452,19 @@ enabled: true
       modelConfig: ModelConfig(model: 'test-model'),
     );
     expect(primaryFallback.single.id, 'curador');
+  });
+
+  test('empty LLM route falls back to a clear persona match', () async {
+    final userId = 'empty_route_match_${DateTime.now().microsecondsSinceEpoch}';
+    final selected = await CharacterSelectionService.selectMultipleCharacters(
+      userId: userId,
+      inputContent: 'Estou exausta e dormi muito pouco.',
+      factId: '2026/05/29.md#ts_empty_route_match',
+      client: _CapturingTextClient(''),
+      modelConfig: ModelConfig(model: 'test-model'),
+    );
+
+    expect(selected.map((character) => character.id), ['guardiao_energia']);
   });
 
   test('excluded topics in an interest filter do not attract a persona',
