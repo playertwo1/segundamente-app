@@ -662,4 +662,5 @@
 - Suíte completa `flutter test --no-pub --reporter compact`: 1.638 aprovados, 2 ignorados, 0 falhas. `flutter analyze --no-pub`: saída 1 com 151 diagnósticos no repositório; `dart analyze` nos arquivos Dart alterados: nenhum problema. `flutter gen-l10n`: PASS.
 - `flutter build apk --flavor global --release --no-pub`: PASS. APK `segundamente_global_1.0.46_131.apk`, pacote `app.segundamente`, versão `1.0.46`, `versionCode 131`, 119.942.665 bytes. Certificado verificado com `apksigner` e idêntico ao da v1.0.45. SHA-256 do APK: `d459a4119ddb77914ba6fc4f9353a664aa9525bc2e934a4ad4c55cff7b729458`.
 - A pasta de backup `secrets/segundamente-app` não foi encontrada no Drive. Com autorização do dono, foi usada a keystore local existente, após confirmar que seu certificado coincide com o APK da release anterior. A recuperação/backup dessa chave no Drive segue pendente.
-- `NOT_RUN`: instalar no S25; checar e baixar release usando um token real no app; publicar a release no GitHub.
+- GitHub Release `v1.0.46` publicada em 2026-11-10 em `playertwo1/segundamente-app`. Tag aponta para `f8b9c66f`; o asset publicado confere com o local (tamanho e SHA-256).
+- `NOT_RUN`: instalar no S25; checar e baixar release usando um token real no app.
