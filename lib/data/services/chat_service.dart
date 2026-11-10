@@ -9,6 +9,7 @@ import 'package:logging/logging.dart';
 import 'package:memex/agent/memex_skill_host_agent/memex_skill_host_agent.dart';
 import 'package:memex/agent/run_mode/agent_run_mode.dart';
 import 'package:memex/agent/pure_skill_host_agent/pure_skill_host_agent.dart';
+import 'package:memex/agent/character_agent/character_conversation_skill.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/agent/state_util.dart';
 import 'package:memex/agent/super_agent/super_agent.dart';
@@ -24,6 +25,7 @@ import 'package:memex/domain/models/location_context_config.dart';
 import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/chat_session_storage.dart';
+import 'package:memex/data/services/character_selection_service.dart';
 import 'package:memex/data/services/local_task_executor.dart';
 import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/share_service.dart';
@@ -274,6 +276,27 @@ class ChatService {
   static const String _activeAgentStateSessionIdKey =
       'active_agent_state_session_id';
   static const String _runningChatTurnIdKey = 'running_chat_turn_id';
+
+  @visibleForTesting
+  static Future<String?> personaPromptForChat({
+    required String userId,
+    required String scene,
+    required bool isQuickQuery,
+    required String message,
+  }) async {
+    if (scene != 'super_agent_home' || isQuickQuery || message.trim().isEmpty) {
+      return null;
+    }
+    final character = await CharacterSelectionService.selectRelevantCharacter(
+      userId: userId,
+      inputContent: message,
+    );
+    return character == null
+        ? null
+        : CharacterConversationSkill.buildMainChatParticipationPrompt(
+            character,
+          );
+  }
 
   /// In-flight runs keyed by session id. Runs are owned by the service so a
   /// closed chat dialog does not interrupt them; a reopened dialog can
@@ -729,10 +752,19 @@ class ChatService {
               );
         // Default: use SuperAgent for normal chat sessions. Behavioral
         // guidance (orchestration, truthfulness, comprehensive correction,
-        // tone, judgment) lives in superAgentSystemPrompt; only the dynamic
-        // language instruction is appended per session here.
+        // tone, judgment) lives in superAgentSystemPrompt; dynamic language
+        // and any clearly matched persona guidance are appended per turn.
         var additionalSystemPrompt =
             """## Language\n${UserStorage.l10n.chatLanguageInstruction}""";
+        final personaPrompt = await personaPromptForChat(
+          userId: userId,
+          scene: scene,
+          isQuickQuery: isQuickQuery,
+          message: message,
+        );
+        if (personaPrompt != null) {
+          additionalSystemPrompt = '$additionalSystemPrompt\n\n$personaPrompt';
+        }
 
         final forceActiveSkills = <String>[];
         if (scene == 'assistant_timeline_card_detail') {

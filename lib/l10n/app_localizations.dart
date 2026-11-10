@@ -5532,20 +5532,80 @@ abstract class AppLocalizations {
   /// No description provided for @earlyUpdateSettingsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Early access updates'**
+  /// **'App updates'**
   String get earlyUpdateSettingsTitle;
 
   /// No description provided for @earlyUpdateSettingsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Check GitHub pre-releases for the matching Early APK, download it, and hand it to Android\'s installer.'**
+  /// **'Check the private GitHub repository for a newer matching Android build and download its APK.'**
   String get earlyUpdateSettingsDesc;
 
   /// No description provided for @earlyUpdateUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'Early updates are only available in the Android Early build.'**
+  /// **'App updates are only available on Android Stable and Early builds.'**
   String get earlyUpdateUnsupported;
+
+  /// No description provided for @earlyUpdateGitHubTokenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub read token'**
+  String get earlyUpdateGitHubTokenTitle;
+
+  /// No description provided for @earlyUpdateGitHubTokenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a fine-grained token limited to this repository with Contents: read. It is stored securely on this device.'**
+  String get earlyUpdateGitHubTokenDesc;
+
+  /// No description provided for @earlyUpdateGitHubTokenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Fine-grained personal access token'**
+  String get earlyUpdateGitHubTokenHint;
+
+  /// No description provided for @earlyUpdateGitHubTokenSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save token'**
+  String get earlyUpdateGitHubTokenSave;
+
+  /// No description provided for @earlyUpdateGitHubTokenReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace token'**
+  String get earlyUpdateGitHubTokenReplace;
+
+  /// No description provided for @earlyUpdateGitHubTokenRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove token'**
+  String get earlyUpdateGitHubTokenRemove;
+
+  /// No description provided for @earlyUpdateGitHubTokenConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'A read token is saved on this device.'**
+  String get earlyUpdateGitHubTokenConfigured;
+
+  /// No description provided for @earlyUpdateGitHubTokenRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a GitHub read token to check private releases.'**
+  String get earlyUpdateGitHubTokenRequired;
+
+  /// No description provided for @earlyUpdateGitHubTokenSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub token saved securely on this device.'**
+  String get earlyUpdateGitHubTokenSaved;
+
+  /// No description provided for @earlyUpdateGitHubTokenRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub token removed.'**
+  String get earlyUpdateGitHubTokenRemoved;
 
   /// No description provided for @earlyUpdateAutoCheckTitle.
   ///
@@ -5592,7 +5652,7 @@ abstract class AppLocalizations {
   /// No description provided for @earlyUpdateChecking.
   ///
   /// In en, this message translates to:
-  /// **'Checking GitHub pre-releases...'**
+  /// **'Checking GitHub releases...'**
   String get earlyUpdateChecking;
 
   /// No description provided for @earlyUpdateSkippedMobile.
@@ -5604,13 +5664,13 @@ abstract class AppLocalizations {
   /// No description provided for @earlyUpdateNoUpdate.
   ///
   /// In en, this message translates to:
-  /// **'You are already on the latest Early build.'**
+  /// **'You already have the latest supported build.'**
   String get earlyUpdateNoUpdate;
 
   /// No description provided for @earlyUpdateFound.
   ///
   /// In en, this message translates to:
-  /// **'Early build {version}+{build} is available.'**
+  /// **'Build {version}+{build} is available.'**
   String earlyUpdateFound(Object version, Object build);
 
   /// No description provided for @earlyUpdateDownloadAndInstall.
@@ -5682,7 +5742,7 @@ abstract class AppLocalizations {
   /// No description provided for @earlyUpdateDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'Early update available'**
+  /// **'App update available'**
   String get earlyUpdateDialogTitle;
 
   /// No description provided for @earlyUpdateReleaseNotes.

@@ -271,3 +271,14 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Contexto: D-042 aceitou "JSON sim" porque mantém a proveniência e era barato. O dono perguntou para que servia; nenhuma tela lê o JSON de volta e ele não tem uso hoje.
 - Decisão (escolha do dono): remover o formato JSON do menu e do código de exportação do relatório. Ficam Markdown, PDF e DOCX; ICS segue dispensado.
 - Consequências: menos um formato a provar na F9-07; a origem de cada item continua visível no relatório e nos formatos de documento. Exportações JSON já feitas em disco não são tocadas. Se um uso aparecer (backup, ferramenta externa), reabrir como pedido novo.
+
+## D-045 — Vozes de personas no chat principal (2026-11-10)
+- Contexto: o dono pediu respostas de persona mais desenvolvidas e que elas participem do chat principal quando o assunto combinar.
+- Decisão: no chat principal normal, a persona habilitada com maior afinidade clara com a mensagem pode acrescentar um parágrafo próprio, identificado pelo nome, depois da resposta central da Segunda Mente. A persona só entra se tiver algo distinto a acrescentar; saudações ficam curtas e assuntos substantivos recebem cerca de 3–6 frases. Sem afinidade clara não há fallback para a persona principal. Quick Query e outras cenas ficam fora.
+- Implementação: o mesmo SuperAgent e modelo configurado produzem a resposta central e a fala identificada, mantendo-a no histórico da conversa e sem chamada adicional ao modelo.
+- Limite de validação: testes focados locais; resposta de modelo real e visualização no S25: `NOT_RUN`.
+
+## D-046 — Atualizador Android para releases do repositório privado (2026-11-10)
+- Contexto: o dono pediu uma opção nas Configurações para procurar e baixar atualizações do repositório GitHub do fork.
+- Decisão: reutilizar o atualizador existente e apontá-lo ao `origin` privado (`playertwo1/segundamente-app`). Stable e Early no Android podem buscar o APK do mesmo flavor; Dev fica indisponível. Para acessar releases privadas, a pessoa configura um token fine-grained limitado ao repositório, com `Contents: read`, salvo pelo `SecretStorage` no cofre do aparelho; o token não é incluído no código, nas preferências ou no backup. A checagem automática só roda se o token estiver salvo e a preferência estiver ativa; download e instalador continuam sujeitos às opções existentes.
+- Limite: é necessário configurar o token em cada instalação e publicar uma release com APK do flavor compatível. Testes Flutter, análise, geração de localizações e validação no S25: `NOT_RUN` neste ambiente, que não tem Flutter/Dart disponível.

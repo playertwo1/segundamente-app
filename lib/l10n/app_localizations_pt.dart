@@ -3110,15 +3110,49 @@ class AppLocalizationsPt extends AppLocalizations {
   String get chooseChatBackgroundImage => 'Escolher imagem de fundo';
 
   @override
-  String get earlyUpdateSettingsTitle => 'Atualizações Early access';
+  String get earlyUpdateSettingsTitle => 'Atualizações do app';
 
   @override
   String get earlyUpdateSettingsDesc =>
-      'Verifique os pre-releases do GitHub para o Early APK correspondente, baixe-o e entregue ao instalador do Android.';
+      'Procure uma versão Android mais nova no repositório privado do GitHub e baixe o APK correspondente.';
 
   @override
   String get earlyUpdateUnsupported =>
-      'Atualizações Early só estão disponíveis no Android Early build.';
+      'Atualizações estão disponíveis apenas nas builds Android Stable e Early.';
+
+  @override
+  String get earlyUpdateGitHubTokenTitle => 'Token de leitura do GitHub';
+
+  @override
+  String get earlyUpdateGitHubTokenDesc =>
+      'Use um token refinado limitado somente a este repositório, com Contents: read. Ele fica protegido neste aparelho.';
+
+  @override
+  String get earlyUpdateGitHubTokenHint => 'Token de acesso pessoal refinado';
+
+  @override
+  String get earlyUpdateGitHubTokenSave => 'Salvar token';
+
+  @override
+  String get earlyUpdateGitHubTokenReplace => 'Trocar token';
+
+  @override
+  String get earlyUpdateGitHubTokenRemove => 'Remover token';
+
+  @override
+  String get earlyUpdateGitHubTokenConfigured =>
+      'Um token de leitura está salvo neste aparelho.';
+
+  @override
+  String get earlyUpdateGitHubTokenRequired =>
+      'Adicione um token de leitura do GitHub para consultar releases privadas.';
+
+  @override
+  String get earlyUpdateGitHubTokenSaved =>
+      'Token do GitHub salvo com segurança neste aparelho.';
+
+  @override
+  String get earlyUpdateGitHubTokenRemoved => 'Token do GitHub removido.';
 
   @override
   String get earlyUpdateAutoCheckTitle =>
@@ -3146,18 +3180,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get earlyUpdateCheckNow => 'Verificar agora';
 
   @override
-  String get earlyUpdateChecking => 'Verificando GitHub pre-releases...';
+  String get earlyUpdateChecking => 'Verificando releases do GitHub...';
 
   @override
   String get earlyUpdateSkippedMobile =>
       'Ignorado porque downloads somente por Wi-Fi estão ativados.';
 
   @override
-  String get earlyUpdateNoUpdate => 'Você já está na última Early build.';
+  String get earlyUpdateNoUpdate => 'Você já está na versão compatível mais recente.';
 
   @override
   String earlyUpdateFound(Object version, Object build) {
-    return 'Early build $version+$build está disponível.';
+    return 'A build $version+$build está disponível.';
   }
 
   @override
@@ -3203,7 +3237,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get earlyUpdateDialogTitle => 'Atualização Early disponível';
+  String get earlyUpdateDialogTitle => 'Atualização do app disponível';
 
   @override
   String get earlyUpdateReleaseNotes => 'Notas da versão';

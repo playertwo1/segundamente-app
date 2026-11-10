@@ -109,6 +109,46 @@ void main() {
       }
     });
 
+    test('invites only a relevant persona into normal main chat', () async {
+      final prompt = await ChatService.personaPromptForChat(
+        userId: userId,
+        scene: 'super_agent_home',
+        isQuickQuery: false,
+        message: 'Estou exausto, dormi pouco e não consigo pensar.',
+      );
+
+      expect(prompt, isNotNull);
+      expect(prompt, contains('## Invited persona for this chat'));
+
+      expect(
+        await ChatService.personaPromptForChat(
+          userId: userId,
+          scene: 'super_agent_home',
+          isQuickQuery: false,
+          message: 'xyzzy qwvz',
+        ),
+        isNull,
+      );
+      expect(
+        await ChatService.personaPromptForChat(
+          userId: userId,
+          scene: 'super_agent_home',
+          isQuickQuery: true,
+          message: 'Estou exausto, dormi pouco e não consigo pensar.',
+        ),
+        isNull,
+      );
+      expect(
+        await ChatService.personaPromptForChat(
+          userId: userId,
+          scene: 'insight_card_chat',
+          isQuickQuery: false,
+          message: 'Estou exausto, dormi pouco e não consigo pensar.',
+        ),
+        isNull,
+      );
+    });
+
     test(
         'creates a new agent state while preserving chat history and old state',
         () async {

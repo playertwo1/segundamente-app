@@ -367,6 +367,12 @@ enabled: true
     expect(tired?.id, 'guardiao_energia');
     expect(frustrated?.id, 'amigo_bar');
     expect(sad?.id, 'escuta_atenta');
+
+    final chatPersona = await CharacterSelectionService.selectRelevantCharacter(
+      userId: userId,
+      inputContent: 'Estou exausta, dormi pouco e não consigo pensar.',
+    );
+    expect(chatPersona?.id, 'guardiao_energia');
   });
 
   test('no affinity returns no character unless a primary companion is set',
@@ -394,6 +400,13 @@ enabled: true
     );
 
     expect(fallback?.id, 'socio_tecnico');
+    expect(
+      await CharacterSelectionService.selectRelevantCharacter(
+        userId: userId,
+        inputContent: input,
+      ),
+      isNull,
+    );
   });
 
   test('a substring inside an unrelated word does not attract a persona',

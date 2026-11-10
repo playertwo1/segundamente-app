@@ -646,3 +646,14 @@
 - Personas: comentário de 3 a 6 frases em registro com conteúdo e seleção de todas as vozes com ângulo próprio até o limite. `NOT_RUN` com modelo real.
 - Timeline: removida a linha "Conversar com a Segunda Mente".
 - Suíte completa sem falhas; testes de agente, personas e comentários repetidos depois do ajuste: 229 passaram.
+
+## Personas no chat principal (2026-11-10, D-045)
+- Uma persona habilitada pode acrescentar um parágrafo em sua própria voz, identificado pelo nome, quando a afinidade temática com a mensagem é clara. A Segunda Mente continua responsável pela resposta central; sem correspondência, não há fala de persona. Quick Query não inclui personas.
+- O chat principal reutiliza o SuperAgent e modelo já configurados, sem chamada extra nem alteração do formato persistido da sessão. Conversa direta com persona e iniciativa também receberam orientação para respostas de 3–6 frases em assuntos substantivos; comentários já tinham essa regra.
+- Testes focados em quatro arquivos: 40 passaram. `dart analyze` direcionado nos oito arquivos alterados: `No issues found!`. Modelo real e visualização no S25: `NOT_RUN`.
+
+## Atualizador do repositório privado (2026-11-10, D-046)
+- A tela de atualização em Configurações usa o repositório privado `playertwo1/segundamente-app`. A opção aparece no Android Stable e Early; Dev não oferece autoatualização. A seleção de release confere canal e flavor para não instalar APK de outro canal.
+- Token fine-grained de leitura é inserido localmente e guardado no `SecretStorage`; a API de releases e o endpoint binário de assets recebem autenticação. O redirecionamento do download não carrega o token. Sem token, a checagem automática fica inativa e a tela orienta a configuração.
+- `git diff --check`: PASS. JSON ARB e paridade das dez novas chaves en/pt: PASS. `flutter gen-l10n`, testes direcionados de serviço/widget e `flutter analyze`: `NOT_RUN`, pois não há Flutter/Dart no PATH nem SDK encontrado nas pastas verificadas. Os arquivos de localização gerados foram sincronizados manualmente com os ARBs; precisam ser regenerados e validados com o SDK.
+- Token real, acesso autenticado às releases e instalação no S25: `NOT_RUN`. O app não recebeu nem persistiu token durante esta implementação.

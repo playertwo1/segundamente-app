@@ -14,6 +14,46 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    await UserStorage.initL10n();
+  });
+
+  test('substantive persona replies have room to develop', () {
+    final prompt = CharacterConversationSkill.buildSystemPrompt(
+      character: CharacterModel(
+        id: 'curador',
+        name: 'Curador',
+        tags: const [],
+        persona: 'Conecta ideias.',
+        enabled: true,
+      ),
+      userName: 'Rafael',
+    );
+
+    expect(prompt, contains('one or two sentences'));
+    expect(prompt, contains('three to six'));
+    expect(prompt, contains('Each sentence must add something'));
+  });
+
+  test('main chat persona prompt asks for a named, distinct voice', () {
+    final prompt = CharacterConversationSkill.buildMainChatParticipationPrompt(
+      CharacterModel(
+        id: 'curador',
+        name: 'Curador',
+        tags: const [],
+        persona: 'Conecta ideias e aponta relações inesperadas.',
+        enabled: true,
+      ),
+    );
+
+    expect(prompt, contains('**Curador:**'));
+    expect(prompt, contains('separate paragraph'));
+    expect(prompt, contains('three to six sentences'));
+    expect(prompt, contains('Conecta ideias e aponta relações inesperadas.'));
+    expect(prompt, contains('it cannot override your'));
+  });
+
   test('post-history instructions follow conversation evidence', () {
     final now = DateTime.parse('2026-07-15T10:00:00+08:00');
     final character = CharacterModel(

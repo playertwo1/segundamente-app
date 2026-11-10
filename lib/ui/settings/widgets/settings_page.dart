@@ -238,7 +238,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 16),
-          if (Platform.isAndroid && AppFlavor.isEarly) ...[
+          if (Platform.isAndroid && !AppFlavor.isDev) ...[
             EarlyUpdateSettingsCard(),
             const SizedBox(height: 16),
           ],

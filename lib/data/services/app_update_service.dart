@@ -11,6 +11,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:memex/config/app_flavor.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:memex/utils/secret_storage.dart';
+
+typedef GitHubTokenLoader = Future<String?> Function();
+
+class AppUpdateGitHubTokenRequiredException implements Exception {
+  const AppUpdateGitHubTokenRequiredException();
+
+  @override
+  String toString() => 'A GitHub read token is required to check updates.';
+}
 
 class AppUpdateSettings {
   final bool autoCheckEnabled;
@@ -297,6 +307,7 @@ class AppUpdateService {
     AppUpdatePlatform? platform,
     AppUpdateSettingsStore? settingsStore,
     AppUpdateEnvironment? environment,
+    GitHubTokenLoader? githubTokenLoader,
     PackageVersionLoader? packageVersionLoader,
     UpdateDirectoryProvider? updateDirectoryProvider,
     Clock? clock,
@@ -304,6 +315,8 @@ class AppUpdateService {
         _platform = platform ?? const MethodChannelAppUpdatePlatform(),
         _settingsStore = settingsStore ?? AppUpdateSettingsStore(),
         _environment = environment ?? AppUpdateEnvironment.current(),
+        _githubTokenLoader = githubTokenLoader ??
+            (() => SecretStorage.read(_githubTokenSecretKey)),
         _packageVersionLoader = packageVersionLoader ?? _loadPackageVersion,
         _updateDirectoryProvider =
             updateDirectoryProvider ?? _defaultUpdateDirectory,
@@ -311,12 +324,14 @@ class AppUpdateService {
 
   static final AppUpdateService instance = AppUpdateService();
   static const String releasesUrl =
-      'https://api.github.com/repos/memex-lab/memex/releases?per_page=20';
+      'https://api.github.com/repos/playertwo1/segundamente-app/releases?per_page=20';
+  static const String _githubTokenSecretKey = 'github_app_update_token';
 
   final http.Client _httpClient;
   final AppUpdatePlatform _platform;
   final AppUpdateSettingsStore _settingsStore;
   final AppUpdateEnvironment _environment;
+  final GitHubTokenLoader _githubTokenLoader;
   final PackageVersionLoader _packageVersionLoader;
   final UpdateDirectoryProvider _updateDirectoryProvider;
   final Clock _clock;
@@ -324,9 +339,22 @@ class AppUpdateService {
   final Map<String, _ActiveAppUpdateDownload> _activeDownloads = {};
   final Map<String, Future<AppUpdateInstallResult>> _activeInstalls = {};
 
-  bool get isSupported => _environment.isAndroid && _environment.isEarlyChannel;
+  bool get isSupported =>
+      _environment.isAndroid && _environment.flavorName != 'globalDev';
 
   Future<AppUpdateSettings> loadSettings() => _settingsStore.load();
+
+  Future<bool> hasGithubToken() async =>
+      (await _githubTokenLoader())?.trim().isNotEmpty ?? false;
+
+  Future<void> saveGithubToken(String token) async {
+    final value = token.trim();
+    if (value.isEmpty) throw ArgumentError.value(token, 'token');
+    await SecretStorage.write(_githubTokenSecretKey, value);
+  }
+
+  Future<void> clearGithubToken() =>
+      SecretStorage.delete(_githubTokenSecretKey);
 
   Future<void> saveSettings(AppUpdateSettings settings) {
     return _settingsStore.save(settings);
@@ -335,7 +363,8 @@ class AppUpdateService {
   Future<bool> shouldRunAutoCheck() async {
     if (!isSupported) return false;
     final settings = await loadSettings();
-    return settings.shouldAutoCheck(now: _clock());
+    return settings.shouldAutoCheck(now: _clock()) &&
+        await hasGithubToken();
   }
 
   Future<AppUpdateCheckResult> checkForUpdate({
@@ -344,6 +373,11 @@ class AppUpdateService {
   }) async {
     if (!isSupported) {
       return const AppUpdateCheckResult.unsupported();
+    }
+
+    final token = (await _githubTokenLoader())?.trim();
+    if (token == null || token.isEmpty) {
+      throw const AppUpdateGitHubTokenRequiredException();
     }
 
     final settings = await loadSettings();
@@ -358,11 +392,12 @@ class AppUpdateService {
     }
 
     final packageVersion = await _packageVersionLoader();
-    final releases = await _fetchReleases();
+    final releases = await _fetchReleases(token);
     final update = selectBestUpdate(
       releases: releases,
       currentBuildNumber: packageVersion.buildNumber,
       flavorName: _environment.flavorName,
+      isEarlyChannel: _environment.isEarlyChannel,
     );
 
     await saveSettings(settings.copyWith(lastCheckAt: _clock()));
@@ -438,9 +473,18 @@ class AppUpdateService {
       await targetFile.delete();
     }
 
+    if (!_isGithubReleaseAssetUrl(update.downloadUrl)) {
+      throw const FormatException('Invalid GitHub release asset URL');
+    }
+
     final settings = await loadSettings();
     if (settings.wifiOnlyDownloads && !await _platform.isWifiConnected()) {
       throw const AppUpdateWifiRequiredException();
+    }
+
+    final token = (await _githubTokenLoader())?.trim();
+    if (token == null || token.isEmpty) {
+      throw const AppUpdateGitHubTokenRequiredException();
     }
 
     if (!await dir.exists()) {
@@ -452,9 +496,21 @@ class AppUpdateService {
       await tempFile.delete();
     }
 
-    final request = http.Request('GET', Uri.parse(update.downloadUrl));
-    request.headers.addAll(_githubHeaders);
-    final response = await _httpClient.send(request);
+    final request = http.Request('GET', Uri.parse(update.downloadUrl))
+      ..followRedirects = false;
+    request.headers.addAll(_githubHeaders(token, binary: true));
+    var response = await _httpClient.send(request);
+    if (response.statusCode >= 300 && response.statusCode < 400) {
+      final location = response.headers['location'];
+      await response.stream.drain<void>();
+      final redirect = location == null ? null : Uri.tryParse(location);
+      if (redirect == null || redirect.scheme != 'https') {
+        throw const FormatException(
+          'GitHub returned an invalid APK redirect',
+        );
+      }
+      response = await _httpClient.send(http.Request('GET', redirect));
+    }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw HttpException(
         'APK download failed: HTTP ${response.statusCode}',
@@ -573,10 +629,10 @@ class AppUpdateService {
     return const AppUpdateInstallResult(AppUpdateInstallStatus.started);
   }
 
-  Future<List<Map<String, dynamic>>> _fetchReleases() async {
+  Future<List<Map<String, dynamic>>> _fetchReleases(String token) async {
     final response = await _httpClient.get(
       Uri.parse(releasesUrl),
-      headers: _githubHeaders,
+      headers: _githubHeaders(token),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw HttpException(
@@ -600,11 +656,13 @@ class AppUpdateService {
     required List<Map<String, dynamic>> releases,
     required int currentBuildNumber,
     required String flavorName,
+    bool isEarlyChannel = true,
   }) {
     final candidates = <AppUpdateInfo>[];
 
     for (final release in releases) {
-      if (release['draft'] == true || release['prerelease'] != true) {
+      if (release['draft'] == true ||
+          release['prerelease'] != isEarlyChannel) {
         continue;
       }
 
@@ -615,10 +673,10 @@ class AppUpdateService {
       for (final rawAsset in assets.whereType<Map>()) {
         final asset = Map<String, dynamic>.from(rawAsset);
         final name = asset['name'] as String? ?? '';
-        final downloadUrl = asset['browser_download_url'] as String? ?? '';
+        final downloadUrl = asset['url'] as String? ?? '';
         if (!name.toLowerCase().endsWith('.apk')) continue;
         if (!_assetMatchesFlavor(name, flavorName)) continue;
-        if (downloadUrl.isEmpty) continue;
+        if (!_isGithubReleaseAssetUrl(downloadUrl)) continue;
 
         final releaseNotes = release['body'] as String? ?? '';
         final buildNumber = _parseBuildNumber(name) ??
@@ -653,7 +711,7 @@ class AppUpdateService {
     candidates.sort((a, b) => b.buildNumber.compareTo(a.buildNumber));
     final selected = candidates.isEmpty ? null : candidates.first;
     if (selected == null) {
-      _logger.fine('No early update found for $flavorName');
+      _logger.fine('No update found for $flavorName');
     }
     return selected;
   }
@@ -751,9 +809,15 @@ class AppUpdateService {
     return lowerPath.endsWith('.apk') || lowerPath.endsWith('.apk.part');
   }
 
-  static Map<String, String> get _githubHeaders => const {
-        'Accept': 'application/vnd.github+json',
-        'User-Agent': 'Memex-Early-Updater',
+  static Map<String, String> _githubHeaders(
+    String token, {
+    bool binary = false,
+  }) => {
+        'Accept': binary
+            ? 'application/octet-stream'
+            : 'application/vnd.github+json',
+        'Authorization': 'Bearer $token',
+        'User-Agent': 'Segunda-Mente-App-Updater',
       };
 
   static String _normalize(String value) {
@@ -763,13 +827,26 @@ class AppUpdateService {
   static bool _assetMatchesFlavor(String assetName, String flavorName) {
     final normalizedName = _normalize(assetName);
     final normalizedFlavor = _normalize(flavorName);
-    if (normalizedName.contains(normalizedFlavor)) return true;
+    return switch (normalizedFlavor) {
+      'global' => normalizedName.contains('global') &&
+          !normalizedName.contains('early') &&
+          !normalizedName.contains('dev'),
+      'globalearly' => normalizedName.contains('globalearly') ||
+          (normalizedName.contains('early') &&
+              !normalizedName.contains('cnearly')),
+      'globaldev' => normalizedName.contains('globaldev'),
+      _ => normalizedName.contains(normalizedFlavor),
+    };
+  }
 
-    if (normalizedFlavor == 'globalearly') {
-      return normalizedName.contains('early') &&
-          !normalizedName.contains('cnearly');
-    }
-    return false;
+  static bool _isGithubReleaseAssetUrl(String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null) return false;
+    return uri.scheme == 'https' &&
+        uri.host == 'api.github.com' &&
+        uri.path.startsWith(
+          '/repos/playertwo1/segundamente-app/releases/assets/',
+        );
   }
 
   static int? _parseBuildNumber(String value) {

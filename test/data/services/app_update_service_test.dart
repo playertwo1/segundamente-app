@@ -32,15 +32,18 @@ void main() {
     int currentBuild = 112,
     String flavorName = 'globalEarly',
     bool isSupported = true,
+    bool isEarlyChannel = true,
+    String? githubToken = 'test_read_token',
   }) {
     return AppUpdateService(
       httpClient: client ?? MockClient((_) async => http.Response('[]', 200)),
       platform: platform,
       environment: AppUpdateEnvironment(
         isAndroid: isSupported,
-        isEarlyChannel: isSupported,
+        isEarlyChannel: isEarlyChannel,
         flavorName: flavorName,
       ),
+      githubTokenLoader: () async => githubToken,
       packageVersionLoader: () async =>
           AppPackageVersion(versionName: '1.0.29', buildNumber: currentBuild),
       updateDirectoryProvider: () async => tempDir,
@@ -79,6 +82,13 @@ void main() {
   });
 
   group('release selection', () {
+    test('supports Android Stable and Early but not Dev builds', () {
+      expect(buildService(flavorName: 'global').isSupported, isTrue);
+      expect(buildService(flavorName: 'globalEarly').isSupported, isTrue);
+      expect(buildService(flavorName: 'globalDev').isSupported, isFalse);
+      expect(buildService(isSupported: false).isSupported, isFalse);
+    });
+
     test('chooses the newest matching pre-release APK above current build', () {
       final service = buildService();
 
@@ -105,7 +115,40 @@ void main() {
       expect(update, isNotNull);
       expect(update!.versionName, '1.0.30');
       expect(update.buildNumber, 113);
-      expect(update.downloadUrl, 'https://example.com/global.apk');
+      expect(update.downloadUrl, _assetApiUrl);
+    });
+
+    test('stable builds only select stable APKs for their exact flavor', () {
+      final service = buildService(
+        flavorName: 'global',
+        isEarlyChannel: false,
+      );
+
+      final update = service.selectBestUpdate(
+        currentBuildNumber: 112,
+        flavorName: 'global',
+        isEarlyChannel: false,
+        releases: [
+          release(
+            assetName: 'app-globalEarly-release.apk',
+            body: 'Version: 1.0.31+115',
+          ),
+          release(
+            prerelease: false,
+            assetName: 'app-globalDev-release.apk',
+            body: 'Version: 1.0.32+116',
+          ),
+          release(
+            prerelease: false,
+            assetName: 'app-global-release.apk',
+            body: 'Version: 1.0.30+114',
+          ),
+        ],
+      );
+
+      expect(update, isNotNull);
+      expect(update!.versionName, '1.0.30');
+      expect(update.buildNumber, 114);
     });
 
     test('returns null when matching APK is not newer', () {
@@ -188,7 +231,7 @@ void main() {
           buildNumber: 113,
           assetName: 'memex_globalEarly_1.0.30_113.apk',
           sizeBytes: 4,
-          downloadUrl: 'https://example.com/global.apk',
+          downloadUrl: _assetApiUrl,
           releaseNotes: '',
         );
 
@@ -202,7 +245,11 @@ void main() {
     test('detects an available update from GitHub pre-releases', () async {
       final service = buildService(
         client: MockClient((request) async {
-          expect(request.url.toString(), AppUpdateService.releasesUrl);
+          expect(
+            request.url.toString(),
+            'https://api.github.com/repos/playertwo1/segundamente-app/releases?per_page=20',
+          );
+          expect(request.headers['authorization'], 'Bearer test_read_token');
           return http.Response(
             jsonEncode([
               release(
@@ -223,12 +270,71 @@ void main() {
       expect(settings.lastCheckAt, DateTime(2026, 5, 15, 10));
     });
 
+    test('requires a read token before checking private releases', () async {
+      final service = buildService(githubToken: null);
+
+      await expectLater(
+        service.checkForUpdate(manual: true),
+        throwsA(isA<AppUpdateGitHubTokenRequiredException>()),
+      );
+      expect(await service.shouldRunAutoCheck(), isFalse);
+    });
+
+    test('rejects an asset URL outside the private GitHub API', () async {
+      final service = buildService(
+        client: MockClient((_) async => throw StateError('unexpected request')),
+      );
+      const update = AppUpdateInfo(
+        releaseName: 'Update',
+        tagName: 'v1.0.30+113',
+        versionName: '1.0.30',
+        buildNumber: 113,
+        assetName: 'app-global-release.apk',
+        sizeBytes: 4,
+        downloadUrl: 'https://example.com/asset.apk',
+        releaseNotes: '',
+      );
+
+      await expectLater(
+        service.downloadUpdate(update),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('does not send the token to redirected downloads', () async {
+      final service = buildService(
+        client: MockClient((request) async {
+          if (request.url.toString() == _assetApiUrl) {
+            expect(request.headers['authorization'], 'Bearer test_read_token');
+            return http.Response(
+              '',
+              302,
+              headers: {
+                'location': 'https://release-assets.githubusercontent.com/test.apk',
+              },
+            );
+          }
+          expect(request.url.host, 'release-assets.githubusercontent.com');
+          expect(request.headers.containsKey('authorization'), isFalse);
+          return http.Response.bytes(
+            [1, 2, 3, 4],
+            200,
+            headers: {'content-length': '4'},
+          );
+        }),
+      );
+
+      await service.downloadUpdate(_testUpdate);
+    });
+
     test(
       'downloads APK and delegates install to Android platform channel',
       () async {
         final service = buildService(
           client: MockClient((request) async {
-            expect(request.url.toString(), 'https://example.com/global.apk');
+            expect(request.url.toString(), _assetApiUrl);
+            expect(request.headers['authorization'], 'Bearer test_read_token');
+            expect(request.headers['accept'], 'application/octet-stream');
             return http.Response.bytes(
               [1, 2, 3, 4],
               200,
@@ -243,7 +349,7 @@ void main() {
           buildNumber: 113,
           assetName: 'memex_globalEarly_1.0.30_113.apk',
           sizeBytes: 4,
-          downloadUrl: 'https://example.com/global.apk',
+          downloadUrl: _assetApiUrl,
           releaseNotes: '',
         );
         final progress = <int>[];
@@ -489,9 +595,12 @@ const _testUpdate = AppUpdateInfo(
   buildNumber: 113,
   assetName: 'memex_globalEarly_1.0.30_113.apk',
   sizeBytes: 4,
-  downloadUrl: 'https://example.com/global.apk',
+  downloadUrl: _assetApiUrl,
   releaseNotes: '',
 );
+
+const _assetApiUrl =
+    'https://api.github.com/repos/playertwo1/segundamente-app/releases/assets/1';
 
 Map<String, dynamic> release({
   bool prerelease = true,
@@ -507,7 +616,12 @@ Map<String, dynamic> release({
     'body': body,
     'published_at': '2026-05-15T00:00:00Z',
     'assets': [
-      {'name': assetName, 'size': 1234, 'browser_download_url': downloadUrl},
+      {
+        'name': assetName,
+        'size': 1234,
+        'url': _assetApiUrl,
+        'browser_download_url': downloadUrl,
+      },
     ],
   };
 }

@@ -349,7 +349,7 @@ class SettingsRegistry {
             UserStorage.l10n.settings,
           ],
         ),
-        if (Platform.isAndroid && AppFlavor.isEarly)
+        if (Platform.isAndroid && !AppFlavor.isDev)
           SettingsItem(
             id: 'settings.early_updates',
             titleGetter: () => UserStorage.l10n.earlyUpdateSettingsTitle,

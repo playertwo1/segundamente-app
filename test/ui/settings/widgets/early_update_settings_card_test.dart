@@ -51,6 +51,34 @@ void main() {
     expect(settings.wifiOnlyDownloads, isFalse);
   });
 
+  testWidgets('saves and removes the private GitHub read token', (
+    tester,
+  ) async {
+    final service = FakeWidgetUpdateService();
+    await pumpCard(tester, service);
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).obscureText,
+      isTrue,
+    );
+    await tester.enterText(find.byType(TextField), 'fine_grained_read_token');
+    await tester.tap(find.text(UserStorage.l10n.earlyUpdateGitHubTokenSave));
+    await tester.pumpAndSettle();
+
+    expect(service.savedGithubToken, 'fine_grained_read_token');
+    expect(
+      find.text(UserStorage.l10n.earlyUpdateGitHubTokenConfigured),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byTooltip(UserStorage.l10n.earlyUpdateGitHubTokenRemove),
+    );
+    await tester.pumpAndSettle();
+
+    expect(service.savedGithubToken, isNull);
+  });
+
   testWidgets('manual check reveals update and download opens installer', (
     tester,
   ) async {
@@ -242,6 +270,7 @@ class FakeWidgetUpdateService extends AppUpdateService {
   bool activeDownload;
   AppUpdateDownloadProgress? activeProgress;
   AppUpdateSettings settings = const AppUpdateSettings();
+  String? savedGithubToken;
   bool installStarted = false;
   bool cacheCleared = false;
   int downloadCallCount = 0;
@@ -255,6 +284,19 @@ class FakeWidgetUpdateService extends AppUpdateService {
   @override
   Future<void> saveSettings(AppUpdateSettings settings) async {
     this.settings = settings;
+  }
+
+  @override
+  Future<bool> hasGithubToken() async => savedGithubToken != null;
+
+  @override
+  Future<void> saveGithubToken(String token) async {
+    savedGithubToken = token;
+  }
+
+  @override
+  Future<void> clearGithubToken() async {
+    savedGithubToken = null;
   }
 
   @override

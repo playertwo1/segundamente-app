@@ -42,6 +42,21 @@ class CharacterSelectionService {
     return _primaryCompanion(enabled);
   }
 
+  /// Selects a character for an in-chat voice only when the topic has a clear
+  /// affinity. Unlike record comments, chat does not fall back to a companion.
+  static Future<CharacterModel?> selectRelevantCharacter({
+    required String userId,
+    required String inputContent,
+  }) async {
+    final content = inputContent.trim();
+    if (content.isEmpty) return null;
+    final characters = await CharacterService.instance.getAllCharacters(userId);
+    return _bestMatch(
+      characters.where((character) => character.enabled).toList(),
+      content,
+    );
+  }
+
   /// Score how well a character matches the input content.
   /// Higher is better; uses tags, positive interests and emotional tone.
   static double scoreAffinity(CharacterModel char, String content) {

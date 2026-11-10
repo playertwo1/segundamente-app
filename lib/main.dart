@@ -629,9 +629,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   Future<void> _checkEarlyUpdateInBackground() async {
     final service = AppUpdateService.instance;
-    if (!await service.shouldRunAutoCheck()) return;
-
     try {
+      if (!await service.shouldRunAutoCheck()) return;
       final settings = await service.loadSettings();
       final result = await service.checkForUpdate(manual: false);
       if (!mounted || result.status != AppUpdateCheckStatus.updateAvailable) {

@@ -61,6 +61,8 @@ void main() {
     expect(skill.systemPrompt, contains('never from a score or field'));
     expect(skill.systemPrompt, contains('never gates imposed by the system'));
     expect(skill.systemPrompt, contains('There is no system push'));
+    expect(skill.systemPrompt, contains('three to six sentences'));
+    expect(skill.systemPrompt, contains('Do not pad'));
   });
 
   test('keeps future reflection available without a fixed retry count', () {
