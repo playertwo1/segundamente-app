@@ -594,6 +594,8 @@
 
 - Otimização do motor (2026-11-10): o prompt de seleção não repete o filtro de interesse dos perfis que já têm política de comentário (cerca de 2,3 mil caracteres a menos por registro com os 15 seeds); no debate, uma persona que ainda não falou no fio só entra com afinidade com a última mensagem do usuário (antes, sem sinal, entrava a primeira por ID e gastava uma chamada); a pontuação do debate é calculada uma vez por candidata; o fallback do roteador foi unificado. 48 testes focados passaram; `dart analyze` direcionado limpo. NOT_RUN: suíte global, build e modelo real no S25.
 
+- 2026-11-10, release v1.0.44+129 (`global`, assinada) com as mudanças de personas acima: suíte completa `+1625 ~4: All other tests passed!`. APK `segundamente_global_1.0.44_129.apk` (119942665 bytes, SHA-256 `b85ea1254529e399e86eaafa0db8851a1d26c8dac8278dfd976ce776187dc305`), certificado igual ao da v1.0.43. Instalado no S25 com `install -r` (1.0.42+127 → 1.0.44+129, dados mantidos); app abriu em primeiro plano. Modelo real nos comentários: `NOT_RUN`. A cópia antiga `projetos/segundamente-rel` (sem git, sem nada além do commit 5d6731a6) foi apagada.
+
 ## Insights — 7 melhorias do motor (2026-11-09)
 - Evidência checada no código: o salvamento confere que todo `related_facts` existe; a análise automática exige 2 registros diferentes (`KnowledgeInsightSkill(auto: true)`). O chat continua com a regra antiga (só existência).
 - Prompt curto próprio para a análise automática (`knowledgeInsightAutoSkillPrompt`); o longo ficou só no chat. Motivo do `no_op` agora no idioma dos registros.
