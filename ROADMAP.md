@@ -2,7 +2,7 @@
 
 **Visão e escopo:** [PROJECT.md](PROJECT.md) · **Design aprovado:** [DESIGN.md](DESIGN.md) · **Índice e pranchas:** [docs/INDEX.md](docs/INDEX.md) · **Estado e próxima ação:** [STATE.md](STATE.md) · **Decisões:** [docs/DECISIONS.md](docs/DECISIONS.md) · **Regras de execução:** [docs/WATCHDOG.md](docs/WATCHDOG.md) · **Auditoria:** [docs/AUDIT.md](docs/AUDIT.md)
 
-**Atualização deste mapa:** 2026-11-09. F9 está ativa por D-042 e pelo pedido atual do dono; veja STATE.md para a próxima ação e a evidência mais recente. Se um resumo divergir de uma evidência datada posterior, prevalece a evidência posterior.
+**Atualização deste mapa:** 2026-11-11. F9 está ativa por D-042 e pelo pedido atual do dono; veja STATE.md para a próxima ação e a evidência mais recente. Se um resumo divergir de uma evidência datada posterior, prevalece a evidência posterior.
 
 ## Como ler e executar este roadmap
 
@@ -47,7 +47,7 @@
 | F5 — Fechamento do MVP | Aceite integral, privacidade, desempenho e auditoria | F0–F4 | DONE | Fechado em 2026-11-05: sete critérios no S25 (1–3 aprovados pelo dono), F5-03 medida e AUDIT RESULT: PASS |
 | F5V — Redesign visual | Aplicação da direção AMOLED aprovada nas telas existentes | D-022 permite execução em paralelo à F5 | IN_PROGRESS | Interações, acessibilidade e validação visual comprovadas |
 | F6 — Memória longitudinal | Busca, encaminhamentos, histórico de mudanças, tópicos e agenda | D-010 permite avançar antes do fechamento do MVP | DONE | Busca semântica, tópicos, justificativas e encaminhamentos verificados |
-| F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas | BLOCKED (F7-02 adiada, D-041) | Portão F7 |
+| F7 — Voz contínua e ponte CLI | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas; D-047 abriu só a F7-03 | IN_PROGRESS (só F7-03; F7-02 adiada por D-041; F7-06 bloqueada) | Portão F7 |
 | F8 — NotebookLM | Exportação opt-in e integração somente se suportada e aprovada | MVP e exportação estáveis; termos e destino aprovados | BLOCKED | Portão F8 |
 | F9 — Meeting Decoder | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | IN_PROGRESS; fase ativa por D-042 e pedido do dono | Portão F9 |
 | F10 — Criação nos comentários | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; MVP fechado | IN_PROGRESS (F10-01 iniciada em paralelo à F9, pedido do dono em 2026-11-06) | Portão F10 |
@@ -59,7 +59,8 @@
 1. **F9-03:** `DONE` em 2026-11-07 (critério atendido pelo app no S25; ver D-043). Limite conhecido: PDF com a mesma data em duas páginas (`c40`).
 2. **F9-07/08/09:** no S25, conferir a renderização dos formatos exportados e completar a revisão de acessibilidade; manter desktop adiado por D-042. Não apagar artefatos sintéticos sem autorização.
 3. **F5V:** continua IN_PROGRESS; retomar suas pendências registradas em STATE.md depois da F9 ou quando o dono mudar a prioridade.
-4. F7 e F8 permanecem BLOCKED pelas decisões e dependências de seus portões.
+4. **F7-03:** `IN_PROGRESS` por D-047. A sonda foi medida no S25 em 2026-11-11: a voz no alto-falante dispara o detector (eco não controlado). O dono escolheu a interrupção por toque (D-049, substitui D-048) e `AppConfig.enableDuplexVoice` está ligado. Falta validar a tela no aparelho com um build instalado. F7-02 e F7-06 seguem BLOCKED.
+5. F8 permanece BLOCKED pelas decisões e dependências de seu portão.
 
 ## F0 — Fundação
 
@@ -233,7 +234,7 @@
 |---|---|---:|---|---|---|
 | F7-01 | Comparar viabilidade, sistemas desktop, licenças, termos, autenticação e limites de dados; decidir escopo antes de código | P0 | F5 fechado (D-031 abriu só esta linha) | DONE | Matriz de opções, riscos e decisão aceita em docs/DECISIONS.md |
 | F7-02 | Medir modelo local no S25 (D-033; antes Ollama) para qualidade em pt-BR, requisitos de hardware e privacidade | P1 | F7-01 | BLOCKED | Tabela de qualidade, latência, RAM/VRAM, tamanho e plataforma; modelo escolhido ou caminho descartado com motivo |
-| F7-03 | Implementar voz full duplex opcional com controle explícito, interrupção, pausa, cancelar e estado de microfone visível | P0 | F7-01, F7-02 | BLOCKED | Testes de início, interrupção, cancelamento, erro, permissão e liberação do microfone; nenhuma gravação sem ação visível |
+| F7-03 | Implementar voz full duplex opcional com controle explícito, interrupção, pausa, cancelar e estado de microfone visível | P0 | F7-01; F7-02 dispensada por D-047 (não é dependência técnica) | IN_PROGRESS (código e testes prontos; sonda medida no S25 em 2026-11-11; interrupção por toque com microfone fechado enquanto o app fala, D-049; entrada ligada; tela no aparelho `NOT_RUN`) | Testes de início, interrupção, cancelamento, erro, permissão e liberação do microfone; nenhuma gravação sem ação visível; eco, latência, bateria e aquecimento medidos no S25 (`docs/F7-03-voz-duplex.md`) |
 | F7-04 | Criar ponte desktop opcional para Claude Code e Codex CLI oficiais, com escopo e prévia de cada solicitação | P0 | F7-01 | CANCELLED | Teste com cada CLI instalada; destino/comando visíveis, confirmação antes de enviar ou executar, cancelamento sem efeito e falha sem perda de contexto |
 | F7-05 | Decidir se uma interface MCP é necessária e, se aprovada, restringir ferramentas e permissões | P2 | F7-01, F7-04 | CANCELLED | Decisão explícita; se implementada, teste de acesso somente aos recursos autorizados e ausência de escrita em Quick Query |
 | F7-06 | Validar privacidade, acessibilidade, segurança, termos e funcionamento nos sistemas escolhidos | P0 | F7-02 a F7-05 | BLOCKED | Auditoria sem bloqueios, resultados de testes e execução real registrados em STATE.md |

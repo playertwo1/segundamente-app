@@ -155,6 +155,11 @@ void main() {
     final mic = find.byKey(const ValueKey('super_agent_mic_button'));
     expect(mic, findsOneWidget);
     expect(find.bySemanticsLabel('Record audio'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('super_agent_duplex_voice_button')),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Open voice conversation'), findsOneWidget);
     expect(find.bySemanticsLabel('Attach'), findsOneWidget);
     expect(
       tester.getSize(find.byKey(const ValueKey('super_agent_attach_button'))),

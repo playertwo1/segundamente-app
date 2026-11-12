@@ -4441,4 +4441,79 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get threadDocFromTextNo => 'Só comentar';
+
+  @override
+  String get duplexTitle => 'Conversa por voz';
+
+  @override
+  String get duplexOpen => 'Abrir conversa por voz';
+
+  @override
+  String get duplexIntro =>
+      'Você fala, o assistente responde em voz alta. Enquanto ele fala o microfone fica desligado; toque em Interromper para calar a resposta e voltar a falar. O áudio fica só na memória e não é gravado; o texto da conversa entra no histórico do chat. O assistente só consulta: não cria nem altera registros.';
+
+  @override
+  String get duplexRouteTranscriptionLocal => 'No aparelho';
+
+  @override
+  String get duplexRouteTranscriptionLocalDetail =>
+      'O áudio não sai do telefone.';
+
+  @override
+  String get duplexRouteSpeech => 'Voz da resposta';
+
+  @override
+  String get duplexRouteSpeechValue => 'Voz do sistema Android';
+
+  @override
+  String get duplexRouteSpeechDetail =>
+      'O texto da resposta é lido pelo mecanismo de voz configurado no telefone.';
+
+  @override
+  String get duplexStart => 'Iniciar conversa';
+
+  @override
+  String get duplexPause => 'Pausar';
+
+  @override
+  String get duplexResume => 'Retomar';
+
+  @override
+  String get duplexCancel => 'Encerrar';
+
+  @override
+  String get duplexStateIdle => 'Microfone desligado';
+
+  @override
+  String get duplexStateStarting => 'Abrindo o microfone…';
+
+  @override
+  String get duplexStateListening => 'Ouvindo — microfone ligado';
+
+  @override
+  String get duplexStateThinking =>
+      'Pensando — microfone ligado, áudio descartado';
+
+  @override
+  String get duplexStateSpeaking => 'Falando — microfone desligado';
+
+  @override
+  String get duplexInterrupt => 'Interromper e falar';
+
+  @override
+  String get duplexStatePaused => 'Pausado — microfone desligado';
+
+  @override
+  String get duplexHeard => 'Você disse';
+
+  @override
+  String get duplexReply => 'Resposta';
+
+  @override
+  String get duplexErrorModelMissing =>
+      'O modelo de fala local ainda não foi baixado. Toque no microfone do chat para baixá-lo e volte aqui.';
+
+  @override
+  String get duplexErrorFailed =>
+      'A conversa por voz parou por um erro. O microfone foi desligado.';
 }

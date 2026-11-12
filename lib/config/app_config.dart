@@ -45,6 +45,11 @@ class AppConfig {
   // D-035: the upstream project's paid model service (memexlab.ai) is not
   // offered in Segunda Mente; the code stays dormant behind this flag.
   static bool get enableMemexModelService => false;
+
+  // F7-03: entry to the hands-free voice screen. The microphone is closed
+  // while the app speaks and a tap interrupts it, because the S25 loudspeaker
+  // echo triggered the voice detector (D-049, docs/F7-03-voz-duplex.md).
+  static bool get enableDuplexVoice => true;
   // static bool get enableICloudSync => AppFlavor.isGlobal;
   // static bool get enableHealthKit  => AppFlavor.isGlobal;
 }

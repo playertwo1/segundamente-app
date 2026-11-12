@@ -4403,4 +4403,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get threadDocFromTextNo => 'Just comment';
+
+  @override
+  String get duplexTitle => 'Voice conversation';
+
+  @override
+  String get duplexOpen => 'Open voice conversation';
+
+  @override
+  String get duplexIntro =>
+      'You speak, the assistant answers aloud. While it speaks the microphone is off; tap Interrupt to silence the answer and speak again. Audio stays in memory only and is not recorded; the text of the conversation goes to the chat history. The assistant only looks things up: it does not create or change records.';
+
+  @override
+  String get duplexRouteTranscriptionLocal => 'On this device';
+
+  @override
+  String get duplexRouteTranscriptionLocalDetail =>
+      'Audio does not leave the phone.';
+
+  @override
+  String get duplexRouteSpeech => 'Answer voice';
+
+  @override
+  String get duplexRouteSpeechValue => 'Android system voice';
+
+  @override
+  String get duplexRouteSpeechDetail =>
+      'The answer text is read by the speech engine configured on the phone.';
+
+  @override
+  String get duplexStart => 'Start conversation';
+
+  @override
+  String get duplexPause => 'Pause';
+
+  @override
+  String get duplexResume => 'Resume';
+
+  @override
+  String get duplexCancel => 'End';
+
+  @override
+  String get duplexStateIdle => 'Microphone off';
+
+  @override
+  String get duplexStateStarting => 'Opening the microphone…';
+
+  @override
+  String get duplexStateListening => 'Listening — microphone on';
+
+  @override
+  String get duplexStateThinking => 'Thinking — microphone on, audio discarded';
+
+  @override
+  String get duplexStateSpeaking => 'Speaking — microphone off';
+
+  @override
+  String get duplexInterrupt => 'Interrupt and speak';
+
+  @override
+  String get duplexStatePaused => 'Paused — microphone off';
+
+  @override
+  String get duplexHeard => 'You said';
+
+  @override
+  String get duplexReply => 'Answer';
+
+  @override
+  String get duplexErrorModelMissing =>
+      'The local speech model has not been downloaded yet. Tap the microphone in the chat to download it, then come back.';
+
+  @override
+  String get duplexErrorFailed =>
+      'The voice conversation stopped because of an error. The microphone was turned off.';
 }

@@ -45,6 +45,9 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-042 | 2026-11-06 | F9 aberta: PDF lido pelo modelo (ChatGPT), Todo própria, só imagens do dono, JSON sim e ICS só sob pedido, só Android | ACCEPTED |
 | D-043 | 2026-11-07 | Follow-up e tarefa viram uma coisa só | ACCEPTED |
 | D-044 | 2026-11-07 | Retirar a exportação em JSON do relatório | ACCEPTED |
+| D-047 | 2026-11-11 | F7-03 (voz duplex) aberta sem o modelo local; entrada desligada até a medição no S25 | ACCEPTED |
+| D-048 | 2026-11-11 | Voz duplex ligada no chat com o eco medido no S25, aceito pelo dono | SUPERSEDED por D-049 |
+| D-049 | 2026-11-11 | Voz duplex: interrupção por toque, microfone fechado enquanto o app fala | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -282,3 +285,25 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Contexto: o dono pediu uma opção nas Configurações para procurar e baixar atualizações do repositório GitHub do fork.
 - Decisão: reutilizar o atualizador existente e apontá-lo ao `origin` privado (`playertwo1/segundamente-app`). Stable e Early no Android podem buscar o APK do mesmo flavor; Dev fica indisponível. Para acessar releases privadas, a pessoa configura um token fine-grained limitado ao repositório, com `Contents: read`, salvo pelo `SecretStorage` no cofre do aparelho; o token não é incluído no código, nas preferências ou no backup. A checagem automática só roda se o token estiver salvo e a preferência estiver ativa; download e instalador continuam sujeitos às opções existentes.
 - Limite: é necessário configurar o token em cada instalação e publicar uma release com APK do flavor compatível. Testes Flutter, análise, geração de localizações e validação no S25: `NOT_RUN` neste ambiente, que não tem Flutter/Dart disponível.
+
+## D-047 — Abrir a F7-03 (voz duplex) sem o modelo local (2026-11-11)
+- Contexto: o dono pediu "trabalhe no F7-03", autorizando a investigação e o protótipo de áudio do F7-01, sem reabrir a F7-02 nem ignorar a dependência. O ROADMAP marcava F7-03 `BLOCKED` até a F7-02, adiada por D-041. D-032 tinha deixado a voz duplex "em aberto, sem decisão".
+- Constatação: a dependência da F7-02 não é técnica. A conversa por voz usa a transcrição já existente (Parakeet local ou nuvem), o modelo de chat já configurado e a voz do sistema Android; nenhuma parte exige um LLM no aparelho. A F7-02 só acrescentaria a opção de resposta sem nuvem.
+- Decisão: F7-03 passa a `IN_PROGRESS` pelo caminho independente. F7-02 continua `BLOCKED` (D-041 intacta) e F7-06 continua `BLOCKED`. Nenhuma dependência nova: a voz usa um canal nativo sobre o `TextToSpeech` do Android; `flutter_tts` e TTS por modelo foram descartados.
+- Limites: o S25 não estava conectado em 2026-11-11, então eco, interrupção, latência, bateria e aquecimento estão `NOT_RUN`. Por isso a entrada da tela no chat fica desligada (`AppConfig.enableDuplexVoice = false`) e a F7-03 não pode ser `DONE`. O turno falado vai ao chat em modo somente leitura. O texto da conversa entra no histórico; o áudio nunca é gravado.
+- Falta ao dono: rodar `tools/f703_probe` no S25 e, com os números, decidir ligar a entrada (ou exigir fone / trocar a interrupção por toque se o eco não for controlável).
+- Evidência: `docs/F7-03-voz-duplex.md`, STATE.md.
+
+## D-048 — Ligar a voz duplex com o eco como está (2026-11-11)
+- Contexto: a sonda no S25 mostrou que, com a voz no alto-falante, o detector dispara com a própria resposta (2 disparos por fala de ~13 s na configuração do app; `docs/F7-03-voz-duplex.md` seção 5). Foram oferecidas três saídas: interrupção por toque, falar por cima só com fone, modo "telefone".
+- Decisão do dono: "deixe com eco mesmo, está aceitável para mim". Nenhuma das três saídas é adotada; a configuração de microfone e os limiares ficam como estão e `AppConfig.enableDuplexVoice` passa a `true`.
+- Consequência conhecida e aceita: no alto-falante a resposta pode ser cortada pela própria voz do app, e o trecho de eco pode ser transcrito e enviado ao modelo como se fosse um turno do usuário (em modo somente leitura; entra no histórico do chat e gasta chamadas do modelo) até o usuário pausar ou encerrar. Com fone o efeito deve sumir, mas isso não foi medido.
+- Limites: a tela e o canal `TtsChannelHandler` ainda não foram executados no aparelho (`NOT_RUN`); a F7-03 segue `IN_PROGRESS`. Reavaliar se o corte da resposta incomodar no uso: a alternativa mais barata continua sendo fechar o microfone enquanto o app fala.
+- Evidência: `docs/medicoes/f7-03/s25.jsonl`, STATE.md.
+
+## D-049 — Interrupção por toque na voz duplex (2026-11-11)
+- Contexto: horas depois de aceitar o eco (D-048), o dono escolheu a opção A oferecida na medição: "então vamos por esse caminho".
+- Decisão: enquanto o app fala, o microfone fica **fechado** (o fluxo é encerrado, não só ignorado) e o indicador mostra desligado. O botão "Interromper e falar" cala a resposta e reabre o microfone; ao fim da resposta ele reabre sozinho. Deixa de existir o "falar por cima". Substitui D-048 no comportamento; a entrada no chat continua ligada.
+- Consequência: some o risco de o app ouvir a própria voz, cortar a resposta e mandar eco ao modelo. A conversa passa a ser em turnos com interrupção manual, não full duplex no sentido estrito. Cada resposta custa um fechar/abrir do microfone (tempo não medido no aparelho).
+- Reserva: falar por cima só com fone (opção B) depende de medir o eco com fone; não implementado.
+- Evidência: testes em STATE.md; `docs/F7-03-voz-duplex.md`. Tela no aparelho: `NOT_RUN`.

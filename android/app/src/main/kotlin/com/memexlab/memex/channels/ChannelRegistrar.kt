@@ -25,5 +25,6 @@ object ChannelRegistrar {
         AppActionChannelHandler.register(flutterEngine, activity)
         AgentBackgroundChannelHandler.register(flutterEngine, activity)
         ClipboardPreviewChannelHandler.register(flutterEngine, activity)
+        TtsChannelHandler.register(flutterEngine, activity)
     }
 }

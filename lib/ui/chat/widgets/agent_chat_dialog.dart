@@ -1,4 +1,6 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:memex/config/app_config.dart';
+import 'package:memex/ui/chat/widgets/duplex_voice_screen.dart';
 import 'package:memex/ui/chat/widgets/transcript_file_import_button.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -2414,6 +2416,17 @@ class _AgentChatDialogState extends State<AgentChatDialog>
                               onTap: _showAttachMenu,
                             ),
                             _buildMicButton(),
+                            if (AppConfig.enableDuplexVoice)
+                              _buildInputIconButton(
+                                key: const ValueKey(
+                                  'super_agent_duplex_voice_button',
+                                ),
+                                icon: Icons.graphic_eq,
+                                label: UserStorage.l10n.duplexOpen,
+                                onTap: () => Navigator.of(context).push(
+                                  DuplexVoiceScreen.route(router: _router),
+                                ),
+                              ),
                             if (_showRunModeSelector) _buildRunModeChip(),
                           ],
                         ),

@@ -257,6 +257,10 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- F7-03: lets TextToSpeech find the system speech engine (Android 11+) -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
         <!-- Health Connect package query removed (not used on Android) -->
     </queries>
 </manifest>

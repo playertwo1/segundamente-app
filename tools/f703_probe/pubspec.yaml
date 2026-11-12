@@ -1,0 +1,24 @@
+name: f703_probe
+description: "Sonda descartável da F7-03: eco, interrupção e resistência da voz duplex no S25."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Mesmas versões do app principal, para medir o que ele vai usar.
+  record: ^6.0.0
+  sherpa_onnx: 1.13.2
+  permission_handler: ^11.1.0
+  path_provider: ^2.1.6
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/silero_vad.onnx

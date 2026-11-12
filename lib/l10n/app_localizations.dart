@@ -7778,6 +7778,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Just comment'**
   String get threadDocFromTextNo;
+
+  /// No description provided for @duplexTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice conversation'**
+  String get duplexTitle;
+
+  /// No description provided for @duplexOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open voice conversation'**
+  String get duplexOpen;
+
+  /// No description provided for @duplexIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'You speak, the assistant answers aloud. While it speaks the microphone is off; tap Interrupt to silence the answer and speak again. Audio stays in memory only and is not recorded; the text of the conversation goes to the chat history. The assistant only looks things up: it does not create or change records.'**
+  String get duplexIntro;
+
+  /// No description provided for @duplexRouteTranscriptionLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get duplexRouteTranscriptionLocal;
+
+  /// No description provided for @duplexRouteTranscriptionLocalDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio does not leave the phone.'**
+  String get duplexRouteTranscriptionLocalDetail;
+
+  /// No description provided for @duplexRouteSpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer voice'**
+  String get duplexRouteSpeech;
+
+  /// No description provided for @duplexRouteSpeechValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Android system voice'**
+  String get duplexRouteSpeechValue;
+
+  /// No description provided for @duplexRouteSpeechDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The answer text is read by the speech engine configured on the phone.'**
+  String get duplexRouteSpeechDetail;
+
+  /// No description provided for @duplexStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start conversation'**
+  String get duplexStart;
+
+  /// No description provided for @duplexPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get duplexPause;
+
+  /// No description provided for @duplexResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get duplexResume;
+
+  /// No description provided for @duplexCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get duplexCancel;
+
+  /// No description provided for @duplexStateIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone off'**
+  String get duplexStateIdle;
+
+  /// No description provided for @duplexStateStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening the microphone…'**
+  String get duplexStateStarting;
+
+  /// No description provided for @duplexStateListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening — microphone on'**
+  String get duplexStateListening;
+
+  /// No description provided for @duplexStateThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking — microphone on, audio discarded'**
+  String get duplexStateThinking;
+
+  /// No description provided for @duplexStateSpeaking.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking — microphone off'**
+  String get duplexStateSpeaking;
+
+  /// No description provided for @duplexInterrupt.
+  ///
+  /// In en, this message translates to:
+  /// **'Interrupt and speak'**
+  String get duplexInterrupt;
+
+  /// No description provided for @duplexStatePaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused — microphone off'**
+  String get duplexStatePaused;
+
+  /// No description provided for @duplexHeard.
+  ///
+  /// In en, this message translates to:
+  /// **'You said'**
+  String get duplexHeard;
+
+  /// No description provided for @duplexReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get duplexReply;
+
+  /// No description provided for @duplexErrorModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The local speech model has not been downloaded yet. Tap the microphone in the chat to download it, then come back.'**
+  String get duplexErrorModelMissing;
+
+  /// No description provided for @duplexErrorFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The voice conversation stopped because of an error. The microphone was turned off.'**
+  String get duplexErrorFailed;
 }
 
 class _AppLocalizationsDelegate
