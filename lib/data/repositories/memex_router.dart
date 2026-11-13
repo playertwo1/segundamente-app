@@ -49,7 +49,7 @@ import 'package:memex/data/services/thread_document_service.dart';
 import 'package:memex/domain/models/thread_document.dart';
 import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
-import 'package:memex/data/services/todo_service.dart';
+import 'package:memex/data/repositories/todo_repository.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
@@ -122,6 +122,7 @@ class MemexRouter {
   final PersonaChatRepository _personaChatRepository = PersonaChatRepository();
   final CharacterEditorRepository _characterEditorRepository =
       CharacterEditorRepository();
+  final TodoRepository _todoRepository = TodoRepository();
 
   Future<void>? _initFuture;
   Future<void>? _fullInitFuture;
@@ -1647,16 +1648,36 @@ class MemexRouter {
   }
 
   Future<Result<List<TodoItem>>> loadTodos() {
-    return runResult(() async => TodoService().load(await _reportUserId()));
+    return runResult(() async {
+      return (await _todoRepository.load(await _reportUserId())).valueOrThrow;
+    });
   }
 
-  Future<Result<TodoItem>> addTodo({required String text, String? due}) {
+  Future<Result<TodoItem>> addTodo({
+    required String text,
+    String? due,
+    String? dueDate,
+    String? dueTime,
+    String timeZone = todoTimeZone,
+    int alertMinutes = 20,
+    TodoPriority priority = TodoPriority.normal,
+    List<TodoSubtask> subtasks = const [],
+    TodoRecurrence? recurrence,
+  }) {
     return runResult(() async {
-      return TodoService().add(
+      return (await _todoRepository.add(
         userId: await _reportUserId(),
         text: text,
         due: due,
-      );
+        dueDate: dueDate,
+        dueTime: dueTime,
+        timeZone: timeZone,
+        alertMinutes: alertMinutes,
+        priority: priority,
+        subtasks: subtasks,
+        recurrence: recurrence,
+      ))
+          .valueOrThrow;
     });
   }
 
@@ -1665,11 +1686,12 @@ class MemexRouter {
     required ReportItem item,
   }) {
     return runResult(() async {
-      return TodoService().addFromReport(
+      return (await _todoRepository.addFromReport(
         userId: await _reportUserId(),
         sessionId: sessionId,
         item: item,
-      );
+      ))
+          .valueOrThrow;
     });
   }
 
@@ -1677,30 +1699,52 @@ class MemexRouter {
     required String id,
     required String text,
     required String due,
+    String? dueDate,
+    String? dueTime,
+    String? timeZone,
+    int? alertMinutes,
+    TodoPriority? priority,
+    List<TodoSubtask>? subtasks,
+    TodoRecurrence? recurrence,
+    bool clearRecurrence = false,
   }) {
     return runResult(() async {
-      await TodoService().edit(
+      (await _todoRepository.edit(
         userId: await _reportUserId(),
         id: id,
         text: text,
         due: due,
-      );
+        dueDate: dueDate,
+        dueTime: dueTime,
+        timeZone: timeZone,
+        alertMinutes: alertMinutes,
+        priority: priority,
+        subtasks: subtasks,
+        recurrence: recurrence,
+        clearRecurrence: clearRecurrence,
+      ))
+          .valueOrThrow;
     });
   }
 
   Future<Result<void>> setTodoDone({required String id, required bool done}) {
     return runResult(() async {
-      await TodoService().setDone(
+      (await _todoRepository.setDone(
         userId: await _reportUserId(),
         id: id,
         done: done,
-      );
+      ))
+          .valueOrThrow;
     });
   }
 
   Future<Result<void>> removeTodo(String id) {
     return runResult(() async {
-      await TodoService().remove(userId: await _reportUserId(), id: id);
+      (await _todoRepository.remove(
+        userId: await _reportUserId(),
+        id: id,
+      ))
+          .valueOrThrow;
     });
   }
 

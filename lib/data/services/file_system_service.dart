@@ -284,7 +284,8 @@ class FileSystemService {
     required String relativePath,
   }) async {
     final absolute = _userImageAssetPath(userId, relativePath);
-    if (absolute == null) throw ArgumentError.value(relativePath, 'relativePath');
+    if (absolute == null)
+      throw ArgumentError.value(relativePath, 'relativePath');
     return Uint8List.fromList(await File(absolute).readAsBytes());
   }
 
@@ -1954,6 +1955,18 @@ class FileSystemService {
   /// Folder of the personal Todo list file.
   String getTodoPath(String userId) {
     return path.join(getWorkspacePath(userId), 'Todo');
+  }
+
+  String getLegacyTodoFilePath(String userId) {
+    return path.join(getTodoPath(userId), 'todo.json');
+  }
+
+  String getTodoV2FilePath(String userId) {
+    return path.join(getTodoPath(userId), 'todo-v2.json');
+  }
+
+  String getLegacyTodoBackupPath(String userId) {
+    return path.join(getTodoPath(userId), 'todo-v1.backup.json');
   }
 
   /// GetKnowledgeInsightsdirectory path

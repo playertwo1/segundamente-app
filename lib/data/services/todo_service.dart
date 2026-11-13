@@ -2,110 +2,150 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:memex/data/services/file_system_service.dart';
+import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/utils/logger.dart';
-import 'package:path/path.dart' as p;
+import 'package:synchronized/synchronized.dart';
+import 'package:uuid/uuid.dart';
 
-/// The personal Todo list: one JSON file in the user's workspace. Only the
-/// user's own approved report tasks and hand-typed items live here; the
-/// agents' internal task queue is a different thing and never reaches it.
+/// Local Todo storage and the compatibility bridge used by session reports.
 class TodoService {
   TodoService({FileSystemService? fileService})
       : _files = fileService ?? FileSystemService.instance;
 
+  static final Lock _storageLock = Lock();
+
   final FileSystemService _files;
   final _logger = getLogger('TodoService');
+  final _uuid = const Uuid();
 
-  Future<List<TodoItem>> load(String userId) async {
-    final file = _file(userId);
-    if (!await file.exists()) return const [];
-    try {
-      final raw = jsonDecode(await file.readAsString());
-      if (raw is! Map || raw['items'] is! List) {
-        throw const FormatException('todo file is malformed');
-      }
-      return [
-        for (final item in raw['items'] as List)
-          TodoItem.fromJson((item as Map).cast<String, dynamic>()),
-      ];
-    } on FormatException catch (error, stackTrace) {
-      await _preserveCorrupt(file);
-      _logger.warning(
-          'Ignoring corrupt Todo file for $userId', error, stackTrace);
-      return const [];
-    } on TypeError catch (error, stackTrace) {
-      await _preserveCorrupt(file);
-      _logger.warning(
-          'Ignoring corrupt Todo file for $userId', error, stackTrace);
-      return const [];
-    }
-  }
+  Future<List<TodoItem>> load(
+    String userId, {
+    bool includeDeleted = false,
+  }) =>
+      _storageLock.synchronized(() async {
+        final items = await _readAll(userId);
+        return [
+          for (final item in items)
+            if (includeDeleted || !item.isTombstoned) item,
+        ];
+      });
 
   Future<TodoItem> add({
     required String userId,
     required String text,
     String? due,
+    String? dueDate,
+    String? dueTime,
+    String timeZone = todoTimeZone,
+    int alertMinutes = 20,
+    TodoPriority priority = TodoPriority.normal,
+    List<TodoSubtask> subtasks = const [],
+    TodoRecurrence? recurrence,
     TodoSource? source,
     DateTime? now,
-  }) async {
-    final items = await load(userId);
-    final clean = text.trim();
-    if (clean.isEmpty) throw ArgumentError('todo text is empty');
-    final moment = now ?? DateTime.now();
-    final item = TodoItem(
-      id: 'todo_${moment.microsecondsSinceEpoch}',
-      text: clean,
-      due: _due(due),
-      done: false,
-      createdAt: moment.toIso8601String(),
-      source: source,
-    );
-    await _write(userId, [...items, item]);
-    return item;
-  }
+  }) =>
+      _storageLock.synchronized(() async {
+        final items = await _readAll(userId);
+        return _addUnlocked(
+          userId: userId,
+          items: items,
+          text: text,
+          due: due,
+          dueDate: dueDate,
+          dueTime: dueTime,
+          timeZone: timeZone,
+          alertMinutes: alertMinutes,
+          priority: priority,
+          subtasks: subtasks,
+          recurrence: recurrence,
+          source: source,
+          now: now,
+        );
+      });
 
-  /// Copies an approved task into the list. Asking twice for the same report
-  /// item returns the existing entry instead of making a second one.
+  /// Copies an approved report task once, keeping its source link intact.
   Future<TodoItem> addFromReport({
     required String userId,
     required String sessionId,
     required ReportItem item,
     DateTime? now,
-  }) async {
-    if (item.kind != ReportItemKind.task ||
-        item.status != ReportItemStatus.approved) {
-      throw StateError('only an approved task can go to the Todo list');
-    }
-    final existing = (await load(userId)).where((todo) =>
-        todo.source?.sessionId == sessionId && todo.source?.itemId == item.id);
-    if (existing.isNotEmpty) return existing.first;
-    return add(
-      userId: userId,
-      text: item.text,
-      due: item.due,
-      now: now,
-      source: TodoSource(
-        sessionId: sessionId,
-        itemId: item.id,
-        excerpt: item.source.excerpt,
-        clock: item.source.clock,
-      ),
-    );
-  }
+  }) =>
+      _storageLock.synchronized(() async {
+        if (item.kind != ReportItemKind.task ||
+            item.status != ReportItemStatus.approved) {
+          throw StateError('only an approved task can go to the Todo list');
+        }
+        final items = await _readAll(userId);
+        final existingIndex = items.indexWhere((todo) =>
+            todo.source?.sessionId == sessionId &&
+            todo.source?.itemId == item.id);
+        if (existingIndex >= 0) {
+          final existing = items[existingIndex];
+          if (!existing.isTombstoned) return existing;
+          final restored = existing.copyWith(
+            clearDeletedAt: true,
+            version: existing.version + 1,
+          );
+          items[existingIndex] = restored;
+          await _write(userId, items);
+          return restored;
+        }
+        return _addUnlocked(
+          userId: userId,
+          items: items,
+          text: item.text,
+          due: item.due,
+          now: now,
+          source: TodoSource(
+            sessionId: sessionId,
+            itemId: item.id,
+            excerpt: item.source.excerpt,
+            clock: item.source.clock,
+          ),
+        );
+      });
 
   Future<void> edit({
     required String userId,
     required String id,
     required String text,
     required String due,
-  }) {
+    String? dueDate,
+    String? dueTime,
+    String? timeZone,
+    int? alertMinutes,
+    TodoPriority? priority,
+    List<TodoSubtask>? subtasks,
+    TodoRecurrence? recurrence,
+    bool clearRecurrence = false,
+  }) async {
     if (text.trim().isEmpty) throw ArgumentError('todo text is empty');
-    return _change(
-      userId,
-      id,
-      (item) => item.copyWith(text: text.trim(), due: _due(due)),
-    );
+    final schedule = _schedule(due, dueDate: dueDate, dueTime: dueTime);
+    if (alertMinutes != null && alertMinutes < 0) {
+      throw ArgumentError.value(alertMinutes, 'alertMinutes');
+    }
+    await _change(userId, id, (item) {
+      final nextRecurrence =
+          clearRecurrence ? null : recurrence ?? item.recurrence;
+      return item.copyWith(
+        text: text.trim(),
+        due: schedule.label,
+        dueDate: schedule.date,
+        dueTime: schedule.time,
+        clearDueDate: schedule.date == null,
+        clearDueTime: schedule.time == null,
+        timeZone: timeZone,
+        alertMinutes: alertMinutes,
+        priority: priority,
+        subtasks: subtasks,
+        recurrence: nextRecurrence,
+        clearRecurrence: clearRecurrence,
+        seriesId: item.seriesId ?? (nextRecurrence == null ? null : item.id),
+        version: item.version + 1,
+      );
+    });
   }
 
   Future<void> setDone({
@@ -113,85 +153,203 @@ class TodoService {
     required String id,
     required bool done,
     DateTime? now,
-  }) {
-    return _change(
-      userId,
-      id,
-      (item) => item.copyWith(
+  }) async {
+    final moment = now ?? DateTime.now();
+    await _change(userId, id, (item) {
+      if (item.done == done) return item;
+      return item.copyWith(
         done: done,
-        doneAt: done ? (now ?? DateTime.now()).toIso8601String() : null,
-      ),
-    );
+        doneAt: done ? moment.toIso8601String() : null,
+        clearDoneAt: !done,
+        version: item.version + 1,
+      );
+    });
   }
 
   Future<void> remove({required String userId, required String id}) async {
-    final items = await load(userId);
-    await _write(userId, [
-      for (final item in items)
-        if (item.id != id) item,
-    ]);
+    final moment = DateTime.now().toIso8601String();
+    await _change(
+        userId,
+        id,
+        (item) => item.copyWith(
+              deletedAt: moment,
+              version: item.version + 1,
+            ));
   }
 
-  /// Deleting a session removes open copies and detaches completed ones.
+  /// Deleting a session tombstones its open copies and detaches completed ones.
   Future<void> deleteForSession({
     required String userId,
     required String sessionId,
-  }) async {
-    final items = await load(userId);
-    final kept = [
-      for (final item in items)
-        if (item.source?.sessionId != sessionId)
-          item
-        else if (item.done)
-          item.copyWith(clearSource: true),
-    ];
-    if (kept.length != items.length) await _write(userId, kept);
-  }
+  }) =>
+      _storageLock.synchronized(() async {
+        final items = await _readAll(userId);
+        var changed = false;
+        final now = DateTime.now().toIso8601String();
+        final kept = [
+          for (final item in items)
+            if (item.source?.sessionId != sessionId || item.isTombstoned)
+              item
+            else if (item.done)
+              item.copyWith(clearSource: true, version: item.version + 1)
+            else
+              item.copyWith(deletedAt: now, version: item.version + 1),
+        ];
+        changed = kept
+            .asMap()
+            .entries
+            .any((entry) => !identical(entry.value, items[entry.key]));
+        if (changed) await _write(userId, kept);
+      });
 
   Future<void> markReportItemStale({
     required String userId,
     required String sessionId,
     required String itemId,
-  }) async {
-    final items = await load(userId);
-    if (!items.any((item) =>
-        item.source?.sessionId == sessionId &&
-        item.source?.itemId == itemId &&
-        !item.sourceStale)) {
-      return;
-    }
-    await _write(userId, [
-      for (final item in items)
-        item.source?.sessionId == sessionId && item.source?.itemId == itemId
-            ? item.copyWith(sourceStale: true)
-            : item,
-    ]);
-  }
+  }) =>
+      _storageLock.synchronized(() async {
+        final items = await _readAll(userId);
+        var changed = false;
+        final updated = [
+          for (final item in items)
+            if (item.source?.sessionId == sessionId &&
+                item.source?.itemId == itemId &&
+                !item.sourceStale &&
+                !item.isTombstoned)
+              item.copyWith(sourceStale: true, version: item.version + 1)
+            else
+              item,
+        ];
+        changed = updated
+            .asMap()
+            .entries
+            .any((entry) => !identical(entry.value, items[entry.key]));
+        if (changed) await _write(userId, updated);
+      });
 
   Future<void> _change(
     String userId,
     String id,
     TodoItem Function(TodoItem) change,
-  ) async {
-    final items = await load(userId);
-    if (!items.any((item) => item.id == id)) {
-      throw StateError('todo item not found: $id');
+  ) =>
+      _storageLock.synchronized(() async {
+        final items = await _readAll(userId);
+        final index =
+            items.indexWhere((item) => item.id == id && !item.isTombstoned);
+        if (index < 0) throw StateError('todo item not found: $id');
+        items[index] = change(items[index]);
+        await _write(userId, items);
+      });
+
+  Future<TodoItem> _addUnlocked({
+    required String userId,
+    required List<TodoItem> items,
+    required String text,
+    String? due,
+    String? dueDate,
+    String? dueTime,
+    String timeZone = todoTimeZone,
+    int alertMinutes = 20,
+    TodoPriority priority = TodoPriority.normal,
+    List<TodoSubtask> subtasks = const [],
+    TodoRecurrence? recurrence,
+    TodoSource? source,
+    DateTime? now,
+  }) async {
+    final clean = text.trim();
+    if (clean.isEmpty) throw ArgumentError('todo text is empty');
+    final schedule = _schedule(due ?? '', dueDate: dueDate, dueTime: dueTime);
+    if (alertMinutes < 0) {
+      throw ArgumentError.value(alertMinutes, 'alertMinutes');
     }
-    await _write(userId, [
-      for (final item in items) item.id == id ? change(item) : item,
-    ]);
+    final id = _uuid.v4();
+    final item = TodoItem(
+      id: id,
+      text: clean,
+      due: schedule.label,
+      dueDate: schedule.date,
+      dueTime: schedule.time,
+      timeZone: timeZone,
+      alertMinutes: alertMinutes,
+      priority: priority,
+      subtasks: subtasks,
+      recurrence: recurrence,
+      seriesId: recurrence == null ? null : id,
+      done: false,
+      createdAt: (now ?? DateTime.now()).toIso8601String(),
+      source: source,
+    );
+    await _write(userId, [...items, item]);
+    return item;
   }
 
-  String _due(String? due) {
-    final clean = due?.trim() ?? '';
-    return clean.isEmpty ? reportDueUnknown : clean;
+  Future<List<TodoItem>> _readAll(String userId) async {
+    final file = File(_files.getTodoV2FilePath(userId));
+    if (!await file.exists()) await _migrateLegacy(userId);
+    try {
+      final raw = jsonDecode(await file.readAsString());
+      if (raw is! Map ||
+          raw['schema_version'] != todoSchemaVersion ||
+          raw['items'] is! List) {
+        throw const FormatException('Todo v2 file is malformed');
+      }
+      return [
+        for (final item in raw['items'] as List)
+          TodoItem.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+    } on FormatException catch (error, stackTrace) {
+      _logger.warning('Todo storage could not be read', error, stackTrace);
+      rethrow;
+    } on TypeError catch (error, stackTrace) {
+      _logger.warning('Todo storage could not be read', error, stackTrace);
+      throw const FormatException('Todo storage could not be read');
+    }
   }
 
-  File _file(String userId) =>
-      File(p.join(_files.getTodoPath(userId), 'todo.json'));
+  Future<void> _migrateLegacy(String userId) async {
+    final legacy = File(_files.getLegacyTodoFilePath(userId));
+    final current = File(_files.getTodoV2FilePath(userId));
+    await current.parent.create(recursive: true);
+    if (!await legacy.exists()) {
+      await _write(userId, const []);
+      return;
+    }
+
+    final backup = File(_files.getLegacyTodoBackupPath(userId));
+    if (!await backup.exists()) await legacy.copy(backup.path);
+    try {
+      final raw = jsonDecode(await legacy.readAsString());
+      if (raw is! Map || raw['items'] is! List) {
+        throw const FormatException('legacy Todo file is malformed');
+      }
+      final items = [
+        for (final item in raw['items'] as List)
+          TodoItem.fromJson((item as Map).cast<String, dynamic>()),
+      ];
+      await _write(userId, items);
+    } on FormatException catch (error, stackTrace) {
+      _logger.warning(
+        'Legacy Todo migration stopped; original and backup were retained',
+        error,
+        stackTrace,
+      );
+      throw const FormatException(
+        'Legacy Todo migration failed; the original and its backup were retained',
+      );
+    } on TypeError catch (error, stackTrace) {
+      _logger.warning(
+        'Legacy Todo migration stopped; original and backup were retained',
+        error,
+        stackTrace,
+      );
+      throw const FormatException(
+        'Legacy Todo migration failed; the original and its backup were retained',
+      );
+    }
+  }
 
   Future<void> _write(String userId, List<TodoItem> items) async {
-    final file = _file(userId);
+    final file = File(_files.getTodoV2FilePath(userId));
     await file.parent.create(recursive: true);
     final temp =
         File('${file.path}.tmp-${DateTime.now().microsecondsSinceEpoch}');
@@ -209,10 +367,68 @@ class TodoService {
     }
   }
 
-  Future<void> _preserveCorrupt(File file) async {
-    final backup = File(
-      '${file.path}.corrupt-${DateTime.now().microsecondsSinceEpoch}',
-    );
-    await file.rename(backup.path);
+  _TodoSchedule _schedule(
+    String due, {
+    String? dueDate,
+    String? dueTime,
+  }) {
+    final explicit = parseExplicitDue(due);
+    final date = _validDate(dueDate) ??
+        (dueDate == null && explicit != null ? _dateOnly(explicit.date) : null);
+    final time = _validTime(dueTime) ??
+        (dueTime == null && explicit?.hasTime == true
+            ? _timeOnly(explicit!.date)
+            : null);
+    if (dueDate != null && date == null) {
+      throw ArgumentError.value(dueDate, 'dueDate', 'invalid calendar date');
+    }
+    if (dueTime != null && time == null) {
+      throw ArgumentError.value(dueTime, 'dueTime', 'invalid wall-clock time');
+    }
+    if (time != null && date == null) {
+      throw ArgumentError('todo time requires a calendar date');
+    }
+    final label = date == null
+        ? (due.trim().isEmpty ? reportDueUnknown : due.trim())
+        : '$date${time == null ? '' : ' $time'}';
+    return _TodoSchedule(date: date, time: time, label: label);
   }
+
+  String? _validDate(String? value) {
+    if (value == null) return null;
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final year = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final day = int.parse(match.group(3)!);
+    final date = DateTime.utc(year, month, day);
+    return date.year == year && date.month == month && date.day == day
+        ? value
+        : null;
+  }
+
+  String? _validTime(String? value) {
+    if (value == null) return null;
+    final match = RegExp(r'^(\d{2}):(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2)!);
+    return hour < 24 && minute < 60 ? value : null;
+  }
+
+  String _dateOnly(DateTime date) => '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  String _timeOnly(DateTime date) => '${date.hour.toString().padLeft(2, '0')}:'
+      '${date.minute.toString().padLeft(2, '0')}';
+}
+
+class _TodoSchedule {
+  const _TodoSchedule(
+      {required this.date, required this.time, required this.label});
+
+  final String? date;
+  final String? time;
+  final String label;
 }

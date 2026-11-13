@@ -41,6 +41,15 @@ void main() {
     if (await tempDir.exists()) await tempDir.delete(recursive: true);
   });
 
+  Future<String> installLegacyFixture(String name, String fixtureName) async {
+    final content =
+        await File('test/fixtures/todo/$fixtureName.json').readAsString();
+    final file = File(FileSystemService.instance.getLegacyTodoFilePath(name));
+    await file.parent.create(recursive: true);
+    await file.writeAsString(content);
+    return content;
+  }
+
   test('starts empty and keeps a hand-typed item across reloads', () async {
     expect(await todos.load(userId), isEmpty);
     await todos.add(userId: userId, text: '  Pagar o seguro  ');
@@ -49,6 +58,15 @@ void main() {
     expect(loaded.single.due, reportDueUnknown);
     expect(loaded.single.done, isFalse);
     expect(loaded.single.source, isNull);
+  });
+
+  test('keeps concurrent additions from separate service instances', () async {
+    await Future.wait([
+      for (var index = 0; index < 8; index++)
+        TodoService().add(userId: userId, text: 'Tarefa $index'),
+    ]);
+
+    expect(await todos.load(userId), hasLength(8));
   });
 
   test('refuses an empty text', () async {
@@ -112,6 +130,11 @@ void main() {
 
     await todos.remove(userId: userId, id: item.id);
     expect(await todos.load(userId), isEmpty);
+    final tombstone = (await todos.load(userId, includeDeleted: true)).single;
+    expect(tombstone.id, item.id);
+    expect(tombstone.isTombstoned, isTrue);
+    expect(tombstone.deletedAt, isNotNull);
+    expect(tombstone.version, greaterThan(item.version));
   });
 
   test('changing an item that does not exist fails loudly', () async {
@@ -148,27 +171,80 @@ void main() {
     expect(left.last.source, isNull);
   });
 
-  test('corrupt files are preserved and do not block a new list', () async {
-    final path = FileSystemService.instance.getTodoPath(userId);
-    final file = File('$path/todo.json');
-    await file.parent.create(recursive: true);
-    await file.writeAsString('{broken');
+  for (final fixtureName in [
+    'empty',
+    'missing_due',
+    'completed',
+    'f9_linked',
+  ]) {
+    test('migrates $fixtureName legacy fixture once and keeps its backup',
+        () async {
+      final fixtureUserId = '$userId-$fixtureName';
+      final legacyContent =
+          await installLegacyFixture(fixtureUserId, fixtureName);
+      final legacy =
+          File(FileSystemService.instance.getLegacyTodoFilePath(fixtureUserId));
+      final backup = File(
+        FileSystemService.instance.getLegacyTodoBackupPath(fixtureUserId),
+      );
+      final v2 =
+          File(FileSystemService.instance.getTodoV2FilePath(fixtureUserId));
 
-    expect(await todos.load(userId), isEmpty);
-    final backups = await Directory(path)
-        .list()
-        .where((entry) => entry.path.contains('.corrupt-'))
-        .toList();
-    expect(backups, hasLength(1));
-    expect(await File(backups.single.path).readAsString(), '{broken');
+      final migrated = await todos.load(fixtureUserId);
+      final loadedAgain = await todos.load(fixtureUserId);
 
-    await todos.add(userId: userId, text: 'Tarefa nova');
-    expect((await todos.load(userId)).single.text, 'Tarefa nova');
-    final temps = await Directory(path)
-        .list()
-        .where((entry) => entry.path.contains('.tmp-'))
-        .toList();
-    expect(temps, isEmpty);
+      expect(await legacy.readAsString(), legacyContent);
+      expect(await backup.readAsString(), legacyContent);
+      expect(await v2.exists(), isTrue);
+      expect(
+          loadedAgain.map((item) => item.id), migrated.map((item) => item.id));
+      expect(loadedAgain, hasLength(migrated.length));
+      expect(migrated.every((item) => item.timeZone == 'America/Sao_Paulo'),
+          isTrue);
+      expect(migrated.every((item) => item.priority == TodoPriority.normal),
+          isTrue);
+      switch (fixtureName) {
+        case 'empty':
+          expect(migrated, isEmpty);
+        case 'missing_due':
+          expect(migrated.single.id, 'legacy-undated');
+          expect(migrated.single.dueDate, isNull);
+          expect(migrated.single.dueTime, isNull);
+          expect(migrated.single.hasAlarmTime, isFalse);
+        case 'completed':
+          expect(migrated.single.id, 'legacy-completed');
+          expect(migrated.single.done, isTrue);
+          expect(migrated.single.doneAt, '2026-11-02T09:00:00.000');
+          expect(migrated.single.dueDate, '2026-11-20');
+          expect(migrated.single.dueTime, '14:30');
+        case 'f9_linked':
+          expect(migrated.single.id, 'legacy-f9-task');
+          expect(migrated.single.source?.sessionId, 'synthetic-session');
+          expect(migrated.single.source?.itemId, 'synthetic-item');
+          expect(migrated.single.source?.excerpt, 'synthetic source excerpt');
+          expect(migrated.single.source?.clock, 'p.2');
+      }
+    });
+  }
+
+  test('corrupt legacy migration retains original and backup and reports error',
+      () async {
+    final legacyContent = await installLegacyFixture(userId, 'corrupt');
+    final legacy =
+        File(FileSystemService.instance.getLegacyTodoFilePath(userId));
+    final backup =
+        File(FileSystemService.instance.getLegacyTodoBackupPath(userId));
+    final v2 = File(FileSystemService.instance.getTodoV2FilePath(userId));
+
+    await expectLater(todos.load(userId), throwsFormatException);
+
+    expect(await legacy.readAsString(), legacyContent);
+    expect(await backup.readAsString(), legacyContent);
+    expect(await v2.exists(), isFalse);
+    await expectLater(
+      todos.add(userId: userId, text: 'Nova tarefa'),
+      throwsFormatException,
+    );
   });
 
   test('report edits mark linked Todo copies as stale', () async {
