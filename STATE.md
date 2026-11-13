@@ -13,12 +13,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | Só a F7-03 (voz duplex por turnos, D-049); F7-02 adiada (D-041), F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 e F11-02 DONE; F11-03 READY |
+| F11 | IN_PROGRESS | F11-01 a F11-03 DONE; F11-04 BLOCKED (validação no S25) |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 
 ## Próxima ação
 
-1. **F11-03:** telas Hoje, Próximas, Atrasadas e Concluídas; busca, filtros e testes de widget. F11-02 está fechada com evidência abaixo.
+1. **F11-04:** permanece BLOCKED; requer validação de alarmes no Galaxy S25 Ultra antes de iniciar.
 2. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
 3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
 4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
@@ -58,6 +58,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `flutter analyze --no-pub` → `NOT_RUN`: permaneceu em “Analyzing segundamente...” sem saída por 60 segundos e foi interrompido.
 - `flutter test --no-pub test/ui/settings/widgets/settings_page_test.dart test/ui/settings/widgets/ai_service_setup_page_test.dart` → **FAIL** em fixtures antigas de configurações (FileSystemService não inicializado e interações fora da área visível); os testes isolados da rota e das configurações Todo passaram.
 - `NOT_RUN`: suíte Flutter completa; validação física. Alarmes no aparelho pertencem à F11-04.
+
+### F11-03 — telas, busca e lista única (2026-11-13)
+- Entregues as abas Hoje, Próximas, Atrasadas e Concluídas sobre a mesma coleção, com busca global incluindo concluídas, filtro de prioridade, subtarefas e estado/data explícitos nos resultados. Itens sem data aparecem em Hoje sob “Sem data”, sem receber prazo. Exclusão usa tombstone com “Desfazer”; o vínculo de origem do relatório continua visível.
+- `flutter test --no-pub --reporter expanded test/data/repositories/todo_repository_test.dart test/data/services/todo_service_test.dart test/domain/use_cases/todo_schedule_calculator_test.dart test/ui/todo/view_models/todo_viewmodel_test.dart test/ui/todo/widgets/todo_screen_test.dart test/integration/todo_undo_flow_test.dart` → **62 testes aprovados**.
+- `flutter gen-l10n` → código pt/en regenerado, saída 0. `dart format` nos arquivos Dart alterados → concluído. `git diff --check` → sem erros.
+- `flutter analyze --no-pub` → `NOT_RUN`: ficou em “Analyzing segundamente...” sem diagnóstico por 60 s; interrompido. `flutter test --no-pub` completo → `NOT_RUN` (suíte completa fora da validação direcionada desta subfase).
+- QA `standard` em `docs/reviews/F11-todo-referencias/qa-f11-03.md`: widget tests de vazio/erro, acessibilidade, 320 dp e texto ampliado passaram; medição estática AMOLED passou AA. `flutter run --flavor globalDev --no-pub -d emulator-5556` compilou e instalou, mas o app encerrou na inicialização com `MissingLibraryException` (`libflutter.so` ausente no APK); captura, TalkBack e temas no Android são `NOT_RUN`. O S25 não foi usado: alarmes físicos pertencem à F11-04.
+- A revisão Ponytail não encontrou defeitos adicionais no fluxo alterado. Risco restante: falta inspeção visual em execução; manter F11-04 bloqueada até o teste físico definido.
 
 ### Modelo de fala em Configurações (2026-11-12)
 - O download do modelo local saiu do microfone do chat e foi para Configurações > "Transcrição no aparelho", com progresso e exclusão. Desligado, o áudio vai direto para o ChatGPT. O microfone do chat só dita; sem modelo, ele aponta para Configurações.

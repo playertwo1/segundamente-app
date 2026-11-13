@@ -99,4 +99,7 @@ class TodoRepository {
 
   Future<Result<void>> remove({required String userId, required String id}) =>
       runResultVoid(() => _service.remove(userId: userId, id: id));
+
+  Future<Result<void>> restore({required String userId, required String id}) =>
+      runResultVoid(() => _service.restore(userId: userId, id: id));
 }

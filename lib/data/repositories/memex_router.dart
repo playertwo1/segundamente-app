@@ -1757,6 +1757,16 @@ class MemexRouter {
     });
   }
 
+  Future<Result<void>> restoreTodo(String id) {
+    return runResult(() async {
+      (await _todoRepository.restore(
+        userId: await _reportUserId(),
+        id: id,
+      ))
+          .valueOrThrow;
+    });
+  }
+
   Future<Result<Map<String, ReportRevision>>> loadReportTextChanges() {
     return runResult(() async {
       final userId = await _reportUserId();

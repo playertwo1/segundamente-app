@@ -6285,17 +6285,53 @@ abstract class AppLocalizations {
   /// **'To-do list'**
   String get todoTitle;
 
+  /// No description provided for @todoTabToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todoTabToday;
+
+  /// No description provided for @todoTabUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get todoTabUpcoming;
+
+  /// No description provided for @todoTabOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get todoTabOverdue;
+
+  /// No description provided for @todoTabCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get todoTabCompleted;
+
   /// No description provided for @todoSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search the list'**
+  /// **'Search all tasks'**
   String get todoSearchHint;
 
-  /// No description provided for @todoEmpty.
+  /// No description provided for @todoSearchResultsHeader.
   ///
   /// In en, this message translates to:
-  /// **'Nothing here yet. Approve a task in a report and add it, or add one by hand.'**
-  String get todoEmpty;
+  /// **'Search results'**
+  String get todoSearchResultsHeader;
+
+  /// No description provided for @todoSearchResultsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{# task across all tabs} other{# tasks across all tabs}}'**
+  String todoSearchResultsCount(int count);
+
+  /// No description provided for @todoSearchStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search all tasks.'**
+  String get todoSearchStart;
 
   /// No description provided for @todoNoResults.
   ///
@@ -6303,16 +6339,202 @@ abstract class AppLocalizations {
   /// **'No item matches this search.'**
   String get todoNoResults;
 
+  /// No description provided for @todoFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get todoFilter;
+
+  /// No description provided for @todoPriorityFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by priority'**
+  String get todoPriorityFilterTitle;
+
+  /// No description provided for @todoFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All priorities'**
+  String get todoFilterAll;
+
+  /// No description provided for @todoFilterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filter'**
+  String get todoFilterClear;
+
+  /// No description provided for @todoPriorityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get todoPriorityLabel;
+
+  /// No description provided for @todoPriorityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get todoPriorityLow;
+
+  /// No description provided for @todoPriorityNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get todoPriorityNormal;
+
+  /// No description provided for @todoPriorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get todoPriorityHigh;
+
+  /// No description provided for @todoPriorityUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get todoPriorityUrgent;
+
+  /// No description provided for @todoStatusToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todoStatusToday;
+
+  /// No description provided for @todoStatusUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get todoStatusUpcoming;
+
+  /// No description provided for @todoStatusOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get todoStatusOverdue;
+
+  /// No description provided for @todoStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get todoStatusCompleted;
+
+  /// No description provided for @todoStatusNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No date'**
+  String get todoStatusNoDate;
+
+  /// No description provided for @todoUndatedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'No date'**
+  String get todoUndatedSection;
+
+  /// No description provided for @todoEmptyToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks for today.'**
+  String get todoEmptyToday;
+
+  /// No description provided for @todoEmptyUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming tasks.'**
+  String get todoEmptyUpcoming;
+
+  /// No description provided for @todoEmptyOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'No overdue tasks.'**
+  String get todoEmptyOverdue;
+
+  /// No description provided for @todoEmptyCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'No completed tasks.'**
+  String get todoEmptyCompleted;
+
+  /// No description provided for @todoLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load tasks.'**
+  String get todoLoadFailed;
+
+  /// No description provided for @todoDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task deleted'**
+  String get todoDeleted;
+
+  /// No description provided for @todoUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get todoUndo;
+
+  /// No description provided for @todoSeriesActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Series active'**
+  String get todoSeriesActive;
+
+  /// No description provided for @todoSeriesNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {date}'**
+  String todoSeriesNext(Object date);
+
+  /// No description provided for @todoTaskActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Task actions'**
+  String get todoTaskActions;
+
+  /// No description provided for @todoSubtasksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtasks'**
+  String get todoSubtasksTitle;
+
+  /// No description provided for @todoSubtaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New subtask'**
+  String get todoSubtaskHint;
+
+  /// No description provided for @todoSubtaskAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add subtask'**
+  String get todoSubtaskAdd;
+
+  /// No description provided for @todoSubtaskRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove subtask'**
+  String get todoSubtaskRemove;
+
+  /// No description provided for @todoMarkDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete task'**
+  String get todoMarkDone;
+
+  /// No description provided for @todoReopenTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopen task'**
+  String get todoReopenTask;
+
   /// No description provided for @todoAdd.
   ///
   /// In en, this message translates to:
-  /// **'Add item'**
+  /// **'Add task'**
   String get todoAdd;
 
   /// No description provided for @todoEdit.
   ///
   /// In en, this message translates to:
-  /// **'Edit item'**
+  /// **'Edit task'**
   String get todoEdit;
 
   /// No description provided for @todoTextHint.
@@ -6332,12 +6554,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get todoSave;
-
-  /// No description provided for @todoDeleteMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove this item from the list? The report it came from is not changed.'**
-  String get todoDeleteMessage;
 
   /// No description provided for @todoOpenSource.
   ///
