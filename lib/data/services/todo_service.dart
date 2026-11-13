@@ -12,12 +12,12 @@ import 'package:uuid/uuid.dart';
 
 /// Local Todo storage and the compatibility bridge used by session reports.
 class TodoService {
-  TodoService({FileSystemService? fileService})
-      : _files = fileService ?? FileSystemService.instance;
+  TodoService({FileSystemService? fileService}) : _fileService = fileService;
 
   static final Lock _storageLock = Lock();
 
-  final FileSystemService _files;
+  final FileSystemService? _fileService;
+  FileSystemService get _files => _fileService ?? FileSystemService.instance;
   final _logger = getLogger('TodoService');
   final _uuid = const Uuid();
 
