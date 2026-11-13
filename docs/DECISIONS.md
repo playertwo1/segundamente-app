@@ -329,6 +329,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão do dono: **lista única, sem grupos/listas/projetos**. Entram:
   - telas Hoje, Próximas e Atrasadas, com hora e alerta antes;
   - repetição: diária, semanal com dias escolhidos e mensal; concluir uma ocorrência mantém o histórico em Concluídas e cria a próxima ocorrência ativa sem apagar a série; no mensal, dia 31 vira o último dia do mês;
+  - ao concluir após ciclos já vencidos, preservar a cadência e avançar para a primeira ocorrência futura; uma tarefa sem horário continua válida até o fim do dia local atual;
   - subtarefas/checklist;
   - prioridade com quatro níveis: baixa, normal, alta e urgente;
   - filtros e busca, que incluem as tarefas concluídas; cada resultado mostra o estado e a data.

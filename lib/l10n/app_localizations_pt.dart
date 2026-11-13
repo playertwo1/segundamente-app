@@ -4533,4 +4533,96 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get duplexErrorFailed =>
       'A conversa por voz parou por um erro. O microfone foi desligado.';
+
+  @override
+  String get todoShortcutsTitle => 'Atalhos do Todo';
+
+  @override
+  String get todoShortcutsDescription =>
+      'Escolha os atalhos de dia e hora usados ao agendar uma tarefa.';
+
+  @override
+  String get todoShortcutsDaysTitle => 'Atalhos de dia';
+
+  @override
+  String get todoShortcutsTimesTitle => 'Atalhos de hora';
+
+  @override
+  String get todoShortcutsAlertTitle => 'Alerta padrão';
+
+  @override
+  String get todoShortcutsTimezone => 'Fuso horário';
+
+  @override
+  String get todoShortcutsTimezoneValue => 'America/Sao_Paulo';
+
+  @override
+  String get todoShortcutToday => 'Hoje';
+
+  @override
+  String get todoShortcutTomorrow => 'Amanhã';
+
+  @override
+  String get todoShortcutInThreeDays => 'Daqui a 3 dias';
+
+  @override
+  String get todoShortcutNextMonday => 'Semana que vem';
+
+  @override
+  String get todoNoTime => 'Sem horário: tarefa do dia, sem alarme.';
+
+  @override
+  String get todoTimeLabel => 'Horário (opcional)';
+
+  @override
+  String get todoTimeHint => 'HH:mm';
+
+  @override
+  String get todoTimeRequiresDate =>
+      'Escolha uma data antes de definir um horário.';
+
+  @override
+  String get todoTimeInvalid => 'Digite o horário no formato HH:mm.';
+
+  @override
+  String get todoRepeatTitle => 'Repetir';
+
+  @override
+  String get todoRepeatNone => 'Não repetir';
+
+  @override
+  String get todoRepeatDaily => 'Diariamente';
+
+  @override
+  String get todoRepeatWeekly => 'Semanalmente';
+
+  @override
+  String get todoRepeatMonthly => 'Mensalmente';
+
+  @override
+  String get todoMonthlyDayRule =>
+      'Se o dia não existir no mês, use o último dia.';
+
+  @override
+  String get todoRepeatRequiresDate =>
+      'Escolha um atalho de dia ou digite uma data válida para salvar uma tarefa recorrente.';
+
+  @override
+  String todoShortcutsAlertBefore(Object minutes) {
+    return '$minutes min antes';
+  }
+
+  @override
+  String get todoShortcutsAlertAtTime => 'No horário da tarefa';
+
+  @override
+  String get todoShortcutsLoadFailed =>
+      'Não foi possível carregar os atalhos do Todo.';
+
+  @override
+  String get todoShortcutsSaveFailed =>
+      'Não foi possível salvar os atalhos do Todo.';
+
+  @override
+  String get todoRetry => 'Tentar novamente';
 }

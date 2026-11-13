@@ -7940,6 +7940,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The voice conversation stopped because of an error. The microphone was turned off.'**
   String get duplexErrorFailed;
+
+  /// No description provided for @todoShortcutsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Todo shortcuts'**
+  String get todoShortcutsTitle;
+
+  /// No description provided for @todoShortcutsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the date and time shortcuts shown when scheduling a task.'**
+  String get todoShortcutsDescription;
+
+  /// No description provided for @todoShortcutsDaysTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Day shortcuts'**
+  String get todoShortcutsDaysTitle;
+
+  /// No description provided for @todoShortcutsTimesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time shortcuts'**
+  String get todoShortcutsTimesTitle;
+
+  /// No description provided for @todoShortcutsAlertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default alert'**
+  String get todoShortcutsAlertTitle;
+
+  /// No description provided for @todoShortcutsTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get todoShortcutsTimezone;
+
+  /// No description provided for @todoShortcutsTimezoneValue.
+  ///
+  /// In en, this message translates to:
+  /// **'America/Sao_Paulo'**
+  String get todoShortcutsTimezoneValue;
+
+  /// No description provided for @todoShortcutToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todoShortcutToday;
+
+  /// No description provided for @todoShortcutTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get todoShortcutTomorrow;
+
+  /// No description provided for @todoShortcutInThreeDays.
+  ///
+  /// In en, this message translates to:
+  /// **'In 3 days'**
+  String get todoShortcutInThreeDays;
+
+  /// No description provided for @todoShortcutNextMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get todoShortcutNextMonday;
+
+  /// No description provided for @todoNoTime.
+  ///
+  /// In en, this message translates to:
+  /// **'No time: day task, no alarm.'**
+  String get todoNoTime;
+
+  /// No description provided for @todoTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Time (optional)'**
+  String get todoTimeLabel;
+
+  /// No description provided for @todoTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'HH:mm'**
+  String get todoTimeHint;
+
+  /// No description provided for @todoTimeRequiresDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date before setting a time.'**
+  String get todoTimeRequiresDate;
+
+  /// No description provided for @todoTimeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the time as HH:mm.'**
+  String get todoTimeInvalid;
+
+  /// No description provided for @todoRepeatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get todoRepeatTitle;
+
+  /// No description provided for @todoRepeatNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Does not repeat'**
+  String get todoRepeatNone;
+
+  /// No description provided for @todoRepeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get todoRepeatDaily;
+
+  /// No description provided for @todoRepeatWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get todoRepeatWeekly;
+
+  /// No description provided for @todoRepeatMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get todoRepeatMonthly;
+
+  /// No description provided for @todoMonthlyDayRule.
+  ///
+  /// In en, this message translates to:
+  /// **'If the day does not exist in a month, use its last day.'**
+  String get todoMonthlyDayRule;
+
+  /// No description provided for @todoRepeatRequiresDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date shortcut or enter a valid date before saving a repeating task.'**
+  String get todoRepeatRequiresDate;
+
+  /// No description provided for @todoShortcutsAlertBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min before'**
+  String todoShortcutsAlertBefore(Object minutes);
+
+  /// No description provided for @todoShortcutsAlertAtTime.
+  ///
+  /// In en, this message translates to:
+  /// **'At the task time'**
+  String get todoShortcutsAlertAtTime;
+
+  /// No description provided for @todoShortcutsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load Todo shortcuts.'**
+  String get todoShortcutsLoadFailed;
+
+  /// No description provided for @todoShortcutsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save Todo shortcuts.'**
+  String get todoShortcutsSaveFailed;
+
+  /// No description provided for @todoRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get todoRetry;
 }
 
 class _AppLocalizationsDelegate

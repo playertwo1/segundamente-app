@@ -1,12 +1,22 @@
 import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/utils/result.dart';
+import 'package:memex/utils/user_storage.dart';
 
 class TodoRepository {
   TodoRepository({TodoService? service}) : _service = service ?? TodoService();
 
   final TodoService _service;
+
+  Future<Result<TodoShortcutSettings>> loadShortcutSettings() =>
+      runResult(UserStorage.getTodoShortcutSettings);
+
+  Future<Result<void>> saveShortcutSettings(
+    TodoShortcutSettings settings,
+  ) =>
+      runResultVoid(() => UserStorage.setTodoShortcutSettings(settings));
 
   Future<Result<List<TodoItem>>> load(String userId) =>
       runResult(() => _service.load(userId));

@@ -16,6 +16,8 @@ import 'package:memex/ui/settings/widgets/data_import_page.dart';
 import 'package:memex/ui/settings/widgets/backup_restore_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
 import 'package:memex/ui/settings/widgets/experimental_lab_page.dart';
+import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/todo_shortcut_settings_page.dart';
 import 'package:memex/ui/settings/view_models/data_import_viewmodel.dart';
 import 'package:memex/ui/memory/view_models/memory_viewmodel.dart';
 import 'package:memex/ui/memory/widgets/memory_screen.dart';
@@ -314,6 +316,29 @@ class SettingsRegistry {
           icon: Icons.language,
           navigationTarget: NavigationTarget(
             pageBuilder: (_) => const SettingsPage(),
+          ),
+          parentPathGetter: () => [
+            UserStorage.l10n.personalCenter,
+            UserStorage.l10n.settings,
+          ],
+        ),
+        SettingsItem(
+          id: 'settings.todo_shortcuts',
+          titleGetter: () => UserStorage.l10n.todoShortcutsTitle,
+          descriptionGetter: () => UserStorage.l10n.todoShortcutsDescription,
+          keywords: const [
+            'todo',
+            'tarefas',
+            'atalhos',
+            'lembrete',
+            'reminder',
+            'shortcut',
+          ],
+          icon: Icons.event_note_outlined,
+          navigationTarget: NavigationTarget(
+            pageBuilder: (_) => TodoShortcutSettingsPage(
+              viewModel: TodoShortcutSettingsViewModel(router: MemexRouter()),
+            ),
           ),
           parentPathGetter: () => [
             UserStorage.l10n.personalCenter,

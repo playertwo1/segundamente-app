@@ -13,16 +13,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | Só a F7-03 (voz duplex por turnos, D-049); F7-02 adiada (D-041), F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 DONE; F11-02 READY (D-051, D-052) |
+| F11 | IN_PROGRESS | F11-01 e F11-02 DONE; F11-03 READY |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 
 ## Próxima ação
 
-1. **F11-02:** implementar recorrência e atalhos de dia/hora com relógio/fuso verificáveis. Critério em [docs/roadmap/F11-todo-robusto-celular.md](docs/roadmap/F11-todo-robusto-celular.md).
-2. **F11-03:** telas Hoje, Próximas, Atrasadas e Concluídas; busca, filtros e testes de widget, após F11-02.
-3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
-4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
+1. **F11-03:** telas Hoje, Próximas, Atrasadas e Concluídas; busca, filtros e testes de widget. F11-02 está fechada com evidência abaixo.
+2. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
+3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
+4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
 ## Pendências do dono
 
@@ -49,6 +48,16 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `dart analyze lib/domain/models/todo_item.dart lib/data/services/todo_service.dart lib/data/repositories/todo_repository.dart` → **No issues found**. A análise direcionada mais ampla encontrou apenas um `info` preexistente em `file_system_service.dart:288`.
 - `git diff --check` → sem erros.
 - `NOT_RUN`: `flutter analyze` completo (ficou sem saída após “Analyzing segundamente...” e foi interrompido); suíte `flutter test --no-pub` completa; validação física. Alarmes no aparelho pertencem à F11-04.
+
+### F11-02 — atalhos e repetição (2026-11-13)
+- Implementados atalhos de data/hora configuráveis, alerta padrão de 20 minutos, editor com recorrência diária/semanal/mensal e cálculo em `America/Sao_Paulo`; mensal no dia 31 usa o último dia disponível. A interface mostra a orientação de tarefa sem horário somente enquanto o horário está vazio.
+- Clarificação do dono registrada em D-051: ao concluir depois de ciclos vencidos, manter a cadência e pular essas ocorrências; uma tarefa sem horário continua válida até o fim do dia local.
+- Ao concluir uma ocorrência, o histórico permanece concluído e a próxima ocorrência ativa é gravada junto, com série, vínculo de origem, prioridade, horário e alerta preservados; checklist reinicia e reabrir/concluir de novo não duplica o sucessor.
+- `flutter test --no-pub --reporter compact test/domain/models/todo_shortcut_settings_test.dart test/domain/use_cases/todo_schedule_calculator_test.dart test/utils/user_storage_todo_shortcuts_test.dart test/data/repositories/todo_repository_test.dart test/data/services/settings_registry_todo_test.dart test/ui/todo/widgets/todo_shortcut_settings_page_test.dart test/ui/todo/widgets/todo_screen_test.dart test/data/services/todo_service_test.dart test/integration/memex_router_init_test.dart` → **73 testes aprovados**.
+- `dart analyze lib/domain/models/todo_item.dart lib/domain/use_cases/todo_schedule_calculator.dart lib/data/services/todo_service.dart lib/data/repositories/todo_repository.dart` → **No issues found**. `flutter gen-l10n` concluiu; `git diff --check` sem erros.
+- `flutter analyze --no-pub` → `NOT_RUN`: permaneceu em “Analyzing segundamente...” sem saída por 60 segundos e foi interrompido.
+- `flutter test --no-pub test/ui/settings/widgets/settings_page_test.dart test/ui/settings/widgets/ai_service_setup_page_test.dart` → **FAIL** em fixtures antigas de configurações (FileSystemService não inicializado e interações fora da área visível); os testes isolados da rota e das configurações Todo passaram.
+- `NOT_RUN`: suíte Flutter completa; validação física. Alarmes no aparelho pertencem à F11-04.
 
 ### Modelo de fala em Configurações (2026-11-12)
 - O download do modelo local saiu do microfone do chat e foi para Configurações > "Transcrição no aparelho", com progresso e exclusão. Desligado, o áudio vai direto para o ChatGPT. O microfone do chat só dita; sem modelo, ele aponta para Configurações.

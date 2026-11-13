@@ -5,7 +5,9 @@ import 'package:memex/data/repositories/todo_repository.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/utils/result.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   const userId = 'todo-repository-user';
@@ -13,6 +15,7 @@ void main() {
   late TodoRepository repository;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     tempDir = await Directory.systemTemp.createTemp('memex_todo_repository_');
     await FileSystemService.init(tempDir.path);
     repository = TodoRepository(service: TodoService());
@@ -88,5 +91,21 @@ void main() {
           .readAsString(),
       '{broken',
     );
+  });
+
+  test('persists shortcut preferences through Result repository methods',
+      () async {
+    final settings = TodoShortcutSettings(
+      enabledDateShortcuts: const {TodoDateShortcut.today},
+      timeShortcutsMinutes: const [510, 870, 1170],
+      defaultAlertMinutes: 25,
+    );
+
+    expect((await repository.saveShortcutSettings(settings)).isOk, isTrue);
+    final loaded = (await repository.loadShortcutSettings()).valueOrThrow;
+
+    expect(loaded.enabledDateShortcuts, {TodoDateShortcut.today});
+    expect(loaded.timeShortcutsMinutes, [510, 870, 1170]);
+    expect(loaded.defaultAlertMinutes, 25);
   });
 }
