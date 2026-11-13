@@ -60,6 +60,34 @@ void main() {
     expect(loaded.single.source, isNull);
   });
 
+  test('proposal id makes confirmation idempotent, including tombstones',
+      () async {
+    final first = await todos.add(
+      userId: userId,
+      id: 'proposal-123',
+      text: 'Enviar relatório',
+    );
+    final repeated = await todos.add(
+      userId: userId,
+      id: 'proposal-123',
+      text: 'Texto alterado',
+    );
+
+    expect(repeated.id, first.id);
+    expect(repeated.text, 'Enviar relatório');
+    expect(await todos.load(userId), hasLength(1));
+
+    await todos.remove(userId: userId, id: first.id);
+    final afterDelete = await todos.add(
+      userId: userId,
+      id: 'proposal-123',
+      text: 'Enviar relatório',
+    );
+
+    expect(afterDelete.isTombstoned, isTrue);
+    expect(await todos.load(userId, includeDeleted: true), hasLength(1));
+  });
+
   test('keeps concurrent additions from separate service instances', () async {
     await Future.wait([
       for (var index = 0; index < 8; index++)

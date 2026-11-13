@@ -109,8 +109,8 @@ void main() {
 
     test('allows session reports as a read-only tool, and the prompt names it',
         () {
-      expect(SuperAgent.isQuickQueryToolAllowed('find_related_sessions'),
-          isTrue);
+      expect(
+          SuperAgent.isQuickQueryToolAllowed('find_related_sessions'), isTrue);
       expect(superAgentSystemPrompt, contains('find_related_sessions'));
     });
 
@@ -134,6 +134,10 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('excludes the Todo proposal skill from read-only query mode', () {
+      expect(SuperAgent.isQuickQuerySkillAllowed('propose_todo'), isFalse);
     });
 
     test('excludes the memory write skill', () {

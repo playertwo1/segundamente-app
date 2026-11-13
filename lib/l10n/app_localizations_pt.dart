@@ -3706,6 +3706,66 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoSave => 'Salvar';
 
   @override
+  String get todoAlertMinutesLabel => 'Avisar antes (minutos)';
+
+  @override
+  String get todoAlertMinutesInvalid =>
+      'Informe um número inteiro igual ou maior que zero.';
+
+  @override
+  String get todoProposalHeading => 'Proposta de tarefa';
+
+  @override
+  String get todoProposalReview => 'Revisar e adicionar';
+
+  @override
+  String get todoProposalReviewTitle => 'Revisar proposta de tarefa';
+
+  @override
+  String get todoProposalConfirm => 'Confirmar e adicionar';
+
+  @override
+  String get todoProposalDateUnclear =>
+      'A IA não conseguiu resolver essa data.';
+
+  @override
+  String get todoProposalTimeUnclear =>
+      'A IA não conseguiu resolver esse horário.';
+
+  @override
+  String get todoProposalUseNoDate => 'Manter sem data';
+
+  @override
+  String get todoProposalUseNoTime => 'Manter sem horário';
+
+  @override
+  String get todoProposalDateMustResolve =>
+      'Escolha uma data ou confirme que a tarefa ficará sem data.';
+
+  @override
+  String get todoProposalTimeMustResolve =>
+      'Escolha um horário ou confirme que a tarefa ficará sem horário.';
+
+  @override
+  String get todoProposalNoDate => 'Sem data definida';
+
+  @override
+  String get todoProposalAdded => 'Adicionada ao Todo.';
+
+  @override
+  String get todoProposalDeleted =>
+      'Esta proposta já gerou uma tarefa que foi excluída.';
+
+  @override
+  String get todoProposalSaveFailed =>
+      'Não foi possível adicionar a tarefa. Tente novamente.';
+
+  @override
+  String todoProposalAlertHint(int minutes) {
+    return 'Aviso padrão: $minutes min antes';
+  }
+
+  @override
   String get todoOpenSource => 'Fonte';
 
   @override

@@ -1,3 +1,4 @@
+import 'package:memex/domain/models/todo_proposal.dart';
 import 'timeline_card_model.dart';
 
 /// Card detail model for detail page
@@ -155,6 +156,7 @@ class Comment {
   final CharacterInfo? character;
   final String? replyToId;
   final String? replyToName;
+  final TodoProposal? todoProposal;
 
   Comment({
     required this.id,
@@ -164,6 +166,7 @@ class Comment {
     this.character,
     this.replyToId,
     this.replyToName,
+    this.todoProposal,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
@@ -177,7 +180,21 @@ class Comment {
           : null,
       replyToId: json['reply_to_id'] as String?,
       replyToName: json['reply_to_name'] as String?,
+      todoProposal: _tryTodoProposal(json['todo_proposal']),
     );
+  }
+}
+
+TodoProposal? _tryTodoProposal(Object? value) {
+  if (value is! Map) return null;
+  try {
+    return TodoProposal.fromJson(Map<String, dynamic>.from(value));
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    return null;
+  } on TypeError {
+    return null;
   }
 }
 

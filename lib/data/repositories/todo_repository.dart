@@ -18,12 +18,16 @@ class TodoRepository {
   ) =>
       runResultVoid(() => UserStorage.setTodoShortcutSettings(settings));
 
-  Future<Result<List<TodoItem>>> load(String userId) =>
-      runResult(() => _service.load(userId));
+  Future<Result<List<TodoItem>>> load(
+    String userId, {
+    bool includeDeleted = false,
+  }) =>
+      runResult(() => _service.load(userId, includeDeleted: includeDeleted));
 
   Future<Result<TodoItem>> add({
     required String userId,
     required String text,
+    String? id,
     String? due,
     String? dueDate,
     String? dueTime,
@@ -36,6 +40,7 @@ class TodoRepository {
       runResult(() => _service.add(
             userId: userId,
             text: text,
+            id: id,
             due: due,
             dueDate: dueDate,
             dueTime: dueTime,

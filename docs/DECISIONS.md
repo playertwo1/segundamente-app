@@ -54,6 +54,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-053 | 2026-11-13 | Desktop: fork do Coucou renomeado Lumen, no repositório do fork, com IA própria e e-mail pessoal | ACCEPTED |
 | D-054 | 2026-11-13 | Sync: relay do Coucou + caixa de correio no Cloudflare; escopo, avisos e backup semanal | ACCEPTED |
 | D-055 | 2026-11-13 | Google: login próprio, Drive (backup) e Calendar; NotebookLM pós-MVP sem previsão | ACCEPTED |
+| D-056 | 2026-11-13 | Manter F11-04 pendente do S25 e avançar F11-05 | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -378,3 +379,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - **Google Calendar:** lê os eventos, que entram nos lembretes e resumos, e cria um evento a partir de uma tarefa confirmada. Nunca apaga ou altera evento sem confirmação e nunca convida terceiros.
   - **NotebookLM:** o caminho escolhido é a via B da F8-01, criar ou atualizar um Google Doc do conteúdo escolhido, com prévia. Fica **pós-MVP, sem previsão**, e a F8 continua `BLOCKED`. Plano do dono: NotebookLM Pro.
 - Descartado agora: Gmail (o e-mail é o MailCraft, D-053), Google Tasks, Drive como fonte de leitura das personas.
+
+## D-056 — Ordem de execução da F11 enquanto alarmes aguardam o S25 (2026-11-13)
+- Contexto: o dono pediu para deixar a F11-04 pendente até haver acesso ao Galaxy S25 Ultra e avançar para a próxima subfase. A F11-04 exige evidência física de alarmes exatos em Doze, offline, após reinício e com economia de bateria.
+- Decisão: manter a F11-04 `BLOCKED` e abrir a F11-05 agora. A F11-05 depende da F11-03, já concluída, e segue as regras de confirmação de IA aceitas em D-051. Esta decisão não dispensa nem simula qualquer teste físico da F11-04 e não desbloqueia outras subfases.

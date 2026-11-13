@@ -49,6 +49,8 @@ import 'package:memex/ui/chat/chat_event_batcher.dart';
 import 'package:memex/ui/chat/view_models/photo_attachments_viewmodel.dart';
 import 'package:memex/ui/chat/view_models/voice_dictation_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/selected_photo_attachment.dart';
+import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/todo_proposal_card.dart';
 
 // --- Display Models ---
 
@@ -491,6 +493,8 @@ class AgentChatDialog extends StatefulWidget {
   @visibleForTesting
   final PhotoAttachmentsViewModel? photoAttachmentsForTesting;
   @visibleForTesting
+  final TodoProposalViewModel? todoProposalViewModelForTesting;
+  @visibleForTesting
   final List<List<EnhancedPhoto>>? photoSuggestionsForTesting;
   @visibleForTesting
   final Future<List<AssetEntity>?> Function(BuildContext)?
@@ -512,6 +516,7 @@ class AgentChatDialog extends StatefulWidget {
     this.scrollClockForTesting,
     this.voiceDictationForTesting,
     this.photoAttachmentsForTesting,
+    this.todoProposalViewModelForTesting,
     this.photoSuggestionsForTesting,
     this.imagePickerForTesting,
   });
@@ -529,6 +534,9 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   // Services
   MemexRouter? _memexRouter;
   MemexRouter get _router => _memexRouter ??= MemexRouter();
+  late final TodoProposalViewModel _todoProposalViewModel =
+      widget.todoProposalViewModelForTesting ??
+          TodoProposalViewModel(router: _router);
   final InputDraftService _draftService = InputDraftService.instance;
   late final VoiceDictationViewModel _voice =
       widget.voiceDictationForTesting ?? VoiceDictationViewModel();
@@ -706,6 +714,9 @@ class _AgentChatDialogState extends State<AgentChatDialog>
       AgentActionApprovalService.instance.detachSession(sessionId);
     }
     _flushDraftOnDispose();
+    if (widget.todoProposalViewModelForTesting == null) {
+      _todoProposalViewModel.dispose();
+    }
     _messageController.removeListener(_handleDraftTextChanged);
     _scrollController.removeListener(_handleHistoryScroll);
     _controller.removeStatusListener(_handleEntranceAnimationStatus);
@@ -3536,6 +3547,8 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         return artifact.systemActionKind == 'calendar'
             ? UserStorage.l10n.discoveredCalendarEvent
             : UserStorage.l10n.discoveredReminder;
+      case ChatArtifact.kindTodoProposal:
+        return UserStorage.l10n.todoProposalHeading;
       case ChatArtifact.kindKnowledgeInsight:
         return _agentChat.insightSaved;
       case ChatArtifact.kindSchedule:
@@ -3556,6 +3569,8 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         return Icons.auto_awesome_mosaic_outlined;
       case ChatArtifact.kindSystemAction:
         return Icons.notifications_active_outlined;
+      case ChatArtifact.kindTodoProposal:
+        return Icons.checklist_outlined;
       case ChatArtifact.kindKnowledgeInsight:
         return Icons.insights_outlined;
       case ChatArtifact.kindSchedule:
@@ -3622,6 +3637,8 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         return const Color(0xFFEA580C);
       case ChatArtifact.kindSystemAction:
         return const Color(0xFF60A5FA);
+      case ChatArtifact.kindTodoProposal:
+        return AppColors.primary;
       case ChatArtifact.kindTimelineCard:
         return AppColors.primary;
       default:
@@ -3703,6 +3720,30 @@ class _AgentChatDialogState extends State<AgentChatDialog>
 
   Widget _buildArtifactItem(ArtifactItem item, {bool embedded = false}) {
     final artifact = item.artifact;
+    final todoProposal = artifact.todoProposal;
+    if (todoProposal != null) {
+      final card = TodoProposalCard(
+        key: ValueKey('todo_proposal_${todoProposal.id}'),
+        proposal: todoProposal,
+        viewModel: _todoProposalViewModel,
+      );
+      if (embedded) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: card,
+        );
+      }
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(width: 32),
+            Expanded(child: card),
+          ],
+        ),
+      );
+    }
     final systemActionId = artifact.systemActionId;
     if (artifact.kind == ChatArtifact.kindSystemAction &&
         systemActionId != null) {

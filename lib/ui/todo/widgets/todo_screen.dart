@@ -4,6 +4,7 @@ import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/l10n/app_localizations.dart';
@@ -14,13 +15,29 @@ import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:uuid/uuid.dart';
 
-typedef _TodoDraft = ({
+typedef TodoDraft = ({
   String text,
   String due,
   TodoRecurrence? recurrence,
   TodoPriority priority,
   List<TodoSubtask> subtasks,
+  int alertMinutes,
 });
+
+Future<TodoDraft?> showTodoEditorDialog({
+  required BuildContext context,
+  required TodoShortcutSettings settings,
+  TodoItem? item,
+  TodoProposal? proposal,
+}) =>
+    showDialog<TodoDraft>(
+      context: context,
+      builder: (_) => _TodoDialog(
+        item: item,
+        proposal: proposal,
+        settings: settings,
+      ),
+    );
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key, required this.viewModel});
@@ -44,12 +61,10 @@ class _TodoScreenState extends State<TodoScreen> {
   Future<void> _addOrEdit([TodoItem? item]) async {
     await widget.viewModel.refreshShortcutSettings();
     if (!mounted) return;
-    final saved = await showDialog<_TodoDraft>(
+    final saved = await showTodoEditorDialog(
       context: context,
-      builder: (_) => _TodoDialog(
-        item: item,
-        settings: widget.viewModel.shortcutSettings,
-      ),
+      item: item,
+      settings: widget.viewModel.shortcutSettings,
     );
     if (saved == null) return;
     if (item == null) {
@@ -59,6 +74,7 @@ class _TodoScreenState extends State<TodoScreen> {
         recurrence: saved.recurrence,
         priority: saved.priority,
         subtasks: saved.subtasks,
+        alertMinutes: saved.alertMinutes,
       );
     } else {
       await widget.viewModel.edit(
@@ -69,6 +85,7 @@ class _TodoScreenState extends State<TodoScreen> {
         clearRecurrence: saved.recurrence == null,
         priority: saved.priority,
         subtasks: saved.subtasks,
+        alertMinutes: saved.alertMinutes,
       );
     }
   }
@@ -664,9 +681,11 @@ Color _priorityColor(TodoPriority priority) => switch (priority) {
     };
 
 class _TodoDialog extends StatefulWidget {
-  const _TodoDialog({this.item, required this.settings});
+  const _TodoDialog({this.item, this.proposal, required this.settings})
+      : assert(item == null || proposal == null);
 
   final TodoItem? item;
+  final TodoProposal? proposal;
   final TodoShortcutSettings settings;
 
   @override
@@ -674,11 +693,19 @@ class _TodoDialog extends StatefulWidget {
 }
 
 class _TodoDialogState extends State<_TodoDialog> {
-  late final _text = TextEditingController(text: widget.item?.text ?? '');
-  late final _due = TextEditingController(
-    text: _initialDate(widget.item),
+  late final _text = TextEditingController(
+    text: widget.proposal?.title ?? widget.item?.text ?? '',
   );
-  late final _time = TextEditingController(text: _initialTime(widget.item));
+  late final _due = TextEditingController(
+    text: _initialDate(widget.item, widget.proposal),
+  );
+  late final _time = TextEditingController(
+    text: _initialTime(widget.item, widget.proposal),
+  );
+  late final _alertMinutes = TextEditingController(
+    text: (widget.item?.alertMinutes ?? widget.settings.defaultAlertMinutes)
+        .toString(),
+  );
   late final _newSubtask = TextEditingController();
   late final List<TodoSubtask> _subtasks = [
     ...?widget.item?.subtasks,
@@ -690,12 +717,16 @@ class _TodoDialogState extends State<_TodoDialog> {
           ? widget.item!.recurrence!.weekdays.toSet()
           : {_anchorDate().weekday};
   String? _scheduleError;
+  String? _alertError;
+  bool _confirmedNoDate = false;
+  bool _confirmedNoTime = false;
 
   @override
   void dispose() {
     _text.dispose();
     _due.dispose();
     _time.dispose();
+    _alertMinutes.dispose();
     _newSubtask.dispose();
     super.dispose();
   }
@@ -706,7 +737,11 @@ class _TodoDialogState extends State<_TodoDialog> {
     final hasTime = _time.text.trim().isNotEmpty;
     return AlertDialog(
       backgroundColor: AppColors.background,
-      title: Text(widget.item == null ? l10n.todoAdd : l10n.todoEdit),
+      title: Text(widget.proposal != null
+          ? l10n.todoProposalReviewTitle
+          : widget.item == null
+              ? l10n.todoAdd
+              : l10n.todoEdit),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -753,8 +788,58 @@ class _TodoDialogState extends State<_TodoDialog> {
                   labelText: l10n.todoTimeLabel,
                   hintText: l10n.todoTimeHint,
                 ),
-                onChanged: (_) => setState(() => _scheduleError = null),
+                onChanged: (_) => setState(() {
+                  _scheduleError = null;
+                  _confirmedNoTime = false;
+                }),
               ),
+              TextField(
+                key: const ValueKey('todo_alert_minutes'),
+                controller: _alertMinutes,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.todoAlertMinutesLabel,
+                  errorText: _alertError,
+                ),
+                onChanged: (_) => setState(() => _alertError = null),
+              ),
+              if (widget.proposal?.dateState ==
+                      TodoProposalDateState.ambiguous &&
+                  !_hasValidDate) ...[
+                const SizedBox(height: 8),
+                Text(l10n.todoProposalDateUnclear),
+                CheckboxListTile(
+                  key: const ValueKey('todo_proposal_no_date'),
+                  contentPadding: EdgeInsets.zero,
+                  value: _confirmedNoDate,
+                  title: Text(l10n.todoProposalUseNoDate),
+                  onChanged: (value) => setState(() {
+                    _confirmedNoDate = value ?? false;
+                    if (_confirmedNoDate) {
+                      _due.clear();
+                      _time.clear();
+                      _confirmedNoTime = true;
+                    }
+                    _scheduleError = null;
+                  }),
+                ),
+              ],
+              if (widget.proposal?.timeState ==
+                      TodoProposalTimeState.ambiguous &&
+                  _time.text.trim().isEmpty) ...[
+                const SizedBox(height: 8),
+                Text(l10n.todoProposalTimeUnclear),
+                CheckboxListTile(
+                  key: const ValueKey('todo_proposal_no_time'),
+                  contentPadding: EdgeInsets.zero,
+                  value: _confirmedNoTime,
+                  title: Text(l10n.todoProposalUseNoTime),
+                  onChanged: (value) => setState(() {
+                    _confirmedNoTime = value ?? false;
+                    _scheduleError = null;
+                  }),
+                ),
+              ],
               if (_scheduleError != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
@@ -920,6 +1005,23 @@ class _TodoDialogState extends State<_TodoDialog> {
           key: const ValueKey('todo_dialog_save'),
           onPressed: () {
             if (_text.text.trim().isEmpty) return;
+            final alertMinutes = int.tryParse(_alertMinutes.text.trim());
+            if (alertMinutes == null || alertMinutes < 0) {
+              setState(() => _alertError = l10n.todoAlertMinutesInvalid);
+              return;
+            }
+            if (widget.proposal?.dateState == TodoProposalDateState.ambiguous &&
+                !_hasValidDate &&
+                !_confirmedNoDate) {
+              setState(() => _scheduleError = l10n.todoProposalDateMustResolve);
+              return;
+            }
+            if (widget.proposal?.timeState == TodoProposalTimeState.ambiguous &&
+                _time.text.trim().isEmpty &&
+                !_confirmedNoTime) {
+              setState(() => _scheduleError = l10n.todoProposalTimeMustResolve);
+              return;
+            }
             final TodoRecurrence? recurrence = _recurrence();
             if (_time.text.trim().isNotEmpty && !_validTime) {
               setState(() => _scheduleError = l10n.todoTimeInvalid);
@@ -933,15 +1035,18 @@ class _TodoDialogState extends State<_TodoDialog> {
               setState(() => _scheduleError = l10n.todoRepeatRequiresDate);
               return;
             }
-            Navigator.of(context).pop<_TodoDraft>((
+            Navigator.of(context).pop<TodoDraft>((
               text: _text.text,
               due: _combinedDue,
               recurrence: recurrence,
               priority: _priority,
               subtasks: List<TodoSubtask>.unmodifiable(_subtasks),
+              alertMinutes: alertMinutes,
             ));
           },
-          child: Text(l10n.todoSave),
+          child: Text(widget.proposal == null
+              ? l10n.todoSave
+              : l10n.todoProposalConfirm),
         ),
       ],
     );
@@ -1016,14 +1121,20 @@ class _TodoDialogState extends State<_TodoDialog> {
       ? _due.text
       : '${_due.text.trim()} ${_time.text.trim()}';
 
-  String _initialDate(TodoItem? item) {
+  String _initialDate(TodoItem? item, TodoProposal? proposal) {
+    if (proposal?.dateState == TodoProposalDateState.explicit) {
+      return proposal!.dueDate!;
+    }
     if (item == null || item.due == reportDueUnknown) return '';
     if (item.dueDate != null) return item.dueDate!;
     final explicit = parseExplicitDue(item.due);
     return explicit == null ? item.due : _formatDate(explicit.date);
   }
 
-  String _initialTime(TodoItem? item) {
+  String _initialTime(TodoItem? item, TodoProposal? proposal) {
+    if (proposal?.timeState == TodoProposalTimeState.explicit) {
+      return proposal!.dueTime!;
+    }
     if (item == null) return '';
     if (item.dueTime != null) return item.dueTime!;
     final explicit = parseExplicitDue(item.due);
@@ -1040,7 +1151,10 @@ class _TodoDialogState extends State<_TodoDialog> {
       );
       _time.text = _formatClock(explicit.date);
     }
-    setState(() => _scheduleError = null);
+    setState(() {
+      _scheduleError = null;
+      _confirmedNoDate = false;
+    });
   }
 
   void _applyDateShortcut(TodoDateShortcut shortcut) {

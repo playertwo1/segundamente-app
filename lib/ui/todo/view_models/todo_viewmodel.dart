@@ -175,6 +175,7 @@ class TodoViewModel extends ChangeNotifier {
     TodoRecurrence? recurrence,
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
+    int? alertMinutes,
   }) async {
     await _change(_router.addTodo(
       text: text,
@@ -182,7 +183,7 @@ class TodoViewModel extends ChangeNotifier {
       recurrence: recurrence,
       priority: priority,
       subtasks: subtasks,
-      alertMinutes: shortcutSettings.defaultAlertMinutes,
+      alertMinutes: alertMinutes ?? shortcutSettings.defaultAlertMinutes,
     ));
   }
 
@@ -192,7 +193,8 @@ class TodoViewModel extends ChangeNotifier {
       TodoRecurrence? recurrence,
       bool clearRecurrence = false,
       TodoPriority? priority,
-      List<TodoSubtask>? subtasks}) async {
+      List<TodoSubtask>? subtasks,
+      int? alertMinutes}) async {
     await _change(_router.editTodo(
       id: item.id,
       text: text,
@@ -201,6 +203,7 @@ class TodoViewModel extends ChangeNotifier {
       clearRecurrence: clearRecurrence,
       priority: priority,
       subtasks: subtasks,
+      alertMinutes: alertMinutes,
     ));
   }
 

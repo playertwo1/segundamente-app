@@ -36,6 +36,7 @@ class TodoService {
   Future<TodoItem> add({
     required String userId,
     required String text,
+    String? id,
     String? due,
     String? dueDate,
     String? dueTime,
@@ -49,9 +50,14 @@ class TodoService {
   }) =>
       _storageLock.synchronized(() async {
         final items = await _readAll(userId);
+        if (id != null) {
+          final existing = items.where((item) => item.id == id);
+          if (existing.isNotEmpty) return existing.first;
+        }
         return _addUnlocked(
           userId: userId,
           items: items,
+          id: id,
           text: text,
           due: due,
           dueDate: dueDate,
@@ -315,6 +321,7 @@ class TodoService {
   Future<TodoItem> _addUnlocked({
     required String userId,
     required List<TodoItem> items,
+    String? id,
     required String text,
     String? due,
     String? dueDate,
@@ -336,9 +343,9 @@ class TodoService {
     if (alertMinutes < 0) {
       throw ArgumentError.value(alertMinutes, 'alertMinutes');
     }
-    final id = _uuid.v4();
+    final taskId = id ?? _uuid.v4();
     final item = TodoItem(
-      id: id,
+      id: taskId,
       text: clean,
       due: schedule.label,
       dueDate: schedule.date,
@@ -348,7 +355,7 @@ class TodoService {
       priority: priority,
       subtasks: subtasks,
       recurrence: recurrence,
-      seriesId: recurrence == null ? null : id,
+      seriesId: recurrence == null ? null : taskId,
       done: false,
       createdAt: (now ?? DateTime.now()).toIso8601String(),
       source: source,

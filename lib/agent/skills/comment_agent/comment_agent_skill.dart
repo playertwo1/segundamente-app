@@ -76,6 +76,16 @@ class CommentAgentSkill extends Skill {
     }
 
     b.write(systemPrompt);
+    b.writeln('');
+    b.writeln('## Todo proposals');
+    b.writeln(
+      'When the owner explicitly expresses a task intention, you may use '
+      '`ProposeTodo` to attach a review card to your comment. This saves only '
+      'the comment and proposal; the Todo task is created only after the '
+      'owner confirms it. Treat weekday-only dates such as "sexta" as '
+      'ambiguous and never invent a date or hour. Use unspecified time when '
+      'none was stated.',
+    );
 
     if (character != null) {
       b.writeln('');
@@ -141,6 +151,7 @@ class CommentAgentSkill extends Skill {
           characterId: characterId,
         ).build(),
         commentFactory.buildSaveCommentTool(),
+        commentFactory.buildTodoProposalTool(),
         if (!forceReply) commentFactory.buildSkipCommentTool(),
       ];
     }

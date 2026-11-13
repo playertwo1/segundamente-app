@@ -1,3 +1,5 @@
+import 'package:memex/domain/models/todo_proposal.dart';
+
 /// A user-visible UI artifact produced by an agent turn.
 ///
 /// Tool trace events stay transient. Artifacts are persisted as chat artifact
@@ -27,6 +29,7 @@ class ChatArtifact {
   static const String kindWorkspaceFile = 'workspace_file';
   static const String kindSchedule = 'schedule';
   static const String kindSystemAction = 'system_action';
+  static const String kindTodoProposal = 'todo_proposal';
   static const String kindUiTemplate = 'ui_template';
 
   static const String operationCreate = 'create';
@@ -40,6 +43,7 @@ class ChatArtifact {
     kindWorkspaceFile,
     kindSchedule,
     kindSystemAction,
+    kindTodoProposal,
     kindUiTemplate,
   };
 
@@ -101,6 +105,23 @@ class ChatArtifact {
   String? get systemActionKind => _nonEmpty(metadata['system_action_kind']);
 
   String? get systemActionId => _nonEmpty(metadata['system_action_id']);
+
+  TodoProposal? get todoProposal {
+    if (kind != kindTodoProposal || metadata['todo_proposal'] is! Map) {
+      return null;
+    }
+    try {
+      return TodoProposal.fromJson(
+        Map<String, dynamic>.from(metadata['todo_proposal'] as Map),
+      );
+    } on FormatException {
+      return null;
+    } on ArgumentError {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
 
   String? get timelineCardId => _memexTargetId('timeline-card');
 
@@ -262,6 +283,27 @@ class ChatArtifact {
       sourceRunId: sourceRunId,
       sourceToolCallId: sourceToolCallId,
       createdAt: createdAt,
+    );
+  }
+
+  factory ChatArtifact.todoProposalCard({
+    required TodoProposal proposal,
+    String? sourceRunId,
+    String? sourceToolCallId,
+    DateTime? createdAt,
+  }) {
+    final targetUri =
+        'memex://todo-proposal/${Uri.encodeComponent(proposal.id)}';
+    return ChatArtifact(
+      artifactId: artifactIdFor(kindTodoProposal, targetUri),
+      kind: kindTodoProposal,
+      operation: operationCreate,
+      title: proposal.title,
+      targetUri: targetUri,
+      sourceRunId: sourceRunId,
+      sourceToolCallId: sourceToolCallId,
+      createdAt: createdAt,
+      metadata: {'todo_proposal': proposal.toJson()},
     );
   }
 

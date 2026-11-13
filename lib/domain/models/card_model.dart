@@ -1,4 +1,6 @@
-/// Typed model for timeline card YAML file (Cards/.../*.yaml).
+import 'package:memex/domain/models/todo_proposal.dart';
+
+// Typed model for timeline card YAML file (Cards/.../*.yaml).
 /// Used by FileSystemService.readCardFile / updateCardFile / safeWriteCardFile.
 /// UiConfig is shared with TimelineCardModel and event bus messages.
 
@@ -275,6 +277,7 @@ class CardComment {
   final int timestamp;
   final String? characterId;
   final String? replyToId;
+  final TodoProposal? todoProposal;
 
   const CardComment({
     required this.id,
@@ -283,6 +286,7 @@ class CardComment {
     required this.timestamp,
     this.characterId,
     this.replyToId,
+    this.todoProposal,
   });
 
   factory CardComment.fromJson(Map<String, dynamic> json) {
@@ -294,6 +298,7 @@ class CardComment {
       timestamp: json['timestamp'] as int? ?? 0,
       characterId: charId?.toString(),
       replyToId: json['reply_to_id'] as String?,
+      todoProposal: _tryTodoProposal(json['todo_proposal']),
     );
   }
 
@@ -306,7 +311,21 @@ class CardComment {
     };
     if (characterId != null) m['character_id'] = characterId;
     if (replyToId != null) m['reply_to_id'] = replyToId;
+    if (todoProposal != null) m['todo_proposal'] = todoProposal!.toJson();
     return m;
+  }
+}
+
+TodoProposal? _tryTodoProposal(Object? value) {
+  if (value is! Map) return null;
+  try {
+    return TodoProposal.fromJson(Map<String, dynamic>.from(value));
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    return null;
+  } on TypeError {
+    return null;
   }
 }
 

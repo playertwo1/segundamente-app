@@ -30,9 +30,13 @@ class _FakeRouter implements MemexRouter {
   var _next = 0;
 
   @override
-  Future<Result<List<TodoItem>>> loadTodos() async => failLoad
-      ? Error<List<TodoItem>>(StateError('synthetic Todo load failure'))
-      : Ok(items);
+  Future<Result<List<TodoItem>>> loadTodos(
+          {bool includeDeleted = false}) async =>
+      failLoad
+          ? Error<List<TodoItem>>(
+              StateError('synthetic Todo load failure'),
+            )
+          : Ok(includeDeleted ? _stored : items);
 
   @override
   Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>
@@ -41,6 +45,7 @@ class _FakeRouter implements MemexRouter {
   @override
   Future<Result<TodoItem>> addTodo({
     required String text,
+    String? id,
     String? due,
     String? dueDate,
     String? dueTime,
@@ -52,7 +57,7 @@ class _FakeRouter implements MemexRouter {
   }) async {
     final explicit = parseExplicitDue(due ?? '');
     final item = TodoItem(
-      id: 'todo_${_next++}',
+      id: id ?? 'todo_${_next++}',
       text: text.trim(),
       due: (due ?? '').trim().isEmpty ? reportDueUnknown : due!.trim(),
       dueDate: explicit == null ? null : _dateOnly(explicit.date),
@@ -310,6 +315,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Preparar');
+    await tester.enterText(
+      find.byKey(const ValueKey('todo_alert_minutes')),
+      '12',
+    );
     await tester.tap(find.byKey(const ValueKey('todo_priority_editor')));
     await tester.pumpAndSettle();
     await tester.tap(find.text(UserStorage.l10n.todoPriorityUrgent).last);
@@ -329,6 +338,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(router.items.single.priority, TodoPriority.urgent);
+    expect(router.items.single.alertMinutes, 12);
     expect(router.items.single.subtasks.single.text, 'Separar documentos');
     expect(find.text(UserStorage.l10n.todoPriorityUrgent), findsOneWidget);
     final subtaskKey = ValueKey(
@@ -553,10 +563,15 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar já');
     await tester.enterText(
         find.byKey(const ValueKey('todo_due')), '2026-11-30');
+    await tester.enterText(
+      find.byKey(const ValueKey('todo_alert_minutes')),
+      '5',
+    );
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
     expect(router.items.single.text, 'Ligar já');
     expect(router.items.single.due, '2026-11-30');
+    expect(router.items.single.alertMinutes, 5);
   });
 
   testWidgets('a report item shows its source and a date offers the calendar',

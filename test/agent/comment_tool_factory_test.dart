@@ -192,6 +192,32 @@ void main() {
         isNot(contains('Outside this character comment policy.')),
       );
     });
+
+    test('ProposeTodo attaches an ambiguous proposal without resolving it',
+        () async {
+      final tool = CommentToolFactory(
+        userId: userId,
+        cardId: cardId,
+        characterId: characterId,
+      ).buildTodoProposalTool();
+
+      await Function.apply(tool.executable!, [
+        'Posso deixar isso como tarefa para você revisar.',
+        'Enviar relatório',
+        'ambiguous',
+        'unspecified',
+        null,
+        'sexta',
+        null,
+        null,
+      ]);
+
+      final latest = await _latestComment(userId, cardId);
+      expect(latest.content, contains('revisar'));
+      expect(latest.todoProposal?.title, 'Enviar relatório');
+      expect(latest.todoProposal?.datePhrase, 'sexta');
+      expect(latest.todoProposal?.dueDate, isNull);
+    });
   });
 }
 

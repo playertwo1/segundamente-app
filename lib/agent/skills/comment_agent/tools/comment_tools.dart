@@ -3,6 +3,7 @@
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/data/services/file_system_service.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memex/utils/logger.dart';
 
@@ -42,83 +43,148 @@ class CommentToolFactory {
         },
         'required': ['content'],
       },
-      executable: (String content, String? reply_to_id) async {
-        if (content.isEmpty) {
-          throw ArgumentError('Comment content cannot be empty.');
-        }
-
-        try {
-          final fileSystemService = FileSystemService.instance;
-          final commentId = const Uuid().v4();
-          final now = DateTime.now();
-
-          final updatedCardData = await fileSystemService.updateCardFile(
-            userId,
-            cardId,
-            (card) {
-              var replyToId =
-                  fixedReplyTarget ?? _normalizedReplyToId(reply_to_id);
-              if (fixedReplyTarget == null &&
-                  replyToId != null &&
-                  characterId != null) {
-                for (final existing in card.comments) {
-                  if (existing.id == replyToId &&
-                      existing.isAi &&
-                      existing.characterId == characterId) {
-                    replyToId = null;
-                    break;
-                  }
-                }
-              }
-              final newComment = CardComment(
-                id: commentId,
-                content: content,
-                isAi: true,
-                timestamp: now.millisecondsSinceEpoch ~/ 1000,
-                characterId: characterId,
-                replyToId: replyToId,
-              );
-              return card.copyWith(comments: [...card.comments, newComment]);
-            },
-          );
-
-          if (updatedCardData == null) {
-            throw StateError('Card not found: $cardId');
-          }
-
-          // Log event
-          try {
-            final cardPath = fileSystemService.getCardPath(userId, cardId);
-            final workspacePath = fileSystemService.getWorkspacePath(userId);
-            final relativePath = fileSystemService.toRelativePath(
-              cardPath,
-              rootPath: workspacePath,
-            );
-            await fileSystemService.eventLogService.logFileModified(
-              userId: userId,
-              filePath: relativePath,
-              description: 'AI comment added to card via tool',
-              metadata: {
-                'card_id': cardId,
-                'comment_id': commentId,
-                'character_id': characterId,
-                'content': content,
-              },
-            );
-          } catch (e) {
-            getLogger('CommentTool').warning('Failed to log event: $e');
-          }
-
-          return AgentToolResult(
-            content: TextPart("Comment saved successfully."),
-            stopFlag: true,
-          );
-        } catch (e, st) {
-          getLogger('CommentTool').severe('Error saving comment', e, st);
-          rethrow;
-        }
-      },
+      executable: (String content, String? reply_to_id) => _saveComment(
+        content: content,
+        replyToId: reply_to_id,
+      ),
     );
+  }
+
+  Tool buildTodoProposalTool() => Tool(
+        name: 'ProposeTodo',
+        description:
+            'Saves a persona comment with an editable Todo proposal. The task '
+            'is not saved until the owner confirms it.',
+        parameters: {
+          'type': 'object',
+          'properties': {
+            'content': {'type': 'string'},
+            'title': {'type': 'string'},
+            'date_state': {
+              'type': 'string',
+              'enum': ['unspecified', 'explicit', 'ambiguous'],
+            },
+            'due_date': {'type': 'string'},
+            'date_phrase': {'type': 'string'},
+            'time_state': {
+              'type': 'string',
+              'enum': ['unspecified', 'explicit', 'ambiguous'],
+            },
+            'due_time': {'type': 'string'},
+            'time_phrase': {'type': 'string'},
+          },
+          'required': ['content', 'title', 'date_state', 'time_state'],
+        },
+        executable: (
+          String content,
+          String title,
+          String dateState,
+          String timeState,
+          String? dueDate,
+          String? datePhrase,
+          String? dueTime,
+          String? timePhrase,
+        ) async {
+          final proposal = TodoProposal(
+            id: const Uuid().v4(),
+            title: title,
+            dateState: TodoProposalDateState.values.byName(dateState),
+            dueDate: dueDate,
+            datePhrase: datePhrase,
+            timeState: TodoProposalTimeState.values.byName(timeState),
+            dueTime: dueTime,
+            timePhrase: timePhrase,
+          );
+          return _saveComment(
+            content: content,
+            replyToId: forcedReplyToId,
+            todoProposal: proposal,
+          );
+        },
+      );
+
+  Future<AgentToolResult> _saveComment({
+    required String content,
+    String? replyToId,
+    TodoProposal? todoProposal,
+  }) async {
+    if (content.trim().isEmpty) {
+      throw ArgumentError('Comment content cannot be empty.');
+    }
+
+    try {
+      final fileSystemService = FileSystemService.instance;
+      final commentId = const Uuid().v4();
+      final now = DateTime.now();
+      final fixedReplyTarget = _normalizedReplyToId(forcedReplyToId);
+      final updatedCardData = await fileSystemService.updateCardFile(
+        userId,
+        cardId,
+        (card) {
+          var normalizedReplyTo =
+              fixedReplyTarget ?? _normalizedReplyToId(replyToId);
+          if (fixedReplyTarget == null &&
+              normalizedReplyTo != null &&
+              characterId != null) {
+            for (final existing in card.comments) {
+              if (existing.id == normalizedReplyTo &&
+                  existing.isAi &&
+                  existing.characterId == characterId) {
+                normalizedReplyTo = null;
+                break;
+              }
+            }
+          }
+          final newComment = CardComment(
+            id: commentId,
+            content: content,
+            isAi: true,
+            timestamp: now.millisecondsSinceEpoch ~/ 1000,
+            characterId: characterId,
+            replyToId: normalizedReplyTo,
+            todoProposal: todoProposal,
+          );
+          return card.copyWith(comments: [...card.comments, newComment]);
+        },
+      );
+
+      if (updatedCardData == null) {
+        throw StateError('Card not found: $cardId');
+      }
+
+      try {
+        final cardPath = fileSystemService.getCardPath(userId, cardId);
+        final workspacePath = fileSystemService.getWorkspacePath(userId);
+        final relativePath = fileSystemService.toRelativePath(
+          cardPath,
+          rootPath: workspacePath,
+        );
+        await fileSystemService.eventLogService.logFileModified(
+          userId: userId,
+          filePath: relativePath,
+          description: 'AI comment added to card via tool',
+          metadata: {
+            'card_id': cardId,
+            'comment_id': commentId,
+            'character_id': characterId,
+            'content': content,
+          },
+        );
+      } catch (e) {
+        getLogger('CommentTool').warning('Failed to log event: $e');
+      }
+
+      return AgentToolResult(
+        content: TextPart(todoProposal == null
+            ? 'Comment saved successfully.'
+            : 'Comment and Todo proposal saved. The task itself is still '
+                'waiting for owner confirmation.'),
+        stopFlag: true,
+      );
+    } catch (e, st) {
+      getLogger('CommentTool').severe('Error saving comment', e, st);
+      rethrow;
+    }
   }
 
   Tool buildSkipCommentTool() {
