@@ -7,10 +7,15 @@ import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
+import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/utils/result.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 enum ReminderOutcome { created, noExactTime, permissionDenied, failed }
+
+enum TodoListSection { today, upcoming, overdue, completed }
+
+enum TodoTaskState { noDate, today, upcoming, overdue, completed }
 
 class TodoViewModel extends ChangeNotifier {
   TodoViewModel({
@@ -28,7 +33,9 @@ class TodoViewModel extends ChangeNotifier {
       String? notes,
     })? createReminder,
     Future<bool> Function()? ensureReminderPermission,
+    DateTime Function()? now,
   })  : _router = router,
+        _now = now ?? DateTime.now,
         _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert,
         _createReminder = createReminder ?? NativeActionService.addReminder,
         _ensureReminderPermission =
@@ -36,6 +43,7 @@ class TodoViewModel extends ChangeNotifier {
 
   final MemexRouter _router;
   MemexRouter get router => _router;
+  final DateTime Function() _now;
   final Future<bool> Function({
     required String title,
     required DateTime start,
@@ -69,14 +77,76 @@ class TodoViewModel extends ChangeNotifier {
 
   List<TodoItem> _all = const [];
   TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
-  String query = '';
+  TodoListSection section = TodoListSection.today;
+  TodoPriority? priorityFilter;
   bool loading = false;
   String? errorMessage;
 
-  /// What the screen shows: filtered by the search, open items first.
-  List<TodoItem> get items => sortTodos(searchTodos(_all, query));
+  List<TodoItem> get allItems => List.unmodifiable(_all);
+
+  List<TodoItem> get items => itemsFor(section);
+
+  List<TodoItem> itemsFor(TodoListSection section) {
+    final items = [
+      for (final item in _all)
+        if ((section == TodoListSection.completed
+                ? item.done
+                : !item.done && _belongsToSection(item, section)) &&
+            (priorityFilter == null || item.priority == priorityFilter))
+          item,
+    ];
+    return _sortForSection(items, section);
+  }
+
+  List<TodoItem> searchResults(String query) => _sortForSection([
+        for (final item in searchTodos(_all, query))
+          if (priorityFilter == null || item.priority == priorityFilter) item,
+      ], null);
+
+  List<TodoItem> get undatedTodayItems => [
+        for (final item in itemsFor(TodoListSection.today))
+          if (stateFor(item) == TodoTaskState.noDate) item,
+      ];
+
+  TodoTaskState stateFor(TodoItem item) {
+    if (item.done) return TodoTaskState.completed;
+    return switch (TodoScheduleCalculator.statusFor(
+      dueDate: item.dueDate,
+      dueTime: item.dueTime,
+      now: _now(),
+      timeZone: item.timeZone,
+    )) {
+      TodoDateStatus.noDate => TodoTaskState.noDate,
+      TodoDateStatus.today => TodoTaskState.today,
+      TodoDateStatus.upcoming => TodoTaskState.upcoming,
+      TodoDateStatus.overdue => TodoTaskState.overdue,
+    };
+  }
+
+  TodoItem? nextOccurrenceFor(TodoItem item) {
+    final seriesId = item.seriesId;
+    if (seriesId == null) return null;
+    for (final candidate in _all) {
+      if (candidate.seriesId == seriesId &&
+          !candidate.done &&
+          !candidate.isTombstoned) {
+        return candidate;
+      }
+    }
+    return null;
+  }
 
   bool get hasAny => _all.isNotEmpty;
+
+  void selectSection(TodoListSection value) {
+    section = value;
+    notifyListeners();
+  }
+
+  void setPriorityFilter(TodoPriority? value) {
+    priorityFilter = value;
+    notifyListeners();
+  }
 
   Future<void> load() async {
     loading = true;
@@ -99,20 +169,19 @@ class TodoViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void search(String value) {
-    query = value;
-    notifyListeners();
-  }
-
   Future<void> add({
     required String text,
     required String due,
     TodoRecurrence? recurrence,
-  }) {
-    return _change(_router.addTodo(
+    TodoPriority priority = TodoPriority.normal,
+    List<TodoSubtask> subtasks = const [],
+  }) async {
+    await _change(_router.addTodo(
       text: text,
       due: due,
       recurrence: recurrence,
+      priority: priority,
+      subtasks: subtasks,
       alertMinutes: shortcutSettings.defaultAlertMinutes,
     ));
   }
@@ -121,22 +190,45 @@ class TodoViewModel extends ChangeNotifier {
       {required String text,
       required String due,
       TodoRecurrence? recurrence,
-      bool clearRecurrence = false}) {
-    return _change(_router.editTodo(
+      bool clearRecurrence = false,
+      TodoPriority? priority,
+      List<TodoSubtask>? subtasks}) async {
+    await _change(_router.editTodo(
       id: item.id,
       text: text,
       due: due,
       recurrence: recurrence,
       clearRecurrence: clearRecurrence,
+      priority: priority,
+      subtasks: subtasks,
     ));
   }
 
-  Future<void> toggleDone(TodoItem item) {
-    return _change(_router.setTodoDone(id: item.id, done: !item.done));
+  Future<void> toggleDone(TodoItem item) async {
+    await _change(_router.setTodoDone(id: item.id, done: !item.done));
   }
 
-  Future<void> remove(TodoItem item) {
+  Future<void> toggleSubtask(TodoItem item, TodoSubtask subtask) async {
+    await _change(_router.editTodo(
+      id: item.id,
+      text: item.text,
+      due: item.due,
+      subtasks: [
+        for (final current in item.subtasks)
+          if (current.id == subtask.id)
+            current.copyWith(done: !current.done)
+          else
+            current,
+      ],
+    ));
+  }
+
+  Future<bool> remove(TodoItem item) {
     return _change(_router.removeTodo(item.id));
+  }
+
+  Future<bool> restore(TodoItem item) {
+    return _change(_router.restoreTodo(item.id));
   }
 
   /// Opens the calendar app's new-event screen with this item. The user
@@ -169,11 +261,51 @@ class TodoViewModel extends ChangeNotifier {
     return created ? ReminderOutcome.created : ReminderOutcome.failed;
   }
 
-  Future<void> _change<T>(Future<Result<T>> action) async {
+  Future<bool> _change<T>(Future<Result<T>> action) async {
+    var succeeded = false;
+    Object? actionError;
     (await action).when(
-      onOk: (_) => errorMessage = null,
-      onError: (error, _) => errorMessage = '$error',
+      onOk: (_) => succeeded = true,
+      onError: (error, _) => actionError = error,
     );
     await load();
+    if (actionError != null) {
+      errorMessage = '$actionError';
+      notifyListeners();
+    }
+    return succeeded;
+  }
+
+  bool _belongsToSection(TodoItem item, TodoListSection section) {
+    final state = stateFor(item);
+    return switch (section) {
+      TodoListSection.today =>
+        state == TodoTaskState.today || state == TodoTaskState.noDate,
+      TodoListSection.upcoming => state == TodoTaskState.upcoming,
+      TodoListSection.overdue => state == TodoTaskState.overdue,
+      TodoListSection.completed => false,
+    };
+  }
+
+  List<TodoItem> _sortForSection(
+    List<TodoItem> items,
+    TodoListSection? section,
+  ) {
+    final sorted = [...items];
+    sorted.sort((a, b) {
+      if (a.done != b.done) return a.done ? 1 : -1;
+      if (section == TodoListSection.completed) {
+        final aDate = DateTime.tryParse(a.doneAt ?? '');
+        final bDate = DateTime.tryParse(b.doneAt ?? '');
+        if (aDate != null && bDate != null) return bDate.compareTo(aDate);
+      }
+      final dateOrder =
+          (a.dueDate ?? '9999-99-99').compareTo(b.dueDate ?? '9999-99-99');
+      if (dateOrder != 0) return dateOrder;
+      final timeOrder = (a.dueTime ?? '99:99').compareTo(b.dueTime ?? '99:99');
+      if (timeOrder != 0) return timeOrder;
+      return a.createdAt.compareTo(b.createdAt);
+    });
+    return sorted;
   }
 }

@@ -234,6 +234,20 @@ class TodoService {
             ));
   }
 
+  Future<void> restore({required String userId, required String id}) =>
+      _storageLock.synchronized(() async {
+        final items = await _readAll(userId);
+        final index = items.indexWhere((item) => item.id == id);
+        if (index < 0) throw StateError('todo item not found: $id');
+        final item = items[index];
+        if (!item.isTombstoned) return;
+        items[index] = item.copyWith(
+          clearDeletedAt: true,
+          version: item.version + 1,
+        );
+        await _write(userId, items);
+      });
+
   /// Deleting a session tombstones its open copies and detaches completed ones.
   Future<void> deleteForSession({
     required String userId,

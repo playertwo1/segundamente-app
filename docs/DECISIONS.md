@@ -333,6 +333,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - subtarefas/checklist;
   - prioridade com quatro níveis: baixa, normal, alta e urgente;
   - filtros e busca, que incluem as tarefas concluídas; cada resultado mostra o estado e a data.
+  - tarefas sem data aparecem em Hoje, numa seção “Sem data”, sem receber um prazo.
 - Atalhos prontos, editáveis nas configurações:
   - horários: Manhã 9h, Tarde 14h e Noite 20h;
   - dias: Hoje, Amanhã, Daqui a 3 dias e Semana que vem (= próxima segunda);

@@ -3561,20 +3561,140 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoTitle => 'Lista de tarefas';
 
   @override
-  String get todoSearchHint => 'Buscar na lista';
+  String get todoTabToday => 'Hoje';
 
   @override
-  String get todoEmpty =>
-      'Nada aqui ainda. Aprove uma tarefa num relatório e adicione, ou crie uma à mão.';
+  String get todoTabUpcoming => 'Próximas';
+
+  @override
+  String get todoTabOverdue => 'Atrasadas';
+
+  @override
+  String get todoTabCompleted => 'Concluídas';
+
+  @override
+  String get todoSearchHint => 'Buscar em todas as tarefas';
+
+  @override
+  String get todoSearchResultsHeader => 'Resultados da busca';
+
+  @override
+  String todoSearchResultsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# tarefas em todas as abas',
+      one: '# tarefa em todas as abas',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todoSearchStart => 'Digite para buscar em todas as tarefas.';
 
   @override
   String get todoNoResults => 'Nenhum item combina com a busca.';
 
   @override
-  String get todoAdd => 'Adicionar item';
+  String get todoFilter => 'Filtrar';
 
   @override
-  String get todoEdit => 'Editar item';
+  String get todoPriorityFilterTitle => 'Filtrar por prioridade';
+
+  @override
+  String get todoFilterAll => 'Todas as prioridades';
+
+  @override
+  String get todoFilterClear => 'Limpar filtro';
+
+  @override
+  String get todoPriorityLabel => 'Prioridade';
+
+  @override
+  String get todoPriorityLow => 'Baixa';
+
+  @override
+  String get todoPriorityNormal => 'Normal';
+
+  @override
+  String get todoPriorityHigh => 'Alta';
+
+  @override
+  String get todoPriorityUrgent => 'Urgente';
+
+  @override
+  String get todoStatusToday => 'Hoje';
+
+  @override
+  String get todoStatusUpcoming => 'Próxima';
+
+  @override
+  String get todoStatusOverdue => 'Atrasada';
+
+  @override
+  String get todoStatusCompleted => 'Concluída';
+
+  @override
+  String get todoStatusNoDate => 'Sem data';
+
+  @override
+  String get todoUndatedSection => 'Sem data';
+
+  @override
+  String get todoEmptyToday => 'Nenhuma tarefa para hoje.';
+
+  @override
+  String get todoEmptyUpcoming => 'Nenhuma tarefa próxima.';
+
+  @override
+  String get todoEmptyOverdue => 'Nenhuma tarefa atrasada.';
+
+  @override
+  String get todoEmptyCompleted => 'Nenhuma tarefa concluída.';
+
+  @override
+  String get todoLoadFailed => 'Não foi possível carregar as tarefas.';
+
+  @override
+  String get todoDeleted => 'Tarefa excluída';
+
+  @override
+  String get todoUndo => 'Desfazer';
+
+  @override
+  String get todoSeriesActive => 'Série ativa';
+
+  @override
+  String todoSeriesNext(Object date) {
+    return 'Próxima: $date';
+  }
+
+  @override
+  String get todoTaskActions => 'Ações da tarefa';
+
+  @override
+  String get todoSubtasksTitle => 'Subtarefas';
+
+  @override
+  String get todoSubtaskHint => 'Nova subtarefa';
+
+  @override
+  String get todoSubtaskAdd => 'Adicionar subtarefa';
+
+  @override
+  String get todoSubtaskRemove => 'Remover subtarefa';
+
+  @override
+  String get todoMarkDone => 'Concluir tarefa';
+
+  @override
+  String get todoReopenTask => 'Reabrir tarefa';
+
+  @override
+  String get todoAdd => 'Adicionar tarefa';
+
+  @override
+  String get todoEdit => 'Editar tarefa';
 
   @override
   String get todoTextHint => 'O que precisa ser feito';
@@ -3584,10 +3704,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get todoSave => 'Salvar';
-
-  @override
-  String get todoDeleteMessage =>
-      'Tirar este item da lista? O relatório de onde ele veio não muda.';
 
   @override
   String get todoOpenSource => 'Fonte';

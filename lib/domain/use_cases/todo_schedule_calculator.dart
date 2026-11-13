@@ -3,6 +3,8 @@ import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+enum TodoDateStatus { noDate, today, upcoming, overdue }
+
 class TodoScheduleCalculator {
   TodoScheduleCalculator._();
 
@@ -27,6 +29,20 @@ class TodoScheduleCalculator {
     };
   }
 
+  static DateTime dateTimeInTimeZone(DateTime instant, String timeZone) {
+    final local = tz.TZDateTime.from(instant, _location(timeZone));
+    return DateTime(
+      local.year,
+      local.month,
+      local.day,
+      local.hour,
+      local.minute,
+      local.second,
+      local.millisecond,
+      local.microsecond,
+    );
+  }
+
   static DateTime nextOccurrenceDate({
     required TodoRecurrence recurrence,
     required DateTime afterDate,
@@ -37,6 +53,28 @@ class TodoScheduleCalculator {
       TodoRepeatFrequency.weekly => _nextWeekday(recurrence, after),
       TodoRepeatFrequency.monthly => _nextMonthDay(recurrence, after),
     };
+  }
+
+  static TodoDateStatus statusFor({
+    required String? dueDate,
+    required DateTime now,
+    required String timeZone,
+    String? dueTime,
+  }) {
+    final date = _parseDate(dueDate);
+    if (date == null) return TodoDateStatus.noDate;
+    final localNow = tz.TZDateTime.from(now, _location(timeZone));
+    final today = DateTime.utc(localNow.year, localNow.month, localNow.day);
+    if (date.isBefore(today)) return TodoDateStatus.overdue;
+    if (date.isAfter(today)) return TodoDateStatus.upcoming;
+    if (dueTime == null) return TodoDateStatus.today;
+    try {
+      return _timeHasPassed(dueTime, localNow)
+          ? TodoDateStatus.overdue
+          : TodoDateStatus.today;
+    } on FormatException {
+      return TodoDateStatus.today;
+    }
   }
 
   static DateTime nextUpcomingOccurrenceDate({
@@ -93,6 +131,19 @@ class TodoScheduleCalculator {
       throw FormatException('invalid Todo time: $dueTime');
     }
     return hour * 60 + minute <= now.hour * 60 + now.minute;
+  }
+
+  static DateTime? _parseDate(String? value) {
+    if (value == null) return null;
+    final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final year = int.parse(match.group(1)!);
+    final month = int.parse(match.group(2)!);
+    final day = int.parse(match.group(3)!);
+    final date = DateTime.utc(year, month, day);
+    return date.year == year && date.month == month && date.day == day
+        ? date
+        : null;
   }
 
   static tz.Location _location(String name) {

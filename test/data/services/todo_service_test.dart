@@ -281,6 +281,20 @@ void main() {
     );
   });
 
+  test('restores a tombstone and is safe to repeat', () async {
+    final item = await todos.add(userId: userId, text: 'Ligar para a escola');
+    await todos.remove(userId: userId, id: item.id);
+    final deleted = (await todos.load(userId, includeDeleted: true)).single;
+
+    await todos.restore(userId: userId, id: item.id);
+    final restored = (await todos.load(userId)).single;
+    expect(restored.isTombstoned, isFalse);
+    expect(restored.version, deleted.version + 1);
+
+    await todos.restore(userId: userId, id: item.id);
+    expect((await todos.load(userId)).single.version, restored.version);
+  });
+
   test('deleting a session removes open copies and keeps completed history',
       () async {
     final completed = await todos.addFromReport(

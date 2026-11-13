@@ -93,6 +93,18 @@ void main() {
     );
   });
 
+  test('restores a deleted Todo through the Result repository interface',
+      () async {
+    final added = await repository.add(userId: userId, text: 'Pagar aluguel');
+    final item = added.valueOrThrow;
+    expect((await repository.remove(userId: userId, id: item.id)).isOk, isTrue);
+
+    final restored = await repository.restore(userId: userId, id: item.id);
+
+    expect(restored.isOk, isTrue);
+    expect((await repository.load(userId)).valueOrThrow.single.id, item.id);
+  });
+
   test('persists shortcut preferences through Result repository methods',
       () async {
     final settings = TodoShortcutSettings(

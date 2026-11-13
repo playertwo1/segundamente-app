@@ -12,6 +12,15 @@ import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
+import 'package:uuid/uuid.dart';
+
+typedef _TodoDraft = ({
+  String text,
+  String due,
+  TodoRecurrence? recurrence,
+  TodoPriority priority,
+  List<TodoSubtask> subtasks,
+});
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key, required this.viewModel});
@@ -35,12 +44,7 @@ class _TodoScreenState extends State<TodoScreen> {
   Future<void> _addOrEdit([TodoItem? item]) async {
     await widget.viewModel.refreshShortcutSettings();
     if (!mounted) return;
-    final saved = await showDialog<
-        ({
-          String text,
-          String due,
-          TodoRecurrence? recurrence,
-        })>(
+    final saved = await showDialog<_TodoDraft>(
       context: context,
       builder: (_) => _TodoDialog(
         item: item,
@@ -53,6 +57,8 @@ class _TodoScreenState extends State<TodoScreen> {
         text: saved.text,
         due: saved.due,
         recurrence: saved.recurrence,
+        priority: saved.priority,
+        subtasks: saved.subtasks,
       );
     } else {
       await widget.viewModel.edit(
@@ -61,33 +67,25 @@ class _TodoScreenState extends State<TodoScreen> {
         due: saved.due,
         recurrence: saved.recurrence,
         clearRecurrence: saved.recurrence == null,
+        priority: saved.priority,
+        subtasks: saved.subtasks,
       );
     }
   }
 
   Future<void> _remove(TodoItem item) async {
+    if (!await widget.viewModel.remove(item) || !mounted) return;
     final l10n = UserStorage.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: Text(l10n.confirmDelete),
-        content: Text(l10n.todoDeleteMessage),
-        actions: [
-          TextButton(
-            key: const ValueKey('todo_delete_cancel'),
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            key: const ValueKey('todo_delete_confirm'),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) await widget.viewModel.remove(item);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l10n.todoDeleted),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: l10n.todoUndo,
+          onPressed: () => widget.viewModel.restore(item),
+        ),
+      ));
   }
 
   Future<void> _calendar(TodoItem item) async {
@@ -142,63 +140,340 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
+  Future<void> _openSearch() => Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => _TodoSearchScreen(
+            viewModel: widget.viewModel,
+            onEdit: _addOrEdit,
+            onDelete: _remove,
+            onCalendar: _calendar,
+            onReminder: _reminder,
+            onOpenSource: _openSource,
+          ),
+        ),
+      );
+
+  Future<void> _taskAction(TodoItem item, _TodoTaskAction action) async {
+    switch (action) {
+      case _TodoTaskAction.edit:
+        await _addOrEdit(item);
+      case _TodoTaskAction.delete:
+        await _remove(item);
+      case _TodoTaskAction.calendar:
+        await _calendar(item);
+      case _TodoTaskAction.reminder:
+        await _reminder(item);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = UserStorage.l10n;
+    return DefaultTabController(
+      length: TodoListSection.values.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.todoTitle),
+          bottom: TabBar(
+            isScrollable: true,
+            onTap: (index) => widget.viewModel.selectSection(
+              TodoListSection.values[index],
+            ),
+            tabs: [
+              Tab(text: l10n.todoTabToday),
+              Tab(text: l10n.todoTabUpcoming),
+              Tab(text: l10n.todoTabOverdue),
+              Tab(text: l10n.todoTabCompleted),
+            ],
+          ),
+          actions: [
+            IconButton(
+              key: const ValueKey('todo_open_search'),
+              tooltip: l10n.todoSearchHint,
+              icon: const Icon(Icons.search),
+              onPressed: _openSearch,
+            ),
+            _TodoPriorityFilterButton(viewModel: widget.viewModel),
+            IconButton(
+              key: const ValueKey('todo_add'),
+              tooltip: l10n.todoAdd,
+              icon: const Icon(Icons.add),
+              onPressed: _addOrEdit,
+            ),
+          ],
+        ),
+        body: ListenableBuilder(
+          listenable: widget.viewModel,
+          builder: (context, _) {
+            final viewModel = widget.viewModel;
+            if (viewModel.loading && !viewModel.hasAny) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (viewModel.errorMessage != null && !viewModel.hasAny) {
+              return _loadError(l10n, viewModel);
+            }
+            return Column(
+              children: [
+                if (viewModel.errorMessage != null)
+                  MaterialBanner(
+                    key: const ValueKey('todo_error'),
+                    content: Text(l10n.todoLoadFailed),
+                    actions: [
+                      TextButton(
+                        onPressed: viewModel.load,
+                        child: Text(l10n.todoRetry),
+                      ),
+                    ],
+                  ),
+                Expanded(
+                  child: _sectionBody(viewModel, l10n),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _loadError(AppLocalizations l10n, TodoViewModel viewModel) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.todoLoadFailed, key: const ValueKey('todo_error')),
+              const SizedBox(height: 12),
+              FilledButton(
+                key: const ValueKey('todo_retry'),
+                onPressed: viewModel.load,
+                child: Text(l10n.todoRetry),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _sectionBody(TodoViewModel viewModel, AppLocalizations l10n) {
+    final section = viewModel.section;
+    final items = viewModel.itemsFor(section);
+    if (items.isEmpty) {
+      final message = viewModel.priorityFilter != null
+          ? l10n.todoNoResults
+          : switch (section) {
+              TodoListSection.today => l10n.todoEmptyToday,
+              TodoListSection.upcoming => l10n.todoEmptyUpcoming,
+              TodoListSection.overdue => l10n.todoEmptyOverdue,
+              TodoListSection.completed => l10n.todoEmptyCompleted,
+            };
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(message, key: const ValueKey('todo_empty')),
+              if (!viewModel.hasAny && section == TodoListSection.today) ...[
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: _addOrEdit,
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.todoAdd),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+    final undated = section == TodoListSection.today
+        ? [
+            for (final item in items)
+              if (viewModel.stateFor(item) == TodoTaskState.noDate) item,
+          ]
+        : const <TodoItem>[];
+    final dated = undated.isEmpty
+        ? items
+        : [
+            for (final item in items)
+              if (!undated.contains(item)) item
+          ];
+    return ListView(
+      key: ValueKey('todo_section_${section.name}'),
+      children: [
+        for (final item in dated) _taskRow(item, l10n, viewModel),
+        if (undated.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+            child: Text(
+              l10n.todoUndatedSection,
+              key: const ValueKey('todo_undated_header'),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+          ),
+          for (final item in undated) _taskRow(item, l10n, viewModel),
+        ],
+      ],
+    );
+  }
+
+  Widget _taskRow(
+    TodoItem item,
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+  ) =>
+      _TodoTaskRow(
+        item: item,
+        viewModel: viewModel,
+        onEdit: () => _addOrEdit(item),
+        onDone: (_) => viewModel.toggleDone(item),
+        onSubtask: (subtask) => viewModel.toggleSubtask(item, subtask),
+        onAction: (action) => _taskAction(item, action),
+        onOpenSource: () => _openSource(item),
+      );
+}
+
+enum _TodoTaskAction { edit, delete, calendar, reminder }
+
+class _TodoPriorityFilterButton extends StatelessWidget {
+  const _TodoPriorityFilterButton({required this.viewModel});
+
+  final TodoViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = UserStorage.l10n;
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) => PopupMenuButton<String>(
+        key: const ValueKey('todo_priority_filter'),
+        tooltip: l10n.todoFilter,
+        icon: Icon(
+          Icons.filter_list,
+          color: viewModel.priorityFilter == null ? null : AppColors.primary,
+        ),
+        onSelected: (value) => viewModel.setPriorityFilter(
+          value == 'all'
+              ? null
+              : TodoPriority.values
+                  .firstWhere((priority) => priority.name == value),
+        ),
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'all', child: Text(l10n.todoFilterAll)),
+          for (final priority in TodoPriority.values)
+            PopupMenuItem(
+              value: priority.name,
+              child: Text(_priorityLabel(l10n, priority)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodoSearchScreen extends StatefulWidget {
+  const _TodoSearchScreen({
+    super.key,
+    required this.viewModel,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onCalendar,
+    required this.onReminder,
+    required this.onOpenSource,
+  });
+
+  final TodoViewModel viewModel;
+  final Future<void> Function(TodoItem item) onEdit;
+  final Future<void> Function(TodoItem item) onDelete;
+  final Future<void> Function(TodoItem item) onCalendar;
+  final Future<void> Function(TodoItem item) onReminder;
+  final void Function(TodoItem item) onOpenSource;
+
+  @override
+  State<_TodoSearchScreen> createState() => _TodoSearchScreenState();
+}
+
+class _TodoSearchScreenState extends State<_TodoSearchScreen> {
+  String _query = '';
+
+  Future<void> _action(TodoItem item, _TodoTaskAction action) async {
+    switch (action) {
+      case _TodoTaskAction.edit:
+        await widget.onEdit(item);
+      case _TodoTaskAction.delete:
+        await widget.onDelete(item);
+      case _TodoTaskAction.calendar:
+        await widget.onCalendar(item);
+      case _TodoTaskAction.reminder:
+        await widget.onReminder(item);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = UserStorage.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.todoTitle),
+        title: Text(l10n.todoSearchResultsHeader),
         actions: [
-          IconButton(
-            key: const ValueKey('todo_add'),
-            tooltip: l10n.todoAdd,
-            icon: const Icon(Icons.add),
-            onPressed: _addOrEdit,
-          ),
+          _TodoPriorityFilterButton(viewModel: widget.viewModel),
         ],
       ),
       body: ListenableBuilder(
         listenable: widget.viewModel,
         builder: (context, _) {
-          final viewModel = widget.viewModel;
-          if (viewModel.loading && !viewModel.hasAny) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final items = viewModel.items;
+          final results = widget.viewModel.searchResults(_query);
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: TextField(
                   key: const ValueKey('todo_search'),
-                  decoration: InputDecoration(hintText: l10n.todoSearchHint),
-                  onChanged: viewModel.search,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: l10n.todoSearchHint,
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                  onChanged: (value) => setState(() => _query = value),
                 ),
               ),
-              if (viewModel.errorMessage != null)
-                Text(
-                  viewModel.errorMessage!,
-                  key: const ValueKey('todo_error'),
+              if (_query.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(l10n.todoSearchResultsCount(results.length)),
+                  ),
                 ),
               Expanded(
-                child: items.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Text(
-                            viewModel.hasAny
-                                ? l10n.todoNoResults
-                                : l10n.todoEmpty,
-                            textAlign: TextAlign.center,
-                            key: const ValueKey('todo_empty'),
+                child: _query.trim().isEmpty
+                    ? Center(child: Text(l10n.todoSearchStart))
+                    : results.isEmpty
+                        ? Center(
+                            child: Text(
+                              l10n.todoNoResults,
+                              key: const ValueKey('todo_search_empty'),
+                            ),
+                          )
+                        : ListView(
+                            key: const ValueKey('todo_search_results'),
+                            children: [
+                              for (final item in results)
+                                _TodoTaskRow(
+                                  item: item,
+                                  viewModel: widget.viewModel,
+                                  onEdit: () => widget.onEdit(item),
+                                  onDone: (_) =>
+                                      widget.viewModel.toggleDone(item),
+                                  onSubtask: (subtask) => widget.viewModel
+                                      .toggleSubtask(item, subtask),
+                                  onAction: (action) => _action(item, action),
+                                  onOpenSource: () => widget.onOpenSource(item),
+                                ),
+                            ],
                           ),
-                        ),
-                      )
-                    : ListView(
-                        children: [
-                          for (final item in items) _tile(item, l10n),
-                        ],
-                      ),
               ),
             ],
           );
@@ -206,74 +481,187 @@ class _TodoScreenState extends State<TodoScreen> {
       ),
     );
   }
+}
 
-  Widget _tile(TodoItem item, AppLocalizations l10n) {
+class _TodoTaskRow extends StatelessWidget {
+  const _TodoTaskRow({
+    required this.item,
+    required this.viewModel,
+    required this.onEdit,
+    required this.onDone,
+    required this.onSubtask,
+    required this.onAction,
+    required this.onOpenSource,
+  });
+
+  final TodoItem item;
+  final TodoViewModel viewModel;
+  final VoidCallback onEdit;
+  final ValueChanged<bool> onDone;
+  final ValueChanged<TodoSubtask> onSubtask;
+  final ValueChanged<_TodoTaskAction> onAction;
+  final VoidCallback onOpenSource;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = UserStorage.l10n;
     final source = item.source;
-    return ListTile(
+    return Column(
       key: ValueKey('todo_${item.id}'),
-      leading: Semantics(
-        label: item.text,
-        child: Checkbox(
-          key: ValueKey('todo_done_${item.id}'),
-          value: item.done,
-          onChanged: (_) => widget.viewModel.toggleDone(item),
-        ),
-      ),
-      title: Text(
-        item.text,
-        style: item.done
-            ? const TextStyle(decoration: TextDecoration.lineThrough)
-            : null,
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(item.due),
-          if (source != null)
-            InkWell(
-              key: ValueKey('todo_source_${item.id}'),
-              onTap: () => _openSource(item),
-              child: Text(
-                '${l10n.todoOpenSource}: ${source.clock ?? ''} '
-                '"${source.excerpt}"',
-              ),
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          leading: Semantics(
+            label: item.done ? l10n.todoReopenTask : l10n.todoMarkDone,
+            child: Checkbox(
+              key: ValueKey('todo_done_${item.id}'),
+              value: item.done,
+              onChanged: (value) => onDone(value ?? !item.done),
             ),
-          if (item.sourceStale)
-            Text(
-              l10n.todoSourceChanged,
-              key: ValueKey('todo_source_stale_${item.id}'),
-            ),
-        ],
-      ),
-      onTap: () => _addOrEdit(item),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!item.done && calendarSlotFor(item.due) != null)
-            IconButton(
-              key: ValueKey('todo_calendar_${item.id}'),
-              tooltip: l10n.addToCalendar,
-              icon: const Icon(Icons.event_outlined),
-              onPressed: () => _calendar(item),
-            ),
-          if (!item.done && TodoViewModel.reminderTimeFor(item.due) != null)
-            IconButton(
-              key: ValueKey('todo_reminder_${item.id}'),
-              tooltip: l10n.addToReminders,
-              icon: const Icon(Icons.alarm_add_outlined),
-              onPressed: () => _reminder(item),
-            ),
-          IconButton(
-            key: ValueKey('todo_remove_${item.id}'),
-            tooltip: l10n.delete,
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () => _remove(item),
           ),
-        ],
-      ),
+          title: Text(
+            item.text,
+            style: item.done
+                ? const TextStyle(decoration: TextDecoration.lineThrough)
+                : null,
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _statusAndDate(item, viewModel, l10n, context),
+                key: ValueKey('todo_status_date_${item.id}'),
+              ),
+              Text(
+                _priorityLabel(l10n, item.priority),
+                key: ValueKey('todo_priority_${item.id}'),
+                style: TextStyle(color: _priorityColor(item.priority)),
+              ),
+              if (source != null)
+                InkWell(
+                  key: ValueKey('todo_source_${item.id}'),
+                  onTap: onOpenSource,
+                  child: Text(
+                    '${l10n.todoOpenSource}: ${source.clock ?? ''} '
+                    '"${source.excerpt}"',
+                  ),
+                ),
+              if (item.sourceStale)
+                Text(
+                  l10n.todoSourceChanged,
+                  key: ValueKey('todo_source_stale_${item.id}'),
+                ),
+              if (item.done)
+                if (viewModel.nextOccurrenceFor(item) case final next?) ...[
+                  const SizedBox(height: 3),
+                  Text(l10n.todoSeriesActive),
+                  Text(
+                    l10n.todoSeriesNext(_formatScheduleDate(next, context)),
+                  ),
+                ],
+            ],
+          ),
+          onTap: onEdit,
+          trailing: PopupMenuButton<_TodoTaskAction>(
+            key: ValueKey('todo_actions_${item.id}'),
+            tooltip: l10n.todoTaskActions,
+            onSelected: onAction,
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: _TodoTaskAction.edit,
+                child: Text(l10n.todoEdit),
+              ),
+              if (!item.done && calendarSlotFor(item.due) != null)
+                PopupMenuItem(
+                  value: _TodoTaskAction.calendar,
+                  child: Text(l10n.addToCalendar),
+                ),
+              if (!item.done && TodoViewModel.reminderTimeFor(item.due) != null)
+                PopupMenuItem(
+                  value: _TodoTaskAction.reminder,
+                  child: Text(l10n.addToReminders),
+                ),
+              PopupMenuItem(
+                value: _TodoTaskAction.delete,
+                child: Text(l10n.delete),
+              ),
+            ],
+          ),
+        ),
+        for (final subtask in item.subtasks)
+          CheckboxListTile(
+            key: ValueKey('todo_subtask_${item.id}_${subtask.id}'),
+            contentPadding: const EdgeInsets.only(left: 48, right: 16),
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: subtask.done,
+            onChanged: (_) => onSubtask(subtask),
+            title: Text(
+              subtask.text,
+              style: subtask.done
+                  ? const TextStyle(decoration: TextDecoration.lineThrough)
+                  : null,
+            ),
+          ),
+        const Divider(height: 1, indent: 16, endIndent: 16),
+      ],
     );
   }
 }
+
+String _statusAndDate(
+  TodoItem item,
+  TodoViewModel viewModel,
+  AppLocalizations l10n,
+  BuildContext context,
+) {
+  final state = viewModel.stateFor(item);
+  final label = switch (state) {
+    TodoTaskState.noDate => l10n.todoStatusNoDate,
+    TodoTaskState.today => l10n.todoStatusToday,
+    TodoTaskState.upcoming => l10n.todoStatusUpcoming,
+    TodoTaskState.overdue => l10n.todoStatusOverdue,
+    TodoTaskState.completed => l10n.todoStatusCompleted,
+  };
+  DateTime? date;
+  if (item.done && item.doneAt != null) {
+    final instant = DateTime.tryParse(item.doneAt!);
+    if (instant != null) {
+      date = TodoScheduleCalculator.dateTimeInTimeZone(instant, item.timeZone);
+    }
+  }
+  date ??= DateTime.tryParse(item.dueDate ?? '');
+  if (item.done) date ??= DateTime.tryParse(item.createdAt);
+  final dateLabel = date == null
+      ? null
+      : DateFormat.yMMMd(Localizations.localeOf(context).toString())
+          .format(date);
+  if (dateLabel == null) return label;
+  final time = item.done ? null : item.dueTime;
+  return '$label · $dateLabel${time == null ? '' : ' · $time'}';
+}
+
+String _formatScheduleDate(TodoItem item, BuildContext context) {
+  final date = DateTime.tryParse(item.dueDate ?? '');
+  if (date == null) return item.due;
+  return DateFormat.yMMMd(Localizations.localeOf(context).toString())
+      .format(date);
+}
+
+String _priorityLabel(AppLocalizations l10n, TodoPriority priority) =>
+    switch (priority) {
+      TodoPriority.low => l10n.todoPriorityLow,
+      TodoPriority.normal => l10n.todoPriorityNormal,
+      TodoPriority.high => l10n.todoPriorityHigh,
+      TodoPriority.urgent => l10n.todoPriorityUrgent,
+    };
+
+Color _priorityColor(TodoPriority priority) => switch (priority) {
+      TodoPriority.low || TodoPriority.normal => AppColors.textSecondary,
+      TodoPriority.high => AppColors.primary,
+      TodoPriority.urgent => AppColors.danger,
+    };
 
 class _TodoDialog extends StatefulWidget {
   const _TodoDialog({this.item, required this.settings});
@@ -291,6 +679,11 @@ class _TodoDialogState extends State<_TodoDialog> {
     text: _initialDate(widget.item),
   );
   late final _time = TextEditingController(text: _initialTime(widget.item));
+  late final _newSubtask = TextEditingController();
+  late final List<TodoSubtask> _subtasks = [
+    ...?widget.item?.subtasks,
+  ];
+  late TodoPriority _priority = widget.item?.priority ?? TodoPriority.normal;
   late TodoRepeatFrequency? _frequency = widget.item?.recurrence?.frequency;
   late final Set<int> _weekdays =
       widget.item?.recurrence?.frequency == TodoRepeatFrequency.weekly
@@ -303,6 +696,7 @@ class _TodoDialogState extends State<_TodoDialog> {
     _text.dispose();
     _due.dispose();
     _time.dispose();
+    _newSubtask.dispose();
     super.dispose();
   }
 
@@ -324,6 +718,22 @@ class _TodoDialogState extends State<_TodoDialog> {
                 key: const ValueKey('todo_text'),
                 controller: _text,
                 decoration: InputDecoration(hintText: l10n.todoTextHint),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<TodoPriority>(
+                key: const ValueKey('todo_priority_editor'),
+                value: _priority,
+                decoration: InputDecoration(labelText: l10n.todoPriorityLabel),
+                items: [
+                  for (final priority in TodoPriority.values)
+                    DropdownMenuItem(
+                      value: priority,
+                      child: Text(_priorityLabel(l10n, priority)),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _priority = value);
+                },
               ),
               const SizedBox(height: 12),
               TextField(
@@ -455,6 +865,47 @@ class _TodoDialogState extends State<_TodoDialog> {
                     ),
                   ),
                 ),
+              const SizedBox(height: 16),
+              Text(l10n.todoSubtasksTitle),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('todo_subtask_new'),
+                      controller: _newSubtask,
+                      decoration:
+                          InputDecoration(hintText: l10n.todoSubtaskHint),
+                      onSubmitted: (_) => _addSubtask(),
+                    ),
+                  ),
+                  IconButton(
+                    key: const ValueKey('todo_subtask_add'),
+                    tooltip: l10n.todoSubtaskAdd,
+                    onPressed: _addSubtask,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              for (var index = 0; index < _subtasks.length; index++)
+                ListTile(
+                  key: ValueKey('todo_subtask_editor_${_subtasks[index].id}'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Checkbox(
+                    value: _subtasks[index].done,
+                    onChanged: (value) => setState(() {
+                      _subtasks[index] = _subtasks[index].copyWith(
+                        done: value ?? false,
+                      );
+                    }),
+                  ),
+                  title: Text(_subtasks[index].text),
+                  trailing: IconButton(
+                    tooltip: l10n.todoSubtaskRemove,
+                    onPressed: () => setState(() => _subtasks.removeAt(index)),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
             ],
           ),
         ),
@@ -469,7 +920,7 @@ class _TodoDialogState extends State<_TodoDialog> {
           key: const ValueKey('todo_dialog_save'),
           onPressed: () {
             if (_text.text.trim().isEmpty) return;
-            final recurrence = _recurrence();
+            final TodoRecurrence? recurrence = _recurrence();
             if (_time.text.trim().isNotEmpty && !_validTime) {
               setState(() => _scheduleError = l10n.todoTimeInvalid);
               return;
@@ -482,16 +933,27 @@ class _TodoDialogState extends State<_TodoDialog> {
               setState(() => _scheduleError = l10n.todoRepeatRequiresDate);
               return;
             }
-            Navigator.of(context).pop((
+            Navigator.of(context).pop<_TodoDraft>((
               text: _text.text,
               due: _combinedDue,
               recurrence: recurrence,
+              priority: _priority,
+              subtasks: List<TodoSubtask>.unmodifiable(_subtasks),
             ));
           },
           child: Text(l10n.todoSave),
         ),
       ],
     );
+  }
+
+  void _addSubtask() {
+    final text = _newSubtask.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _subtasks.add(TodoSubtask(id: const Uuid().v4(), text: text));
+      _newSubtask.clear();
+    });
   }
 
   Widget _repeatChip(TodoRepeatFrequency? frequency, String label) =>

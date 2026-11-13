@@ -3526,20 +3526,140 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoTitle => 'To-do list';
 
   @override
-  String get todoSearchHint => 'Search the list';
+  String get todoTabToday => 'Today';
 
   @override
-  String get todoEmpty =>
-      'Nothing here yet. Approve a task in a report and add it, or add one by hand.';
+  String get todoTabUpcoming => 'Upcoming';
+
+  @override
+  String get todoTabOverdue => 'Overdue';
+
+  @override
+  String get todoTabCompleted => 'Completed';
+
+  @override
+  String get todoSearchHint => 'Search all tasks';
+
+  @override
+  String get todoSearchResultsHeader => 'Search results';
+
+  @override
+  String todoSearchResultsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# tasks across all tabs',
+      one: '# task across all tabs',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todoSearchStart => 'Type to search all tasks.';
 
   @override
   String get todoNoResults => 'No item matches this search.';
 
   @override
-  String get todoAdd => 'Add item';
+  String get todoFilter => 'Filter';
 
   @override
-  String get todoEdit => 'Edit item';
+  String get todoPriorityFilterTitle => 'Filter by priority';
+
+  @override
+  String get todoFilterAll => 'All priorities';
+
+  @override
+  String get todoFilterClear => 'Clear filter';
+
+  @override
+  String get todoPriorityLabel => 'Priority';
+
+  @override
+  String get todoPriorityLow => 'Low';
+
+  @override
+  String get todoPriorityNormal => 'Normal';
+
+  @override
+  String get todoPriorityHigh => 'High';
+
+  @override
+  String get todoPriorityUrgent => 'Urgent';
+
+  @override
+  String get todoStatusToday => 'Today';
+
+  @override
+  String get todoStatusUpcoming => 'Upcoming';
+
+  @override
+  String get todoStatusOverdue => 'Overdue';
+
+  @override
+  String get todoStatusCompleted => 'Completed';
+
+  @override
+  String get todoStatusNoDate => 'No date';
+
+  @override
+  String get todoUndatedSection => 'No date';
+
+  @override
+  String get todoEmptyToday => 'No tasks for today.';
+
+  @override
+  String get todoEmptyUpcoming => 'No upcoming tasks.';
+
+  @override
+  String get todoEmptyOverdue => 'No overdue tasks.';
+
+  @override
+  String get todoEmptyCompleted => 'No completed tasks.';
+
+  @override
+  String get todoLoadFailed => 'Could not load tasks.';
+
+  @override
+  String get todoDeleted => 'Task deleted';
+
+  @override
+  String get todoUndo => 'Undo';
+
+  @override
+  String get todoSeriesActive => 'Series active';
+
+  @override
+  String todoSeriesNext(Object date) {
+    return 'Next: $date';
+  }
+
+  @override
+  String get todoTaskActions => 'Task actions';
+
+  @override
+  String get todoSubtasksTitle => 'Subtasks';
+
+  @override
+  String get todoSubtaskHint => 'New subtask';
+
+  @override
+  String get todoSubtaskAdd => 'Add subtask';
+
+  @override
+  String get todoSubtaskRemove => 'Remove subtask';
+
+  @override
+  String get todoMarkDone => 'Complete task';
+
+  @override
+  String get todoReopenTask => 'Reopen task';
+
+  @override
+  String get todoAdd => 'Add task';
+
+  @override
+  String get todoEdit => 'Edit task';
 
   @override
   String get todoTextHint => 'What needs to be done';
@@ -3549,10 +3669,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get todoSave => 'Save';
-
-  @override
-  String get todoDeleteMessage =>
-      'Remove this item from the list? The report it came from is not changed.';
 
   @override
   String get todoOpenSource => 'Source';

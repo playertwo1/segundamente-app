@@ -103,6 +103,63 @@ void main() {
     expect(next, DateTime.utc(2026, 11, 13));
   });
 
+  test('classifies tasks by local date and due time', () {
+    final now = DateTime.utc(2026, 11, 14, 1); // 22:00 in São Paulo on Nov 13.
+
+    expect(
+      TodoScheduleCalculator.statusFor(
+        dueDate: null,
+        now: now,
+        timeZone: 'America/Sao_Paulo',
+      ),
+      TodoDateStatus.noDate,
+    );
+    expect(
+      TodoScheduleCalculator.statusFor(
+        dueDate: '2026-11-12',
+        now: now,
+        timeZone: 'America/Sao_Paulo',
+      ),
+      TodoDateStatus.overdue,
+    );
+    expect(
+      TodoScheduleCalculator.statusFor(
+        dueDate: '2026-11-13',
+        dueTime: '23:00',
+        now: now,
+        timeZone: 'America/Sao_Paulo',
+      ),
+      TodoDateStatus.today,
+    );
+    expect(
+      TodoScheduleCalculator.statusFor(
+        dueDate: '2026-11-13',
+        dueTime: '09:00',
+        now: now,
+        timeZone: 'America/Sao_Paulo',
+      ),
+      TodoDateStatus.overdue,
+    );
+    expect(
+      TodoScheduleCalculator.statusFor(
+        dueDate: '2026-11-14',
+        now: now,
+        timeZone: 'America/Sao_Paulo',
+      ),
+      TodoDateStatus.upcoming,
+    );
+  });
+
+  test('converts completion timestamps to the task timezone', () {
+    expect(
+      TodoScheduleCalculator.dateTimeInTimeZone(
+        DateTime.utc(2026, 11, 14, 1),
+        'America/Sao_Paulo',
+      ),
+      DateTime(2026, 11, 13, 22),
+    );
+  });
+
   test('monthly day 31 clamps to the last day of short months', () {
     final february = TodoScheduleCalculator.nextOccurrenceDate(
       recurrence: TodoRecurrence.monthly(31),
