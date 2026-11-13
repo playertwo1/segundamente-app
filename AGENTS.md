@@ -1,10 +1,62 @@
-# Memex — Project Context for Coding Agent
+# Segunda Mente — guia para agentes de código
+
+Este é o arquivo canônico de instruções para qualquer agente (Codex, Claude Code, Gemini, Antigravity). `CLAUDE.md` e `GEMINI.md` só apontam para cá. A parte 1 é a do projeto; a parte 2 são as regras de código herdadas do Memex e continuam valendo.
+
+## Parte 1 — Projeto
+
+### O que é
+A Segunda Mente é um fork privado do [Memex](https://github.com/memex-lab/memex) (Flutter, GPL-3.0). É um diário de vida local-first com IA, memória e personas, e está virando um assistente pessoal de trabalho com Todo robusto. Tem um lado desktop, o **Lumen**, que vive em outro repositório: o fork `playertwo1/coucou` (Tauri, Rust e TypeScript). Os dois trocam dados por sync (D-050 a D-055).
+
+### Antes de agir, leia nesta ordem
+1. [STATE.md](STATE.md): estado atual, próxima ação, pendências e evidências recentes.
+2. [ROADMAP.md](ROADMAP.md): regras, estados, mapa e ordem de trabalho. Depois abra **só** o arquivo da fase em `docs/roadmap/`.
+3. [docs/DECISIONS.md](docs/DECISIONS.md): decisões aceitas (D-xxx). Não contrarie uma decisão aceita sem uma nova registrada.
+4. Quando precisar: [PROJECT.md](PROJECT.md) (escopo), [DESIGN.md](DESIGN.md) (visual), [docs/WATCHDOG.md](docs/WATCHDOG.md) (regras de execução), [docs/AUDIT.md](docs/AUDIT.md) (auditoria antes de fechar fase) e [docs/INDEX.md](docs/INDEX.md) (índice de tudo).
+
+### Mapa do repositório
+| Caminho | Conteúdo |
+|---|---|
+| `lib/`, `test/` | App Flutter e testes (estrutura na parte 2) |
+| `android/`, `ios/`, `plugins/` | Código nativo e plugins locais |
+| `tools/` | Sondas e utilitários de medição (fora do app) |
+| `docs/roadmap/` | Um arquivo por fase (F0–F14) |
+| `docs/fases/` | Documentos de trabalho das fases: estudos, viabilidade, medições |
+| `docs/questionario/` | Decisões tomadas por questionário com o dono |
+| `docs/medicoes/` | Dados brutos e scripts de medição |
+| `docs/reviews/`, `docs/releases/` | Auditorias e notas de release |
+| `docs/testes/` | Roteiros de teste no aparelho |
+| `docs/lumen/` | Pacote de planejamento do Lumen (base; as decisões mandam) |
+| `docs/historico/` | STATE arquivado; não editar |
+| `docs/imagens/`, `docs/prompts/` | Imagens dos documentos e prompts de geração |
+| `docs/upstream/` | Documentos herdados do Memex, mantidos como referência; podem citar código que não existe mais |
+
+### Regras de trabalho
+- **Evidência:** subfase só vira `DONE` com evidência registrada em STATE.md. O que não foi executado é `NOT_RUN`, nunca `PASS`. Compilar não é validar.
+- **Escopo:** só subfases `READY` da ordem de trabalho vigente. `BLOCKED` e `PAUSED` exigem uma nova decisão registrada antes de abrir.
+- **Aparelho:** fluxos com notificação, áudio, permissão ou segundo plano são validados no Galaxy S25 Ultra. O emulador é apoio.
+- **Dados:** segredos, chaves, tokens, keystores e client IDs nunca entram no repositório. Não registrar conteúdo pessoal do dono, nem dados de clientes ou do trabalho dele, em documentos, logs ou fixtures. Use dados sintéticos.
+- **IA:** a IA propõe e o usuário confirma. Nada de tarefa, data, e-mail ou mensagem gravado ou enviado sem confirmação.
+- **Idioma:** documentos e mensagens de commit em pt-BR; código e identificadores em inglês. App só em inglês e português (D-012).
+- **Ambiente local:** Flutter fora do PATH e cuidados com `analysis_options.yaml`, descritos em STATE.md, seção Ambiente.
+
+### Git
+- `origin` = `https://github.com/playertwo1/segundamente-app.git` (privado) é o único destino de push. `upstream` = `memex-lab/memex` serve só para buscar atualizações; nunca enviar para ele. O fork público antigo `playertwo1/segundamente` está arquivado e não recebe push.
+- Trabalhe numa branch (`feat/…`, `fix/…`, `docs/…`) e integre na `main` com merge depois dos testes. Commits em pt-BR, no estilo Conventional Commits (`feat(todo): …`).
+- Não commitar `analysis_options.yaml` nem `android/gradle.properties` reescritos pelo Flutter.
+- Release: só com pedido do dono. Siga a última nota em `docs/releases/` e registre a nova.
+
+### Ao terminar uma tarefa
+1. Rode os testes da área alterada e, quando der, `flutter analyze`. Registre os comandos e as saídas.
+2. Atualize STATE.md (evidências recentes e próxima ação) e o estado da subfase no arquivo da fase.
+3. Decisão nova, de produto ou cara de desfazer, vai como D-xxx em `docs/DECISIONS.md`.
+
+## Parte 2 — Regras de código (herdadas do Memex)
 
 > *"Always leave the code better than you found it."* — The Boy Scout Rule
 
 Memex is a local-first, AI-powered personal life recording app built with Flutter (iOS + Android). The user's journal workspace is stored locally: timeline cards, PKM files, media assets, schedules, knowledge insights, and indexes live under the selected filesystem root plus SQLite. AI features use the configured model service (BYO provider, local Ollama, OAuth providers, or optional Memex AI for model access/billing); Memex does not host the user's journal data. SuperAgent orchestrates specialist workers that turn raw inputs into timeline cards, PKM entries, schedule state, knowledge insights, comments, and long-term memory updates. Respect the existing abstractions: use the right service for data access, follow the layer boundaries, and read the surrounding code before making changes. Shortcuts that bypass encapsulation create bugs that are hard to trace in a system with agents, event pipelines, and per-user isolation.
 
-## Build & Run
+### Build & Run
 
 ```bash
 flutter pub get
@@ -19,7 +71,7 @@ cd ios && pod install && cd ..
 
 Never edit `*.g.dart` files — always regenerate.
 
-## Testing Requirements
+### Testing Requirements
 
 Behavior changes must include tests in the same PR. Documentation, comments, or
 pure repository configuration changes may skip app tests only when the PR test
@@ -44,11 +96,11 @@ plan explains why.
   `flutter test` and `flutter analyze` before publishing when feasible. If a
   command is not run, the PR test plan must state the exact reason.
 
-## Architecture
+### Architecture
 
 **MVVM + Provider** following [Flutter app architecture guide](https://docs.flutter.dev/app-architecture/guide).
 
-### Layers
+#### Layers
 
 - **UI layer** — Views (widgets) contain no business logic. ViewModels extend `ChangeNotifier`, each UI feature has `view_models/` and `widgets/` subdirectories.
 - **Data layer** — `MemexRouter` is a thin routing/facade; it delegates to repositories and services. **Do not put complex business logic in MemexRouter.** New features should add repository functions or service classes, then wire them through MemexRouter.
@@ -56,7 +108,7 @@ plan explains why.
   - **Services** (`data/services/`) — local-first app services play the backend role for local work: filesystem I/O, SQLite, task execution, search indexing, LLM client calls, optional Memex AI/account integration, health data, speech transcription, etc. Can be stateful singletons.
 - **Domain layer** — `domain/models/` for business models (e.g. `TimelineCardModel`, `LLMConfig`). `data/model/` for protocol/transport DTOs (e.g. `ChatEvent`). Don't mix them. Optional `domain/use_cases/` for complex logic that merges multiple repositories or is reused across ViewModels.
 
-### Dependency rules
+#### Dependency rules
 
 - `dependencies.dart` registers **only** repositories/services (currently just `MemexRouter`), **never ViewModels**
 - ViewModels receive `MemexRouter` via constructor: `MyViewModel({required MemexRouter router})`
@@ -64,11 +116,11 @@ plan explains why.
 - `data/` layer must NOT depend on `ui/` or any specific feature
 - `domain/models/` must NOT depend on Flutter, Repository, or Service
 
-## Logging
+### Logging
 
 Use `getLogger('ComponentName')` from `utils/logger.dart` (wraps `package:logging`), not `print()`.
 
-### ViewModel ↔ Screen wiring
+#### ViewModel ↔ Screen wiring
 
 **Naming conventions:**
 - ViewModels: `*_viewmodel.dart` (lowercase), class `XxxViewModel`
@@ -82,7 +134,7 @@ Use `getLogger('ComponentName')` from `utils/logger.dart` (wraps `package:loggin
 - Sub-route ViewModels: created in `router.dart` route builders with `context.read<MemexRouter>()`
 - Root-level ViewModels (Timeline, Insight, KnowledgeBase): created once in `RootShell` via `MultiProvider`, passed down to tab screens via constructor
 
-### Result & Command
+#### Result & Command
 
 **Result** (`utils/result.dart`) — core error handling pattern, used throughout:
 ```dart
@@ -101,14 +153,14 @@ result.when(
 
 **Command** (`utils/command.dart`) — optional wrapper for retryable async loads. Wraps a `Future<Result<T>>` action into a `ChangeNotifier` with `running`/`error`/`completed` states, so UI can bind via `ListenableBuilder`.
 
-## Data Model
+### Data Model
 
 - Workspace source data lives mostly on the filesystem (YAML/JSON/Markdown/media) with SQLite used for indexes, caches, tasks, and query speed. Each data type has a dedicated service — **always use these for app data changes, never manipulate managed files directly with `dart:io`**: cards/facts/assets/tags/insights/templates/schedule → `FileSystemService`; characters → `CharacterService`; chat → `ChatService`; memory → `MemoryManagement`/`MemorySyncService`; custom agents → `CustomAgentConfigService`; backup → `BackupService`.
 - All workspace path definitions (e.g. `getCardsPath`, `getFactsPath`) must live in `FileSystemService` — never hardcode paths elsewhere.
 - User-related preferences (user ID, LLM configs, agent configs, locale, storage location, etc.) are centralized in `UserStorage` (`utils/user_storage.dart`). System-level or temporary flags can live in their own service.
 - Per-user workspace: `workspace/_<userId>/` with subdirs including `Facts/`, `Facts/assets/`, `Cards/`, `PKM/`, `KnowledgeInsights/`, `Schedule/`, `ChatSessions/`, `_UserSettings/`, and `_System/`. Memory files live under `_System/memory/`; agent state under `_System/state_dir/`.
 
-## UI & Design System
+### UI & Design System
 
 **Card rendering** uses two factories:
 - `NativeCardFactory.build(templateId, data, ...)`
@@ -120,11 +172,11 @@ result.when(
 - `showGeneralDialog` with `AgentChatDialog` for AI chat overlays
 - Any interaction UI change must include a widget test covering the behavior.
 
-### Timeline Screen boundaries
+#### Timeline Screen boundaries
 
 `TimelineScreen` handles page-level orchestration only (tab switching, pagination, pull-to-refresh, navigation). Do not add card-specific special-case logic here. Reuse `NativeCardFactory` / `NativeWidgetFactory` for card rendering and `CardAttachmentFactory` for attachments — keep templateId branching and card-type checks out of the screen layer.
 
-## Event & Task System
+### Event & Task System
 
 The app uses an event-driven pipeline for processing. When deciding how to handle a new feature's processing logic, consider:
 
@@ -134,11 +186,11 @@ The app uses an event-driven pipeline for processing. When deciding how to handl
 
 - **`EventBusService`** — lightweight UI notification bus. Task handlers and repositories call `emitEvent()` when data changes (card created, card updated, insight generated, error occurred) so ViewModels can refresh the screen. Ephemeral, not persisted — purely for driving UI updates.
 
-### SQLite change observation
+#### SQLite change observation
 
 Use `TableChangeNotifier.instance.watch(tableName, handler)` to react to table-level changes. Do not scatter Drift `query.watch()` streams across services and ViewModels — centralize change observation through `TableChangeNotifier` so there is one subscription per table and consistent dispatch.
 
-## Agent System
+### Agent System
 
 All agents are built on `dart_agent_core`'s `StatefulAgent`. When creating or modifying agents, follow these conventions:
 
@@ -149,7 +201,7 @@ All agents are built on `dart_agent_core`'s `StatefulAgent`. When creating or mo
 - **Prompts**: co-locate with the agent/skill/tool that uses them. Large prompts go in a dedicated `prompts.dart` as constants or builder methods (e.g. `agent/super_agent/prompts.dart`). Short prompts can be inline string variables in the code file. Shared prompts go in `agent/prompts.dart`.
 - **Hooks**: use `AgentHook`s for cross-cutting agent behavior around model requests, tool calls, turn completion, persistence, retries, and runtime coordination. Prefer hooks when behavior should apply consistently across an agent run instead of being scattered through tool implementations. Be deliberate about what goes into persisted history or state: one-turn context should stay transient unless future turns need the provenance.
 
-### SuperAgent and child workers
+#### SuperAgent and child workers
 
 - `SuperAgent` is the root conversational orchestrator. It owns user-facing replies, record identity, and coordination; specialist child workers own bounded production tasks.
 - Child workers are launched through `delegate_to_subagent` fixed presets in `agent/super_agent/subagent/delegate_subagent_tool.dart`. Do not create free-form child types from prompts alone; update the preset registry, permissions, skills, and `superAgentSystemPrompt` together.
@@ -158,17 +210,10 @@ All agents are built on `dart_agent_core`'s `StatefulAgent`. When creating or mo
 - SuperAgent and child workers must use owning skills/tools for managed data (`manage_timeline_card`, `manage_pkm`, `update_schedule_aggregation`, `update_knowledge_insight`, `manage_memory`). Raw file tools are for reading/searching or explicitly allowed workspace files, not bypassing managed write paths.
 - Quick Query mode is read-only. Any new skill or tool that can mutate app data must be excluded from Quick Query, not just hidden from the base tool list.
 
-## Localization
+### Localization
 
 Two approaches — pick the right one based on string length:
-- **Short UI strings** (labels, buttons, toasts): ARB files in `lib/l10n/` (standard Flutter l10n). Keep both `app_en.arb` and `app_zh.arb` in sync.
+- **Short UI strings** (labels, buttons, toasts): ARB files in `lib/l10n/` (standard Flutter l10n). The app ships only English and Portuguese (D-012): keep `app_en.arb` and `app_pt.arb` in sync and regenerate the `app_localizations*.dart` files.
 - **Multi-line text** (long descriptions, agent prompts, onboarding copy): defined directly in `AppLocalizationsExt` (`lib/l10n/app_localizations_ext.dart`) as Dart code — better readability than JSON for multi-line content.
 
 Access all strings via `UserStorage.l10n` (static, initialized in `main()`).
-
-
-## Segunda Mente (fork) — retomada do trabalho
-
-Este repositório é o fork **Segunda Mente** do Memex. Antes de agir: leia `STATE.md` (próxima ação) e `ROADMAP.md` (fases, subfases, evidência exigida). Escopo em `PROJECT.md`, decisões em `docs/DECISIONS.md`. Regras de execução: `docs/WATCHDOG.md`; auditoria antes de fechar fase: `docs/AUDIT.md`. Subfase só é `DONE` com evidência; não executado é `NOT_RUN`. Segredos, chaves e tokens nunca entram no repositório. Este arquivo continua sendo a regra de código.
-
-**Remotos git:** `origin` = `https://github.com/playertwo1/segundamente-app.git` (privado) é o único destino de push. `upstream` = `memex-lab/memex`, só para buscar atualizações do projeto original; nunca enviar para ele. O fork público `playertwo1/segundamente` foi arquivado em 2026-11-05 e não deve receber push (o `STATE.md` e os documentos trazem dados do uso pessoal do dono).

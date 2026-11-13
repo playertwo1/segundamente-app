@@ -1,14 +1,41 @@
 # Índice de documentação — Segunda Mente
 
-## Retomada e escopo
+Mapa de toda a documentação. Agentes: comecem pelo [AGENTS.md](../AGENTS.md).
 
-- [Estado atual e próxima ação](../STATE.md)
-- [Roadmap, fases e evidências](../ROADMAP.md)
-- [Visão e escopo do produto](../PROJECT.md)
-- [Decisões aceitas e pendentes](DECISIONS.md)
-- [F10 — Criação a partir das conversas nos comentários](F10-criacao-nos-comentarios.md)
-- [Regras de execução](WATCHDOG.md) · [auditoria](AUDIT.md)
-- [Roteiro de teste no S25 de 2026-11-04](TESTE-NO-S25-2026-11-04.md)
+## Retomada e governança
+
+| Documento | Para quê |
+|---|---|
+| [STATE.md](../STATE.md) | Estado atual, próxima ação, pendências e evidências recentes |
+| [ROADMAP.md](../ROADMAP.md) | Regras, estados, mapa das fases e ordem de trabalho |
+| [roadmap/](roadmap/) | Um arquivo por fase (F0–F14), com subfases, critérios e portão |
+| [DECISIONS.md](DECISIONS.md) | Decisões aceitas (D-001 em diante) |
+| [PROJECT.md](../PROJECT.md) | Visão, escopo e restrições do produto |
+| [WATCHDOG.md](WATCHDOG.md) · [AUDIT.md](AUDIT.md) | Regras de execução e auditoria antes de fechar fase |
+| [historico/](historico/) | STATE arquivado (2026-11-02 a 2026-11-13) |
+
+## Expansão Lumen + Todo robusto (2026-11-13)
+
+- [Questionário com as decisões](questionario/2026-11-13-lumen-desktop-e-todo.md) (D-050 a D-055)
+- [Pacote de planejamento original](lumen/README.md): proposta de 2026-11-12; onde divergir, valem as decisões
+- Fases: [F11 Todo](roadmap/F11-todo-robusto-celular.md) · [F12 Sync](roadmap/F12-sync-com-o-lumen.md) · [F13 Google](roadmap/F13-google.md) · [F14 Assistente ativo](roadmap/F14-assistente-ativo.md)
+- Lado desktop: `docs/roadmap/fase-l-lumen.md` no repositório `playertwo1/coucou`
+
+## Questionários
+
+- [2026-11-02 — Segunda memória (escopo inicial)](questionario/2026-11-02-segunda-memoria.md)
+- [2026-11-05 — F10, criação nos comentários](questionario/2026-11-05-f10-criacao-nos-comentarios.md)
+- [2026-11-06 — F10-05, imagens](questionario/2026-11-06-f10-05-imagens.md)
+- [2026-11-13 — Lumen desktop e Todo](questionario/2026-11-13-lumen-desktop-e-todo.md)
+
+## Testes, releases e revisões
+
+- Roteiros no aparelho: [teste no S25 de 2026-11-04](testes/TESTE-NO-S25-2026-11-04.md) · [prompt para o Antigravity](testes/PROMPT-ANTIGRAVITY-S25.md)
+- [Notas de release](releases/) · [Revisões e auditorias](reviews/) · [Dados de medição](medicoes/)
+
+## Referência herdada do Memex
+
+[upstream/](upstream/) guarda os documentos do projeto original: arquitetura de agentes, avaliação, revisão de PR e READMEs em chinês. Servem de referência e podem citar código que não existe mais no fork.
 
 ## Design móvel
 
@@ -57,18 +84,18 @@
 
 ![Tela inicial, menu superior, chat e família de ícones](../.impeccable-mobile/references/amoled-v3-ios/09-navigation-chat-icons.png)
 
-## Evidência do MVP
+## Documentos de trabalho das fases ([fases/](fases/))
 
-- [Checklist dos sete critérios F5-01](F5-01-checklist.md)
-- [Privacidade F5-02](F5-02-privacidade.md)
-- [Viabilidade F8-01 (NotebookLM)](F8-01-viabilidade.md)
-- [Mapeamento F9-01](F9-01-mapeamento.md)
-- [Corpus F9-02](F9-02-corpus.md)
-- [Plano de medição F7-02](F7-02-plano-de-medicao.md)
-- [F7-03 — voz duplex: implementação, limites e medição pendente](F7-03-voz-duplex.md)
-- [Plano de medição F2-11](F2-11-plano-de-medicao.md)
-- [Medições F5-03](F5-03-medicoes.md)
+- [Checklist dos sete critérios F5-01](fases/F5-01-checklist.md)
+- [Privacidade F5-02](fases/F5-02-privacidade.md)
+- [Viabilidade F8-01 (NotebookLM)](fases/F8-01-viabilidade.md)
+- [Mapeamento F9-01](fases/F9-01-mapeamento.md)
+- [Corpus F9-02](fases/F9-02-corpus.md)
+- [Plano de medição F7-02](fases/F7-02-plano-de-medicao.md)
+- [F7-03 — voz duplex: implementação, limites e medição pendente](fases/F7-03-voz-duplex.md)
+- [Plano de medição F2-11](fases/F2-11-plano-de-medicao.md)
+- [Medições F5-03](fases/F5-03-medicoes.md)
 - [Revisão F5](reviews/F5.md)
 - [Revisão F9](reviews/F9-2026-11-06.md)
-- [Captura do S25 Ultra](s25_screenshot.png)
-- `docs/EXTRACAO-DOCUMENTOS.md`: regras de leitura para atas e documentos, com fontes e o que foi aplicado nos prompts.
+- [Captura do S25 Ultra](imagens/s25_screenshot.png)
+- `docs/fases/EXTRACAO-DOCUMENTOS.md`: regras de leitura para atas e documentos, com fontes e o que foi aplicado nos prompts.

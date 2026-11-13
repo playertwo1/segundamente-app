@@ -79,8 +79,8 @@ GENERATED_PATTERNS = [
 ]
 
 POLICY_CONTROL_PATTERNS = [
-    "docs/pr-policy-preflight.en.md",
-    "docs/pr-policy-preflight.zh.md",
+    "docs/upstream/pr-policy-preflight.en.md",
+    "docs/upstream/pr-policy-preflight.zh.md",
     "scripts/pr_policy_check.py",
     ".github/CODEOWNERS",
 ]

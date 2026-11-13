@@ -14,10 +14,10 @@ Read these files before judging the PR:
 - `CONTRIBUTING.md`
 - `.github/PULL_REQUEST_TEMPLATE.md`
 - `.github/claude/pr-ai-review.schema.json`
-- `docs/pr-policy-preflight.en.md`
-- `docs/pr-policy-preflight.zh.md`
-- `docs/pr-ai-review.en.md`
-- `docs/pr-ai-review.zh.md`
+- `docs/upstream/pr-policy-preflight.en.md`
+- `docs/upstream/pr-policy-preflight.zh.md`
+- `docs/upstream/pr-ai-review.en.md`
+- `docs/upstream/pr-ai-review.zh.md`
 - `pr-ai-review-input/pr-title.txt`
 - `pr-ai-review-input/pr-body.txt`
 - `pr-ai-review-input/pr-files.txt`
@@ -41,7 +41,7 @@ Your job:
 7. If the diff is too incomplete to assess a relevant area, raise risk instead of
    pretending confidence is high.
 8. Apply the unit/widget/integration test expectations from `AGENTS.md` and
-   `docs/pr-ai-review.*.md`; missing test evidence for behavior changes must be
+   `docs/upstream/pr-ai-review.*.md`; missing test evidence for behavior changes must be
    reported in `test_gaps`.
 
 Before returning, verify the JSON includes every required top-level key:

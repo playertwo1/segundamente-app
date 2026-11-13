@@ -71,7 +71,7 @@ class DuplexVoiceService {
   }
 
   /// The platform echo canceller is what keeps the app from hearing its own
-  /// voice. Values NOT measured on the S25 yet (docs/F7-03-voz-duplex.md);
+  /// voice. Values NOT measured on the S25 yet (docs/fases/F7-03-voz-duplex.md);
   /// tools/f703_probe compares the alternatives.
   static const micConfig = RecordConfig(
     encoder: AudioEncoder.pcm16bits,
