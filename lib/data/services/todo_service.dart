@@ -5,6 +5,7 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/utils/logger.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
@@ -129,6 +130,9 @@ class TodoService {
     await _change(userId, id, (item) {
       final nextRecurrence =
           clearRecurrence ? null : recurrence ?? item.recurrence;
+      if (nextRecurrence != null && schedule.date == null) {
+        throw ArgumentError('a recurring Todo needs a due date');
+      }
       return item.copyWith(
         text: text.trim(),
         due: schedule.label,
@@ -155,14 +159,67 @@ class TodoService {
     DateTime? now,
   }) async {
     final moment = now ?? DateTime.now();
-    await _change(userId, id, (item) {
-      if (item.done == done) return item;
-      return item.copyWith(
+    await _storageLock.synchronized(() async {
+      final items = await _readAll(userId);
+      final index = items.indexWhere(
+        (item) => item.id == id && !item.isTombstoned,
+      );
+      if (index < 0) throw StateError('todo item not found: $id');
+      final item = items[index];
+      if (item.done == done) return;
+      items[index] = item.copyWith(
         done: done,
         doneAt: done ? moment.toIso8601String() : null,
         clearDoneAt: !done,
         version: item.version + 1,
       );
+      if (done && item.recurrence != null) {
+        final dueDate = item.dueDate;
+        if (dueDate == null) {
+          throw StateError('a recurring Todo has no due date: $id');
+        }
+        final seriesId = item.seriesId ?? item.id;
+        final hasActiveSuccessor = items.any((candidate) =>
+            candidate.id != item.id &&
+            candidate.seriesId == seriesId &&
+            !candidate.done &&
+            !candidate.isTombstoned);
+        if (!hasActiveSuccessor) {
+          final nextDate = TodoScheduleCalculator.nextUpcomingOccurrenceDate(
+            recurrence: item.recurrence!,
+            afterDate: DateTime.parse(dueDate),
+            now: moment,
+            timeZone: item.timeZone,
+            dueTime: item.dueTime,
+          );
+          final schedule = _schedule(
+            item.due,
+            dueDate: _dateOnly(nextDate),
+            dueTime: item.dueTime,
+          );
+          items.add(TodoItem(
+            id: _uuid.v4(),
+            text: item.text,
+            due: schedule.label,
+            dueDate: schedule.date,
+            dueTime: schedule.time,
+            timeZone: item.timeZone,
+            alertMinutes: item.alertMinutes,
+            priority: item.priority,
+            subtasks: [
+              for (final subtask in item.subtasks)
+                TodoSubtask(id: _uuid.v4(), text: subtask.text),
+            ],
+            recurrence: item.recurrence,
+            seriesId: seriesId,
+            done: false,
+            createdAt: moment.toIso8601String(),
+            source: item.source,
+            sourceStale: item.sourceStale,
+          ));
+        }
+      }
+      await _write(userId, items);
     });
   }
 
@@ -259,6 +316,9 @@ class TodoService {
     final clean = text.trim();
     if (clean.isEmpty) throw ArgumentError('todo text is empty');
     final schedule = _schedule(due ?? '', dueDate: dueDate, dueTime: dueTime);
+    if (recurrence != null && schedule.date == null) {
+      throw ArgumentError('a recurring Todo needs a due date');
+    }
     if (alertMinutes < 0) {
       throw ArgumentError.value(alertMinutes, 'alertMinutes');
     }

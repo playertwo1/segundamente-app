@@ -12,6 +12,7 @@ import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/domain/models/model_catalog.dart';
 import 'package:memex/domain/models/agent_config.dart';
 import 'package:memex/domain/models/location_context_config.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:memex/domain/models/agent_definitions.dart';
 import 'package:memex/l10n/supported_languages.dart';
@@ -922,6 +923,30 @@ class UserStorage {
 
   static const String _keyLinkPreview = 'link_preview_enabled';
   static const String _keySemanticSearchEnabled = 'semantic_search_enabled';
+  static const String _keyTodoShortcutSettings = 'todo_shortcut_settings';
+
+  static Future<TodoShortcutSettings> getTodoShortcutSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_keyTodoShortcutSettings);
+      if (raw == null) return TodoShortcutSettings.defaults;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return TodoShortcutSettings.defaults;
+      return TodoShortcutSettings.fromJson(decoded.cast<String, dynamic>());
+    } catch (_) {
+      return TodoShortcutSettings.defaults;
+    }
+  }
+
+  static Future<void> setTodoShortcutSettings(
+    TodoShortcutSettings settings,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _keyTodoShortcutSettings,
+      jsonEncode(settings.toJson()),
+    );
+  }
 
   /// Whether link previews (which contact the linked site) are on. Off by default.
   static Future<bool> isLinkPreviewEnabled() async {

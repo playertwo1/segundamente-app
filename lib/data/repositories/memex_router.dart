@@ -51,6 +51,7 @@ import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
 import 'package:memex/data/repositories/todo_repository.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
 import 'package:memex/data/services/saved_view_service.dart';
@@ -1652,6 +1653,14 @@ class MemexRouter {
       return (await _todoRepository.load(await _reportUserId())).valueOrThrow;
     });
   }
+
+  Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() =>
+      _todoRepository.loadShortcutSettings();
+
+  Future<Result<void>> saveTodoShortcutSettings(
+    TodoShortcutSettings settings,
+  ) =>
+      _todoRepository.saveShortcutSettings(settings);
 
   Future<Result<TodoItem>> addTodo({
     required String text,

@@ -76,6 +76,36 @@ void main() {
     );
   });
 
+  test('recurring tasks require a date when created or edited', () async {
+    await expectLater(
+      todos.add(
+        userId: userId,
+        text: 'Revisar relatório',
+        recurrence: TodoRecurrence.daily(),
+      ),
+      throwsArgumentError,
+    );
+    final item = await todos.add(
+      userId: userId,
+      text: 'Revisar relatório',
+      dueDate: '2026-11-13',
+      recurrence: TodoRecurrence.daily(),
+    );
+
+    await expectLater(
+      todos.edit(
+        userId: userId,
+        id: item.id,
+        text: item.text,
+        due: '',
+      ),
+      throwsArgumentError,
+    );
+    final unchanged = (await todos.load(userId)).single;
+    expect(unchanged.dueDate, '2026-11-13');
+    expect(unchanged.recurrence?.frequency, TodoRepeatFrequency.daily);
+  });
+
   test('an approved task goes in with its source and only once', () async {
     final first = await todos.addFromReport(
       userId: userId,
@@ -135,6 +165,113 @@ void main() {
     expect(tombstone.isTombstoned, isTrue);
     expect(tombstone.deletedAt, isNotNull);
     expect(tombstone.version, greaterThan(item.version));
+  });
+
+  test('completing a recurrence retains history and creates one next task',
+      () async {
+    final item = await todos.add(
+      userId: userId,
+      text: 'Enviar a proposta',
+      dueDate: '2026-11-13',
+      dueTime: '09:00',
+      alertMinutes: 35,
+      priority: TodoPriority.urgent,
+      subtasks: const [TodoSubtask(id: 'sub_1', text: 'Revisar', done: true)],
+      recurrence: TodoRecurrence.weekly([DateTime.friday]),
+      source: const TodoSource(
+        sessionId: 'report_1',
+        itemId: 'task_1',
+        excerpt: 'Enviar a proposta',
+      ),
+      now: DateTime.utc(2026, 11, 1),
+    );
+    final completedAt = DateTime.utc(2026, 11, 13, 15);
+
+    await todos.setDone(
+      userId: userId,
+      id: item.id,
+      done: true,
+      now: completedAt,
+    );
+    await todos.setDone(
+      userId: userId,
+      id: item.id,
+      done: true,
+      now: completedAt,
+    );
+
+    final all = await todos.load(userId);
+    expect(all, hasLength(2));
+    final completed = all.firstWhere((todo) => todo.id == item.id);
+    final next = all.firstWhere((todo) => todo.id != item.id);
+    expect(completed.done, isTrue);
+    expect(completed.doneAt, completedAt.toIso8601String());
+    expect(next.done, isFalse);
+    expect(next.due, '2026-11-20 09:00');
+    expect(next.seriesId, item.seriesId);
+    expect(next.recurrence?.frequency, TodoRepeatFrequency.weekly);
+    expect(next.timeZone, 'America/Sao_Paulo');
+    expect(next.alertMinutes, 35);
+    expect(next.priority, TodoPriority.urgent);
+    expect(next.source?.sessionId, 'report_1');
+    expect(next.subtasks.single.text, 'Revisar');
+    expect(next.subtasks.single.done, isFalse);
+    expect(next.subtasks.single.id, isNot('sub_1'));
+
+    await todos.setDone(userId: userId, id: item.id, done: false);
+    await todos.setDone(
+      userId: userId,
+      id: item.id,
+      done: true,
+      now: completedAt,
+    );
+    expect(await todos.load(userId), hasLength(2));
+  });
+
+  test('late completion skips passed daily cycles in the task timezone',
+      () async {
+    final item = await todos.add(
+      userId: userId,
+      text: 'Rotina diária',
+      dueDate: '2026-11-10',
+      dueTime: '23:00',
+      recurrence: TodoRecurrence.daily(),
+    );
+
+    await todos.setDone(
+      userId: userId,
+      id: item.id,
+      done: true,
+      now: DateTime.utc(2026, 11, 14, 1),
+    );
+
+    final next = (await todos.load(userId)).singleWhere(
+      (todo) => todo.id != item.id,
+    );
+    expect(next.due, '2026-11-13 23:00');
+  });
+
+  test('late monthly completion skips past months and keeps day 31 cadence',
+      () async {
+    final item = await todos.add(
+      userId: userId,
+      text: 'Fechamento mensal',
+      dueDate: '2027-01-31',
+      recurrence: TodoRecurrence.monthly(31),
+    );
+
+    await todos.setDone(
+      userId: userId,
+      id: item.id,
+      done: true,
+      now: DateTime.utc(2027, 3, 1, 15),
+    );
+
+    final next = (await todos.load(userId)).singleWhere(
+      (todo) => todo.id != item.id,
+    );
+    expect(next.due, '2027-03-31');
+    expect(next.recurrence?.dayOfMonth, 31);
   });
 
   test('changing an item that does not exist fails loudly', () async {

@@ -4,6 +4,8 @@ import 'package:memex/config/app_flavor.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
+import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_screen.dart';
@@ -13,13 +15,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Keeps the list in memory; the real file storage has its own tests.
 class _FakeRouter implements MemexRouter {
-  _FakeRouter(this.items);
+  _FakeRouter(this.items, {TodoShortcutSettings? shortcutSettings})
+      : shortcutSettings = shortcutSettings ?? TodoShortcutSettings.defaults;
 
   List<TodoItem> items;
+  TodoShortcutSettings shortcutSettings;
   var _next = 0;
 
   @override
   Future<Result<List<TodoItem>>> loadTodos() async => Ok([...items]);
+
+  @override
+  Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>
+      Ok(shortcutSettings);
 
   @override
   Future<Result<TodoItem>> addTodo({
@@ -39,6 +47,12 @@ class _FakeRouter implements MemexRouter {
       due: (due ?? '').trim().isEmpty ? reportDueUnknown : due!.trim(),
       done: false,
       createdAt: DateTime(2026, 11, 6, 0, 0, _next).toIso8601String(),
+      timeZone: timeZone,
+      alertMinutes: alertMinutes,
+      priority: priority,
+      subtasks: subtasks,
+      recurrence: recurrence,
+      seriesId: recurrence == null ? null : 'series_${_next - 1}',
     );
     items = [...items, item];
     return Ok(item);
@@ -60,7 +74,18 @@ class _FakeRouter implements MemexRouter {
   }) async {
     items = [
       for (final i in items)
-        i.id == id ? i.copyWith(text: text.trim(), due: due) : i,
+        i.id == id
+            ? i.copyWith(
+                text: text.trim(),
+                due: due,
+                recurrence: recurrence,
+                clearRecurrence: clearRecurrence,
+                timeZone: timeZone,
+                alertMinutes: alertMinutes,
+                priority: priority,
+                subtasks: subtasks,
+              )
+            : i,
     ];
     return const Ok.v();
   }
@@ -124,12 +149,14 @@ void main() {
 
   Future<_FakeRouter> pump(
     WidgetTester tester,
-    List<TodoItem> items,
-  ) async {
-    tester.view.physicalSize = const Size(800, 2000);
+    List<TodoItem> items, {
+    TodoShortcutSettings? shortcutSettings,
+    Size viewport = const Size(800, 2000),
+  }) async {
+    tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final router = _FakeRouter(items);
+    final router = _FakeRouter(items, shortcutSettings: shortcutSettings);
     final viewModel = TodoViewModel(
       router: router,
       openCalendar: ({
@@ -194,6 +221,179 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
     expect(router.items, isEmpty);
+  });
+
+  testWidgets('date and time shortcuts save a selected weekly recurrence', (
+    tester,
+  ) async {
+    final router = await pump(
+      tester,
+      [],
+      shortcutSettings: TodoShortcutSettings(defaultAlertMinutes: 10),
+    );
+    final today = TodoScheduleCalculator.dateForShortcut(
+      TodoDateShortcut.today,
+      now: DateTime.now(),
+    );
+    final additionalWeekday = today.weekday == DateTime.monday ? 2 : 1;
+    final dialogScroll = find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+
+    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('todo_text')),
+      'Revisar relatório',
+    );
+    final dateShortcut = find.byKey(
+      const ValueKey('todo_date_shortcut_today'),
+    );
+    await tester.scrollUntilVisible(dateShortcut, 100,
+        scrollable: dialogScroll);
+    await tester.tap(dateShortcut);
+    expect(find.byKey(const ValueKey('todo_no_time')), findsOneWidget);
+
+    final timeShortcut = find.byKey(const ValueKey('todo_time_shortcut_0'));
+    await tester.scrollUntilVisible(timeShortcut, 100,
+        scrollable: dialogScroll);
+    await tester.tap(timeShortcut);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('todo_no_time')), findsNothing);
+
+    final weekly = find.byKey(const ValueKey('todo_repeat_weekly'));
+    await tester.scrollUntilVisible(weekly, 100, scrollable: dialogScroll);
+    await tester.tap(weekly);
+    final day = find.byKey(
+      ValueKey('todo_repeat_weekday_$additionalWeekday'),
+    );
+    await tester.scrollUntilVisible(day, 100, scrollable: dialogScroll);
+    await tester.tap(day);
+    await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+    await tester.pumpAndSettle();
+
+    final saved = router.items.single;
+    expect(saved.text, 'Revisar relatório');
+    expect(saved.due, matches(RegExp(r'^\d{4}-\d{2}-\d{2} 09:00$')));
+    expect(saved.recurrence?.frequency, TodoRepeatFrequency.weekly);
+    expect(saved.recurrence?.weekdays, contains(today.weekday));
+    expect(saved.recurrence?.weekdays, contains(additionalWeekday));
+    expect(saved.alertMinutes, 10);
+  });
+
+  testWidgets('reloads edited shortcut settings before opening the editor', (
+    tester,
+  ) async {
+    final router = await pump(tester, []);
+    router.shortcutSettings = TodoShortcutSettings(
+      enabledDateShortcuts: const {TodoDateShortcut.inThreeDays},
+    );
+    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('todo_date_shortcut_inThreeDays')),
+      findsOneWidget,
+    );
+    expect(
+        find.byKey(const ValueKey('todo_date_shortcut_today')), findsNothing);
+  });
+
+  testWidgets('a time without a valid date stays in the draft', (tester) async {
+    final router = await pump(tester, []);
+    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar');
+    await tester.enterText(find.byKey(const ValueKey('todo_time')), '09:00');
+    await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(UserStorage.l10n.todoTimeRequiresDate),
+      findsOneWidget,
+    );
+    expect(router.items, isEmpty);
+  });
+
+  testWidgets('the task editor fits a narrow screen with larger text', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.7;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pump(tester, [], viewport: const Size(320, 720));
+    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('todo_time')), findsOneWidget);
+    expect(find.byKey(const ValueKey('todo_repeat_monthly')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('monthly recurrence uses the explicit day of the month', (
+    tester,
+  ) async {
+    final router = await pump(tester, []);
+    final dialogScroll = find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('todo_text')), 'Fechar mês');
+    await tester.enterText(
+      find.byKey(const ValueKey('todo_due')),
+      '2027-01-31',
+    );
+    final monthly = find.byKey(const ValueKey('todo_repeat_monthly'));
+    await tester.scrollUntilVisible(monthly, 100, scrollable: dialogScroll);
+    await tester.tap(monthly);
+    await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+    await tester.pumpAndSettle();
+
+    expect(router.items.single.recurrence?.dayOfMonth, 31);
+  });
+
+  testWidgets('editing an occurrence preserves its weekly day selection', (
+    tester,
+  ) async {
+    final router = await pump(tester, [
+      TodoItem(
+        id: 'weekly',
+        text: 'Revisar',
+        due: '2026-11-13',
+        dueDate: '2026-11-13',
+        recurrence: TodoRecurrence.weekly([5]),
+        seriesId: 'series-1',
+        done: false,
+        createdAt: '2026-11-01T00:00:00Z',
+      ),
+    ]);
+    final friday = find.byKey(const ValueKey('todo_repeat_weekday_5'));
+    final dialogScroll = find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+
+    await tester.tap(find.byKey(const ValueKey('todo_weekly')));
+    await tester.pumpAndSettle();
+    final weekly = find.byKey(const ValueKey('todo_repeat_weekly'));
+    await tester.scrollUntilVisible(weekly, 100, scrollable: dialogScroll);
+    await tester.tap(weekly);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(friday, 100, scrollable: dialogScroll);
+    expect(tester.widget<FilterChip>(friday).selected, isTrue);
+    await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+    await tester.pumpAndSettle();
+
+    expect(router.items.single.recurrence?.weekdays, [5]);
   });
 
   testWidgets('editing changes the text and the date', (tester) async {

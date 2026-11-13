@@ -4494,4 +4494,93 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get duplexErrorFailed =>
       'The voice conversation stopped because of an error. The microphone was turned off.';
+
+  @override
+  String get todoShortcutsTitle => 'Todo shortcuts';
+
+  @override
+  String get todoShortcutsDescription =>
+      'Choose the date and time shortcuts shown when scheduling a task.';
+
+  @override
+  String get todoShortcutsDaysTitle => 'Day shortcuts';
+
+  @override
+  String get todoShortcutsTimesTitle => 'Time shortcuts';
+
+  @override
+  String get todoShortcutsAlertTitle => 'Default alert';
+
+  @override
+  String get todoShortcutsTimezone => 'Time zone';
+
+  @override
+  String get todoShortcutsTimezoneValue => 'America/Sao_Paulo';
+
+  @override
+  String get todoShortcutToday => 'Today';
+
+  @override
+  String get todoShortcutTomorrow => 'Tomorrow';
+
+  @override
+  String get todoShortcutInThreeDays => 'In 3 days';
+
+  @override
+  String get todoShortcutNextMonday => 'Next week';
+
+  @override
+  String get todoNoTime => 'No time: day task, no alarm.';
+
+  @override
+  String get todoTimeLabel => 'Time (optional)';
+
+  @override
+  String get todoTimeHint => 'HH:mm';
+
+  @override
+  String get todoTimeRequiresDate => 'Choose a date before setting a time.';
+
+  @override
+  String get todoTimeInvalid => 'Enter the time as HH:mm.';
+
+  @override
+  String get todoRepeatTitle => 'Repeat';
+
+  @override
+  String get todoRepeatNone => 'Does not repeat';
+
+  @override
+  String get todoRepeatDaily => 'Daily';
+
+  @override
+  String get todoRepeatWeekly => 'Weekly';
+
+  @override
+  String get todoRepeatMonthly => 'Monthly';
+
+  @override
+  String get todoMonthlyDayRule =>
+      'If the day does not exist in a month, use its last day.';
+
+  @override
+  String get todoRepeatRequiresDate =>
+      'Choose a date shortcut or enter a valid date before saving a repeating task.';
+
+  @override
+  String todoShortcutsAlertBefore(Object minutes) {
+    return '$minutes min before';
+  }
+
+  @override
+  String get todoShortcutsAlertAtTime => 'At the task time';
+
+  @override
+  String get todoShortcutsLoadFailed => 'Could not load Todo shortcuts.';
+
+  @override
+  String get todoShortcutsSaveFailed => 'Could not save Todo shortcuts.';
+
+  @override
+  String get todoRetry => 'Try again';
 }

@@ -6,6 +6,7 @@ import 'package:memex/data/services/native_action_service.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/utils/result.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -52,8 +53,9 @@ class TodoViewModel extends ChangeNotifier {
 
   // Android keeps reminders in the calendar; iOS has its own store.
   static Future<bool> _askReminderPermission() async {
-    final permission =
-        Platform.isAndroid ? Permission.calendarFullAccess : Permission.reminders;
+    final permission = Platform.isAndroid
+        ? Permission.calendarFullAccess
+        : Permission.reminders;
     if ((await permission.status).isGranted) return true;
     return (await permission.request()).isGranted;
   }
@@ -66,6 +68,7 @@ class TodoViewModel extends ChangeNotifier {
   }
 
   List<TodoItem> _all = const [];
+  TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
   String query = '';
   bool loading = false;
   String? errorMessage;
@@ -83,7 +86,16 @@ class TodoViewModel extends ChangeNotifier {
       onOk: (value) => _all = value,
       onError: (error, _) => errorMessage = '$error',
     );
+    await refreshShortcutSettings();
     loading = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshShortcutSettings() async {
+    (await _router.loadTodoShortcutSettings()).when(
+      onOk: (value) => shortcutSettings = value,
+      onError: (error, _) => errorMessage ??= '$error',
+    );
     notifyListeners();
   }
 
@@ -92,13 +104,31 @@ class TodoViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> add({required String text, required String due}) {
-    return _change(_router.addTodo(text: text, due: due));
+  Future<void> add({
+    required String text,
+    required String due,
+    TodoRecurrence? recurrence,
+  }) {
+    return _change(_router.addTodo(
+      text: text,
+      due: due,
+      recurrence: recurrence,
+      alertMinutes: shortcutSettings.defaultAlertMinutes,
+    ));
   }
 
   Future<void> edit(TodoItem item,
-      {required String text, required String due}) {
-    return _change(_router.editTodo(id: item.id, text: text, due: due));
+      {required String text,
+      required String due,
+      TodoRecurrence? recurrence,
+      bool clearRecurrence = false}) {
+    return _change(_router.editTodo(
+      id: item.id,
+      text: text,
+      due: due,
+      recurrence: recurrence,
+      clearRecurrence: clearRecurrence,
+    ));
   }
 
   Future<void> toggleDone(TodoItem item) {
