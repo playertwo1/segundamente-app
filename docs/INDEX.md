@@ -20,6 +20,7 @@ Mapa de toda a documentação. Agentes: comecem pelo [AGENTS.md](../AGENTS.md).
 - [Pacote de planejamento original](lumen/README.md): proposta de 2026-11-12; onde divergir, valem as decisões
 - Fases: [F11 Todo](roadmap/F11-todo-robusto-celular.md) · [F12 Sync](roadmap/F12-sync-com-o-lumen.md) · [F13 Google](roadmap/F13-google.md) · [F14 Assistente ativo](roadmap/F14-assistente-ativo.md)
 - Lado desktop: `docs/roadmap/fase-l-lumen.md` no repositório `playertwo1/coucou`
+- [Prompts para o Codex](prompts/codex-segundamente-lumen.md): um para cada repositório
 
 ## Questionários
 
