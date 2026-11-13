@@ -166,7 +166,7 @@ class _DuplexVoiceScreenState extends State<DuplexVoiceScreen>
           switch (_vm.problem!) {
             DuplexVoiceProblem.permissionDenied => l10n.voiceMicDenied,
             DuplexVoiceProblem.speechModelMissing =>
-              l10n.duplexErrorModelMissing,
+              l10n.speechModelMissingHint,
             DuplexVoiceProblem.failed => l10n.duplexErrorFailed,
           },
           key: const ValueKey('duplex-problem'),

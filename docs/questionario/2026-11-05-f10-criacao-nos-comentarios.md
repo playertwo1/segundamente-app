@@ -194,5 +194,5 @@ Contexto técnico: avaliação crítica feita na mesma conversa (PDF não é gua
 
 ## Próximos passos
 1. Agora (MVP/F4): trocar o exportador de PDF por biblioteca, ampliar o DOCX e passar o relatório de sessão para ele (D18, D19, D23); reconferir PDF no Acrobat e DOCX no Word no S25.
-2. Atualizar docs/F10-criacao-nos-comentarios.md, ROADMAP.md e DECISIONS.md com estas decisões, em especial a mudança de regra do debate entre personas (D7, D8) e a busca automática com confirmação (D12, D13).
+2. Atualizar docs/fases/F10-criacao-nos-comentarios.md, ROADMAP.md e DECISIONS.md com estas decisões, em especial a mudança de regra do debate entre personas (D7, D8) e a busca automática com confirmação (D12, D13).
 3. Depois do MVP: F10 na ordem de D24.

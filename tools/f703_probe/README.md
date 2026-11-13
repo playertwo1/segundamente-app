@@ -1,7 +1,7 @@
 # f703_probe — sonda descartável da F7-03 (voz duplex)
 
 App separado do Segunda Mente (`app.segundamente.f703_probe`), no método da F6-10. Mede no S25 o que o
-`docs/F7-01-viabilidade.md` mandou medir antes de liberar a tela de voz: eco, interrupção, latência,
+`docs/fases/F7-01-viabilidade.md` mandou medir antes de liberar a tela de voz: eco, interrupção, latência,
 bateria e aquecimento.
 
 **Privacidade:** só usa uma frase sintética fixa. Nenhum áudio é gravado em arquivo; saem apenas contagens,
@@ -41,7 +41,7 @@ adb -s <serial> logcat -d -s flutter | grep "F703 " > ../../docs/medicoes/f7-03/
 adb -s <serial> uninstall app.segundamente.f703_probe
 ```
 
-Registre os números em `docs/F7-03-voz-duplex.md` (seção "Medição no S25"). A configuração `voz_aec` é a que o
+Registre os números em `docs/fases/F7-03-voz-duplex.md` (seção "Medição no S25"). A configuração `voz_aec` é a que o
 app usa (`DuplexVoiceService.micConfig`); se outra ganhar, troque lá e nos limiares do detector.
 
-Estado: executada no S25 em 2026-11-11 e desinstalada. Resultado em `docs/F7-03-voz-duplex.md` (seção 5) e `docs/medicoes/f7-03/s25.jsonl`. Depois do primeiro teste de eco, os testes 2 e 3 passaram a usar `voz_aec_saida_chamada`.
+Estado: executada no S25 em 2026-11-11 e desinstalada. Resultado em `docs/fases/F7-03-voz-duplex.md` (seção 5) e `docs/medicoes/f7-03/s25.jsonl`. Depois do primeiro teste de eco, os testes 2 e 3 passaram a usar `voz_aec_saida_chamada`.

@@ -35,6 +35,8 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -232,6 +234,44 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets(
+      'mic only dictates: a missing local model points to Settings, '
+      'no download offered', (tester) async {
+    final dir = Directory.systemTemp.createTempSync('chat_no_model');
+    final original = PathProviderPlatform.instance;
+    PathProviderPlatform.instance = _SupportDirProvider(dir.path);
+    await UserStorage.setUseLocalSpeechToText(true);
+    addTearDown(() async {
+      PathProviderPlatform.instance = original;
+      await UserStorage.setUseLocalSpeechToText(false);
+      dir.deleteSync(recursive: true);
+    });
+    var permissionAsked = false;
+    final voice = VoiceDictationViewModel(
+      requestPermission: () async => permissionAsked = true,
+      startStream: () async => const Stream<Uint8List>.empty(),
+      stopStream: () async {},
+      transcribe: (_) async => null,
+    );
+    addTearDown(voice.dispose);
+    await _pumpDialogFrame(
+      tester,
+      dialog: AgentChatDialog(voiceDictationForTesting: voice),
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+
+    await tester.runAsync(() async {
+      await tester.tap(find.byKey(const ValueKey('super_agent_mic_button')));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
+    await tester.pump();
+
+    expect(find.text(UserStorage.l10n.speechModelMissingHint), findsOneWidget);
+    expect(find.text(UserStorage.l10n.speechModelStartDownload), findsNothing);
+    expect(permissionAsked, isFalse);
+    expect(voice.isRecording, isFalse);
   });
 
   testWidgets(
@@ -1392,4 +1432,13 @@ Future<void> _pumpDialogFrame(
     ),
   );
   await tester.pump();
+}
+
+class _SupportDirProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _SupportDirProvider(this.root);
+  final String root;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => root;
 }

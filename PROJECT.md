@@ -36,4 +36,16 @@ O dono do repositório aprova mudanças de escopo.
 
 ## Evolução planejada — conversas nos comentários (D-036)
 
-F10: aprofundar as respostas aos comentários das personas em documentos/registros e transformar o que foi construído, por pedido na própria conversa, em MD, PDF, DOCX, imagens e relatório ilustrado. Manter participação opcional, fontes e histórico de revisões. Planejada fora do MVP; implementação ainda não aberta. Ver [plano](docs/F10-criacao-nos-comentarios.md) e ROADMAP.md.
+F10: aprofundar as respostas aos comentários das personas em documentos/registros e transformar o que foi construído, por pedido na própria conversa, em MD, PDF, DOCX, imagens e relatório ilustrado. Manter participação opcional, fontes e histórico de revisões. Planejada fora do MVP; implementação ainda não aberta. Ver [plano](docs/fases/F10-criacao-nos-comentarios.md) e ROADMAP.md.
+
+## Expansão — assistente de trabalho com Lumen e Todo robusto (D-050 a D-055)
+A Segunda Mente passa a ser também o assistente pessoal de trabalho do dono: lembra o que fazer, ajuda nas tarefas e troca ideias. São três peças:
+- **Todo robusto no celular (F11):** lista única, alarmes próprios e uma IA que propõe tarefas para o dono confirmar.
+- **Lumen no notebook:** o fork `playertwo1/coucou` (Tauri), renomeado.
+- **Ligação entre os dois:** sync pelo relay do Coucou, com uma caixa de correio no Cloudflare do dono (F12).
+
+Integra o Google Calendar e faz backup no Drive (F13). O assistente pode tomar a iniciativa (F14). Restrições:
+- Só entram agenda, tarefas e ideias do próprio dono. Dados de clientes e documentos internos do trabalho não entram.
+- O e-mail é só o pessoal, e nada é enviado sem confirmação.
+
+Detalhes no [questionário](docs/questionario/2026-11-13-lumen-desktop-e-todo.md) e no ROADMAP.

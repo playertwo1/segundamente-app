@@ -1,9 +1,5 @@
-# Memex Gemini Instructions
+# Segunda Mente — instruções para o Gemini
 
-`AGENTS.md` is the canonical instruction file for coding agents in this
-repository. Read it before editing code.
+O arquivo canônico é o [AGENTS.md](AGENTS.md). Leia-o antes de editar código; ele prevalece sobre este.
 
-Behavior changes require tests in the same PR: unit tests for non-UI behavior,
-widget tests for UI/user interaction changes, and integration or full-chain
-tests for cross-layer golden-path changes. If tests are not applicable, explain
-the concrete reason in the PR test plan.
+Mudança de comportamento exige teste no mesmo commit: unitário para lógica fora da UI, widget para UI e interação, e integração para fluxos que cruzam camadas. Se um teste não se aplica, explique o motivo concreto.

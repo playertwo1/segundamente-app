@@ -1,10 +1,23 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/services/transcription_isolate.dart';
 import 'package:memex/data/services/whisper_service.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
+class _FakePathProvider extends PathProviderPlatform
+    with MockPlatformInterfaceMixin {
+  _FakePathProvider(this.root);
+  final String root;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => root;
+}
 
 void main() {
   test('local model is Parakeet as a NeMo transducer on CPU', () {
@@ -51,8 +64,8 @@ void main() {
       expect(audio[cut - 1], 0);
       expect(audio[cut], 0);
     }
-    expect(cuts.map((c) => c / 16000),
-        [closeTo(24.1, 0.2), closeTo(50.1, 0.2)]);
+    expect(
+        cuts.map((c) => c / 16000), [closeTo(24.1, 0.2), closeTo(50.1, 0.2)]);
   });
 
   test('speech without pauses still yields pieces of at most 30 s', () {
@@ -73,12 +86,66 @@ void main() {
         isTrue);
   });
 
+  test(
+      'downloadModel extracts in the background even when onProgress holds '
+      'an object that cannot cross isolates', () async {
+    final dir = Directory.systemTemp.createTempSync('whisper_download');
+    final original = PathProviderPlatform.instance;
+    PathProviderPlatform.instance = _FakePathProvider(dir.path);
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final savedUrl = WhisperService.downloadUrl;
+    // A ReceivePort cannot be sent to another isolate, like the dialog
+    // context the chat's progress callback held on the S25.
+    final port = ReceivePort();
+    addTearDown(() async {
+      port.close();
+      WhisperService.downloadUrl = savedUrl;
+      PathProviderPlatform.instance = original;
+      await server.close(force: true);
+      dir.deleteSync(recursive: true);
+    });
+
+    ArchiveFile entry(String name) {
+      final bytes = Uint8List.fromList(name.codeUnits);
+      return ArchiveFile('model/$name', bytes.length, bytes);
+    }
+
+    final archive =
+        BZip2Encoder().encodeBytes(TarEncoder().encodeBytes(Archive()
+          ..addFile(entry('encoder.int8.onnx'))
+          ..addFile(entry('decoder.int8.onnx'))
+          ..addFile(entry('joiner.int8.onnx'))
+          ..addFile(entry('tokens.txt'))));
+    server.listen((request) {
+      request.response
+        ..contentLength = archive.length
+        ..add(archive)
+        ..close();
+    });
+    WhisperService.downloadUrl = 'http://127.0.0.1:${server.port}/model';
+
+    final progress = <double>[];
+    await WhisperService.instance.downloadModel(onProgress: (p) {
+      port.sendPort; // keeps the port in this closure's context
+      progress.add(p);
+    });
+
+    expect(await WhisperService.instance.isModelDownloaded(), isTrue);
+    expect(progress.last, 1.0);
+    expect(
+        File(p.join(dir.path, 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
+                'model.tar.bz2'))
+            .existsSync(),
+        isFalse);
+  });
+
   test('extractModelFiles keeps only the named files and cleans up', () {
     final dir = Directory.systemTemp.createTempSync('whisper_extract');
     addTearDown(() => dir.deleteSync(recursive: true));
     ArchiveFile entry(String name, String text) {
       final bytes = Uint8List.fromList(text.codeUnits);
-      return ArchiveFile('sherpa-onnx-whisper-turbo/$name', bytes.length, bytes);
+      return ArchiveFile(
+          'sherpa-onnx-whisper-turbo/$name', bytes.length, bytes);
     }
 
     final tar = TarEncoder().encodeBytes(Archive()
@@ -94,7 +161,8 @@ void main() {
       {'turbo-encoder.int8.onnx', 'turbo-tokens.txt'},
     );
 
-    expect(File('${dir.path}/turbo-encoder.int8.onnx').readAsStringSync(), 'enc');
+    expect(
+        File('${dir.path}/turbo-encoder.int8.onnx').readAsStringSync(), 'enc');
     expect(File('${dir.path}/turbo-tokens.txt').readAsStringSync(), 'tok');
     expect(File('${dir.path}/turbo-encoder.onnx').existsSync(), isFalse);
     expect(File('$archivePath.tar').existsSync(), isFalse);

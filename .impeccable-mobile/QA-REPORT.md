@@ -8,7 +8,7 @@
 - Design de referência atual: `.impeccable-mobile/references/amoled-v3-ios/`
 - Referências anteriores: `.impeccable-mobile/references/amoled/` e `amoled-v2/` (supersedidas por fidelidade às referências e navegação inferior pesada)
 - Impeccable oficial instalado? sim
-- Evidência de execução: inspeção de código e screenshot aprovado `docs/s25_screenshot.png`; referências são imagens geradas, não capturas reais
+- Evidência de execução: inspeção de código e screenshot aprovado `docs/imagens/s25_screenshot.png`; referências são imagens geradas, não capturas reais
 
 ## Achados
 
@@ -18,7 +18,7 @@
 
 ## Registros
 
-- Screenshot antes: `docs/s25_screenshot.png` (onboarding claro, captura já existente no repositório)
+- Screenshot antes: `docs/imagens/s25_screenshot.png` (onboarding claro, captura já existente no repositório)
 - Screenshot depois: não aplicável; nenhuma tela do app foi alterada. As novas referências estão em `.impeccable-mobile/references/amoled-v3-ios/`.
 - Diff / dados métricos: não executado
 - XML / teste de navegação: não executado

@@ -71,7 +71,7 @@ class ArticleCard extends StatelessWidget {
 /// Clear heading steps, one-idea blocks with room between them, amber list
 /// markers and a ruled table keep the text scannable (Nielsen Norman Group,
 /// "How Users Read on the Web"); 16sp body with 1.55 line height follows the
-/// font-size findings of Rello et al., CHI 2016. See docs/EXTRACAO-DOCUMENTOS.md.
+/// font-size findings of Rello et al., CHI 2016. See docs/fases/EXTRACAO-DOCUMENTOS.md.
 MarkdownStyleSheet articleMarkdownStyleSheet() {
   const body = TextStyle(
     fontSize: 16,

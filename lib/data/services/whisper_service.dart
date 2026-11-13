@@ -1,4 +1,4 @@
-import 'dart:io' show File, Directory;
+import 'dart:io' show File, Directory, HttpException;
 import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
@@ -41,8 +41,9 @@ class WhisperService {
     'sherpa-onnx-whisper-turbo',
   ];
 
-  /// Download URL
-  static const _downloadUrl =
+  /// Download URL; a test points it at a local server.
+  @visibleForTesting
+  static String downloadUrl =
       'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/$_modelDirName.tar.bz2';
 
   TranscriptionIsolate? _bgIsolate;
@@ -81,10 +82,10 @@ class WhisperService {
     await Directory(dir).create(recursive: true);
 
     // Download tar.bz2 archive from GitHub
-    _logger.info('Downloading Parakeet model from $_downloadUrl');
+    _logger.info('Downloading Parakeet model from $downloadUrl');
     final tmpFile = File('$dir/model.tar.bz2');
     await _downloadFile(
-      _downloadUrl,
+      downloadUrl,
       tmpFile.path,
       onProgress: (p) => onProgress(p * 0.9),
     );
@@ -93,10 +94,7 @@ class WhisperService {
     // big to decompress in memory on the UI isolate.
     _logger.info('Extracting model archive...');
     onProgress(0.9);
-    final archivePath = tmpFile.path;
-    await Isolate.run(
-      () => extractModelFiles(archivePath, dir, _modelFileNames),
-    );
+    await _extractInBackground(tmpFile.path, dir);
     if (tmpFile.existsSync()) await tmpFile.delete();
 
     final support = (await getApplicationSupportDirectory()).path;
@@ -108,6 +106,12 @@ class WhisperService {
 
     _logger.info('Parakeet model downloaded to $dir');
   }
+
+  /// Static so the isolate closure captures only the two paths: built inside
+  /// [downloadModel] it shared that scope with `onProgress`, which reaches the
+  /// UI and cannot be sent to an isolate ("object is unsendable" at 90%).
+  static Future<void> _extractInBackground(String archivePath, String dir) =>
+      Isolate.run(() => extractModelFiles(archivePath, dir, _modelFileNames));
 
   /// Extracts the files named in [names] from the `.tar.bz2` at [archivePath]
   /// into [outDir], streaming through a temporary `.tar` on disk. Each file is
@@ -154,6 +158,9 @@ class WhisperService {
   }) async {
     final request = http.Request('GET', Uri.parse(url));
     final response = await http.Client().send(request);
+    if (response.statusCode != 200) {
+      throw HttpException('HTTP ${response.statusCode}', uri: request.url);
+    }
     final totalBytes = response.contentLength ?? 0;
     int receivedBytes = 0;
     final sink = File(savePath).openWrite();

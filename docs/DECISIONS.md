@@ -42,12 +42,18 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-039 | 2026-11-06 | Busca semântica local com MiniLM-L12 int8, opcional e baixada sob demanda | ACCEPTED |
 | D-040 | 2026-11-06 | Fechar a F6 sem auditoria própria; abrir a F7-02 (medição do modelo local no S25) | ACCEPTED |
 | D-041 | 2026-11-06 | Adiar a F7-02 (modelo local) e guardar como reserva; nada implementado | ACCEPTED |
-| D-042 | 2026-11-06 | F9 aberta: PDF lido pelo modelo (ChatGPT), Todo própria, só imagens do dono, JSON sim e ICS só sob pedido, só Android | ACCEPTED |
+| D-042 | 2026-11-06 | F9 aberta: PDF lido pelo modelo (ChatGPT), Todo própria, só imagens do dono, JSON sim e ICS só sob pedido, só Android | ACCEPTED; lembretes e "só Android" substituídos por D-052/D-053 |
 | D-043 | 2026-11-07 | Follow-up e tarefa viram uma coisa só | ACCEPTED |
 | D-044 | 2026-11-07 | Retirar a exportação em JSON do relatório | ACCEPTED |
 | D-047 | 2026-11-11 | F7-03 (voz duplex) aberta sem o modelo local; entrada desligada até a medição no S25 | ACCEPTED |
 | D-048 | 2026-11-11 | Voz duplex ligada no chat com o eco medido no S25, aceito pelo dono | SUPERSEDED por D-049 |
 | D-049 | 2026-11-11 | Voz duplex: interrupção por toque, microfone fechado enquanto o app fala | ACCEPTED |
+| D-050 | 2026-11-13 | Expansão: Todo robusto no celular + Lumen no notebook; ordem, pausas e assistente ativo | ACCEPTED |
+| D-051 | 2026-11-13 | Todo robusto: lista única, recursos, atalhos de dia/hora e IA que propõe com confirmação | ACCEPTED |
+| D-052 | 2026-11-13 | Lembretes de tarefa disparados pelo próprio app (substitui D-042 no item lembretes) | ACCEPTED |
+| D-053 | 2026-11-13 | Desktop: fork do Coucou renomeado Lumen, no repositório do fork, com IA própria e e-mail pessoal | ACCEPTED |
+| D-054 | 2026-11-13 | Sync: relay do Coucou + caixa de correio no Cloudflare; escopo, avisos e backup semanal | ACCEPTED |
+| D-055 | 2026-11-13 | Google: login próprio, Drive (backup) e Calendar; NotebookLM pós-MVP sem previsão | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -195,10 +201,10 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-031 — Abrir a pesquisa F7-01 (2026-11-05)
 - Contexto: o dono pediu avançar para a F7, que está `BLOCKED` até o fechamento da F5 (D-003). Mesmo precedente da D-010 para a F6.
 - Decisão: abrir somente F7-01 (pesquisa e decisão de escopo). F7-02 a F7-06 seguem `BLOCKED`; nenhum código, provedor, serviço de PC ou permissão de microfone é autorizado. A F5 continua aberta e o MVP não muda.
-- Evidência: `docs/F7-01-viabilidade.md` (termos da Anthropic e da OpenAI, licenças, autenticação, sistemas e limites de dados, com nível de evidência por linha).
+- Evidência: `docs/fases/F7-01-viabilidade.md` (termos da Anthropic e da OpenAI, licenças, autenticação, sistemas e limites de dados, com nível de evidência por linha).
 
 ## D-032 — F7 sem ponte para CLIs (2026-11-05)
-- Contexto: `docs/F7-01-viabilidade.md` propunha uma ponte opcional para Claude Code e Codex CLI. O dono respondeu que o acesso ao ChatGPT por OAuth via Codex, que o app já tem, "já está bom".
+- Contexto: `docs/fases/F7-01-viabilidade.md` propunha uma ponte opcional para Claude Code e Codex CLI. O dono respondeu que o acesso ao ChatGPT por OAuth via Codex, que o app já tem, "já está bom".
 - Decisão: não haverá ponte desktop (F7-04) nem interface MCP (F7-05). O app segue com o login ChatGPT já existente; nenhum fluxo novo de credenciais. O limite dos termos permanece: sem login Claude.ai por assinatura (D-005).
 - Em aberto, sem decisão: voz full duplex (F7-03) e Ollama (F7-02). Seguem `BLOCKED` até o dono pedir, e só com medição no S25/PC.
 - F7-01 cumpre o objetivo (escopo decidido antes de código).
@@ -211,8 +217,8 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-034 — F8 e F9 só em pesquisa e documento; F7-02 em plano (2026-11-05)
 - Contexto: o dono pediu "veja do F7, F8 e F9 o que possa fazer sem o celular e faça". O roadmap exige decisão registrada para abrir fase `BLOCKED` (mesmo precedente de D-010 e D-031).
 - Decisão: abrir somente trabalho de pesquisa e de documento, sem código, dependência, permissão ou download de modelo: F8-01 (viabilidade do NotebookLM), F9-01 (mapeamento e perguntas), F9-02 (corpus de 40 casos em dados) e um plano de medição para F7-02. As demais subfases seguem `BLOCKED`.
-- Limites: nenhuma recomendação dos documentos está aceita; as decisões do dono estão listadas em `docs/F8-01-viabilidade.md` (seção 5) e `docs/F9-01-mapeamento.md` (seção 3). O que depende do S25 continua `NOT_RUN`. A F5 segue aberta e o MVP não muda.
-- Evidência: `docs/F8-01-viabilidade.md`, `docs/F9-01-mapeamento.md`, `docs/F9-02-corpus.md` e `docs/medicoes/f9-02/`, `docs/F7-02-plano-de-medicao.md`.
+- Limites: nenhuma recomendação dos documentos está aceita; as decisões do dono estão listadas em `docs/fases/F8-01-viabilidade.md` (seção 5) e `docs/fases/F9-01-mapeamento.md` (seção 3). O que depende do S25 continua `NOT_RUN`. A F5 segue aberta e o MVP não muda.
+- Evidência: `docs/fases/F8-01-viabilidade.md`, `docs/fases/F9-01-mapeamento.md`, `docs/fases/F9-02-corpus.md` e `docs/medicoes/f9-02/`, `docs/fases/F7-02-plano-de-medicao.md`.
 
 ## D-035 — Serviço pago do Memex fora da interface; GPS de foto sob o interruptor de localização (2026-11-05)
 - Contexto: o dono pediu "retire conectar pelo Memex e serviço oficial Memex, troque tudo por Segunda Mente" e deixou o GPS a meu critério. A auditoria da F5 achou que o GPS do EXIF de foto ia ao Nominatim e ao prompt do modelo sem passar pelo interruptor de localização.
@@ -223,7 +229,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-036 — Enriquecer conversas nos comentários e produzir materiais (2026-11-05)
 - Contexto: o dono confirmou que quer desenvolver as conversas que surgem dos comentários das personas em documentos e registros, respondendo quando quiser e transformando o que foi construído em novos materiais.
 - Decisão de produto: preservar esse ponto de entrada; permitir aprofundamento, criação e revisão por pedido na própria conversa, com saídas MD/PDF/DOCX, imagens e relatório ilustrado. Original, fontes, hipóteses, decisões e versões permanecem distinguíveis.
-- Planejamento: F10 em BACKLOG, detalhada em [F10-criacao-nos-comentarios.md](F10-criacao-nos-comentarios.md). Primeiro conversa/rascunho/exportação textual; depois imagens e relatório ilustrado. Reutilizar F3/F4/F6/F9 onde compatível, sem exigir Todo, NotebookLM ou desktop.
+- Planejamento: F10 em BACKLOG, detalhada em [F10-criacao-nos-comentarios.md](fases/F10-criacao-nos-comentarios.md). Primeiro conversa/rascunho/exportação textual; depois imagens e relatório ilustrado. Reutilizar F3/F4/F6/F9 onde compatível, sem exigir Todo, NotebookLM ou desktop.
 - Limites: este pedido autoriza estruturar a ideia no projeto. Não abre implementação, não altera a fase ativa nem amplia o MVP fechado. Prioridade de execução após MVP ou exceção explícita ainda precisa ser registrada. Provedor/custo de imagem e contratos persistidos ainda não estão decididos.
 - Evidência: plano com mapa de código, contratos, etapas e casos de aceite. Funcionalidade e revisão independente: NOT_RUN.
 
@@ -241,7 +247,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Efeito: critérios 6 e 7 passam com a evidência já registrada no S25; F2-07 deixa de exigir prévia para anexos do chat.
 
 ## D-039 — Busca semântica local com MiniLM-L12 int8 (2026-11-06)
-- Contexto: a medição da F6-10 (`docs/F6-10-medicao.md`) mostrou ganho dos embeddings sobre a busca textual nas consultas reformuladas. Com as 24 notas reais do dono: acerto@3 de 0,83 (texto) para 0,92 (e5-small) e 1,00 (MiniLM); o MiniLM também recusou melhor o que está fora do tema (94% contra 67% de acertos acima do corte).
+- Contexto: a medição da F6-10 (`docs/fases/F6-10-medicao.md`) mostrou ganho dos embeddings sobre a busca textual nas consultas reformuladas. Com as 24 notas reais do dono: acerto@3 de 0,83 (texto) para 0,92 (e5-small) e 1,00 (MiniLM); o MiniLM também recusou melhor o que está fora do tema (94% contra 67% de acertos acima do corte).
 - Decisão do dono: usar o `paraphrase-multilingual-MiniLM-L12-v2` quantizado (int8, Apache-2.0, 118 MB).
 - Desenho aceito para a F6-01: busca textual primeiro; a semântica só complementa quando o texto acha pouco, com corte de nota; recurso opcional e desligado por padrão. O modelo não vai no repositório nem no APK: é baixado sob demanda do repositório público `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, em revisão fixa, com conferência de SHA-256; depois disso roda só no aparelho, sem enviar texto a ninguém. Dependência nova: `flutter_onnxruntime` (MIT, compatível com GPL-3.0).
 - Limites: o corte de nota depende do corpus (no corpus sintético da F6-10 o resultado dos dois modelos foi o inverso), então o valor inicial é só um ponto de partida e precisa ser conferido no S25 com as notas do dono. O índice fica em memória no início (sem persistência). Bateria, tokenizador sobre texto fora do ASCII/NFKC e notas muito longas (truncadas em 128 tokens) seguem como limites conhecidos.
@@ -251,7 +257,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Contexto: os 12 itens da F6 estão `DONE` com prova no S25 (F6-01 fechada hoje). O texto do portão F6 não exige auditoria própria, ao contrário da F5. O dono pediu: "feche o f06 e avance para o f07". A F7 estava `BLOCKED`; só a F7-01 (pesquisa) tinha sido aberta (D-031) e a F7-02 tinha plano (D-034).
 - Decisão: F6 `DONE` sem auditoria dedicada; limites declarados continuam valendo (corte 0,42 provisório, índice só em memória, tempos e bateria não medidos). F7: abrir somente a F7-02 (sonda de modelo local no S25, método da F6-10, app separado em `tools/`). F7-03 e F7-06 seguem `BLOCKED`; F7-04 e F7-05 seguem `CANCELLED`.
 - Limites: nenhum modelo é baixado antes de o dono confirmar o download do Gemma 3 1B (~529 MB) e liberar o S25 por cerca de uma hora. O Gemma nunca vai empacotado no APK nem no repositório (Termos de Uso exigem repassar as restrições a quem recebe os pesos; risco de conflito com a GPL-3.0). Resumo dos Termos lido em 2026-11-06, não é parecer jurídico.
-- Evidência: `ROADMAP.md`, `docs/F7-02-plano-de-medicao.md`.
+- Evidência: `ROADMAP.md`, `docs/fases/F7-02-plano-de-medicao.md`.
 
 ## D-041 — Adiar o modelo local (2026-11-06)
 - Contexto: a medição no PC mostrou o Gemma 3 1B fraco (8/40) e o Gemma 4 E2B melhor (até 23/40 no corpus da F9-02), ainda abaixo do que serve para classificar sozinho. O dono: "vamos deixar esse negocio para depois, coloque no rollback, nao vamos implementar isso agora".
@@ -259,7 +265,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Reavaliar quando: o modelo remoto ficar caro/indisponível, ou o dono quiser voz/resumo sem nuvem. Antes, rodar o E4B com os dois prompts, comparar com o modelo remoto + regra da F3-07 e medir velocidade e RAM no S25.
 
 ## D-042 — Decisões da F9-01 e abertura da F9 (2026-11-06)
-- Contexto: o dono pediu "vamos para o f09" e respondeu às perguntas de `docs/F9-01-mapeamento.md` (seção 3). MVP e F6 estão fechados.
+- Contexto: o dono pediu "vamos para o f09" e respondeu às perguntas de `docs/fases/F9-01-mapeamento.md` (seção 3). MVP e F6 estão fechados.
 - Decisão (escolha do dono): (1) PDF é lido pelo **modelo configurado (ChatGPT)**, não por biblioteca local; não entra OCR local nem DOCX nesta fase. (2) Todo pessoal em **lista própria**, alimentada só por itens aprovados e ligada ao relatório de origem; lembretes e agenda pelas ações nativas existentes, um item por vez. (3) Imagens: **só as do dono**, com origem registrada; JSON de exportação sim (guarda a proveniência); ICS só quando houver pedido real. (4) **Só Android** agora; desktop fica para depois. Lembretes pelo `SystemActionService`, sem permissão antecipada (recomendação aceita por falta de objeção).
 - Consequências: o cliente `codex_responses_client.dart` já envia PDF (`input_file`, base64); o `gemini_oauth_client.dart` descarta PDF, então o app deve avisar quando o modelo ativo não lê PDF. O PDF sai do aparelho para o provedor, então exige o consentimento de envio já existente, com aviso de tamanho e de páginas. Página de evidência vem do modelo e precisa ser conferida no corpus. Sem IA, PDF não gera síntese.
 - Limites: nenhuma implementação autorizada além da F9-02 (fixtures de PDF) e da F9-03 em diante conforme o ROADMAP; limite de páginas e tamanho do PDF e a conferência de página pelo modelo ficam para medir na F9-02/F9-03.
@@ -292,10 +298,10 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: F7-03 passa a `IN_PROGRESS` pelo caminho independente. F7-02 continua `BLOCKED` (D-041 intacta) e F7-06 continua `BLOCKED`. Nenhuma dependência nova: a voz usa um canal nativo sobre o `TextToSpeech` do Android; `flutter_tts` e TTS por modelo foram descartados.
 - Limites: o S25 não estava conectado em 2026-11-11, então eco, interrupção, latência, bateria e aquecimento estão `NOT_RUN`. Por isso a entrada da tela no chat fica desligada (`AppConfig.enableDuplexVoice = false`) e a F7-03 não pode ser `DONE`. O turno falado vai ao chat em modo somente leitura. O texto da conversa entra no histórico; o áudio nunca é gravado.
 - Falta ao dono: rodar `tools/f703_probe` no S25 e, com os números, decidir ligar a entrada (ou exigir fone / trocar a interrupção por toque se o eco não for controlável).
-- Evidência: `docs/F7-03-voz-duplex.md`, STATE.md.
+- Evidência: `docs/fases/F7-03-voz-duplex.md`, STATE.md.
 
 ## D-048 — Ligar a voz duplex com o eco como está (2026-11-11)
-- Contexto: a sonda no S25 mostrou que, com a voz no alto-falante, o detector dispara com a própria resposta (2 disparos por fala de ~13 s na configuração do app; `docs/F7-03-voz-duplex.md` seção 5). Foram oferecidas três saídas: interrupção por toque, falar por cima só com fone, modo "telefone".
+- Contexto: a sonda no S25 mostrou que, com a voz no alto-falante, o detector dispara com a própria resposta (2 disparos por fala de ~13 s na configuração do app; `docs/fases/F7-03-voz-duplex.md` seção 5). Foram oferecidas três saídas: interrupção por toque, falar por cima só com fone, modo "telefone".
 - Decisão do dono: "deixe com eco mesmo, está aceitável para mim". Nenhuma das três saídas é adotada; a configuração de microfone e os limiares ficam como estão e `AppConfig.enableDuplexVoice` passa a `true`.
 - Consequência conhecida e aceita: no alto-falante a resposta pode ser cortada pela própria voz do app, e o trecho de eco pode ser transcrito e enviado ao modelo como se fosse um turno do usuário (em modo somente leitura; entra no histórico do chat e gasta chamadas do modelo) até o usuário pausar ou encerrar. Com fone o efeito deve sumir, mas isso não foi medido.
 - Limites: a tela e o canal `TtsChannelHandler` ainda não foram executados no aparelho (`NOT_RUN`); a F7-03 segue `IN_PROGRESS`. Reavaliar se o corte da resposta incomodar no uso: a alternativa mais barata continua sendo fechar o microfone enquanto o app fala.
@@ -306,4 +312,65 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: enquanto o app fala, o microfone fica **fechado** (o fluxo é encerrado, não só ignorado) e o indicador mostra desligado. O botão "Interromper e falar" cala a resposta e reabre o microfone; ao fim da resposta ele reabre sozinho. Deixa de existir o "falar por cima". Substitui D-048 no comportamento; a entrada no chat continua ligada.
 - Consequência: some o risco de o app ouvir a própria voz, cortar a resposta e mandar eco ao modelo. A conversa passa a ser em turnos com interrupção manual, não full duplex no sentido estrito. Cada resposta custa um fechar/abrir do microfone (tempo não medido no aparelho).
 - Reserva: falar por cima só com fone (opção B) depende de medir o eco com fone; não implementado.
-- Evidência: testes em STATE.md; `docs/F7-03-voz-duplex.md`. Tela no aparelho: `NOT_RUN`.
+- Evidência: testes em STATE.md; `docs/fases/F7-03-voz-duplex.md`. Tela no aparelho: `NOT_RUN`.
+
+## D-050 — Expansão: Todo robusto no celular e Lumen no notebook (2026-11-13)
+- Contexto: o dono quer ampliar o escopo para um assistente pessoal de trabalho que lembre o que fazer, ajude nas tarefas e troque ideias, com um Todo robusto no celular e uma parte no notebook que converse com ele. Base: o pacote de planejamento salvo em `docs/lumen/pacote-v1/` e o questionário [questionario/2026-11-13-lumen-desktop-e-todo.md](questionario/2026-11-13-lumen-desktop-e-todo.md) (D1–D27 do questionário).
+- Decisão:
+  - **Frentes:** o Todo robusto (F11) e o desktop Lumen (no fork, D-053) andam **em paralelo**; o sync (F12) vem depois dos dois. A frente desktop começa pelo que não depende do modelo de tarefas; as telas de tarefas do Lumen só começam depois que a F11-01 fixar o modelo.
+  - **Fases atuais:** a F7-03 é fechada, porque só falta validar a tela no S25. A F9, a F5V e a F10 ficam `PAUSED`, sem apagar nada.
+  - **Conteúdo do trabalho:** uso real, só com a agenda, as tarefas e as ideias do dono. Dados de clientes, contas, valores e documentos internos do banco não entram, e o app avisa sobre isso.
+  - **Assistente "mais ativo"** (F14): resumo de manhã e de tarde, cobrança de tarefas paradas e sugestões das personas. Só entra depois que o núcleo estiver estável: alarmes, sync sem perda e Lumen abrindo nota.
+- Notebook: pessoal, de uso livre (não é corporativo).
+- Supera: a parte "desktop fica para depois" da D-042.
+- Evidência: questionário citado; ROADMAP (F11–F14).
+
+## D-051 — Todo robusto (2026-11-13)
+- Decisão do dono: **lista única, sem grupos/listas/projetos**. Entram:
+  - telas Hoje, Próximas e Atrasadas, com hora e alerta antes;
+  - repetição: diária, semanal com dias escolhidos e mensal; concluir uma ocorrência não apaga a série;
+  - subtarefas/checklist;
+  - prioridade;
+  - filtros e busca, que incluem as tarefas concluídas.
+- Atalhos prontos, editáveis nas configurações:
+  - horários: Manhã 9h, Tarde 14h e Noite 20h;
+  - dias: Hoje, Amanhã, Daqui a 3 dias e Semana que vem (= próxima segunda);
+  - alerta padrão: 20 min antes;
+  - tarefa sem hora é tarefa do dia, sem alarme.
+- IA: propõe e o dono confirma. Texto ou voz viram um cartão pré-preenchido (título, dia, hora, alerta) que o dono ajusta e confirma. Data ou hora ambígua nunca é inventada. Vale no chat, na captura rápida e nos comentários das personas.
+- Regras que valem como estão no pacote: o domínio calcula as datas e o SO dispara, nunca a IA; IDs estáveis e tombstones.
+- Descartado: listas/projetos; a IA criar a tarefa direto.
+
+## D-052 — Lembretes disparados pelo próprio app (2026-11-13)
+- Contexto: pela D-042, o lembrete de uma tarefa era enviado ao app nativo de lembretes, um por vez. Assim não há como adiar ou concluir com estado conhecido, nem como avisar com o notebook desligado de forma controlada.
+- Decisão: a Segunda Mente agenda a própria notificação local como alarme exato, com as ações Adiar, Concluir e Abrir. Ela sobrevive ao reinício e funciona offline. As tarefas deixam de ir para o app nativo de lembretes. Substitui a D-042 só nesse item; o resto da D-042 continua.
+- Custo conhecido: exige a permissão de alarme exato e a de notificações. Se uma permissão for negada, a interface mostra que o disparo não está garantido. Exige teste físico no S25 com Doze, reinício e economia de bateria. A biblioteca é escolhida na F11-04.
+
+## D-053 — Desktop: fork do Coucou como Lumen (2026-11-13)
+- Contexto: o dono pediu "usar o Coucou como base para o Windows, pois ele já tem conversação, enviar documentos, chat, ver e-mails etc. [...] transformando em um só". Ele já mantém o fork público `playertwo1/coucou`: Tauri 2 com Rust e TypeScript, código MIT, releases `windows-v0.6.x` e roadmap próprio.
+- Decisão:
+  1. O fork `playertwo1/coucou` vira o app desktop inteiro, renomeado **Lumen**, e continua no próprio repositório. Não vira monorepo: o histórico, os merges do upstream e o atualizador ficam. O Flutter fica só no celular. O plano do pacote com Flutter Windows e Tauri como casca (T-002) foi descartado.
+  2. A primeira etapa é renomear, com personagem, ícone e sons próprios. O `LICENSE-ASSETS.md` do Coucou não permite distribuir um fork com o nome e os assets Coucou/Mochi sem autorização escrita. O visual se escolhe por protótipo.
+  3. O desktop chama o LLM direto, com o mesmo login OAuth do celular, começando pelo ChatGPT, sem chave de API paga. As personas e a memória resumida chegam pelo sync como dados. Em TypeScript/Rust só se reescreve o mínimo: comentar nota e conversar com persona.
+  4. Ficam todos os recursos do Coucou: ditado offline, captura rápida, chat, e-mail e monitorar agentes. O Notetaker passa a ser um **anotador de pensamentos e ideias**, comentado pelas personas com as mesmas regras do celular. Só o aparelho que criou a nota pede o comentário, e o outro recebe pelo sync.
+  5. E-mail: só a conta pessoal, e nada é enviado sozinho. O e-mail principal é o **MailCraft**, ligado pelo servidor MCP ou pelo canal de controle (`UCS-Care-Group/mailcraft`, MIT OR Apache-2.0). O Outlook clássico fica como secundário. A agenda vem do Google Calendar (D-055).
+  6. O trabalho do Lumen vai na frente da fila do fork. Das fases 0/1/2 fecha-se só o que está quase pronto; a 2B e a 2C pausam. O plano "Mochi assistente" (M0–M10) vira "Lumen assistente" e vem depois.
+  7. Interface do Lumen só em pt-BR. A regra das 13 línguas do fork deixa de valer para o trabalho do Lumen.
+- Difícil de reverter: a base e a linguagem do desktop.
+
+## D-054 — Sync entre celular e Lumen (2026-11-13)
+- Decisão:
+  - **Transporte:** reaproveitar o pareamento por QR, a criptografia e o relay do Coucou (`docs/ANDROID_LINK.md` e `docs/RELAY_LINK.md` do fork). O Worker do dono no Cloudflare passa a guardar as mudanças cifradas até o outro aparelho buscar (caixa de correio em Durable Objects/SQLite). O Wi-Fi local continua o caminho rápido.
+  - **Custo:** conferido em 2026-11-13 nas páginas oficiais de preço. Plano Free: 100 mil requisições por dia e 100 mil gravações por dia nos Durable Objects. Estourar bloqueia e não cobra.
+  - **Escopo:** tarefas, notas (inclusive do anotador), conversas e comentários das personas, personas, preferências confirmadas e memória resumida. Timeline, fotos e áudios ficam só no celular; o espelho completo é futuro sem previsão.
+  - **Avisos:** com os dois ligados, os dois avisam. Concluir ou adiar num aparelho cancela o aviso no outro.
+  - **Backup:** semanal no Google Drive, numa pasta própria, feito pelos dois aparelhos, cada um na sua subpasta. O celular faz o backup completo.
+  - **Regras do pacote mantidas:** `mutation_id` idempotente, tombstones, conflito de texto visível, e "salvo no aparelho" diferente de "sincronizado".
+- Difícil de reverter: o formato das mensagens e o pareamento.
+
+## D-055 — Ferramentas Google (2026-11-13)
+- Decisão:
+  - **Login:** um login Google próprio, num projeto Google Cloud do dono, em produção sem verificação e só para uso próprio. O aviso de "app não verificado" é aceito uma vez por aparelho. O modo teste foi descartado porque expira o login a cada 7 dias. Os escopos são os mínimos: Drive para arquivos do app e eventos do Calendar. O login do Gemini (D-013) não serve de base. Credenciais e client IDs ficam fora do repositório.
+  - **Google Calendar:** lê os eventos, que entram nos lembretes e resumos, e cria um evento a partir de uma tarefa confirmada. Nunca apaga ou altera evento sem confirmação e nunca convida terceiros.
+  - **NotebookLM:** o caminho escolhido é a via B da F8-01, criar ou atualizar um Google Doc do conteúdo escolhido, com prévia. Fica **pós-MVP, sem previsão**, e a F8 continua `BLOCKED`. Plano do dono: NotebookLM Pro.
+- Descartado agora: Gmail (o e-mail é o MailCraft, D-053), Google Tasks, Drive como fonte de leitura das personas.

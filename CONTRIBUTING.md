@@ -1,6 +1,6 @@
 # Contributing to Memex
 
-[简体中文](CONTRIBUTING_CN.md) | English
+[简体中文](docs/upstream/CONTRIBUTING_CN.md) | English
 
 Thanks for helping make Memex better. Memex is a local-first, AI-native personal knowledge app, so we are careful about changes that affect privacy, local data, database migrations, agent behavior, and LLM provider boundaries.
 

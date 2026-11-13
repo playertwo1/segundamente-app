@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="docs/segundamente-banner.png" alt="Segunda Mente: registre fragmentos, descubra conexões e preserve seu espaço." width="100%">
+  <img src="docs/imagens/segundamente-banner.png" alt="Segunda Mente: registre fragmentos, descubra conexões e preserve seu espaço." width="100%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/playertwo1/segundamente-app/releases/tag/v1.0.46"><strong>Android v1.0.46</strong></a> · Release privada do GitHub; exige acesso ao repositório.
 </p>
 
 <p align="center">
@@ -18,6 +22,7 @@ A Segunda Mente ajuda a guardar pensamentos, conversas, imagens e documentos sem
 ## Conteúdo
 
 - [O que o aplicativo faz](#o-que-o-aplicativo-faz)
+- [Atualizações do aplicativo](#atualizações-do-aplicativo)
 - [Como os dados circulam](#como-os-dados-circulam)
 - [Privacidade e armazenamento](#privacidade-e-armazenamento)
 - [Modelos de IA](#modelos-de-ia)
@@ -32,12 +37,17 @@ A Segunda Mente ajuda a guardar pensamentos, conversas, imagens e documentos sem
 - Registra texto, imagens, áudio, transcrições e documentos nos fluxos suportados.
 - Organiza registros em cartões da linha do tempo e arquivos Markdown de conhecimento.
 - Gera insights que ajudam a encontrar padrões e relações entre registros.
-- Permite criar personas que comentam nos registros e conversar com elas.
+- Permite criar personas que comentam nos registros, conversar com elas e incluir uma contribuição contextual no chat principal quando o assunto combina.
+- Orienta as personas a responder com 3 a 6 frases em conversas substantivas, evitando repetição e conteúdo de preenchimento; Quick Query não inclui essa participação.
 - Cria relatórios de sessões com resumos, decisões, ideias, tarefas e referências a trechos ou horários.
 - Exporta relatórios em Markdown, PDF e DOCX.
 - Mantém busca, dados estruturados e arquivos do workspace no dispositivo ou no local de armazenamento escolhido.
 
-A leitura de anexos e as capacidades de cada fluxo dependem do modelo configurado. O planejamento para aprofundar conversas nos comentários e criar documentos a partir delas está na F10; esse fluxo ainda não está disponível. Consulte [o roadmap](ROADMAP.md) para distinguir o que foi validado do que está planejado.
+A leitura de anexos e as capacidades de cada fluxo dependem do modelo configurado. Conversas aprofundadas a partir de comentários e criação de documentos nesses fios fazem parte da F10; consulte [o roadmap](ROADMAP.md) para acompanhar o estado e as evidências.
+
+## Atualizações do aplicativo
+
+No Android Stable e Early, **Configurações** permite consultar e baixar releases do GitHub. Como o repositório é privado, é necessário um token de acesso pessoal refinado, limitado a `playertwo1/segundamente-app` e com permissão `Contents: read`. O token fica no armazenamento seguro do aparelho. O canal Dev não oferece essa função.
 
 ## Como os dados circulam
 
@@ -47,6 +57,7 @@ flowchart LR
     B --> C[Cartão da linha do tempo]
     B --> D[Arquivos de conhecimento]
     B --> E[Insights e relatórios]
+    B --> I[Parágrafo da persona no chat principal, quando pertinente]
     C --> F[Workspace local]
     D --> F
     E --> F
@@ -90,7 +101,7 @@ A disponibilidade de visão, áudio, arquivos e outras capacidades varia por mod
 
 ```bash
 git clone https://github.com/playertwo1/segundamente-app.git
-cd segundamente
+cd segundamente-app
 flutter pub get
 flutter run --flavor globalDev
 ```
@@ -139,14 +150,18 @@ A arquitetura segue MVVM com Provider. Regras para agentes e acesso ao workspace
 
 ## Documentação do projeto
 
-- [Visão e escopo](PROJECT.md)
-- [Roadmap e evidências](ROADMAP.md)
-- [Estado atual e próxima ação](STATE.md)
-- [Decisões do produto](docs/DECISIONS.md)
-- [Índice de documentos](docs/INDEX.md)
-- [Direção visual](DESIGN.md)
-- [Extração de documentos](docs/EXTRACAO-DOCUMENTOS.md)
-- [Aviso de origem do fork](NOTICE)
+| Documento | Conteúdo |
+|---|---|
+| [AGENTS.md](AGENTS.md) | Guia canônico para agentes de código: ordem de leitura, regras, git e arquitetura |
+| [STATE.md](STATE.md) | Estado atual, próxima ação e evidências recentes |
+| [ROADMAP.md](ROADMAP.md) | Fases, ordem de trabalho e regras; um arquivo por fase em `docs/roadmap/` |
+| [PROJECT.md](PROJECT.md) | Visão, escopo e restrições |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Decisões do produto |
+| [DESIGN.md](DESIGN.md) | Direção visual |
+| [docs/INDEX.md](docs/INDEX.md) | Índice de toda a documentação |
+| [NOTICE](NOTICE) | Aviso de origem do fork |
+
+O lado desktop do produto, o **Lumen**, vive no repositório `playertwo1/coucou` e conversa com este app por sync (decisões D-050 a D-055).
 
 ## Origem e licença
 

@@ -37,7 +37,7 @@ enum DuplexVoiceProblem { permissionDenied, speechModelMissing, failed }
 /// Hands-free voice conversation (F7-03): listen → transcribe → model reply →
 /// speak. The reply is cut short by a tap ([interrupt]), not by talking over
 /// it: on the S25 loudspeaker the echo canceller does not keep the app from
-/// hearing its own voice (D-049, docs/F7-03-voz-duplex.md).
+/// hearing its own voice (D-049, docs/fases/F7-03-voz-duplex.md).
 ///
 /// The microphone opens only from [start] or [resume], both user actions, and
 /// every exit path (pause, cancel, error, dispose) closes it.

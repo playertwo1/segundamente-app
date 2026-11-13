@@ -1,0 +1,112 @@
+{
+  "name": "Segunda Mente + Lumen MVP package",
+  "version": "1.0",
+  "date": "2026-11-12",
+  "files": [
+    {
+      "path": "Manual_Mestre_Segunda_Mente_Lumen.docx",
+      "bytes": 1537338,
+      "sha256": "99eb383e61592b985403e59f78985e6f685a991afbfb65745419b4949cf5837a"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2848,
+      "sha256": "5b7bac6c570bb6ddca69b8054a76118eeed7a1db4d2c25277c760b8ca31840b0"
+    },
+    {
+      "path": "backlog/BACKLOG_PRIORIZADO.md",
+      "bytes": 2335,
+      "sha256": "62cbdc7464116df651913828392f5a5117e8b0c703f7e0aa6daa353fed6615ba"
+    },
+    {
+      "path": "design/01_conceito_desktop_mobile.png",
+      "bytes": 1802912,
+      "sha256": "a482dfd1074ac822fa8cdabd8d1adf6c7ac1e8f857bd95e0513a3f87c4893a98"
+    },
+    {
+      "path": "design/02_workspace_multiplataforma.png",
+      "bytes": 1587692,
+      "sha256": "36cfc3c7d3b5e0b9789a08f3d43891d4e23667b34d918d67672f0a91f1bba306"
+    },
+    {
+      "path": "design/03_wireframe_lumen.png",
+      "bytes": 59601,
+      "sha256": "4967927ff5e49f10c2c671716b4dba79473dfc53abba369a53d3c8a1f1dba619"
+    },
+    {
+      "path": "documentos/00_LEIA_PRIMEIRO.md",
+      "bytes": 2848,
+      "sha256": "5b7bac6c570bb6ddca69b8054a76118eeed7a1db4d2c25277c760b8ca31840b0"
+    },
+    {
+      "path": "documentos/01_PRODUCT_PRD.md",
+      "bytes": 5058,
+      "sha256": "b97d437806d2c8af0d3066d09405f6e3b6cebb6474d5091caeeec95e0387baa1"
+    },
+    {
+      "path": "documentos/02_MVP_DEFINICAO.md",
+      "bytes": 4425,
+      "sha256": "b9d203046afbf91e41e8aa1df4ae9604e23173d43be92c3d881626ad580a3c2e"
+    },
+    {
+      "path": "documentos/03_POS_MVP.md",
+      "bytes": 2002,
+      "sha256": "00c7e3440f2ed8492ef63d831f3756e92eacd1b6274e0f22386d451bc6293815"
+    },
+    {
+      "path": "documentos/04_ROADMAP_FASES.md",
+      "bytes": 5167,
+      "sha256": "0d4f539a8314e7579a5b9e91304c6dd89762445adea8edef754484dfb8a2811e"
+    },
+    {
+      "path": "documentos/05_ARQUITETURA.md",
+      "bytes": 4286,
+      "sha256": "4a8032d89633d4d432d8905734f39afdc20cf67c54cfe1135755de6e5f51db98"
+    },
+    {
+      "path": "documentos/06_MODELO_DADOS_E_API.md",
+      "bytes": 3206,
+      "sha256": "23ec504d862394a6bd385b46254d16b8c3af92e5484fd91a13ce53da66467a52"
+    },
+    {
+      "path": "documentos/07_UX_DESIGN.md",
+      "bytes": 2913,
+      "sha256": "af77d7285d4e72ed8d33df8607e575179ecc446dc2b51ef2c6f7969003e675e6"
+    },
+    {
+      "path": "documentos/08_SEGURANCA_PRIVACIDADE.md",
+      "bytes": 2365,
+      "sha256": "5432b2adbb85fcb523d96745fa2e838bf9e1db42410692494186d459325d84ea"
+    },
+    {
+      "path": "documentos/09_TESTES_ACEITE.md",
+      "bytes": 2690,
+      "sha256": "57a67128fc0264bf7a88c2e97bf5773a8ccdcba817602c3d1d75a39f4d960011"
+    },
+    {
+      "path": "documentos/10_DECISOES_E_RISCOS.md",
+      "bytes": 2824,
+      "sha256": "e45648fe72f020242f45cddbfa2b3051a4af2146233250f02de75c476347bf39"
+    },
+    {
+      "path": "documentos/11_REGISTRO_DA_CONVERSA.md",
+      "bytes": 4706,
+      "sha256": "87b6b2a57b6835fac15978316e1e93baeaa7c4ad1db022f621f3f376e3290d6d"
+    },
+    {
+      "path": "documentos/12_FONTES_E_REFERENCIAS.md",
+      "bytes": 2507,
+      "sha256": "ee25479a4ad39bce165e7842c86421452e3acd8070d6dcbc586d603b112bc420"
+    },
+    {
+      "path": "documentos/13_PROMPT_IMPLEMENTACAO_CODEX.md",
+      "bytes": 3231,
+      "sha256": "123e850a3fd3157c1a81e705a99ad4d524395655dd4d63591b0dd8c17c92a6d9"
+    },
+    {
+      "path": "referencias/MANIFEST.json",
+      "bytes": 3611,
+      "sha256": "69e202c29ccd137b340ccec905ceac48c78f9d0bebfa487ed8b3b6b141d45789"
+    }
+  ]
+}

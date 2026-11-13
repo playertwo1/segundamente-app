@@ -1183,6 +1183,21 @@
   "speechModelStartDownload": "Iniciar download",
   "speechModelDownloading": "Baixando modelo...",
   "speechModelConnecting": "Conectando...",
+  "speechModelMissingHint": "O modelo de fala local não está baixado. Baixe em Configurações > Transcrição no aparelho, ou desligue essa opção para transcrever pelo ChatGPT.",
+  "speechModelReady": "Modelo de fala baixado e pronto.",
+  "speechModelMissing": "Modelo de fala não baixado. Sem ele, o microfone não transcreve.",
+  "speechModelDownloadButton": "Baixar modelo (~{sizeMB} MB)",
+  "@speechModelDownloadButton": {
+    "placeholders": {
+      "sizeMB": {}
+    }
+  },
+  "speechModelDownloadFailed": "Falha ao baixar o modelo de fala: {error}",
+  "@speechModelDownloadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "deleteSpeechModel": "Excluir modelo de fala",
   "confirmDeleteSpeechModelMessage": "Excluir os arquivos do modelo local de reconhecimento de fala baixado? Eles serão baixados novamente na próxima vez que local speech-to-text for usado.",
   "speechModelDeletedSuccess": "Arquivos do modelo de fala excluídos",
@@ -1196,7 +1211,7 @@
   "speechTranscribing": "Reconhecendo...",
   "speechNoResult": "Nenhuma fala detectada",
   "useLocalSpeechToTextTitle": "Transcrição no aparelho",
-  "useLocalSpeechToTextDesc": "Quando ativado, a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixa um modelo de ~470 MB na primeira gravação). Quando desativado, o áudio é transcrito pelo modelo da nuvem configurado.",
+  "useLocalSpeechToTextDesc": "Ligado: a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixe o modelo de ~470 MB abaixo). Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).",
   "pendingAiProcessingHint": "Configure o modelo AI para processar",
   "demoWelcome": "Boas-vindas à Segunda Mente!\nVeja três formas de registrar, organizar e reencontrar seus momentos.",
   "demoTapAdd": "Toque aqui para criar seu primeiro registro",
@@ -1910,6 +1925,5 @@
   "duplexStatePaused": "Pausado — microfone desligado",
   "duplexHeard": "Você disse",
   "duplexReply": "Resposta",
-  "duplexErrorModelMissing": "O modelo de fala local ainda não foi baixado. Toque no microfone do chat para baixá-lo e volte aqui.",
   "duplexErrorFailed": "A conversa por voz parou por um erro. O microfone foi desligado."
 }
