@@ -328,15 +328,17 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-051 — Todo robusto (2026-11-13)
 - Decisão do dono: **lista única, sem grupos/listas/projetos**. Entram:
   - telas Hoje, Próximas e Atrasadas, com hora e alerta antes;
-  - repetição: diária, semanal com dias escolhidos e mensal; concluir uma ocorrência não apaga a série;
+  - repetição: diária, semanal com dias escolhidos e mensal; concluir uma ocorrência mantém o histórico em Concluídas e cria a próxima ocorrência ativa sem apagar a série; no mensal, dia 31 vira o último dia do mês;
   - subtarefas/checklist;
-  - prioridade;
-  - filtros e busca, que incluem as tarefas concluídas.
+  - prioridade com quatro níveis: baixa, normal, alta e urgente;
+  - filtros e busca, que incluem as tarefas concluídas; cada resultado mostra o estado e a data.
 - Atalhos prontos, editáveis nas configurações:
   - horários: Manhã 9h, Tarde 14h e Noite 20h;
   - dias: Hoje, Amanhã, Daqui a 3 dias e Semana que vem (= próxima segunda);
   - alerta padrão: 20 min antes;
-  - tarefa sem hora é tarefa do dia, sem alarme.
+  - tarefa sem hora é tarefa do dia, sem alarme; a explicação aparece apenas quando o campo de hora está vazio;
+  - ao excluir, a tarefa sai da lista e aparece a ação temporária “Tarefa excluída · Desfazer”.
+- Fuso das datas e horas: `America/Sao_Paulo`.
 - IA: propõe e o dono confirma. Texto ou voz viram um cartão pré-preenchido (título, dia, hora, alerta) que o dono ajusta e confirma. Data ou hora ambígua nunca é inventada. Vale no chat, na captura rápida e nos comentários das personas.
 - Regras que valem como estão no pacote: o domínio calcula as datas e o SO dispara, nunca a IA; IDs estáveis e tombstones.
 - Descartado: listas/projetos; a IA criar a tarefa direto.

@@ -22,7 +22,17 @@ class _FakeRouter implements MemexRouter {
   Future<Result<List<TodoItem>>> loadTodos() async => Ok([...items]);
 
   @override
-  Future<Result<TodoItem>> addTodo({required String text, String? due}) async {
+  Future<Result<TodoItem>> addTodo({
+    required String text,
+    String? due,
+    String? dueDate,
+    String? dueTime,
+    String timeZone = todoTimeZone,
+    int alertMinutes = 20,
+    TodoPriority priority = TodoPriority.normal,
+    List<TodoSubtask> subtasks = const [],
+    TodoRecurrence? recurrence,
+  }) async {
     final item = TodoItem(
       id: 'todo_${_next++}',
       text: text.trim(),
@@ -39,6 +49,14 @@ class _FakeRouter implements MemexRouter {
     required String id,
     required String text,
     required String due,
+    String? dueDate,
+    String? dueTime,
+    String? timeZone,
+    int? alertMinutes,
+    TodoPriority? priority,
+    List<TodoSubtask>? subtasks,
+    TodoRecurrence? recurrence,
+    bool clearRecurrence = false,
   }) async {
     items = [
       for (final i in items)
