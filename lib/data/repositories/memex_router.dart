@@ -1648,9 +1648,13 @@ class MemexRouter {
     });
   }
 
-  Future<Result<List<TodoItem>>> loadTodos() {
+  Future<Result<List<TodoItem>>> loadTodos({bool includeDeleted = false}) {
     return runResult(() async {
-      return (await _todoRepository.load(await _reportUserId())).valueOrThrow;
+      return (await _todoRepository.load(
+        await _reportUserId(),
+        includeDeleted: includeDeleted,
+      ))
+          .valueOrThrow;
     });
   }
 
@@ -1664,6 +1668,7 @@ class MemexRouter {
 
   Future<Result<TodoItem>> addTodo({
     required String text,
+    String? id,
     String? due,
     String? dueDate,
     String? dueTime,
@@ -1677,6 +1682,7 @@ class MemexRouter {
       return (await _todoRepository.add(
         userId: await _reportUserId(),
         text: text,
+        id: id,
         due: due,
         dueDate: dueDate,
         dueTime: dueTime,

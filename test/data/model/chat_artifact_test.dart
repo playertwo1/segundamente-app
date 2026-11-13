@@ -1,8 +1,48 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/model/chat_artifact.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
 
 void main() {
   group('ChatArtifact schema v2', () {
+    test('round trips a pending Todo proposal artifact', () {
+      final original = TodoProposal(
+        id: 'proposal-1',
+        title: 'Enviar relatório',
+        dateState: TodoProposalDateState.ambiguous,
+        datePhrase: 'sexta',
+        timeState: TodoProposalTimeState.unspecified,
+      );
+      final artifact = ChatArtifact.todoProposalCard(proposal: original);
+
+      final decoded = ChatArtifact.fromJson(artifact.toJson());
+
+      expect(decoded!.kind, ChatArtifact.kindTodoProposal);
+      expect(decoded.todoProposal!.id, original.id);
+      expect(decoded.todoProposal!.datePhrase, 'sexta');
+      expect(decoded.todoProposal!.dueDate, isNull);
+    });
+
+    test('ignores a proposal map with non-string keys', () {
+      final artifact = Map<String, dynamic>.from(
+        ChatArtifact.todoProposalCard(
+          proposal: TodoProposal(
+            id: 'proposal-1',
+            title: 'Enviar relatório',
+            dateState: TodoProposalDateState.unspecified,
+            timeState: TodoProposalTimeState.unspecified,
+          ),
+        ).toJson(),
+      );
+      final metadata = Map<String, dynamic>.from(artifact['metadata'] as Map)
+        ..['todo_proposal'] = {1: 'malformada'};
+      artifact['metadata'] = metadata;
+
+      final decoded = ChatArtifact.fromJson(artifact);
+
+      expect(decoded, isNotNull);
+      expect(decoded!.todoProposal, isNull);
+    });
+
     test('parses a timeline card artifact with target uri metadata', () {
       final artifact = ChatArtifact.fromToolMetadata({
         'artifact': ChatArtifact.timelineCard(

@@ -11,7 +11,9 @@ class _FakeRouter implements MemexRouter {
   final List<TodoItem> items;
 
   @override
-  Future<Result<List<TodoItem>>> loadTodos() async => Ok(items);
+  Future<Result<List<TodoItem>>> loadTodos(
+          {bool includeDeleted = false}) async =>
+      Ok(items);
 
   @override
   Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>

@@ -25,6 +25,8 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:memex/ui/timeline/widgets/timeline/asset_header_gallery.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
+import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/todo_proposal_card.dart';
 
 import 'package:memex/ui/chat/widgets/open_super_agent_dialog.dart';
 import 'package:memex/ui/chat/widgets/reference_asset_formatter.dart';
@@ -73,6 +75,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
   bool _showInsightText = true;
   String? _replyToCommentId;
   String? _replyToCommentName;
+  late final TodoProposalViewModel _todoProposalViewModel;
   late bool _showDemoHint;
 
   @override
@@ -81,6 +84,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
     _showDemoHint = widget.showDemoHint &&
         DemoService.instance.currentStep == DemoStep.tapCard;
     _memexRouter = MemexRouter();
+    _todoProposalViewModel = TodoProposalViewModel(router: _memexRouter);
     _memexRouter.registerCardDetailForeground(widget.cardId);
     _fetchDetail();
     _loadUserInfo();
@@ -143,6 +147,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
 
   @override
   void dispose() {
+    _todoProposalViewModel.dispose();
     _docsRefresh.dispose();
     _memexRouter.unregisterCardDetailForeground(widget.cardId);
     EventBusService.instance.removeHandler(
@@ -1463,34 +1468,49 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
           ? displayUserName
           : (comment.character?.name ?? UserStorage.l10n.commentAuthorAi);
       commentWidgets.add(
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              // Tap a comment to reply to it
-              setState(() {
-                _replyToCommentId = comment.id;
-                _replyToCommentName = commentName;
-              });
-              _showInputModal(detail.id);
-            },
-            borderRadius: BorderRadius.circular(8),
-            splashColor: AppColors.primary.withValues(alpha: 0.06),
-            highlightColor: AppColors.primary.withValues(alpha: 0.03),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-              child: _buildSingleComment(
-                characterId: isUser ? 'user' : comment.character?.id,
-                avatar: isUser ? _userAvatar : comment.character?.avatar,
-                name: commentName,
-                content: comment.content,
-                time: DateFormat('MM-dd').format(
-                  DateTime.fromMillisecondsSinceEpoch(comment.timestamp * 1000),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _replyToCommentId = comment.id;
+                      _replyToCommentName = commentName;
+                    });
+                    _showInputModal(detail.id);
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  splashColor: AppColors.primary.withValues(alpha: 0.06),
+                  highlightColor: AppColors.primary.withValues(alpha: 0.03),
+                  child: _buildSingleComment(
+                    characterId: isUser ? 'user' : comment.character?.id,
+                    avatar: isUser ? _userAvatar : comment.character?.avatar,
+                    name: commentName,
+                    content: comment.content,
+                    time: DateFormat('MM-dd').format(
+                      DateTime.fromMillisecondsSinceEpoch(
+                        comment.timestamp * 1000,
+                      ),
+                    ),
+                    isAi: comment.isAi,
+                    replyToName: comment.replyToName,
+                  ),
                 ),
-                isAi: comment.isAi,
-                replyToName: comment.replyToName,
               ),
-            ),
+              if (comment.todoProposal != null)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 42, top: 8),
+                  child: TodoProposalCard(
+                    key: ValueKey('comment_todo_${comment.todoProposal!.id}'),
+                    proposal: comment.todoProposal!,
+                    viewModel: _todoProposalViewModel,
+                  ),
+                ),
+            ],
           ),
         ),
       );

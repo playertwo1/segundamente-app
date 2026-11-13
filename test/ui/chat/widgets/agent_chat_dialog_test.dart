@@ -18,20 +18,26 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:memex/data/model/chat_artifact.dart';
 import 'package:memex/data/model/chat_events.dart';
+import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/demo_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_asset_server.dart';
 import 'package:memex/data/services/system_action_service.dart';
 import 'package:memex/db/app_database.dart';
 import 'package:memex/domain/models/llm_config.dart';
+import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
+import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/view_models/voice_dictation_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/agent_chat_dialog.dart';
+import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/core/widgets/agent_logo_loading.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
 import 'package:memex/ui/knowledge/widgets/knowledge_file_page.dart';
 import 'package:memex/utils/user_storage.dart';
+import 'package:memex/utils/result.dart';
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1246,6 +1252,41 @@ void main() {
       expect(find.text(UserStorage.l10n.artifactOpen), findsNothing);
     });
 
+    testWidgets('renders the task proposal card in an assistant reply', (
+      tester,
+    ) async {
+      final router = _TodoProposalRouter();
+      final viewModel = TodoProposalViewModel(router: router);
+      addTearDown(viewModel.dispose);
+      final proposal = TodoProposal(
+        id: 'proposal-chat-1',
+        title: 'Review the report',
+        dateState: TodoProposalDateState.ambiguous,
+        datePhrase: 'Friday',
+        timeState: TodoProposalTimeState.unspecified,
+      );
+
+      await _pumpDialog(
+        tester,
+        dialog: AgentChatDialog(
+          todoProposalViewModelForTesting: viewModel,
+          initialItems: [
+            AIMessageItem(
+              'Here is a task suggestion.',
+              artifacts: [
+                ArtifactItem(ChatArtifact.todoProposalCard(proposal: proposal)),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(find.text('Here is a task suggestion.'), findsOneWidget);
+      expect(find.text('Review the report'), findsOneWidget);
+      expect(find.text(UserStorage.l10n.todoProposalReview), findsOneWidget);
+      expect(router.addCalls, 0);
+    });
+
     testWidgets('renders a system action with inline confirmation controls', (
       tester,
     ) async {
@@ -1432,6 +1473,39 @@ Future<void> _pumpDialogFrame(
     ),
   );
   await tester.pump();
+}
+
+class _TodoProposalRouter implements MemexRouter {
+  int addCalls = 0;
+
+  @override
+  Future<Result<List<TodoItem>>> loadTodos(
+          {bool includeDeleted = false}) async =>
+      const Ok(<TodoItem>[]);
+
+  @override
+  Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>
+      Ok(TodoShortcutSettings.defaults);
+
+  @override
+  Future<Result<TodoItem>> addTodo({
+    required String text,
+    String? id,
+    String? due,
+    String? dueDate,
+    String? dueTime,
+    String timeZone = todoTimeZone,
+    int alertMinutes = 20,
+    TodoPriority priority = TodoPriority.normal,
+    List<TodoSubtask> subtasks = const [],
+    TodoRecurrence? recurrence,
+  }) async {
+    addCalls++;
+    return Error(StateError('Unexpected Todo proposal confirmation'));
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _SupportDirProvider extends PathProviderPlatform

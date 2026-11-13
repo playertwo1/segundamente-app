@@ -13,21 +13,23 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | Só a F7-03 (voz duplex por turnos, D-049); F7-02 adiada (D-041), F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 a F11-03 DONE; F11-04 BLOCKED (validação no S25) |
+| F11 | IN_PROGRESS | F11-01 a F11-03 e F11-05 DONE; F11-04 BLOCKED (validação no S25); F11-06 BLOCKED |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 
 ## Próxima ação
 
-1. **F11-04:** permanece BLOCKED; requer validação de alarmes no Galaxy S25 Ultra antes de iniciar.
-2. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
-3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
+1. **F11-04:** aguardar o Galaxy S25 Ultra para validar alarmes exatos, offline, após reinício e em Doze; permanece BLOCKED.
+2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
+3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
+4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
+5. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
 ## Pendências do dono
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
 - Testar no S25 os itens da F7-03 acima.
+- Testar os alarmes da F11-04 no S25 (AC-01, T05, T15 e T16).
 
 ## Ambiente (fora do repositório)
 
@@ -37,7 +39,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Linha de base de qualidade
 
-- v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. `flutter analyze` no repositório inteiro: `NOT_RUN` desde então.
+- v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
 
@@ -69,6 +71,16 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `flutter run --flavor globalDev --no-pub -d emulator-5554` iniciou o app; `adb shell monkey -p app.segundamente.dev -c android.intent.category.LAUNCHER 1` confirmou reinício a frio e persistência. QA manual passou em criação sem data, edição de prioridade, filtro, busca global com estado/data, conclusão/reabertura, quatro abas, subtarefa criada/concluída, exclusão/desfazer e persistência da tarefa e subtarefa após reinício. Capturas AMOLED foram inspecionadas; a tarefa sintética foi removida.
 - QA atualizado em `docs/reviews/F11-todo-referencias/qa-f11-03.md`. `flutter analyze --no-pub` e suíte completa `flutter test --no-pub` → `NOT_RUN`; TalkBack, tema claro, fonte ampliada do sistema, Maestro e validação no S25 → `NOT_RUN`. Alarmes físicos permanecem na F11-04.
 - O primeiro APK sem ABI x86 falhou no AVD por incompatibilidade com o filtro arm64 de produto; não é uma falha do APK destinado ao aparelho arm64. A correção de inicialização foi verificada no build x86 temporário; validação física continua pendente para fluxos que a exigem.
+
+### F11-05 — propostas de tarefa pela IA (2026-11-13)
+- Chat e captura exibem uma proposta persistida como artefato; comentários de personas guardam o mesmo cartão no comentário. A lista Todo só muda após a confirmação do dono; datas como “sexta” e horários vagos ficam sem resolução automática. O ID da proposta torna a confirmação idempotente e impede duplicação ao reabrir o chat; tombstones continuam visíveis. Mapas de proposta malformados, inclusive com chave YAML não textual, são ignorados sem derrubar a leitura do cartão.
+- O editor compartilhado permite revisar título, data, hora, prioridade, subtarefas, repetição e alerta. Foi protegida a carga assíncrona do cartão contra descarte do ViewModel ao fechar o chat.
+- `flutter test --no-pub test/domain/models/todo_proposal_test.dart test/domain/models/card_model_test.dart test/data/model/chat_artifact_test.dart test/data/services/todo_service_test.dart test/data/repositories/todo_repository_test.dart test/data/repositories/todo_repository_initialization_test.dart test/data/repositories/card_reply_name_test.dart test/agent/todo_proposal_skill_test.dart test/agent/comment_tool_factory_test.dart test/agent/comment_agent_policy_test.dart test/agent/super_agent_permissions_test.dart test/ui/todo/view_models/todo_viewmodel_test.dart test/ui/todo/view_models/todo_proposal_viewmodel_test.dart test/ui/todo/widgets/todo_screen_test.dart test/ui/todo/widgets/todo_proposal_card_test.dart test/ui/chat/widgets/agent_chat_dialog_test.dart test/integration/todo_undo_flow_test.dart` → **166 testes aprovados**.
+- A integração inclui skill → artefato → confirmação → MemexRouter/serviço/armazenamento; nenhum Todo existia antes da confirmação.
+- `flutter test --no-pub --reporter compact` → **1.743 aprovados, 2 ignorados, 4 falhas**, todas em `test/ui/settings/widgets/settings_page_test.dart` (toques fora da janela). A execução isolada reproduziu: `link previews start off and the switch is remembered`, `on-device transcription starts off and the switch is remembered`, `the local speech model is downloaded and deleted here, only when on-device transcription is on` e `downloaded model can be deleted while semantic search is off`. São falhas conhecidas, fora dos arquivos alterados; a suíte geral foi executada antes dos dois testes finais de mapas malformados, aprovados no lote de área acima.
+- `flutter analyze --no-pub` → **159 issues encontrados** no repositório; não é PASS. `dart analyze lib/ui/todo/view_models/todo_proposal_viewmodel.dart test/ui/todo/view_models/todo_proposal_viewmodel_test.dart test/integration/todo_undo_flow_test.dart test/domain/models/todo_proposal_test.dart test/agent/todo_proposal_skill_test.dart` → `No issues found!`. A análise dirigida mais ampla apontou 15 avisos/infos em linhas legadas de `todo_screen.dart`, `card_model.dart` e `timeline_card_detail_screen.dart`; a análise final dos parsers/modelos/testes encontrou 3 `info` legados em `card_model.dart` e nenhum erro.
+- AVD `CoreFlow_API36_Clean`/`emulator-5554`: `flutter run --flavor globalDev --no-pub -d emulator-5554` abriu o app após build x86_64 local temporário (filtro restaurado). Maestro navegou até Todo, confirmou o estado vazio, abriu o editor, verificou “Sem horário” e alerta padrão de 20 min e cancelou sem gravar dados.
+- `NOT_RUN`: geração de proposta por modelo real no chat/captura/persona (o AVD mostra modelo de IA não configurado); validação física no S25 (pertence à F11-04); TalkBack; suíte geral aprovada sem as quatro falhas de Configurações.
 
 ### Modelo de fala em Configurações (2026-11-12)
 - O download do modelo local saiu do microfone do chat e foi para Configurações > "Transcrição no aparelho", com progresso e exclusão. Desligado, o áudio vai direto para o ChatGPT. O microfone do chat só dita; sem modelo, ele aponta para Configurações.

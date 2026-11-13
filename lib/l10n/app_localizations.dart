@@ -6555,6 +6555,108 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get todoSave;
 
+  /// No description provided for @todoAlertMinutesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert before (minutes)'**
+  String get todoAlertMinutesLabel;
+
+  /// No description provided for @todoAlertMinutesInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number of zero or more minutes.'**
+  String get todoAlertMinutesInvalid;
+
+  /// No description provided for @todoProposalHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Task suggestion'**
+  String get todoProposalHeading;
+
+  /// No description provided for @todoProposalReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and add'**
+  String get todoProposalReview;
+
+  /// No description provided for @todoProposalReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review task suggestion'**
+  String get todoProposalReviewTitle;
+
+  /// No description provided for @todoProposalConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and add'**
+  String get todoProposalConfirm;
+
+  /// No description provided for @todoProposalDateUnclear.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI could not resolve this date.'**
+  String get todoProposalDateUnclear;
+
+  /// No description provided for @todoProposalTimeUnclear.
+  ///
+  /// In en, this message translates to:
+  /// **'The AI could not resolve this time.'**
+  String get todoProposalTimeUnclear;
+
+  /// No description provided for @todoProposalUseNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep without a date'**
+  String get todoProposalUseNoDate;
+
+  /// No description provided for @todoProposalUseNoTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep without a time'**
+  String get todoProposalUseNoTime;
+
+  /// No description provided for @todoProposalDateMustResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a date or confirm that the task will have no date.'**
+  String get todoProposalDateMustResolve;
+
+  /// No description provided for @todoProposalTimeMustResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a time or confirm that the task will have no time.'**
+  String get todoProposalTimeMustResolve;
+
+  /// No description provided for @todoProposalNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'No date set'**
+  String get todoProposalNoDate;
+
+  /// No description provided for @todoProposalAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to Todo.'**
+  String get todoProposalAdded;
+
+  /// No description provided for @todoProposalDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This proposal already created a task that was deleted.'**
+  String get todoProposalDeleted;
+
+  /// No description provided for @todoProposalSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add the task. Try again.'**
+  String get todoProposalSaveFailed;
+
+  /// No description provided for @todoProposalAlertHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Default alert: {minutes} min before'**
+  String todoProposalAlertHint(int minutes);
+
   /// No description provided for @todoOpenSource.
   ///
   /// In en, this message translates to:

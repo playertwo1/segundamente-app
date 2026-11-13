@@ -3671,6 +3671,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoSave => 'Save';
 
   @override
+  String get todoAlertMinutesLabel => 'Alert before (minutes)';
+
+  @override
+  String get todoAlertMinutesInvalid =>
+      'Enter a whole number of zero or more minutes.';
+
+  @override
+  String get todoProposalHeading => 'Task suggestion';
+
+  @override
+  String get todoProposalReview => 'Review and add';
+
+  @override
+  String get todoProposalReviewTitle => 'Review task suggestion';
+
+  @override
+  String get todoProposalConfirm => 'Confirm and add';
+
+  @override
+  String get todoProposalDateUnclear => 'The AI could not resolve this date.';
+
+  @override
+  String get todoProposalTimeUnclear => 'The AI could not resolve this time.';
+
+  @override
+  String get todoProposalUseNoDate => 'Keep without a date';
+
+  @override
+  String get todoProposalUseNoTime => 'Keep without a time';
+
+  @override
+  String get todoProposalDateMustResolve =>
+      'Choose a date or confirm that the task will have no date.';
+
+  @override
+  String get todoProposalTimeMustResolve =>
+      'Choose a time or confirm that the task will have no time.';
+
+  @override
+  String get todoProposalNoDate => 'No date set';
+
+  @override
+  String get todoProposalAdded => 'Added to Todo.';
+
+  @override
+  String get todoProposalDeleted =>
+      'This proposal already created a task that was deleted.';
+
+  @override
+  String get todoProposalSaveFailed => 'Could not add the task. Try again.';
+
+  @override
+  String todoProposalAlertHint(int minutes) {
+    return 'Default alert: $minutes min before';
+  }
+
+  @override
   String get todoOpenSource => 'Source';
 
   @override

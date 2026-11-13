@@ -34,9 +34,13 @@ void main() {
       final skill = _buildSkill(forceReply: false, tempRoot: tempRoot);
       final toolNames = _toolNames(skill);
 
-      expect(toolNames, containsAll(['SaveComment', 'SkipComment']));
+      expect(
+        toolNames,
+        containsAll(['SaveComment', 'SkipComment', 'ProposeTodo']),
+      );
       expect(skill.systemPrompt, contains('Comment Policy'));
       expect(skill.systemPrompt, contains('SkipComment'));
+      expect(skill.systemPrompt, contains('Todo proposals'));
       expect(skill.systemPrompt, contains('exactly one completion tool'));
     });
 
@@ -44,7 +48,7 @@ void main() {
       final skill = _buildSkill(forceReply: true, tempRoot: tempRoot);
       final toolNames = _toolNames(skill);
 
-      expect(toolNames, contains('SaveComment'));
+      expect(toolNames, containsAll(['SaveComment', 'ProposeTodo']));
       expect(toolNames, isNot(contains('SkipComment')));
       expect(skill.systemPrompt, contains('must leave a visible'));
       expect(skill.systemPrompt, contains('SaveComment'));

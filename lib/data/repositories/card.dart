@@ -200,6 +200,7 @@ Future<CardDetailModel> getCardDetail(String cardId) async {
             timestamp: commentData.timestamp,
             character: commentCharacter,
             replyToId: commentData.replyToId,
+            todoProposal: commentData.todoProposal,
           ),
         );
       } catch (e) {
@@ -496,10 +497,9 @@ Future<bool> updateCardLocationEndpoint(
   }
 }
 
-String replyDisplayNameFor(Comment c, String userDisplayName) =>
-    c.isAi
-        ? (c.character?.name ?? UserStorage.l10n.commentAuthorAi)
-        : userDisplayName;
+String replyDisplayNameFor(Comment c, String userDisplayName) => c.isAi
+    ? (c.character?.name ?? UserStorage.l10n.commentAuthorAi)
+    : userDisplayName;
 
 Map<String, String> commentReplyNameMap(
   Iterable<Comment> comments, {

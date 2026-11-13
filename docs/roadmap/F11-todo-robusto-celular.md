@@ -14,7 +14,7 @@
 | F11-02 | Repetição diária, semanal (dias) e mensal e atalhos de dia/hora (Hoje, Amanhã, Daqui a 3 dias, Semana que vem; 9h/14h/20h; alerta 20 min) | P0 | F11-01 | DONE | 73 testes direcionados; ocorrências mantêm a série, pulam ciclos vencidos e preservam a cadência em `America/Sao_Paulo` |
 | F11-03 | Telas Hoje/Próximas/Atrasadas/Concluídas, prioridade, subtarefas, filtros e busca (inclui concluídas) | P0 | F11-02 | DONE | 63 testes direcionados; busca explicita estado/data; lista sem projetos; vazios/erros, desfazer e fluxo ViewModel→MemexRouter→serviço cobertos. Reteste manual passou em AVD x86_64 após correção da inicialização do filesystem; QA em `docs/reviews/F11-todo-referencias/qa-f11-03.md` |
 | F11-04 | Alarme próprio: notificação exata com Adiar/Concluir/Abrir, sobrevive a reinício, permissão negada visível | P0 | F11-02 | BLOCKED | No S25: reunião 08h30 avisa 08h10 offline e após reinício (AC-01, T05, T15, T16); testes de agendar/cancelar |
-| F11-05 | Cartão de confirmação da IA no chat, na captura e nos comentários das personas | P1 | F11-03 | BLOCKED | Testes: "sexta" ou falta de hora pede confirmação; nada é gravado sem confirmar (T11, AC-05) |
+| F11-05 | Cartão de confirmação da IA no chat, na captura e nos comentários das personas | P1 | F11-03 | DONE | 166 testes direcionados e de integração; smoke no AVD x86_64. IA real `NOT_RUN` (modelo não configurado); a suíte geral tem 4 falhas conhecidas em Configurações |
 | F11-06 | Aviso de conteúdo: não registrar dados de clientes, contas ou documentos do banco | P2 | F11-03 | BLOCKED | Texto pt/en visível na captura e nas configurações; teste de widget |
 
 **Portão F11:** F11-01 a F11-05 DONE, AC-01 comprovado no S25, nenhum Todo antigo perdido.
