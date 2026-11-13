@@ -2591,6 +2591,27 @@ class AppLocalizationsPt extends AppLocalizations {
   String get speechModelConnecting => 'Conectando...';
 
   @override
+  String get speechModelMissingHint =>
+      'O modelo de fala local não está baixado. Baixe em Configurações > Transcrição no aparelho, ou desligue essa opção para transcrever pelo ChatGPT.';
+
+  @override
+  String get speechModelReady => 'Modelo de fala baixado e pronto.';
+
+  @override
+  String get speechModelMissing =>
+      'Modelo de fala não baixado. Sem ele, o microfone não transcreve.';
+
+  @override
+  String speechModelDownloadButton(Object sizeMB) {
+    return 'Baixar modelo (~$sizeMB MB)';
+  }
+
+  @override
+  String speechModelDownloadFailed(Object error) {
+    return 'Falha ao baixar o modelo de fala: $error';
+  }
+
+  @override
   String get deleteSpeechModel => 'Excluir modelo de fala';
 
   @override
@@ -2621,7 +2642,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get useLocalSpeechToTextDesc =>
-      'Quando ativado, a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixa um modelo de ~470 MB na primeira gravação). Quando desativado, o áudio é transcrito pelo modelo da nuvem configurado.';
+      'Ligado: a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixe o modelo de ~470 MB abaixo). Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).';
 
   @override
   String get pendingAiProcessingHint => 'Configure o modelo AI para processar';
@@ -4508,10 +4529,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get duplexReply => 'Resposta';
-
-  @override
-  String get duplexErrorModelMissing =>
-      'O modelo de fala local ainda não foi baixado. Toque no microfone do chat para baixá-lo e volte aqui.';
 
   @override
   String get duplexErrorFailed =>

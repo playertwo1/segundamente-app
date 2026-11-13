@@ -4623,6 +4623,36 @@ abstract class AppLocalizations {
   /// **'Connecting...'**
   String get speechModelConnecting;
 
+  /// No description provided for @speechModelMissingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The on-device speech model is not downloaded. Download it in Settings > On-device transcription, or turn that option off to transcribe with ChatGPT.'**
+  String get speechModelMissingHint;
+
+  /// No description provided for @speechModelReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech model downloaded and ready.'**
+  String get speechModelReady;
+
+  /// No description provided for @speechModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech model not downloaded. Without it, the microphone cannot transcribe.'**
+  String get speechModelMissing;
+
+  /// No description provided for @speechModelDownloadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Download model (~{sizeMB} MB)'**
+  String speechModelDownloadButton(Object sizeMB);
+
+  /// No description provided for @speechModelDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to download the speech model: {error}'**
+  String speechModelDownloadFailed(Object error);
+
   /// No description provided for @deleteSpeechModel.
   ///
   /// In en, this message translates to:
@@ -4674,7 +4704,7 @@ abstract class AppLocalizations {
   /// No description provided for @useLocalSpeechToTextDesc.
   ///
   /// In en, this message translates to:
-  /// **'When enabled, Portuguese speech is transcribed on-device by Parakeet, without sending the audio (downloads a ~470 MB model on the first recording). When disabled, audio is transcribed by your configured cloud model.'**
+  /// **'On: speech is transcribed on-device by Parakeet, without sending the audio (download the ~470 MB model below). Off: audio goes straight to ChatGPT (or your configured cloud model).'**
   String get useLocalSpeechToTextDesc;
 
   /// No description provided for @pendingAiProcessingHint.
@@ -7904,12 +7934,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Answer'**
   String get duplexReply;
-
-  /// No description provided for @duplexErrorModelMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'The local speech model has not been downloaded yet. Tap the microphone in the chat to download it, then come back.'**
-  String get duplexErrorModelMissing;
 
   /// No description provided for @duplexErrorFailed.
   ///

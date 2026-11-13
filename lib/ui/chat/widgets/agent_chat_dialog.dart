@@ -28,7 +28,6 @@ import 'package:memex/data/services/demo_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/input_draft_service.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
-import 'package:memex/data/services/whisper_service.dart';
 import 'package:memex/ui/card_attachments/widgets/system_action_card.dart';
 import 'package:memex/ui/core/widgets/html_webview_card.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
@@ -2840,94 +2839,15 @@ class _AgentChatDialogState extends State<AgentChatDialog>
     }
   }
 
-  /// Downloads the local model only after the user confirms. The next tap
-  /// starts recording, matching the quick-recording flow.
+  /// The mic only dictates: the local model is downloaded in Settings, so a
+  /// missing model just points there (or to ChatGPT transcription).
   Future<bool> _prepareVoiceModel() async {
     if (!await SpeechTranscriptionService.instance
         .requiresLocalModelDownload()) {
       return true;
     }
-    if (!mounted) return false;
-
-    final l10n = UserStorage.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(l10n.speechModelDownloadTitle),
-        content: Text(
-          l10n.speechModelDownloadDesc(WhisperService.modelSizeMB.toInt()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(l10n.speechModelStartDownload),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return false;
-
-    final progress = ValueNotifier<double>(0);
-    BuildContext? progressDialogContext;
-    final progressDialog = showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        progressDialogContext = dialogContext;
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text(l10n.speechModelDownloading),
-          content: ValueListenableBuilder<double>(
-            valueListenable: progress,
-            builder: (context, value, _) => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: value > 0 ? value : null,
-                  backgroundColor: AppColors.background,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  value > 0
-                      ? '${(value * 100).toInt()}%'
-                      : l10n.speechModelConnecting,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    Object? downloadError;
-    try {
-      await WhisperService.instance.downloadModel(
-        onProgress: (value) => progress.value = value,
-      );
-    } catch (e, stackTrace) {
-      downloadError = e;
-      _logger.severe('Speech model download failed', e, stackTrace);
-    } finally {
-      final dialogContext = progressDialogContext;
-      if (dialogContext != null && dialogContext.mounted) {
-        Navigator.of(dialogContext).pop();
-      }
-      await progressDialog;
-      progress.dispose();
-    }
-
-    if (downloadError != null && mounted) {
-      ToastHelper.showError(context, downloadError);
+    if (mounted) {
+      ToastHelper.showInfo(context, UserStorage.l10n.speechModelMissingHint);
     }
     return false;
   }

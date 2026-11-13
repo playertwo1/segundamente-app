@@ -2567,6 +2567,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechModelConnecting => 'Connecting...';
 
   @override
+  String get speechModelMissingHint =>
+      'The on-device speech model is not downloaded. Download it in Settings > On-device transcription, or turn that option off to transcribe with ChatGPT.';
+
+  @override
+  String get speechModelReady => 'Speech model downloaded and ready.';
+
+  @override
+  String get speechModelMissing =>
+      'Speech model not downloaded. Without it, the microphone cannot transcribe.';
+
+  @override
+  String speechModelDownloadButton(Object sizeMB) {
+    return 'Download model (~$sizeMB MB)';
+  }
+
+  @override
+  String speechModelDownloadFailed(Object error) {
+    return 'Failed to download the speech model: $error';
+  }
+
+  @override
   String get deleteSpeechModel => 'Delete speech model';
 
   @override
@@ -2596,7 +2617,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useLocalSpeechToTextDesc =>
-      'When enabled, Portuguese speech is transcribed on-device by Parakeet, without sending the audio (downloads a ~470 MB model on the first recording). When disabled, audio is transcribed by your configured cloud model.';
+      'On: speech is transcribed on-device by Parakeet, without sending the audio (download the ~470 MB model below). Off: audio goes straight to ChatGPT (or your configured cloud model).';
 
   @override
   String get pendingAiProcessingHint => 'Set up AI model to process';
@@ -4469,10 +4490,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get duplexReply => 'Answer';
-
-  @override
-  String get duplexErrorModelMissing =>
-      'The local speech model has not been downloaded yet. Tap the microphone in the chat to download it, then come back.';
 
   @override
   String get duplexErrorFailed =>

@@ -16,6 +16,8 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_task_executor.dart';
 import 'package:memex/data/services/event_bus_service.dart';
 import 'package:memex/data/services/semantic_search_model_service.dart';
+import 'package:memex/data/services/whisper_service.dart';
+import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/data/services/comment_settings_service.dart'
     show CommentSettings;
 import 'package:memex/data/repositories/memex_router.dart';
@@ -23,9 +25,10 @@ import 'package:memex/main.dart' show rootShellKey;
 import 'package:memex/utils/result.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, this.semanticSearchManager});
+  const SettingsPage({super.key, this.semanticSearchManager, this.speechModel});
 
   final SemanticSearchModelManager? semanticSearchManager;
+  final WhisperService? speechModel;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -39,6 +42,9 @@ class _SettingsPageState extends State<SettingsPage> {
   late final SemanticSearchModelManager _semanticSearch;
   bool _semanticSearchEnabled = false;
   bool _semanticSearchBusy = false;
+  late final WhisperService _speechModel;
+  bool _speechModelReady = false;
+  double? _speechModelProgress; // non-null while downloading
 
   @override
   void initState() {
@@ -46,6 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _semanticSearch =
         widget.semanticSearchManager ?? SemanticSearchModelService.instance;
     _semanticSearch.addListener(_onSemanticSearchChanged);
+    _speechModel = widget.speechModel ?? WhisperService.instance;
     _loadSettings();
   }
 
@@ -76,6 +83,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _commentSettings = commentSettings;
       });
     }
+    await _refreshSpeechModel();
   }
 
   Future<void> _changeLanguage(String localeTag) async {
@@ -110,6 +118,54 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _updateUseLocalSpeechToText(bool value) async {
     await UserStorage.setUseLocalSpeechToText(value);
     if (mounted) setState(() => _useLocalSpeechToText = value);
+    await _refreshSpeechModel();
+  }
+
+  Future<void> _refreshSpeechModel() async {
+    bool ready;
+    try {
+      ready = await _speechModel.isModelDownloaded();
+    } catch (_) {
+      ready = false; // no file access (tests); shows the download button
+    }
+    if (mounted) setState(() => _speechModelReady = ready);
+  }
+
+  /// The only place the local speech model is downloaded (the chat
+  /// microphone just dictates and points here when it is missing).
+  Future<void> _downloadSpeechModel() async {
+    if (_speechModelProgress != null) return;
+    setState(() => _speechModelProgress = 0);
+    try {
+      await _speechModel.downloadModel(
+        onProgress: (p) {
+          if (mounted) setState(() => _speechModelProgress = p);
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ToastHelper.showError(
+            context, UserStorage.l10n.speechModelDownloadFailed('$e'));
+      }
+    }
+    if (mounted) setState(() => _speechModelProgress = null);
+    await _refreshSpeechModel();
+  }
+
+  Future<void> _deleteSpeechModel() async {
+    try {
+      await _speechModel.deleteDownloadedModel();
+      if (mounted) {
+        ToastHelper.showSuccess(
+            context, UserStorage.l10n.speechModelDeletedSuccess);
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastHelper.showError(
+            context, UserStorage.l10n.speechModelDeleteFailed('$e'));
+      }
+    }
+    await _refreshSpeechModel();
   }
 
   void _onSemanticSearchChanged() {
@@ -177,6 +233,49 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) {
       setState(() => _commentSettings = updated);
     }
+  }
+
+  Widget _buildSpeechModelStatus() {
+    final l10n = UserStorage.l10n;
+    final progress = _speechModelProgress;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          progress != null
+              ? '${l10n.speechModelDownloading} ${(progress * 100).toInt()}%'
+              : _speechModelReady
+                  ? l10n.speechModelReady
+                  : l10n.speechModelMissing,
+          key: const ValueKey('speech-model-status'),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        if (progress != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child:
+                LinearProgressIndicator(value: progress > 0 ? progress : null),
+          )
+        else
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _speechModelReady
+                ? TextButton.icon(
+                    key: const ValueKey('speech-model-delete'),
+                    onPressed: _deleteSpeechModel,
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(l10n.deleteSpeechModel),
+                  )
+                : TextButton.icon(
+                    key: const ValueKey('speech-model-download'),
+                    onPressed: _downloadSpeechModel,
+                    icon: const Icon(Icons.download_outlined),
+                    label: Text(l10n.speechModelDownloadButton(
+                        WhisperService.modelSizeMB.toInt())),
+                  ),
+          ),
+      ],
+    );
   }
 
   @override
@@ -408,41 +507,51 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 16),
-          // Local Whisper (Portuguese); the model downloads on first recording.
+          // Local Parakeet or ChatGPT (cloud); the local model downloads here.
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: AppColors.divider)),
             ),
-            child: SwitchListTile(
-              key: const ValueKey('local-speech-switch'),
-              contentPadding: EdgeInsets.zero,
-              secondary: const Icon(
-                Icons.mic_none,
-                color: AppColors.primary,
-                size: 22,
-              ),
-              title: Text(
-                UserStorage.l10n.useLocalSpeechToTextTitle,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  UserStorage.l10n.useLocalSpeechToTextDesc,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                    height: 1.4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SwitchListTile(
+                  key: const ValueKey('local-speech-switch'),
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(
+                    Icons.mic_none,
+                    color: AppColors.primary,
+                    size: 22,
                   ),
+                  title: Text(
+                    UserStorage.l10n.useLocalSpeechToTextTitle,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      UserStorage.l10n.useLocalSpeechToTextDesc,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  value: _useLocalSpeechToText,
+                  onChanged: _updateUseLocalSpeechToText,
                 ),
-              ),
-              value: _useLocalSpeechToText,
-              onChanged: _updateUseLocalSpeechToText,
+                if (_useLocalSpeechToText)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 56, top: 4),
+                    child: _buildSpeechModelStatus(),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

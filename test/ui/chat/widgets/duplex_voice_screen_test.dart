@@ -161,7 +161,7 @@ void main() {
 
     await tap(tester, 'duplex-start');
 
-    expect(find.text(UserStorage.l10n.duplexErrorModelMissing), findsOneWidget);
+    expect(find.text(UserStorage.l10n.speechModelMissingHint), findsOneWidget);
     expect(device.permissionRequests, 0);
   });
 

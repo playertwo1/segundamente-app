@@ -1190,6 +1190,21 @@
   "speechModelStartDownload": "Start Download",
   "speechModelDownloading": "Downloading model...",
   "speechModelConnecting": "Connecting...",
+  "speechModelMissingHint": "The on-device speech model is not downloaded. Download it in Settings > On-device transcription, or turn that option off to transcribe with ChatGPT.",
+  "speechModelReady": "Speech model downloaded and ready.",
+  "speechModelMissing": "Speech model not downloaded. Without it, the microphone cannot transcribe.",
+  "speechModelDownloadButton": "Download model (~{sizeMB} MB)",
+  "@speechModelDownloadButton": {
+    "placeholders": {
+      "sizeMB": {}
+    }
+  },
+  "speechModelDownloadFailed": "Failed to download the speech model: {error}",
+  "@speechModelDownloadFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "deleteSpeechModel": "Delete speech model",
   "confirmDeleteSpeechModelMessage": "Delete the downloaded local speech recognition model files? They will be downloaded again the next time local speech-to-text is used.",
   "speechModelDeletedSuccess": "Speech model files deleted",
@@ -1203,7 +1218,7 @@
   "speechTranscribing": "Recognizing...",
   "speechNoResult": "No speech detected",
   "useLocalSpeechToTextTitle": "On-device transcription",
-  "useLocalSpeechToTextDesc": "When enabled, Portuguese speech is transcribed on-device by Parakeet, without sending the audio (downloads a ~470 MB model on the first recording). When disabled, audio is transcribed by your configured cloud model.",
+  "useLocalSpeechToTextDesc": "On: speech is transcribed on-device by Parakeet, without sending the audio (download the ~470 MB model below). Off: audio goes straight to ChatGPT (or your configured cloud model).",
   "pendingAiProcessingHint": "Set up AI model to process",
   "demoWelcome": "Welcome to Segunda Mente!\nSee three ways to record, organize, and find your moments again.",
   "demoTapAdd": "Tap here to create your first record",
@@ -1919,6 +1934,5 @@
   "duplexStatePaused": "Paused — microphone off",
   "duplexHeard": "You said",
   "duplexReply": "Answer",
-  "duplexErrorModelMissing": "The local speech model has not been downloaded yet. Tap the microphone in the chat to download it, then come back.",
   "duplexErrorFailed": "The voice conversation stopped because of an error. The microphone was turned off."
 }

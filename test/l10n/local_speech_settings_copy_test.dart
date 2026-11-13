@@ -6,7 +6,7 @@ void main() {
   test('en local-STT description describes cloud transcription, not raw attach',
       () {
     final l10n = lookupAppLocalizations(const Locale('en'));
-    expect(l10n.useLocalSpeechToTextDesc, contains('transcribed by your configured cloud model'));
+    expect(l10n.useLocalSpeechToTextDesc, allOf(contains('ChatGPT'), contains('cloud model')));
     expect(l10n.useLocalSpeechToTextDesc, isNot(contains('original audio is sent directly')));
     expect(lookupAppLocalizations(const Locale('pt')).useLocalSpeechToTextDesc,
         contains('português'));

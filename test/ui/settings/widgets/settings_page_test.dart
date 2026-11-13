@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/services/semantic_search_model_service.dart';
+import 'package:memex/data/services/whisper_service.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/settings/widgets/settings_page.dart';
@@ -79,6 +80,30 @@ class _SemanticSearchManagerFake extends ChangeNotifier
   Future<List<double>> embedItem(String text) async => [1, 0];
 }
 
+class _SpeechModelFake implements WhisperService {
+  bool downloaded = false;
+  final download = Completer<void>();
+  ValueChanged<double>? onProgress;
+
+  @override
+  Future<bool> isModelDownloaded() async => downloaded;
+
+  @override
+  Future<void> downloadModel({required ValueChanged<double> onProgress}) {
+    this.onProgress = onProgress;
+    return download.future.then((_) => downloaded = true);
+  }
+
+  @override
+  Future<bool> deleteDownloadedModel() async {
+    downloaded = false;
+    return true;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -137,7 +162,48 @@ void main() {
     await tester.pump();
     expect(tester.widget<SwitchListTile>(tile).value, isTrue);
     expect(await UserStorage.getUseLocalSpeechToText(), isTrue);
-    expect(find.text(UserStorage.l10n.useLocalSpeechToTextDesc), findsOneWidget);
+    expect(
+        find.text(UserStorage.l10n.useLocalSpeechToTextDesc), findsOneWidget);
+  });
+
+  testWidgets(
+      'the local speech model is downloaded and deleted here, '
+      'only when on-device transcription is on', (tester) async {
+    final speech = _SpeechModelFake();
+    await tester
+        .pumpWidget(MaterialApp(home: SettingsPage(speechModel: speech)));
+    await tester.pump();
+    final l10n = UserStorage.l10n;
+    final tile = find.byKey(const ValueKey('local-speech-switch'));
+    await tester.scrollUntilVisible(tile, 200);
+    // Off means ChatGPT/cloud: nothing to download.
+    expect(find.byKey(const ValueKey('speech-model-download')), findsNothing);
+
+    await tester.tap(tile);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(l10n.speechModelMissing), findsOneWidget);
+    final downloadButton = find.byKey(const ValueKey('speech-model-download'));
+    expect(find.text(l10n.speechModelDownloadButton(470)), findsOneWidget);
+
+    await tester.tap(downloadButton);
+    await tester.pump();
+    speech.onProgress!(0.45);
+    await tester.pump();
+    expect(find.text('${l10n.speechModelDownloading} 45%'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsWidgets);
+    expect(downloadButton, findsNothing);
+
+    speech.download.complete();
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(l10n.speechModelReady), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('speech-model-delete')));
+    await tester.pump();
+    await tester.pump();
+    expect(speech.downloaded, isFalse);
+    expect(find.text(l10n.speechModelMissing), findsOneWidget);
   });
 
   testWidgets('semantic search starts off and explains the local download',
