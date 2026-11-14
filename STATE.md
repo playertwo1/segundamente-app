@@ -18,7 +18,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Próxima ação
 
-1. **Portão F11:** observar AC-01 no S25 na hora real (tarefa sintética às 08h30, aviso às 08h10, `America/Sao_Paulo`), sem alterar o relógio. Depois, auditoria da fase (docs/AUDIT.md).
+1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado na notificação `F11 cold start`, oculta pelo Não Perturbar até 07h00. A auditoria `docs/reviews/F11.md` está `FAIL` por um HIGH: sem aviso quando o horário do alerta já passou. Corrigir depende de decisão do dono.
 2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
 3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
