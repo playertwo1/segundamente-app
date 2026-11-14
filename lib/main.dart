@@ -174,7 +174,7 @@ void main() async {
     ),
   );
 
-  // A floating chat launch (F15-02) starts on the sheet, not the home screen.
+  // A floating launch (F15-02 chat, F15-04 capture) starts on its sheet, not the home screen.
   FloatingChatService.instance.initialize();
   final floatingMode = await FloatingChatService.instance.takePendingMode();
   final appRouter = createAppRouter(
@@ -182,7 +182,7 @@ void main() async {
     () => RootShell(key: rootShellKey),
     initialLocation: floatingMode == null
         ? AppRoutes.home
-        : AppRoutes.floatingChatFor(floatingMode),
+        : AppRoutes.floatingLocationFor(floatingMode),
   );
 
   // Initialize quick actions (app icon long-press shortcuts).
@@ -367,7 +367,7 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _floatingChatSubscription =
         FloatingChatService.instance.openRequests.listen((mode) {
-      unawaited(widget.router.push(AppRoutes.floatingChatFor(mode)));
+      unawaited(widget.router.push(AppRoutes.floatingLocationFor(mode)));
     });
     _checkUser();
     _checkLockSettings();

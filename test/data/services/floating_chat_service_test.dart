@@ -41,6 +41,14 @@ void main() {
       expect(calls, ['takePendingMode', 'takePendingMode']);
     });
 
+    test('reads the capture modes (F15-04)', () async {
+      for (final mode in ['note', 'photo', 'paste']) {
+        mockNative((call) async => mode);
+        expect(await service.takePendingMode(), FloatingChatMode.parse(mode));
+      }
+      expect(calls, ['takePendingMode', 'takePendingMode', 'takePendingMode']);
+    });
+
     test('an unknown value, null, or a missing plugin gives null', () async {
       mockNative((call) async => 'voice');
       expect(await service.takePendingMode(), isNull);

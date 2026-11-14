@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 a F15-07 BLOCKED | D-062 a D-066; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 a F15-07 BLOCKED | D-062 a D-067; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -41,6 +41,17 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-04 — widget médio com captura, código (2026-11-14)
+- O que existe: `widget_medium.xml` (faixa de chat mais faixa de captura Anotar, Foto e Colar), com `widget_chat_row` e `widget_capture_row` compartilhados com o pequeno; `WidgetLayouts` com o mapa `SMALL_MIN` 200×60 e `MEDIUM_MIN` 200×120 dp no API 31+, e escolha por `OPTION_APPWIDGET_MIN_HEIGHT` no API 26–30 (`onAppWidgetOptionsChanged`). Cada tecla de captura abre `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. O Dart roteia para `/floating-capture` (`FloatingCaptureScreen`). Guardar envia pelo `MemexRouter.sendMessage` do Registrar (cena `super_agent_home`, sessão mais recente); Fechar, toque fora e voltar não gravam. Desenho e checklist do S25 em `docs/fases/F15-04-widget-medio.md`; decisão em D-067.
+- Comandos e saídas (branch `feat/f15-04-widget-medio`, worktree `sm-f1504`):
+  - `flutter pub get --enforce-lockfile` → exit 0.
+  - `flutter gen-l10n` → regenerou `app_localizations*.dart` com as dez chaves `floatingCapture*` pt/en.
+  - `dart analyze` nos arquivos alterados (lib e testes da F15-04): `No issues found!` (exit 0) nos 9 caminhos alterados (lib/domain, lib/routing, lib/ui/floating_chat, lib/main.dart, lib/l10n, testes da captura e do serviço), depois do `dart format`.
+  - `flutter test --no-pub --reporter compact` (domínio do modo, `test/ui/floating_chat`, integração do chat e da captura, serviço e `test/l10n`): `All tests passed!`: +56 (exit 0) em `test/domain/models/floating_chat_mode_test.dart`, `test/ui/floating_chat` (inclui `floating_capture_viewmodel_test` e `floating_capture_screen_test`), `test/integration/floating_capture_flow_test.dart`, `test/integration/floating_chat_flow_test.dart`, `test/data/services/floating_chat_service_test.dart` e `test/l10n`.
+  - `flutter build apk --flavor globalDev --debug --no-pub`: `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (exit 0).
+- Aparelho: nenhum (adb e celular não usados). `NOT_RUN`: tudo no S25 (checklist de nove itens em `docs/fases/F15-04-widget-medio.md`); câmera e galeria dentro da folha translúcida; medição da grade do médio; Android 8 a 11; TalkBack; texto a 200%.
+- Estado: F15-04 REVIEW (D-067) até a evidência no S25.
 
 ### F15-03 — widget pequeno, código (2026-11-14)
 - O que existe: `SegundaMenteWidgetProvider` e `WidgetLayouts` (Kotlin, pacote `com.memexlab.memex.widget`); layout `widget_small` com as teclas Conversar (âmbar, preenchida) e Falar (contorno) na mesma faixa; `res/xml/segundamente_widget_info.xml` (home_screen, `updatePeriodMillis="0"`, resizable, minWidth 200 dp, minHeight 60 dp, targetCell 2×1); receiver no manifesto. Toques abrem `FloatingChatActivity` com `floating_chat_mode` = `type` ou `talk`, o mesmo alvo dos atalhos da F15-02 (D-066). Desenho e checklist do S25 em `docs/fases/F15-03-widget-pequeno.md`.

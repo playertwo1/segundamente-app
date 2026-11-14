@@ -52,15 +52,8 @@ class FloatingChatScreen extends StatelessWidget {
   /// The native close runs first, then the sheet is popped so the screen below
   /// (where the app was) shows again. A cold start has nothing below it, so it
   /// goes home. Either way the home screen is never painted over the sheet.
-  Future<void> _close(BuildContext context) async {
-    final router = GoRouter.of(context);
-    await _service.close();
-    if (router.canPop()) {
-      router.pop();
-    } else {
-      router.go(AppRoutes.home);
-    }
-  }
+  Future<void> _close(BuildContext context) =>
+      closeFloatingSheet(context, _service);
 
   /// Opens the full app. A conversation that was started is shown there
   /// through the quick note action, which opens the super agent.

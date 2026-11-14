@@ -18,9 +18,11 @@ object FloatingChatChannelHandler {
     private var channel: MethodChannel? = null
     private var pendingMode: String? = null
 
-    /** Accepts only "type" and "talk"; anything else means no pending mode. */
+    /** Chat modes (F15-02) and capture modes (F15-04); anything else means no pending mode. */
+    private val MODES = setOf("type", "talk", "note", "photo", "paste")
+
     fun setPendingMode(mode: String?) {
-        pendingMode = mode?.takeIf { it == "type" || it == "talk" }
+        pendingMode = mode?.takeIf { it in MODES }
     }
 
     fun notifyOpen() {

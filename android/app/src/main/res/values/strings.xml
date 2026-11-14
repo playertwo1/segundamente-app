@@ -9,4 +9,8 @@
     <!-- F15-03: widget keys reuse the shortcut_chat_* labels. -->
     <string name="widget_label">Segunda Mente</string>
     <string name="widget_description">Chat and talk with Segunda Mente from the home screen.</string>
+    <!-- F15-04: medium widget capture keys. -->
+    <string name="widget_key_note">Note</string>
+    <string name="widget_key_photo">Photo</string>
+    <string name="widget_key_paste">Paste</string>
 </resources>

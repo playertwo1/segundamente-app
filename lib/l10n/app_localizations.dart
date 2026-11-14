@@ -8528,6 +8528,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not listen right now. Use the keyboard.'**
   String get floatingListenFailed;
+
+  /// No description provided for @floatingCaptureNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get floatingCaptureNoteTitle;
+
+  /// No description provided for @floatingCapturePhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get floatingCapturePhotoTitle;
+
+  /// No description provided for @floatingCapturePasteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get floatingCapturePasteTitle;
+
+  /// No description provided for @floatingCaptureTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write what to keep'**
+  String get floatingCaptureTextHint;
+
+  /// No description provided for @floatingCapturePhotoTextHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional text'**
+  String get floatingCapturePhotoTextHint;
+
+  /// No description provided for @floatingCaptureSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get floatingCaptureSave;
+
+  /// No description provided for @floatingCaptureCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get floatingCaptureCamera;
+
+  /// No description provided for @floatingCaptureGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get floatingCaptureGallery;
+
+  /// No description provided for @floatingCapturePasteEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to paste. Copy some text and try again.'**
+  String get floatingCapturePasteEmpty;
+
+  /// No description provided for @floatingCaptureSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save right now. Try again.'**
+  String get floatingCaptureSaveFailed;
 }
 
 class _AppLocalizationsDelegate

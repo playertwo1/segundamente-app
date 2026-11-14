@@ -448,3 +448,12 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - As teclas abrem a `FloatingChatActivity` com o mesmo alvo e o mesmo extra (`floating_chat_mode` = `type` ou `talk`) dos atalhos da F15-02 (D-065). A linha da F15 falava em `AppActionService`; isso não existe para o chat flutuante, e uma segunda rota não se justifica.
   - Médio e grande continuam fora (F15-04 e F15-05, BLOCKED).
 - Limite: o aceite da F15-03 (tocar o widget no S25) depende do S25 da F15-02, que ainda não foi feito. Não fecha a F15-02 nem o portão da F15.
+
+## D-067 — Abrir a F15-04 (widget médio) antes do S25 da F15-03 (2026-11-14)
+- Contexto: a linha da F15-04 estava BLOCKED pela F15-03, cujo código está em REVIEW (D-066) e cujo S25 ainda está `NOT_RUN`. O dono pediu toda a F15 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
+- Decisão:
+  - Abrir a **F15-04** com o tamanho médio em código: a faixa de teclas do pequeno (Conversar e Falar) mais a faixa de captura (Anotar, Foto e Colar), em `widget_medium.xml`. Faixa mínima 200×120 dp no Android 12+ (chave do mapa de `RemoteViews`); no Android 8 a 11 o provider escolhe o layout por `OPTION_APPWIDGET_MIN_HEIGHT`.
+  - As três teclas de captura abrem a `FloatingChatActivity` com o mesmo alvo e o extra `floating_chat_mode` = `note`, `photo` ou `paste` (estende D-065 e D-066). O Dart roteia esses modos para uma folha compacta de captura (`/floating-capture`), não para o chat.
+  - Guardar envia a captura pelo mesmo caminho do Registrar: `MemexRouter.sendMessage` com a cena `super_agent_home` e a sessão mais recente. Esse é o único caminho que grava. Fechar, o toque fora e o voltar descartam. Colar só pré-preenche o campo; Foto só escolhe a imagem.
+  - Confirmação: o toque em Guardar, com o texto ou a foto visível, é a confirmação de D-051. A IA organiza o registro depois, como já faz no Registrar.
+- Limite: o aceite da F15-04 depende do S25 (adicionar e redimensionar o widget, cada tecla, Guardar contra Fechar, Colar com a área de transferência, Foto com câmera e galeria) e continua `NOT_RUN`. F15-03 segue REVIEW até o próprio S25. Não fecha a F15 nem o portão da F15.

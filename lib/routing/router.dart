@@ -41,7 +41,33 @@ import 'package:memex/ui/user_setup/widgets/user_setup_screen.dart';
 import 'package:memex/routing/routes.dart';
 import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/domain/models/floating_chat_mode.dart';
+import 'package:memex/ui/floating_chat/view_models/floating_capture_viewmodel.dart';
+import 'package:memex/ui/floating_chat/widgets/floating_capture_screen.dart';
 import 'package:memex/ui/floating_chat/widgets/floating_chat_screen.dart';
+
+FloatingChatMode _floatingModeOf(GoRouterState state, FloatingChatMode fallback) =>
+    FloatingChatMode.parse(state.uri.queryParameters['mode']) ?? fallback;
+
+/// A floating sheet page (F15-02, F15-04). Opaque so the screens below are not
+/// painted; the Activity itself is transparent, so the launcher shows through.
+Page<void> _floatingSheetPage(Widget child) {
+  return CustomTransitionPage<void>(
+    opaque: true,
+    barrierColor: null,
+    transitionDuration: const Duration(milliseconds: 180),
+    child: child,
+    transitionsBuilder: (context, animation, _, child) => FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.04),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      ),
+    ),
+  );
+}
 
 /// Creates the app [GoRouter]. Root content is built by [rootBuilder].
 /// [initialLocation] starts the app elsewhere, e.g. the floating chat sheet.
@@ -60,29 +86,25 @@ GoRouter createAppRouter(
       ),
       GoRoute(
         path: AppRoutes.floatingChat,
-        pageBuilder: (context, state) => CustomTransitionPage<void>(
-          // Opaque so the screens below are not painted; the Activity itself
-          // is transparent, so the launcher shows through.
-          opaque: true,
-          barrierColor: null,
-          transitionDuration: const Duration(milliseconds: 180),
-          child: FloatingChatScreen(
-            mode: FloatingChatMode.parse(
-                  state.uri.queryParameters['mode'],
-                ) ??
-                FloatingChatMode.type,
-          ),
-          transitionsBuilder: (context, animation, _, child) => FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.04),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
+        pageBuilder: (context, state) => _floatingSheetPage(
+          FloatingChatScreen(
+            mode: _floatingModeOf(state, FloatingChatMode.type),
           ),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.floatingCapture,
+        pageBuilder: (context, state) {
+          final mode = _floatingModeOf(state, FloatingChatMode.note);
+          return _floatingSheetPage(
+            FloatingCaptureScreen(
+              viewModel: FloatingCaptureViewModel(
+                router: context.read<MemexRouter>(),
+                mode: mode,
+              ),
+            ),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.userSetup,

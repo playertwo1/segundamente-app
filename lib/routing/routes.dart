@@ -14,9 +14,17 @@ abstract final class AppRoutes {
   /// Floating chat sheet over the home screen (F15-02); the mode is a query.
   static const String floatingChat = '/floating-chat';
 
-  /// Location of the floating sheet in [mode]; `/floating-chat?mode=talk`.
+  /// Location of the floating chat sheet in [mode]; `/floating-chat?mode=talk`.
   static String floatingChatFor(FloatingChatMode mode) =>
       '$floatingChat?mode=${mode.wireName}';
+
+  /// Compact capture sheet over the home screen (F15-04); the mode is a query.
+  static const String floatingCapture = '/floating-capture';
+
+  /// Location of whichever floating sheet [mode] belongs to.
+  static String floatingLocationFor(FloatingChatMode mode) => mode.isCapture
+      ? '$floatingCapture?mode=${mode.wireName}'
+      : floatingChatFor(mode);
 
   /// User setup (onboarding).
   static const String userSetup = '/user-setup';
