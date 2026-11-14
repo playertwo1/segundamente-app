@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="sm_launcher_background">#172B55</color>
+    <!-- F15-03: widget palette from DESIGN.md (AMOLED black, amber, ivory, divider). -->
+    <color name="widget_black">#000000</color>
+    <color name="widget_amber">#E99A3D</color>
+    <color name="widget_ivory">#F3EEE6</color>
+    <color name="widget_line">#33312E</color>
 </resources>

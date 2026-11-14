@@ -440,3 +440,11 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A folha é uma rota do mesmo app (`/floating-chat`), com o `AgentChatDialog` em modo flutuante. Conversar abre o teclado; Falar ouve uma fala, transcreve e envia. Nada é gravado sem confirmação (D-051).
   - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
 - Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.
+
+## D-066 — Abrir a F15-03 (widget pequeno) antes do S25 da F15-02 (2026-11-14)
+- Contexto: a linha da F15-03 estava BLOCKED pela F15-02, cujo código está em `main` (d787e85d) mas ainda não foi validado no S25. O dono pediu a implementação da F15-03 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
+- Decisão:
+  - Abrir a **F15-03** com o widget pequeno em código: duas teclas (Conversar em âmbar, Falar em contorno), `AppWidgetProvider` nativo, home screen apenas, sem rede e sem atualização periódica. Estado: REVIEW. A validação no S25 fica como `NOT_RUN` até o validador rodar o checklist em `docs/fases/F15-03-widget-pequeno.md`.
+  - As teclas abrem a `FloatingChatActivity` com o mesmo alvo e o mesmo extra (`floating_chat_mode` = `type` ou `talk`) dos atalhos da F15-02 (D-065). A linha da F15 falava em `AppActionService`; isso não existe para o chat flutuante, e uma segunda rota não se justifica.
+  - Médio e grande continuam fora (F15-04 e F15-05, BLOCKED).
+- Limite: o aceite da F15-03 (tocar o widget no S25) depende do S25 da F15-02, que ainda não foi feito. Não fecha a F15-02 nem o portão da F15.

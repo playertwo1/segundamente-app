@@ -5,4 +5,7 @@
     <string name="shortcut_quick_note_long">Nota rápida</string>
     <string name="shortcut_chat_type">Conversar</string>
     <string name="shortcut_chat_talk">Falar</string>
+    <!-- F15-03: widget keys reuse the shortcut_chat_* labels. -->
+    <string name="widget_label">Segunda Mente</string>
+    <string name="widget_description">Conversar e falar com a Segunda Mente pela tela inicial.</string>
 </resources>

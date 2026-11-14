@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 a F15-07 BLOCKED | D-062 a D-066; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -41,6 +41,17 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-03 — widget pequeno, código (2026-11-14)
+- O que existe: `SegundaMenteWidgetProvider` e `WidgetLayouts` (Kotlin, pacote `com.memexlab.memex.widget`); layout `widget_small` com as teclas Conversar (âmbar, preenchida) e Falar (contorno) na mesma faixa; `res/xml/segundamente_widget_info.xml` (home_screen, `updatePeriodMillis="0"`, resizable, minWidth 200 dp, minHeight 60 dp, targetCell 2×1); receiver no manifesto. Toques abrem `FloatingChatActivity` com `floating_chat_mode` = `type` ou `talk`, o mesmo alvo dos atalhos da F15-02 (D-066). Desenho e checklist do S25 em `docs/fases/F15-03-widget-pequeno.md`.
+- Comandos e saídas (branch `feat/f15-03-widget-pequeno`, worktree `sm-f1503`):
+  - `flutter pub get --enforce-lockfile` → `Got dependencies!` (exit 0)
+  - `flutter build apk --flavor globalDev --debug --no-pub` → `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (exit 0). O APK traz `res/layout/widget_small.xml`, `res/xml/segundamente_widget_info.xml` e os drawables; o manifesto mesclado contém `SegundaMenteWidgetProvider` e `APPWIDGET_UPDATE`.
+  - Teste Android: nenhum. `android/app/src/test` e `androidTest` não existem, e a subfase não adiciona infraestrutura de teste. Dart: nenhuma linha alterada, então `flutter test` e `flutter analyze` não foram rodados para esta subfase.
+  - `git diff --check` → limpo.
+- Aparelho: nenhum (adb não usado; o widget não foi instalado).
+- `NOT_RUN`: tudo no S25 (checklist de oito itens em `docs/fases/F15-03-widget-pequeno.md`); TalkBack; medição da grade real (a dica 2×1 e o mínimo de 200 dp podem mudar após medir); texto a 200%; abertura a frio do chat pelo widget.
+- Estado: F15-03 REVIEW (D-066) até a evidência no S25.
 
 ### F15-02 — chat flutuante, implementação (2026-11-14)
 - O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.
