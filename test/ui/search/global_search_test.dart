@@ -9,6 +9,9 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   List<TimelineCardModel> cards = [];
   List<Map<String, dynamic>> files = [];
   final queries = <String>[];

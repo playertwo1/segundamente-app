@@ -9,6 +9,9 @@ import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
 import 'package:memex/utils/result.dart';
 
 class _FakeRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   List<TodoItem> items = [];
   String? savedId;
   String? savedDue;

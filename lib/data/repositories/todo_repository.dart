@@ -33,9 +33,10 @@ class TodoRepository {
       runResult(TodoAlarmService.instance.requestPermissions);
 
   Future<Result<TodoAlarmStatus>> synchronizeAlarms(String userId) =>
-      runResult(() async => TodoAlarmService.instance.synchronize(
-            await _service.load(userId),
-          ));
+      runResult(() => _service.synchronizeAlarms(userId));
+
+  Future<Result<String?>> damagedLegacyFileName(String userId) =>
+      runResult(() => _service.damagedLegacyFileName(userId));
 
   Future<Result<TodoItem>> add({
     required String userId,

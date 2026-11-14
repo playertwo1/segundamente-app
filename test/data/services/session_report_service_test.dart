@@ -50,6 +50,7 @@ void main() {
   });
 
   tearDown(() async {
+    await TodoService.waitForAlarmSync();
     await LocalAssetServer.stopServer();
     if (await tempDir.exists()) {
       await tempDir.delete(recursive: true);

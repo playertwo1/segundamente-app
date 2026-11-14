@@ -196,6 +196,10 @@ class TodoScheduleCalculator {
       tzdata.initializeTimeZones();
       _timeZonesInitialized = true;
     }
-    return tz.getLocation(name);
+    try {
+      return tz.getLocation(name);
+    } on tz.LocationNotFoundException {
+      return tz.getLocation(todoTimeZone);
+    }
   }
 }

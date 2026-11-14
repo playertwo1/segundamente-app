@@ -124,6 +124,9 @@ void main() {
 }
 
 class _FakeMemexRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _FakeMemexRouter(this.summaries);
 
   final List<PersonaAvatarSummary> summaries;
@@ -144,6 +147,9 @@ class _FakeMemexRouter implements MemexRouter {
 }
 
 class _ControlledMemexRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   final requests = <Completer<Result<PersonaAvatarSummary>>>[];
 
   @override

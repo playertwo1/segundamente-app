@@ -1,5 +1,7 @@
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 const todoSchemaVersion = 2;
 const todoTimeZone = 'America/Sao_Paulo';
@@ -259,7 +261,7 @@ class TodoItem {
           (explicit == null ? null : _dateOnly(explicit.date)),
       dueTime: _optionalText(json['due_time']) ??
           (explicit?.hasTime == true ? _timeOnly(explicit!.date) : null),
-      timeZone: _optionalText(json['time_zone']) ?? todoTimeZone,
+      timeZone: _knownTimeZone(json['time_zone']),
       alertMinutes: (json['alert_minutes'] as num?)?.toInt() ?? 20,
       priority: TodoPriority.values.firstWhere(
         (value) => value.name == rawPriority,
@@ -284,6 +286,25 @@ class TodoItem {
       version: (json['version'] as num?)?.toInt() ?? 1,
       deletedAt: _optionalText(json['deleted_at']),
     );
+  }
+}
+
+bool _timeZonesReady = false;
+
+/// A stored zone the timezone database does not know (e.g. from sync) falls
+/// back to the Todo default, so one bad task cannot break the whole list.
+String _knownTimeZone(Object? value) {
+  final name = _optionalText(value);
+  if (name == null) return todoTimeZone;
+  if (!_timeZonesReady) {
+    tzdata.initializeTimeZones();
+    _timeZonesReady = true;
+  }
+  try {
+    tz.getLocation(name);
+    return name;
+  } on tz.LocationNotFoundException {
+    return todoTimeZone;
   }
 }
 

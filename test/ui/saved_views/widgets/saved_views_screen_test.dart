@@ -141,6 +141,9 @@ void main() {
 }
 
 class _FakeRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _FakeRouter({this.views = const []});
 
   List<SavedView> views;

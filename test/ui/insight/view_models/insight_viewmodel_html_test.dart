@@ -77,6 +77,9 @@ void main() {
 }
 
 class _FakeInsightRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   int renderCount = 0;
   List<Result<String>> results = [const Ok('<div>chart</div>')];
 

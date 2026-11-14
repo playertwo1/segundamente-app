@@ -1969,6 +1969,13 @@ class FileSystemService {
     return path.join(getTodoPath(userId), 'todo-v1.backup.json');
   }
 
+  /// Prefix of the copy kept when a legacy Todo file cannot be read.
+  static const legacyTodoQuarantinePrefix = 'todo.json.corrupt-';
+
+  String getLegacyTodoQuarantinePath(String userId, String stamp) {
+    return path.join(getTodoPath(userId), '$legacyTodoQuarantinePrefix$stamp');
+  }
+
   /// GetKnowledgeInsightsdirectory path
   String getKnowledgeInsightsPath(String userId) {
     return path.join(getWorkspacePath(userId), 'KnowledgeInsights');

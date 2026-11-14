@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/domain/models/session_report.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   const userId = 'todo-user';
@@ -38,6 +41,7 @@ void main() {
   });
 
   tearDown(() async {
+    await TodoService.waitForAlarmSync();
     if (await tempDir.exists()) await tempDir.delete(recursive: true);
   });
 
@@ -432,7 +436,7 @@ void main() {
     });
   }
 
-  test('corrupt legacy migration retains original and backup and reports error',
+  test('corrupt legacy file is kept as a quarantine copy and the Todo works',
       () async {
     final legacyContent = await installLegacyFixture(userId, 'corrupt');
     final legacy =
@@ -441,15 +445,123 @@ void main() {
         File(FileSystemService.instance.getLegacyTodoBackupPath(userId));
     final v2 = File(FileSystemService.instance.getTodoV2FilePath(userId));
 
-    await expectLater(todos.load(userId), throwsFormatException);
+    expect(await todos.load(userId), isEmpty);
+    await todos.add(userId: userId, text: 'Nova tarefa');
 
     expect(await legacy.readAsString(), legacyContent);
     expect(await backup.readAsString(), legacyContent);
-    expect(await v2.exists(), isFalse);
+    expect(await v2.exists(), isTrue);
+    expect((await todos.load(userId)).single.text, 'Nova tarefa');
+    final quarantineName = await todos.damagedLegacyFileName(userId);
+    expect(
+      quarantineName,
+      matches(RegExp(r'^todo\.json\.corrupt-\d{8}T\d{6}$')),
+    );
+    final quarantine = File(p.join(legacy.parent.path, quarantineName!));
+    expect(
+      await quarantine.readAsBytes(),
+      await File('test/fixtures/todo/corrupt.json').readAsBytes(),
+    );
+  });
+
+  test('a damaged todo-v2 file is never reset to an empty list', () async {
+    final v2 = File(FileSystemService.instance.getTodoV2FilePath(userId));
+    await v2.parent.create(recursive: true);
+    await v2.writeAsString('{broken');
+
+    await expectLater(todos.load(userId), throwsFormatException);
     await expectLater(
       todos.add(userId: userId, text: 'Nova tarefa'),
       throwsFormatException,
     );
+    expect(await v2.readAsString(), '{broken');
+    expect(await todos.damagedLegacyFileName(userId), isNull);
+  });
+
+  group('alarm sync', () {
+    final original = TodoService.alarmSynchronizer;
+    Completer<TodoAlarmStatus>? gate;
+
+    tearDown(() async {
+      if (gate?.isCompleted == false) {
+        gate!.complete(TodoAlarmStatus.unsupported);
+      }
+      gate = null;
+      await TodoService.waitForAlarmSync();
+      TodoService.alarmSynchronizer = original;
+    });
+
+    test('a save completes while the alarm synchronizer never returns',
+        () async {
+      gate = Completer<TodoAlarmStatus>();
+      TodoService.alarmSynchronizer = (_) => gate!.future;
+
+      final item = await todos
+          .add(userId: userId, text: 'Ligar para Rui')
+          .timeout(const Duration(seconds: 5));
+      await todos
+          .setDone(userId: userId, id: item.id, done: true)
+          .timeout(const Duration(seconds: 5));
+
+      expect((await todos.load(userId)).single.done, isTrue);
+    });
+
+    test('saves during a blocked sync run exactly one more sync, newest list',
+        () async {
+      gate = Completer<TodoAlarmStatus>();
+      final seen = <List<TodoItem>>[];
+      TodoService.alarmSynchronizer = (items) {
+        seen.add(items);
+        return seen.length == 1
+            ? gate!.future
+            : Future.value(TodoAlarmStatus.unsupported);
+      };
+
+      final first = await todos
+          .add(userId: userId, text: 'Tarefa A')
+          .timeout(const Duration(seconds: 5));
+      for (var i = 0; i < 1000 && seen.isEmpty; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      expect(seen, hasLength(1));
+
+      await todos.setDone(userId: userId, id: first.id, done: true);
+      await todos.add(userId: userId, text: 'Tarefa B');
+      expect(seen, hasLength(1));
+
+      gate!.complete(TodoAlarmStatus.unsupported);
+      await TodoService.waitForAlarmSync();
+
+      expect(seen, hasLength(2));
+      final newest = seen.last;
+      expect(newest.firstWhere((item) => item.id == first.id).done, isTrue);
+      expect(
+        newest.where((item) => !item.done).map((item) => item.text),
+        ['Tarefa B'],
+      );
+    });
+
+    test('a failing alarm synchronizer does not fail the save', () async {
+      TodoService.alarmSynchronizer =
+          (_) async => throw StateError('channel down');
+
+      await todos
+          .add(userId: userId, text: 'Ligar')
+          .timeout(const Duration(seconds: 5));
+      await TodoService.waitForAlarmSync();
+
+      expect(await todos.load(userId), hasLength(1));
+    });
+
+    test('synchronizeAlarms reports the status of its own run', () async {
+      TodoService.alarmSynchronizer =
+          (_) async => TodoAlarmStatus.exactAlarmsDenied;
+
+      expect(
+        await todos.synchronizeAlarms(userId),
+        TodoAlarmStatus.exactAlarmsDenied,
+      );
+    });
   });
 
   test('report edits mark linked Todo copies as stale', () async {

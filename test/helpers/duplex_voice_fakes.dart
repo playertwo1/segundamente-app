@@ -8,6 +8,7 @@ import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/duplex_voice_service.dart';
 import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/ui/chat/view_models/duplex_voice_viewmodel.dart';
+import 'package:memex/utils/result.dart';
 
 /// Synthetic 16 kHz PCM: [windows] detector windows of a loud square wave or
 /// of silence. No recorded audio is used in these tests.
@@ -123,6 +124,9 @@ class FakeAudioDevice {
 }
 
 class FakeChatRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   final List<String> sent = [];
   final List<String?> sessionIds = [];
   final List<bool> readOnly = [];

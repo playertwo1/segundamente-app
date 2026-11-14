@@ -3779,6 +3779,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoAlarmConfigure => 'Configure';
 
   @override
+  String todoLegacyFileDamaged(String fileName) {
+    return 'The old task file was damaged and was kept as $fileName.';
+  }
+
+  @override
   String get todoOpenSource => 'Source';
 
   @override

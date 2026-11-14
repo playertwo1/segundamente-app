@@ -1492,6 +1492,9 @@ Future<void> _pumpDialogFrame(
 }
 
 class _TodoProposalRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   int addCalls = 0;
 
   @override

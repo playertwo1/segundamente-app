@@ -79,6 +79,9 @@ void main() {
 }
 
 class _RunRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _RunRouter({required this.runs, this.requestFails = false});
 
   final List<InsightRunStatus> runs;

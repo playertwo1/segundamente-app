@@ -3817,6 +3817,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoAlarmConfigure => 'Configurar';
 
   @override
+  String todoLegacyFileDamaged(String fileName) {
+    return 'O arquivo antigo de tarefas estava danificado e foi guardado como $fileName.';
+  }
+
+  @override
   String get todoOpenSource => 'Fonte';
 
   @override

@@ -22,6 +22,7 @@ void main() {
   });
 
   tearDown(() async {
+    await TodoService.waitForAlarmSync();
     if (await tempDir.exists()) await tempDir.delete(recursive: true);
   });
 
@@ -76,7 +77,7 @@ void main() {
     expect(edited.recurrence, isNull);
   });
 
-  test('returns a Result error when legacy migration cannot parse the file',
+  test('a damaged legacy file is kept aside and the repository keeps working',
       () async {
     final legacy =
         File(FileSystemService.instance.getLegacyTodoFilePath(userId));
@@ -85,11 +86,17 @@ void main() {
 
     final result = await repository.load(userId);
 
-    expect(result.isError, isTrue);
+    expect(result.isOk, isTrue);
+    expect(result.valueOrThrow, isEmpty);
+    expect(await legacy.readAsString(), '{broken');
     expect(
       await File(FileSystemService.instance.getLegacyTodoBackupPath(userId))
           .readAsString(),
       '{broken',
+    );
+    expect(
+      (await repository.damagedLegacyFileName(userId)).valueOrThrow,
+      isNotNull,
     );
   });
 

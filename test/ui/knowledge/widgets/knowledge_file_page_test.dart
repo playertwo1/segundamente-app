@@ -4,8 +4,12 @@ import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/knowledge/widgets/knowledge_file_page.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:memex/utils/result.dart';
 
 class _FakeRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _FakeRouter(this.content);
 
   final String content;
