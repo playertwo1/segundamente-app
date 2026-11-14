@@ -6657,6 +6657,78 @@ abstract class AppLocalizations {
   /// **'Default alert: {minutes} min before'**
   String todoProposalAlertHint(int minutes);
 
+  /// No description provided for @todoAlarmChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Task reminders'**
+  String get todoAlarmChannelName;
+
+  /// No description provided for @todoAlarmChannelDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Time-sensitive reminders for your Todo tasks.'**
+  String get todoAlarmChannelDescription;
+
+  /// No description provided for @todoAlarmNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Task reminder'**
+  String get todoAlarmNotificationTitle;
+
+  /// No description provided for @todoAlarmNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{task} · due at {time}'**
+  String todoAlarmNotificationBody(String task, String time);
+
+  /// No description provided for @todoAlarmSnoozeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze 10 min'**
+  String get todoAlarmSnoozeAction;
+
+  /// No description provided for @todoAlarmCompleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get todoAlarmCompleteAction;
+
+  /// No description provided for @todoAlarmOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get todoAlarmOpenAction;
+
+  /// No description provided for @todoAlarmNotificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Task notifications are off. Turn them on to receive reminders.'**
+  String get todoAlarmNotificationsDenied;
+
+  /// No description provided for @todoAlarmExactDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarms are off. Task reminders are not guaranteed.'**
+  String get todoAlarmExactDenied;
+
+  /// No description provided for @todoAlarmBothDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications and exact alarms are off. Task reminders are not guaranteed.'**
+  String get todoAlarmBothDenied;
+
+  /// No description provided for @todoAlarmUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Task alarm permissions could not be checked. Reminders are not guaranteed.'**
+  String get todoAlarmUnavailable;
+
+  /// No description provided for @todoAlarmConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure'**
+  String get todoAlarmConfigure;
+
   /// No description provided for @todoOpenSource.
   ///
   /// In en, this message translates to:
@@ -6698,30 +6770,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'comment by {name}'**
   String documentCitationFrom(String name);
-
-  /// No description provided for @todoReminderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a reminder?'**
-  String get todoReminderTitle;
-
-  /// No description provided for @todoReminderBody.
-  ///
-  /// In en, this message translates to:
-  /// **'\"{text}\" will be saved as a reminder in your calendar for {when}. Nothing is created before you confirm.'**
-  String todoReminderBody(Object text, Object when);
-
-  /// No description provided for @todoReminderConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Create reminder'**
-  String get todoReminderConfirm;
-
-  /// No description provided for @todoReminderCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'Reminder created'**
-  String get todoReminderCreated;
 
   /// No description provided for @reportUnconfirmed.
   ///

@@ -3,6 +3,7 @@ import 'package:memex/domain/models/session_report.dart';
 
 const todoSchemaVersion = 2;
 const todoTimeZone = 'America/Sao_Paulo';
+const todoAlarmSnoozeMinutes = 10;
 
 enum TodoPriority { low, normal, high, urgent }
 
@@ -137,6 +138,7 @@ class TodoItem {
     this.recurrence,
     this.seriesId,
     this.doneAt,
+    this.snoozedUntil,
     this.source,
     this.sourceStale = false,
     this.version = 1,
@@ -159,6 +161,7 @@ class TodoItem {
   final bool done;
   final String createdAt;
   final String? doneAt;
+  final String? snoozedUntil;
   final TodoSource? source;
   final bool sourceStale;
   final int version;
@@ -181,7 +184,9 @@ class TodoItem {
     String? seriesId,
     bool? done,
     String? doneAt,
+    String? snoozedUntil,
     bool clearDoneAt = false,
+    bool clearSnoozedUntil = false,
     bool? sourceStale,
     bool clearSource = false,
     int? version,
@@ -207,6 +212,8 @@ class TodoItem {
       done: nextDone,
       createdAt: createdAt,
       doneAt: clearDoneAt || !nextDone ? null : doneAt ?? this.doneAt,
+      snoozedUntil:
+          clearSnoozedUntil ? null : snoozedUntil ?? this.snoozedUntil,
       source: nextSource,
       sourceStale: nextSource == null ? false : sourceStale ?? this.sourceStale,
       version: version ?? this.version,
@@ -229,6 +236,7 @@ class TodoItem {
         'done': done,
         'created_at': createdAt,
         'done_at': doneAt,
+        'snoozed_until': snoozedUntil,
         if (source != null) 'source': source!.toJson(),
         if (sourceStale) 'source_stale': true,
         'version': version,
@@ -270,6 +278,7 @@ class TodoItem {
       done: json['done'] == true,
       createdAt: _text(json['created_at']),
       doneAt: _optionalText(json['done_at']),
+      snoozedUntil: _optionalText(json['snoozed_until']),
       source: source is Map ? TodoSource.fromJson(source.cast()) : null,
       sourceStale: source is Map && json['source_stale'] == true,
       version: (json['version'] as num?)?.toInt() ?? 1,

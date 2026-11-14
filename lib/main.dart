@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:memex/l10n/app_localizations.dart';
@@ -68,6 +69,7 @@ import 'package:memex/ui/chat/widgets/open_super_agent_dialog.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:memex/data/services/app_action_link_service.dart';
 import 'package:memex/data/services/app_action_service.dart';
+import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
 import 'package:memex/utils/wakelock_manager.dart';
@@ -80,6 +82,46 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 final GlobalKey<RootShellState> rootShellKey = GlobalKey<RootShellState>();
+
+Future<void> _handleTodoAlarmResponse(NotificationResponse response) async {
+  const payloadPrefix = 'todoAlarm:';
+  final payload = response.payload;
+  if (payload == null || !payload.startsWith(payloadPrefix)) return;
+  final id = payload.substring(payloadPrefix.length);
+  if (id.isEmpty) return;
+
+  switch (response.actionId) {
+    case 'open':
+    case null:
+      AppActionService.instance.handleAction(
+        AppActionService.openTodoAction,
+        source: 'todo_alarm',
+      );
+      return;
+    case 'snooze':
+      final router = MemexRouter();
+      await router.ensureInitialized();
+      final result = await router.snoozeTodo(id);
+      result.when(
+        onOk: (_) {},
+        onError: (error, stackTrace) => getLogger('TodoAlarmAction')
+            .warning('Could not snooze Todo alarm', error, stackTrace),
+      );
+      return;
+    case 'complete':
+      final router = MemexRouter();
+      await router.ensureInitialized();
+      final result = await router.setTodoDone(id: id, done: true);
+      result.when(
+        onOk: (_) {},
+        onError: (error, stackTrace) => getLogger('TodoAlarmAction')
+            .warning('Could not complete Todo from alarm', error, stackTrace),
+      );
+      return;
+    default:
+      return;
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,6 +142,15 @@ void main() async {
     initAgentBridge: AgentBackgroundTaskService.instance.initializeNativeBridge,
     startLocalServer: LocalServerService.start,
   );
+  NotificationResponse? alarmLaunchResponse;
+  try {
+    alarmLaunchResponse = await TodoAlarmService.instance.initialize(
+      onAction: _handleTodoAlarmResponse,
+    );
+  } catch (error, stackTrace) {
+    getLogger('TodoAlarmService')
+        .warning('Todo notifications are unavailable', error, stackTrace);
+  }
 
   // Cancel legacy pedometer background tasks on iOS without wiping newer
   // background registrations such as agent queue processing.
@@ -142,6 +193,9 @@ void main() async {
       child: MemexApp(router: appRouter),
     ),
   );
+  if (alarmLaunchResponse != null) {
+    unawaited(_handleTodoAlarmResponse(alarmLaunchResponse));
+  }
 }
 
 /// Root route content: user check then loading / UserSetupScreen / MainScreen (Compass-style).
@@ -1363,6 +1417,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   void _handleAppAction(String? action) {
     if (action == null) return;
+    if (action == AppActionService.openTodoAction) {
+      context.push(AppRoutes.todo);
+      return;
+    }
     if (action != AppActionService.quickNoteAction) {
       _logger.info('Ignoring unsupported app action: $action');
       return;

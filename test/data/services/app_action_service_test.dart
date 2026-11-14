@@ -28,6 +28,15 @@ void main() {
       await event;
     });
 
+    test('dispatches open_todo from a task notification', () {
+      service.handleAction(
+        AppActionService.openTodoAction,
+        source: 'todo_alarm',
+      );
+
+      expect(service.consumeIfPending(), AppActionService.openTodoAction);
+    });
+
     test(
       'consumePendingAction returns null when no action is queued',
       () async {

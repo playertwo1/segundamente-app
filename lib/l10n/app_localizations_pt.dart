@@ -3766,6 +3766,49 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get todoAlarmChannelName => 'Lembretes de tarefas';
+
+  @override
+  String get todoAlarmChannelDescription =>
+      'Avisos com horário definido para as tarefas do Todo.';
+
+  @override
+  String get todoAlarmNotificationTitle => 'Lembrete de tarefa';
+
+  @override
+  String todoAlarmNotificationBody(String task, String time) {
+    return '$task · horário $time';
+  }
+
+  @override
+  String get todoAlarmSnoozeAction => 'Adiar 10 min';
+
+  @override
+  String get todoAlarmCompleteAction => 'Concluir';
+
+  @override
+  String get todoAlarmOpenAction => 'Abrir';
+
+  @override
+  String get todoAlarmNotificationsDenied =>
+      'As notificações de tarefas estão desativadas. Ative-as para receber avisos.';
+
+  @override
+  String get todoAlarmExactDenied =>
+      'Os alarmes exatos estão desativados. Os avisos não são garantidos.';
+
+  @override
+  String get todoAlarmBothDenied =>
+      'Notificações e alarmes exatos estão desativados. Os avisos não são garantidos.';
+
+  @override
+  String get todoAlarmUnavailable =>
+      'Não foi possível verificar as permissões. Os avisos não são garantidos.';
+
+  @override
+  String get todoAlarmConfigure => 'Configurar';
+
+  @override
   String get todoOpenSource => 'Fonte';
 
   @override
@@ -3790,20 +3833,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String documentCitationFrom(String name) {
     return 'comentário de $name';
   }
-
-  @override
-  String get todoReminderTitle => 'Criar lembrete?';
-
-  @override
-  String todoReminderBody(Object text, Object when) {
-    return '\"$text\" será salvo como lembrete no seu calendário para $when. Nada é criado antes de você confirmar.';
-  }
-
-  @override
-  String get todoReminderConfirm => 'Criar lembrete';
-
-  @override
-  String get todoReminderCreated => 'Lembrete criado';
 
   @override
   String get reportUnconfirmed => 'Não confirmado';

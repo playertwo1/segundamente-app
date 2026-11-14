@@ -43,6 +43,39 @@ class TodoScheduleCalculator {
     );
   }
 
+  static tz.TZDateTime? alarmDateTimeFor({
+    required String? dueDate,
+    required String? dueTime,
+    required String timeZone,
+    required int alertMinutes,
+    String? snoozedUntil,
+    required DateTime now,
+  }) {
+    final date = _parseDate(dueDate);
+    final time = _parseTime(dueTime);
+    if (date == null || time == null || alertMinutes < 0) return null;
+
+    final location = _location(timeZone);
+    if (snoozedUntil != null) {
+      final snooze = DateTime.tryParse(snoozedUntil);
+      if (snooze != null) {
+        return snooze.isAfter(now)
+            ? tz.TZDateTime.from(snooze, location)
+            : null;
+      }
+    }
+    final due = tz.TZDateTime(
+      location,
+      date.year,
+      date.month,
+      date.day,
+      time.$1,
+      time.$2,
+    );
+    final alarm = due.subtract(Duration(minutes: alertMinutes));
+    return alarm.isAfter(tz.TZDateTime.from(now, location)) ? alarm : null;
+  }
+
   static DateTime nextOccurrenceDate({
     required TodoRecurrence recurrence,
     required DateTime afterDate,
@@ -144,6 +177,15 @@ class TodoScheduleCalculator {
     return date.year == year && date.month == month && date.day == day
         ? date
         : null;
+  }
+
+  static (int, int)? _parseTime(String? value) {
+    if (value == null) return null;
+    final match = RegExp(r'^(\d{2}):(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2)!);
+    return hour < 24 && minute < 60 ? (hour, minute) : null;
   }
 
   static tz.Location _location(String name) {

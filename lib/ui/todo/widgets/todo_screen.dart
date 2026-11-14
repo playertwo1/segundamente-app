@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_proposal.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
@@ -48,14 +51,33 @@ class TodoScreen extends StatefulWidget {
   State<TodoScreen> createState() => _TodoScreenState();
 }
 
-class _TodoScreenState extends State<TodoScreen> {
+class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
+  AppLifecycleState? _lastLifecycleState;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.viewModel.load();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _lastLifecycleState != null &&
+        _lastLifecycleState != AppLifecycleState.resumed) {
+      unawaited(widget.viewModel.load());
+    }
+    _lastLifecycleState = state;
   }
 
   Future<void> _addOrEdit([TodoItem? item]) async {
@@ -112,42 +134,6 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  Future<void> _reminder(TodoItem item) async {
-    final l10n = UserStorage.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: Text(l10n.todoReminderTitle),
-        content: Text(l10n.todoReminderBody(item.text, item.due)),
-        actions: [
-          TextButton(
-            key: const ValueKey('todo_reminder_cancel'),
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.sendBack),
-          ),
-          TextButton(
-            key: const ValueKey('todo_reminder_confirm'),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.todoReminderConfirm),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    final outcome = await widget.viewModel.addReminder(item);
-    if (!mounted) return;
-    switch (outcome) {
-      case ReminderOutcome.created:
-        ToastHelper.showSuccess(context, l10n.todoReminderCreated);
-      case ReminderOutcome.permissionDenied:
-        ToastHelper.showError(context, l10n.permissionRequired(l10n.reminders));
-      case ReminderOutcome.noExactTime:
-      case ReminderOutcome.failed:
-        ToastHelper.showError(context, l10n.writeToSystemFailed);
-    }
-  }
-
   void _openSource(TodoItem item) {
     Navigator.of(context).push(
       SessionReportScreen.route(
@@ -164,7 +150,6 @@ class _TodoScreenState extends State<TodoScreen> {
             onEdit: _addOrEdit,
             onDelete: _remove,
             onCalendar: _calendar,
-            onReminder: _reminder,
             onOpenSource: _openSource,
           ),
         ),
@@ -178,8 +163,6 @@ class _TodoScreenState extends State<TodoScreen> {
         await _remove(item);
       case _TodoTaskAction.calendar:
         await _calendar(item);
-      case _TodoTaskAction.reminder:
-        await _reminder(item);
     }
   }
 
@@ -231,6 +214,8 @@ class _TodoScreenState extends State<TodoScreen> {
             }
             return Column(
               children: [
+                if (_alarmPermissionBanner(l10n, viewModel) case final banner?)
+                  banner,
                 if (viewModel.errorMessage != null)
                   MaterialBanner(
                     key: const ValueKey('todo_error'),
@@ -250,6 +235,35 @@ class _TodoScreenState extends State<TodoScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget? _alarmPermissionBanner(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+  ) {
+    if (viewModel.alarmStatus == TodoAlarmStatus.ready ||
+        viewModel.alarmStatus == TodoAlarmStatus.unsupported) {
+      return null;
+    }
+    final message = switch (viewModel.alarmStatus) {
+      TodoAlarmStatus.notificationsDenied => l10n.todoAlarmNotificationsDenied,
+      TodoAlarmStatus.exactAlarmsDenied => l10n.todoAlarmExactDenied,
+      TodoAlarmStatus.bothPermissionsDenied => l10n.todoAlarmBothDenied,
+      TodoAlarmStatus.unavailable => l10n.todoAlarmUnavailable,
+      TodoAlarmStatus.ready || TodoAlarmStatus.unsupported => null,
+    };
+    if (message == null) return null;
+    return MaterialBanner(
+      key: const ValueKey('todo_alarm_permission_banner'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          key: const ValueKey('todo_alarm_configure'),
+          onPressed: viewModel.configureAlarmPermissions,
+          child: Text(l10n.todoAlarmConfigure),
+        ),
+      ],
     );
   }
 
@@ -352,7 +366,7 @@ class _TodoScreenState extends State<TodoScreen> {
       );
 }
 
-enum _TodoTaskAction { edit, delete, calendar, reminder }
+enum _TodoTaskAction { edit, delete, calendar }
 
 class _TodoPriorityFilterButton extends StatelessWidget {
   const _TodoPriorityFilterButton({required this.viewModel});
@@ -397,7 +411,6 @@ class _TodoSearchScreen extends StatefulWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onCalendar,
-    required this.onReminder,
     required this.onOpenSource,
   });
 
@@ -405,7 +418,6 @@ class _TodoSearchScreen extends StatefulWidget {
   final Future<void> Function(TodoItem item) onEdit;
   final Future<void> Function(TodoItem item) onDelete;
   final Future<void> Function(TodoItem item) onCalendar;
-  final Future<void> Function(TodoItem item) onReminder;
   final void Function(TodoItem item) onOpenSource;
 
   @override
@@ -423,8 +435,6 @@ class _TodoSearchScreenState extends State<_TodoSearchScreen> {
         await widget.onDelete(item);
       case _TodoTaskAction.calendar:
         await widget.onCalendar(item);
-      case _TodoTaskAction.reminder:
-        await widget.onReminder(item);
     }
   }
 
@@ -592,11 +602,6 @@ class _TodoTaskRow extends StatelessWidget {
                 PopupMenuItem(
                   value: _TodoTaskAction.calendar,
                   child: Text(l10n.addToCalendar),
-                ),
-              if (!item.done && TodoViewModel.reminderTimeFor(item.due) != null)
-                PopupMenuItem(
-                  value: _TodoTaskAction.reminder,
-                  child: Text(l10n.addToReminders),
                 ),
               PopupMenuItem(
                 value: _TodoTaskAction.delete,
