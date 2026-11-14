@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-13 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F11 — Todo robusto (IN_PROGRESS), em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`
+**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F11 — Todo robusto (IN_PROGRESS), em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -15,13 +15,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | IN_PROGRESS | F11-01 a F11-06 DONE (F11-06 em D-061); portão aguarda AC-01 (08h30/08h10) no S25 |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
+| F15 | BLOCKED até o portão da F11 (abre sem nova decisão) | D-062; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
 1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão.
-2. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
-3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
+2. **F15-01 (maquetes):** depois do portão da F11, gerar as maquetes do widget e do chat flutuante na direção AMOLED (`DESIGN.md`) para o dono escolher (D-062). Nenhum código de widget antes dessa escolha.
+3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
+4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
+5. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
 ## Pendências do dono
 

@@ -401,3 +401,13 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-061 — Abrir a F11-06: aviso de conteúdo (2026-11-13)
 - Contexto: o dono aprovou seguir com a F11-06, que estava `BLOCKED` na ordem de trabalho da F11. Ela depende da F11-03, já `DONE`.
 - Decisão: abrir somente a F11-06. O aviso "não registre dados de clientes, contas ou documentos do banco" aparece como legenda fixa na captura e como linha em Configurações, em pt-BR e en. Não é diálogo, não bloqueia e não exige toque extra. Nada mais é desbloqueado: F11-04 segue pendente do S25 e a F12 segue bloqueada.
+
+## D-062 — Fase F15: widget e atalhos Android (2026-11-14)
+- Contexto: o dono respondeu o [questionário](questionario/2026-11-14-widget-e-capsula.md) e confirmou a abertura da F15 em 2026-11-14. O app não tem widget hoje; os atalhos do ícone e os deep links já passam pelo `AppActionService`.
+- Decisão:
+  - Abrir a **F15 — Widget e atalhos Android** (`docs/roadmap/F15-widget-e-atalhos-android.md`), com as subfases F15-01 a F15-07. A fase começa depois do portão da F11 e roda em paralelo à fase L do fork.
+  - Escopo: um widget redimensionável (pequeno: Conversar e Falar; médio: + captura; grande: + tarefas de hoje), um chat flutuante, o botão "Conversar" no painel de configurações rápidas e protótipos da minicápsula.
+  - A forma da minicápsula (bolha oficial ou sobreposição própria) só é decidida depois dos protótipos no S25 (F15-07).
+  - Vão para "Ideias futuras": resumo e próximo evento no widget (depende de F13 e F14); captura sem sair do app pela minicápsula; assistente que vê a tela (risco alto de privacidade; exige decisão própria antes de qualquer trabalho).
+  - Widget, microfone, painel rápido e minicápsula só se validam no S25.
+  - Não desbloqueia F12, F13 nem F14.
