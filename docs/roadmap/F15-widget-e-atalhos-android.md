@@ -2,7 +2,7 @@
 
 ## F15 — Widget e atalhos Android
 
-**Estado:** READY após o portão da F11 (D-062).
+**Estado:** BLOCKED até o portão da F11; vira READY ao fechá-lo, sem nova decisão (D-062).
 
 **Objetivo:** dar à Segunda Mente presença na tela inicial e no painel rápido do Android: conversar, falar, capturar e ver as tarefas de hoje sem abrir o app inteiro. A forma da minicápsula é decidida por protótipo no S25.
 
@@ -10,7 +10,7 @@
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F15-01 | Maquetes do widget (pequeno, médio e grande) e do chat flutuante na direção AMOLED de `DESIGN.md`, para o dono escolher | P1 | Portão F11 | READY | Escolha do dono registrada |
+| F15-01 | Maquetes do widget (pequeno, médio e grande) e do chat flutuante na direção AMOLED de `DESIGN.md`, para o dono escolher | P1 | Portão F11 | BLOCKED (vira READY ao fechar o portão da F11, sem nova decisão: D-062) | Escolha do dono registrada |
 | F15-02 | Chat flutuante: Activity translúcida com rota de chat compacto; Conversar abre conversa nova com a Segunda Mente; Falar ouve e envia sozinho ao fim da fala; aviso da F11-06 sob o campo; botão para expandir para o app | P0 | F15-01 | BLOCKED | Abertura a frio medida no S25; teclado ou microfone conforme o toque; volta para a tela de origem ao fechar; testes de widget e de integração |
 | F15-03 | Widget redimensionável, tamanho pequeno (Conversar e Falar); ações entram pelo `AppActionService` | P0 | F15-02 | BLOCKED | Widget adicionado e tocado no S25 |
 | F15-04 | Tamanho médio: Anotar, Foto e Colar levam à linha do tempo, com confirmação antes de gravar | P1 | F15-03 | BLOCKED | Captura gravada só após confirmação; testes de widget e de integração; fluxo tocado no S25 |

@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | IN_PROGRESS | F11-01 a F11-06 DONE (F11-06 em D-061); portão aguarda AC-01 (08h30/08h10) no S25 |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | READY após o portão da F11 | D-062; widget e atalhos Android, paralela à fase L do fork |
+| F15 | BLOCKED até o portão da F11 (abre sem nova decisão) | D-062; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
