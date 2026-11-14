@@ -44,17 +44,57 @@ void main() {
       );
     });
 
-    test('skips alarms already due and rejects invalid wall-clock times', () {
-      expect(
-        TodoScheduleCalculator.alarmDateTimeFor(
+    test('keeps the warning time while it is still ahead', () {
+      final alarm = TodoScheduleCalculator.alarmDateTimeFor(
+        dueDate: '2026-11-14',
+        dueTime: '08:30',
+        timeZone: 'America/Sao_Paulo',
+        alertMinutes: 20,
+        now: DateTime.utc(2026, 11, 14, 10),
+      );
+
+      expect(alarm, isNotNull);
+      expect(alarm!.toUtc(), DateTime.utc(2026, 11, 14, 11, 10));
+    });
+
+    test('fires at the due time once the warning time has passed', () {
+      for (final now in [
+        DateTime.utc(2026, 11, 14, 11, 10),
+        DateTime.utc(2026, 11, 14, 11, 25),
+      ]) {
+        final alarm = TodoScheduleCalculator.alarmDateTimeFor(
           dueDate: '2026-11-14',
           dueTime: '08:30',
           timeZone: 'America/Sao_Paulo',
           alertMinutes: 20,
-          now: DateTime.utc(2026, 11, 14, 11, 10),
-        ),
-        isNull,
-      );
+          now: now,
+        );
+
+        expect(alarm, isNotNull, reason: 'now=$now');
+        expect(alarm!.toUtc(), DateTime.utc(2026, 11, 14, 11, 30));
+      }
+    });
+
+    test('skips alarms once the due time has passed or is now', () {
+      for (final now in [
+        DateTime.utc(2026, 11, 14, 11, 30),
+        DateTime.utc(2026, 11, 14, 11, 40),
+      ]) {
+        expect(
+          TodoScheduleCalculator.alarmDateTimeFor(
+            dueDate: '2026-11-14',
+            dueTime: '08:30',
+            timeZone: 'America/Sao_Paulo',
+            alertMinutes: 20,
+            now: now,
+          ),
+          isNull,
+          reason: 'now=$now',
+        );
+      }
+    });
+
+    test('rejects invalid wall-clock times', () {
       expect(
         TodoScheduleCalculator.alarmDateTimeFor(
           dueDate: '2026-11-14',

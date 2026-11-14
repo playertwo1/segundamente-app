@@ -72,8 +72,11 @@ class TodoScheduleCalculator {
       time.$1,
       time.$2,
     );
+    final nowLocal = tz.TZDateTime.from(now, location);
     final alarm = due.subtract(Duration(minutes: alertMinutes));
-    return alarm.isAfter(tz.TZDateTime.from(now, location)) ? alarm : null;
+    if (alarm.isAfter(nowLocal)) return alarm;
+    // Warning time passed but the task is still ahead: remind at the due time.
+    return due.isAfter(nowLocal) ? due : null;
   }
 
   static DateTime nextOccurrenceDate({

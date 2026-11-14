@@ -390,3 +390,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-058 — Retomar F11-04 com o S25 conectado (2026-11-13)
 - Contexto: D-056 manteve a F11-04 bloqueada até haver acesso ao Galaxy S25 Ultra. O dono confirmou que o aparelho está conectado e pediu para continuar.
 - Decisão: abrir a F11-04 para implementação e validação física no S25. A F11-06 continua `BLOCKED`; esta decisão não a desbloqueia.
+
+## D-059 — Aviso do Todo quando o alerta já passou (2026-11-13)
+- Decisão do dono, vinda da auditoria da F11 (`docs/reviews/F11.md`): se o horário do alerta já passou e o prazo da tarefa ainda não chegou, o lembrete dispara na hora do prazo. Tarefa com prazo já vencido continua sem lembrete.
