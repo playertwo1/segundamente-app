@@ -24,4 +24,29 @@ void main() {
     expect(FloatingChatMode.photo.isCapture, isTrue);
     expect(FloatingChatMode.paste.isCapture, isTrue);
   });
+
+  test('parses the Todo modes (F15-05) and they are not capture sheets', () {
+    expect(FloatingChatMode.parse('todo_add'), FloatingChatMode.todoAdd);
+    expect(FloatingChatMode.todoAdd.isCapture, isFalse);
+    expect(FloatingChatMode.todoComplete.isCapture, isFalse);
+  });
+
+  test('a launch carries the task id only for todo_complete:<id>', () {
+    expect(FloatingLaunch.parse('talk'),
+        const FloatingLaunch(FloatingChatMode.talk));
+    expect(FloatingLaunch.parse('todo_add'),
+        const FloatingLaunch(FloatingChatMode.todoAdd));
+    expect(
+      FloatingLaunch.parse('todo_complete:abc-1'),
+      const FloatingLaunch(FloatingChatMode.todoComplete, todoId: 'abc-1'),
+    );
+  });
+
+  test('a completion without an id, or an unknown value, is no launch', () {
+    expect(FloatingLaunch.parse('todo_complete:'), isNull);
+    expect(FloatingLaunch.parse('todo_complete:   '), isNull);
+    expect(FloatingLaunch.parse('todo_complete'), isNull);
+    expect(FloatingLaunch.parse('camera'), isNull);
+    expect(FloatingLaunch.parse(null), isNull);
+  });
 }

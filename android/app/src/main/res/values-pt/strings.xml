@@ -12,4 +12,9 @@
     <string name="widget_key_note">Anotar</string>
     <string name="widget_key_photo">Foto</string>
     <string name="widget_key_paste">Colar</string>
+    <!-- F15-05: widget grande: tarefas, tecla "+ tarefa", descrição do círculo. -->
+    <string name="widget_tasks_empty">Nada para hoje</string>
+    <string name="widget_key_task_add">+ tarefa</string>
+    <string name="widget_today">Hoje</string>
+    <string name="widget_task_complete">Concluir %1$s</string>
 </resources>

@@ -110,6 +110,11 @@ class AppActionService {
       return quickNoteAction;
     }
 
+    // memex://open_todo: the widget's task title (F15-05) opens the Todo list.
+    if (host == openTodoAction && pathSegments.isEmpty) {
+      return openTodoAction;
+    }
+
     if (host.isEmpty &&
         pathSegments.length == 1 &&
         pathSegments.first == quickNoteAction) {

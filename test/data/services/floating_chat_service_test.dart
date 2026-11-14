@@ -80,7 +80,23 @@ void main() {
       (_) {},
     );
 
-    expect(await first, FloatingChatMode.talk);
+    expect((await first).mode, FloatingChatMode.talk);
+  });
+
+  test('reads the Todo launches, with the task id for a completion (F15-05)',
+      () async {
+    mockNative((call) async => 'todo_add');
+    expect(await service.takePendingLaunch(),
+        const FloatingLaunch(FloatingChatMode.todoAdd));
+
+    mockNative((call) async => 'todo_complete:tarefa-42');
+    expect(
+      await service.takePendingLaunch(),
+      const FloatingLaunch(FloatingChatMode.todoComplete, todoId: 'tarefa-42'),
+    );
+
+    mockNative((call) async => 'todo_complete:');
+    expect(await service.takePendingLaunch(), isNull);
   });
 
   test('an open signal with nothing pending emits nothing', () async {
@@ -88,7 +104,7 @@ void main() {
     service.initialize();
     addTearDown(() => channel.setMethodCallHandler(null));
 
-    final emitted = <FloatingChatMode>[];
+    final emitted = <FloatingLaunch>[];
     final subscription = service.openRequests.listen(emitted.add);
     addTearDown(subscription.cancel);
     await messenger.handlePlatformMessage(

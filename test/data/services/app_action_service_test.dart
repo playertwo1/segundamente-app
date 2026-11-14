@@ -159,6 +159,14 @@ void main() {
       expect(service.consumeIfPending(), AppActionService.quickNoteAction);
     });
 
+    test('maps memex://open_todo, the widget task title, to the Todo list', () {
+      service.attach();
+
+      expect(service.handleDeepLink('memex://open_todo'), isTrue);
+
+      expect(service.consumeIfPending(), AppActionService.openTodoAction);
+    });
+
     test('also accepts path-style memex:///quick_note deep link', () {
       service.attach();
 

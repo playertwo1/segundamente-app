@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 a F15-07 BLOCKED | D-062 a D-067; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-070; código pronto, S25 NOT_RUN); F15-06 e F15-07 BLOCKED | D-062 a D-070; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -41,6 +41,19 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-05 — widget grande com tarefas de hoje, código (2026-11-14)
+- O que existe: tamanho grande em `widget_large.xml` (chave `LARGE_MIN` 250×270 dp no API 31+, altura ≥ 270 no API 26–30): faixa de Conversar e Falar, faixa de captura, até três linhas de tarefa (círculo conclui, título abre `memex://open_todo`, hora) e "+ tarefa". Atrasadas primeiro, depois as de hoje por horário; só tarefas abertas com data (D-070). Snapshot Dart → nativo por `TodoWidgetSnapshotService` (`com.memexlab.memex/todo_widget`, `updateSnapshot`), com id, título, data, hora, status e fuso das dez primeiras; guardado em `SharedPreferences` privado. Envio após cada escrita do Todo (fora do lock, sem `await`) e na inicialização. Redesenho por envio, `DATE_CHANGED`, `TIME_SET`, `TIMEZONE_CHANGED` e alarme inexato no próximo instante (meia-noite SP ou hora de tarefa de hoje). Concluir pelo círculo: `FloatingChatActivity` com `todo_complete:<id>` → `/floating-todo-complete` → `setTodoDone` pelo router, sem folha, funciona a frio. "+ tarefa": `todo_add` → `/floating-todo-add` → editor do Todo com o aviso da F11-06 (parâmetro `notice` novo em `showTodoEditorDialog`, padrão nulo). Desenho e checklist do S25 (doze itens) em `docs/fases/F15-05-widget-grande.md`; decisão em D-070.
+- Comandos e saídas (branch `feat/f15-05-widget-grande`, worktree `sm-f1505`):
+  - `flutter pub get --enforce-lockfile` → `Got dependencies!` (exit 0). `analysis_options.yaml` e `android/gradle.properties` sem alteração.
+  - `dart analyze` nos arquivos alterados e novos (lib e testes): nenhum erro e nenhum aviso novo; o conjunto final tem um aviso pré-existente. Único aviso em `todo_screen.dart:419` (`unused_element_parameter`) é da busca do Todo, código que não mudou.
+  - `dart format` nos 22 arquivos Dart alterados: 10 reformatados (só linhas tocadas).
+  - `flutter test --no-pub --reporter compact` (suíte completa): `Some tests failed`, `+1853 -1`. Única falha: `floating_todo_add_screen_test` (aviso da F11-06 ainda não existia). Depois de corrigida, rodada dirigida: `test/ui/floating_chat/widgets/floating_todo_add_screen_test.dart`, `test/ui/todo` e `test/integration/floating_todo_flow_test.dart`: `All tests passed!`.
+  - Testes novos da F15-05: `todo_widget_snapshot_service_test.dart` (conteúdo, filtros, ordem, corte de 10, meia-noite com relógio fixo, envio pelo canal, falha sem exceção), grupo "widget snapshot" em `todo_service_test.dart` (envio que nunca volta, ordem, falha do envio, envio na inicialização), `floating_todo_complete_viewmodel_test.dart`, `floating_todo_add_screen_test.dart`, `floating_todo_flow_test.dart`, e casos de `FloatingLaunch` em `floating_chat_mode_test.dart`, `floating_chat_service_test.dart` e `memex://open_todo` em `app_action_service_test.dart`.
+  - `flutter build apk --flavor globalDev --debug --no-pub`: `√ Built buildpp\outputslutter-apkpp-globaldev-debug.apk` (exit 0).
+  - `git diff --check`: limpo.
+- Aparelho: nenhum (adb e celular não usados). `NOT_RUN`: tudo no S25 (checklist de doze itens em `docs/fases/F15-05-widget-grande.md`); o widget grande de fato; os broadcasts de data e hora; o alarme da meia-noite; a abertura a frio do trampolim de concluir; TalkBack; texto a 200%. Testes de Android nativo não existem no projeto; `TodoWidgetSnapshot.rows` e `nextChangeMillis` só se validam no aparelho.
+- Estado: F15-05 REVIEW (D-070) até a evidência no S25.
 
 ### F15-04 — widget médio com captura, código (2026-11-14)
 - O que existe: `widget_medium.xml` (faixa de chat mais faixa de captura Anotar, Foto e Colar), com `widget_chat_row` e `widget_capture_row` compartilhados com o pequeno; `WidgetLayouts` com o mapa `SMALL_MIN` 200×60 e `MEDIUM_MIN` 200×120 dp no API 31+, e escolha por `OPTION_APPWIDGET_MIN_HEIGHT` no API 26–30 (`onAppWidgetOptionsChanged`). Cada tecla de captura abre `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. O Dart roteia para `/floating-capture` (`FloatingCaptureScreen`). Guardar envia pelo `MemexRouter.sendMessage` do Registrar (cena `super_agent_home`, sessão mais recente); Fechar, toque fora e voltar não gravam. Desenho e checklist do S25 em `docs/fases/F15-04-widget-medio.md`; decisão em D-067.

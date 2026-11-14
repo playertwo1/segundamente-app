@@ -564,6 +564,61 @@ void main() {
     });
   });
 
+  group('widget snapshot (F15-05)', () {
+    final original = TodoService.widgetSnapshotSynchronizer;
+
+    tearDown(() => TodoService.widgetSnapshotSynchronizer = original);
+
+    test('a save completes while the widget push never returns', () async {
+      final never = Completer<void>();
+      TodoService.widgetSnapshotSynchronizer = (_) => never.future;
+
+      final item = await todos
+          .add(userId: userId, text: 'Ligar para Rui')
+          .timeout(const Duration(seconds: 5));
+      await todos
+          .setDone(userId: userId, id: item.id, done: true)
+          .timeout(const Duration(seconds: 5));
+
+      expect((await todos.load(userId)).single.done, isTrue);
+    });
+
+    test('each write pushes the list it saved, in write order', () async {
+      final seen = <List<TodoItem>>[];
+      TodoService.widgetSnapshotSynchronizer = (items) async => seen.add(items);
+      // The first read of a new store writes an empty list: one push, not ours.
+      await todos.load(userId);
+      seen.clear();
+
+      final first = await todos.add(userId: userId, text: 'Tarefa A');
+      await todos.setDone(userId: userId, id: first.id, done: true);
+      await todos.add(userId: userId, text: 'Tarefa B');
+
+      expect(seen, hasLength(3));
+      expect(seen.last.map((item) => item.text), ['Tarefa A', 'Tarefa B']);
+      expect(seen.last.firstWhere((item) => item.id == first.id).done, isTrue);
+    });
+
+    test('a failing push does not fail the save', () async {
+      TodoService.widgetSnapshotSynchronizer =
+          (_) async => throw StateError('widget down');
+
+      await todos.add(userId: userId, text: 'Ligar');
+
+      expect(await todos.load(userId), hasLength(1));
+    });
+
+    test('startup pushes the stored list before any write', () async {
+      await todos.add(userId: userId, text: 'Já salva');
+      final seen = <List<TodoItem>>[];
+      TodoService.widgetSnapshotSynchronizer = (items) async => seen.add(items);
+
+      await todos.refreshWidgetSnapshot(userId);
+
+      expect(seen.single.single.text, 'Já salva');
+    });
+  });
+
   test('report edits mark linked Todo copies as stale', () async {
     final item = await todos.addFromReport(
       userId: userId,

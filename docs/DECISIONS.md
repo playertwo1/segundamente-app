@@ -457,3 +457,13 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Guardar envia a captura pelo mesmo caminho do Registrar: `MemexRouter.sendMessage` com a cena `super_agent_home` e a sessão mais recente. Esse é o único caminho que grava. Fechar, o toque fora e o voltar descartam. Colar só pré-preenche o campo; Foto só escolhe a imagem.
   - Confirmação: o toque em Guardar, com o texto ou a foto visível, é a confirmação de D-051. A IA organiza o registro depois, como já faz no Registrar.
 - Limite: o aceite da F15-04 depende do S25 (adicionar e redimensionar o widget, cada tecla, Guardar contra Fechar, Colar com a área de transferência, Foto com câmera e galeria) e continua `NOT_RUN`. F15-03 segue REVIEW até o próprio S25. Não fecha a F15 nem o portão da F15.
+
+## D-070 — Widget grande: tarefas de hoje, concluir e "+ tarefa" (2026-11-14)
+- Contexto: a F15-05 entrega o tamanho grande do widget (D-064: linhas). Ao implementar, três escolhas de produto e de mecanismo ficaram por decidir; esta decisão as registra.
+- Decisão:
+  - **Quais tarefas aparecem:** até três tarefas abertas com data: atrasadas primeiro (por data e hora), depois as de hoje por horário. Tarefas sem data e as de dias futuros ficam fora do widget e continuam no Todo. Motivo: sem data não há ordem nem virada do dia, e a lista fica previsível. A aba "Hoje" do Todo mostra as sem data; o widget não. Reversível.
+  - **Concluir pelo círculo:** abre a `FloatingChatActivity` no modo `todo_complete:<id>`; o Dart chama `MemexRouter.setTodoDone` (caminho normal do Todo) e fecha sem folha. Funciona com o app fechado, porque o motor compartilhado (D-065) sobe com a janela. O nativo não edita o arquivo do Todo.
+  - **Título:** abre a lista de tarefas pelo `memex://open_todo`. Abrir uma tarefa específica não existe no app; fica para depois.
+  - **"+ tarefa":** abre o editor do Todo por cima da tela inicial; Salvar grava pelo router; Cancelar e toque fora não gravam.
+  - **Dados ao widget:** só id, título, data, hora, status informativo e fuso das dez primeiras tarefas abertas com data, em `SharedPreferences` privado do app (D8).
+- Limite: a validação é no S25 (F15-05 fica REVIEW). A altura mínima do grande (270 dp) é estimativa. Se o dono quiser tarefas sem data no widget, é uma nova decisão.

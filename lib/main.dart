@@ -176,13 +176,13 @@ void main() async {
 
   // A floating launch (F15-02 chat, F15-04 capture) starts on its sheet, not the home screen.
   FloatingChatService.instance.initialize();
-  final floatingMode = await FloatingChatService.instance.takePendingMode();
+  final floatingLaunch = await FloatingChatService.instance.takePendingLaunch();
   final appRouter = createAppRouter(
     rootNavigatorKey,
     () => RootShell(key: rootShellKey),
-    initialLocation: floatingMode == null
+    initialLocation: floatingLaunch == null
         ? AppRoutes.home
-        : AppRoutes.floatingLocationFor(floatingMode),
+        : AppRoutes.floatingLocationForLaunch(floatingLaunch),
   );
 
   // Initialize quick actions (app icon long-press shortcuts).
@@ -359,15 +359,16 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
   bool _isLocked = true; // Default to locked on start
   bool _requiresAuth = true; // Whether actual authentication is required
   DateTime? _lastPausedTime; // Track when app was paused
-  StreamSubscription<FloatingChatMode>? _floatingChatSubscription;
+  StreamSubscription<FloatingLaunch>? _floatingChatSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _floatingChatSubscription =
-        FloatingChatService.instance.openRequests.listen((mode) {
-      unawaited(widget.router.push(AppRoutes.floatingLocationFor(mode)));
+        FloatingChatService.instance.openRequests.listen((launch) {
+      unawaited(
+          widget.router.push(AppRoutes.floatingLocationForLaunch(launch)));
     });
     _checkUser();
     _checkLockSettings();

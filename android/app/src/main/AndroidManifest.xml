@@ -100,6 +100,15 @@
                     android:scheme="memex"
                     android:host="quick_note" />
             </intent-filter>
+            <!-- F15-05: the widget's task title opens the Todo list. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="memex"
+                    android:host="open_todo" />
+            </intent-filter>
 
             <!-- share_handler: handle incoming shares -->
             <!-- Text shares -->
@@ -242,13 +251,16 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize" />
-        <!-- F15-03: home-screen widget (small layout). Taps open FloatingChatActivity; no keyguard. -->
+        <!-- F15-03 to F15-05: home-screen widget. Taps open the floating sheets; date and time changes refresh it. -->
         <receiver
             android:name=".widget.SegundaMenteWidgetProvider"
             android:exported="true"
             android:label="@string/widget_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

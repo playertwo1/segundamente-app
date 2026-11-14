@@ -13,4 +13,9 @@
     <string name="widget_key_note">Note</string>
     <string name="widget_key_photo">Photo</string>
     <string name="widget_key_paste">Paste</string>
+    <!-- F15-05: large widget: tasks, "+ tarefa" key, task circle description. -->
+    <string name="widget_tasks_empty">Nothing for today</string>
+    <string name="widget_key_task_add">+ Task</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_task_complete">Complete %1$s</string>
 </resources>

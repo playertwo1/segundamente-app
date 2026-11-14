@@ -14,7 +14,6 @@ import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/memory/view_models/memory_viewmodel.dart';
 import 'package:memex/ui/thread_document/view_models/thread_document_viewmodel.dart';
 import 'package:memex/ui/thread_document/widgets/thread_document_screen.dart';
-import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_screen.dart';
 import 'package:memex/ui/memory/widgets/memory_screen.dart';
 import 'package:memex/ui/character/widgets/character_config_screen.dart';
@@ -44,8 +43,13 @@ import 'package:memex/domain/models/floating_chat_mode.dart';
 import 'package:memex/ui/floating_chat/view_models/floating_capture_viewmodel.dart';
 import 'package:memex/ui/floating_chat/widgets/floating_capture_screen.dart';
 import 'package:memex/ui/floating_chat/widgets/floating_chat_screen.dart';
+import 'package:memex/ui/floating_chat/view_models/floating_todo_complete_viewmodel.dart';
+import 'package:memex/ui/floating_chat/widgets/floating_todo_add_screen.dart';
+import 'package:memex/ui/floating_chat/widgets/floating_todo_complete_screen.dart';
+import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 
-FloatingChatMode _floatingModeOf(GoRouterState state, FloatingChatMode fallback) =>
+FloatingChatMode _floatingModeOf(
+        GoRouterState state, FloatingChatMode fallback) =>
     FloatingChatMode.parse(state.uri.queryParameters['mode']) ?? fallback;
 
 /// A floating sheet page (F15-02, F15-04). Opaque so the screens below are not
@@ -105,6 +109,25 @@ GoRouter createAppRouter(
             ),
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.floatingTodoAdd,
+        pageBuilder: (context, state) => _floatingSheetPage(
+          FloatingTodoAddScreen(
+            viewModel: TodoViewModel(router: context.read<MemexRouter>()),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.floatingTodoComplete,
+        pageBuilder: (context, state) => _floatingSheetPage(
+          FloatingTodoCompleteScreen(
+            viewModel: FloatingTodoCompleteViewModel(
+              router: context.read<MemexRouter>(),
+              todoId: state.uri.queryParameters['id'] ?? '',
+            ),
+          ),
+        ),
       ),
       GoRoute(
         path: AppRoutes.userSetup,

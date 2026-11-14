@@ -219,6 +219,7 @@ class MemexRouter {
       onError: (error, stackTrace) =>
           _logger.warning('Could not restore Todo alarms', error, stackTrace),
     );
+    unawaited(_todoRepository.refreshWidgetSnapshot(userId));
     return userId;
   }
 
