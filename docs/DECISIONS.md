@@ -466,6 +466,15 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A F15-02 segue IN_PROGRESS até a validação no S25. Esta decisão não muda o estado dela.
 - Limite: se a F15-02 falhar no aparelho (abertura a frio, volta para a tela de origem), o botão do painel rápido herda a falha e fica sem efeito até a correção. A ordem das subfases e o portão F15 não mudam.
 
+## D-069 — Abrir a F15-07 (protótipos da cápsula) em código antes da validação da F15-02 no S25 (2026-11-14)
+- Contexto: o dono pediu para fazer toda a F15 hoje. A tabela da F15 põe a F15-07 depois da F15-02, e a F15-02 ainda espera a validação no S25 (D-065).
+- Decisão:
+  - Abrir o código dos dois protótipos da F15-07 (bolha oficial do Android e sobreposição própria), só no build `globalDev`. Desenho e passos de uso em `docs/fases/F15-07-prototipos-capsula.md`. Estado: IN_PROGRESS.
+  - Nada vai para `src/main`, `global` ou `globalEarly`. As permissões `SYSTEM_ALERT_WINDOW` e `FOREGROUND_SERVICE_SPECIAL_USE` ficam só no manifesto do flavor dev.
+  - A forma da cápsula (D11) só se decide com a comparação no S25. F15-07 não vira DONE antes disso.
+  - F15-03 a F15-06 seguem BLOCKED; o portão da F11 continua exigido (D-062); a F15-02 não é dispensada de validação no S25.
+- Limite: os protótipos não foram medidos no aparelho. Os critérios de decisão são os cinco da D11.
+
 ## D-070 — Widget grande: tarefas de hoje, concluir e "+ tarefa" (2026-11-14)
 - Contexto: a F15-05 entrega o tamanho grande do widget (D-064: linhas). Ao implementar, três escolhas de produto e de mecanismo ficaram por decidir; esta decisão as registra.
 - Decisão:

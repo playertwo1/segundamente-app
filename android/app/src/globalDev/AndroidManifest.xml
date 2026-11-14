@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- F15-07 prototypes, dev flavor only. Nothing here reaches src/main, global or globalEarly builds. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <application>
+        <!-- Prototype A: conversation bubble. -->
+        <activity
+            android:name=".dev.CapsuleBubbleLauncherActivity"
+            android:exported="true"
+            android:label="Cápsula: bolha"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- The bubble's activity. Embeddable and resizable so the system can host it in a bubble. -->
+        <activity
+            android:name=".dev.CapsuleBubbleHostActivity"
+            android:exported="false"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            android:documentLaunchMode="always"
+            android:taskAffinity="${applicationId}.bubble"
+            android:theme="@style/NormalTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Prototype B: own overlay. -->
+        <activity
+            android:name=".dev.CapsuleOverlayLauncherActivity"
+            android:exported="true"
+            android:label="Cápsula: sobreposição"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".dev.CapsuleOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Prototipo de desenvolvedor: bolinha de conversa sobre outros apps" />
+        </service>
+    </application>
+</manifest>

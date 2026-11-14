@@ -15,11 +15,11 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-070; código pronto, S25 NOT_RUN); F15-06 REVIEW (D-068; código pronto, device NOT_RUN); F15-07 BLOCKED | D-062 a D-070; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-070; código pronto, S25 NOT_RUN); F15-06 REVIEW (D-068; código pronto, device NOT_RUN); F15-07 IN_PROGRESS (D-069; protótipos no build dev) | D-062 a D-070; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
-1. **F15-02 (chat flutuante):** código e testes prontos na branch feat/f15-02-chat-flutuante (D-065). Falta validar no S25: instalar o pacote dev, abrir pelos atalhos Conversar e Falar, medir a abertura a frio, conferir a volta para a tela de origem e o Abrir no app.
+1. **Validar F15-02 a F15-07 no S25 com um APK integrado** (branch `feat/f15-integracao`, que junta F15-05 com F15-03 e F15-04, F15-06 e F15-07). Depois, o dono escolhe a forma da minicápsula pela comparação da F15-07 (D-069). Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
@@ -41,6 +41,17 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-07 — protótipos da cápsula (2026-11-14)
+- O que existe, só no flavor `globalDev` (`android/app/src/globalDev/`, D-069): A, bolha oficial (launcher "Cápsula: bolha", `Notification.BubbleMetadata` com `setAutoExpandBubble`, `setSuppressNotification`, atalho de conversa, host `CapsuleBubbleHostActivity` que reusa o motor e a rota do chat); B, sobreposição própria (launcher "Cápsula: sobreposição", `CapsuleOverlayService` com `TYPE_APPLICATION_OVERLAY`, `specialUse`, notificação com "Parar"). Medição pelo log `F1507`. Passos de uso, permissões e comandos adb em `docs/fases/F15-07-prototipos-capsula.md`.
+- Comandos e saídas:
+  - `flutter pub get --enforce-lockfile` → exit 0 (avisos de pacotes descontinuados e desatualizados); nenhum arquivo rastreado alterado.
+  - `flutter build apk --flavor globalDev --debug --no-pub` → `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk`, exit 0.
+  - `gradlew.bat :app:processGlobalDebugManifest` (flavor `global`, debug) → BUILD SUCCESSFUL; o manifesto mesclado não tem `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE_SPECIAL_USE` nem entradas `com.memexlab.memex.dev` (0 ocorrências). `android/app/src/main/AndroidManifest.xml` sem alteração.
+  - `flutter analyze` e `flutter test`: NOT_RUN, sem mudança em Dart nesta subfase.
+- Aparelho: nenhum (sem adb nesta subfase).
+- `NOT_RUN`: tudo no S25: abrir pelos dois lançadores, bolha expandida e recolhida, sobreposição com a permissão, arrastar, esconder e parar, economia de bateria, custo de bateria e os cinco critérios. A comparação e a escolha do dono vêm depois.
+- Estado: F15-07 IN_PROGRESS.
 
 ### F15-06 — botão no painel rápido (2026-11-14)
 - O que existe: `ConversarTileService` (`TileService`) abre a `FloatingChatActivity` em modo `type`; API 34+ usa `startActivityAndCollapse(PendingIntent)`, API 26 a 33 usa o `Intent`; com aparelho bloqueado, `unlockAndRun`. Rótulo "Conversar"/"Chat", ícone `ic_qs_chat`. Documento `docs/fases/F15-06-painel-rapido.md`. Decisão D-068 (abertura antes da validação da F15-02 no S25).
