@@ -393,3 +393,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 
 ## D-059 — Aviso do Todo quando o alerta já passou (2026-11-13)
 - Decisão do dono, vinda da auditoria da F11 (`docs/reviews/F11.md`): se o horário do alerta já passou e o prazo da tarefa ainda não chegou, o lembrete dispara na hora do prazo. Tarefa com prazo já vencido continua sem lembrete.
+
+## D-060 — Fechamento da F7-03 sem o teste de revogação durante a conversa (2026-11-13)
+- Decisão do dono: não testar a revogação da permissão de microfone no meio da conversa, por não ter utilidade real. Esse caso fica `NOT_RUN` e não bloqueia o fechamento.
+- A F7-03 fecha com Interromper e falar, Encerrar e permissão negada observados no S25 em 2026-11-13 (`docs/fases/F7-03-voz-duplex.md`, seção 5c). Bateria fora do carregador, eco com fone e latência ponta a ponta seguem fora desta decisão, como pela ordem de trabalho da D-050.

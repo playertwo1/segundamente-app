@@ -10,7 +10,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 |---|---|---|
 | F0, F4, F5, F6 | DONE | Portões fechados |
 | F1, F2, F3 | IN_PROGRESS | Critérios do MVP cumpridos; tarefas adicionais abertas |
-| F7 | IN_PROGRESS | Só a F7-03 (voz duplex por turnos, D-049); F7-02 adiada (D-041), F7-06 BLOCKED |
+| F7 | IN_PROGRESS | F7-03 DONE (D-060; voz duplex por turnos, D-049); F7-02 adiada (D-041); F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | IN_PROGRESS | F11-01 a F11-05 DONE; portão aguarda AC-01 (08h30/08h10) no S25; F11-06 BLOCKED |
@@ -20,15 +20,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão.
 2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
-3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
-4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
+3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
+4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
 ## Pendências do dono
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
-- Testar no S25 os itens da F7-03 acima.
 - Observar o AC-01 no S25 às 08h10 (aviso de uma tarefa sintética das 08h30).
 
 ## Ambiente (fora do repositório)
@@ -42,6 +40,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F7-03 — fechamento no S25 (2026-11-13)
+- Conversa no app `app.segundamente` (release 1.0.47+132), por volta de 22h55–23h00, com o dono falando. **Interromper e falar**: PASS, observado pelo dono (a voz parou e o app voltou a ouvir). **Encerrar**: PASS, observado pelo dono. Nenhum dos dois tem medição de tempo.
+- **Permissão negada**: PASS. O dono negou o microfone e o app mostrou o aviso. Adb às 23:02:47: `RECORD_AUDIO: granted=false` (negação permanente) e `Uid mode: RECORD_AUDIO: ignore`. Restaurada às 23:03 (`granted=true`, `foreground`).
+- Limitação de evidência: o observador por adb foi preparado, mas a gravação da linha do tempo (estados da tela e `appops`) não foi concluída.
+- `NOT_RUN`: revogação no meio da conversa (dispensada pelo dono, D-060); bateria fora do carregador; eco com fone; latência ponta a ponta no app.
+- Detalhes em `docs/fases/F7-03-voz-duplex.md`, seção 5c; decisão em D-060.
 
 ### F11-01 — modelo e migração do Todo (2026-11-13)
 - Novo modelo versionado com UUID, prioridade baixa/normal/alta/urgente, dia e hora separados em `America/Sao_Paulo`, recorrência, subtarefas, origem F9, versão e tombstone. O armazenamento novo é aditivo (`todo-v2.json`); o `todo.json` original fica intacto e é copiado para backup antes de interpretar. Migração só roda quando o v2 não existe.

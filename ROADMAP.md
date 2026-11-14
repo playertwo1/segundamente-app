@@ -50,7 +50,7 @@
 | [F5 — Fechamento do MVP](docs/roadmap/F5-fechamento-do-mvp.md) | Aceite integral, privacidade, desempenho e auditoria | F0–F4 | DONE | Fechado em 2026-11-05: sete critérios no S25 (1–3 aprovados pelo dono), F5-03 medida e AUDIT RESULT: PASS |
 | [F5V — Redesign visual](docs/roadmap/F5V-redesign-visual.md) | Aplicação da direção AMOLED aprovada nas telas existentes | D-022 permite execução em paralelo à F5 | PAUSED por D-050 (2026-11-13); estado anterior registrado na seção da fase | Interações, acessibilidade e validação visual comprovadas |
 | [F6 — Memória longitudinal](docs/roadmap/F6-memoria-longitudinal.md) | Busca, encaminhamentos, histórico de mudanças, tópicos e agenda | D-010 permite avançar antes do fechamento do MVP | DONE | Busca semântica, tópicos, justificativas e encaminhamentos verificados |
-| [F7 — Voz contínua e ponte CLI](docs/roadmap/F7-voz-continua-e-ponte-para-clis-oficiais.md) | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas; D-047 abriu só a F7-03 | IN_PROGRESS (só F7-03; F7-02 adiada por D-041; F7-06 bloqueada) | Portão F7 |
+| [F7 — Voz contínua e ponte CLI](docs/roadmap/F7-voz-continua-e-ponte-para-clis-oficiais.md) | Voz full duplex opcional, modelo local e integração controlada com CLIs oficiais | MVP fechado e decisões de plataforma, termos e segurança aprovadas; D-047 abriu só a F7-03 | IN_PROGRESS (F7-03 DONE por D-060; F7-02 adiada por D-041; F7-06 bloqueada) | Portão F7 |
 | [F8 — NotebookLM](docs/roadmap/F8-notebooklm.md) | Exportação opt-in e integração somente se suportada e aprovada | MVP e exportação estáveis; termos e destino aprovados | BLOCKED | Portão F8 |
 | [F9 — Meeting Decoder](docs/roadmap/F9-meeting-decoder.md) | Conversas e PDFs viram relatórios revisáveis, Todo e encaminhamentos | MVP fechado; decisões da F9-01 aprovadas | PAUSED por D-050 (2026-11-13); estado anterior registrado na seção da fase | Portão F9 |
 | [F10 — Criação nos comentários](docs/roadmap/F10-criacao-a-partir-das-conversas-nos-comentarios.md) | Conversas com personas desenvolvem documentos e imagens | D-036/D-037: desenho decidido; MVP fechado | PAUSED por D-050 (2026-11-13); estado anterior registrado na seção da fase | Portão F10 |
@@ -65,7 +65,7 @@
 
 Definida por D-050 (2026-11-13). Decisões completas: [questionário](docs/questionario/2026-11-13-lumen-desktop-e-todo.md); material de base: [pacote Lumen](docs/lumen/pacote-v1/README.md).
 
-1. **F7-03:** fechar. A conversa por voz já passou no S25 em início, turnos, pausa, retomada e tela apagada. Falta validar Interromper e falar, Encerrar e permissão negada ou revogada. F7-02 e F7-06 seguem BLOCKED.
+1. **F7-03:** fechada em 2026-11-13 (D-060). No S25 passaram início, turnos, pausa, retomada, tela apagada, Interromper e falar, Encerrar e permissão negada; a revogação no meio da conversa não foi testada por decisão do dono. F7-02 e F7-06 seguem BLOCKED.
 2. **F11 (celular)** em paralelo com a **fase L do fork** (`playertwo1/coucou`, `docs/roadmap/fase-l-lumen.md`): renomear para Lumen, login OAuth, anotador, e-mail. As telas de tarefas do Lumen esperam a F11-01 fixar o modelo.
 3. **F12:** sync, depois que F11-01 e a fase L tiverem base. O contrato F12-01 pode ser escrito antes.
 4. **F13:** Google (login, backup no Drive, Calendar). O backup entra assim que o login existir.
