@@ -1,6 +1,6 @@
 # F7-03 — Voz full duplex (conversa por voz mãos-livres)
 
-Data: 2026-11-11. Estado: **IN_PROGRESS** — código e testes prontos; **medição da sonda no S25 feita em 2026-11-11: o eco não está controlado**; por decisão do dono a interrupção é **por toque, com o microfone fechado enquanto o app fala** (D-049, que substitui D-048); a entrada no chat está ligada (`AppConfig.enableDuplexVoice = true`); a conversa rodou no S25 em 2026-11-12 (seção 5b); "Interromper e falar", Encerrar e permissão negada/revogada seguem `NOT_RUN`. Decisões: D-047, D-048, D-049.
+Data: 2026-11-11. Estado: **DONE** em 2026-11-13 (D-060), com validação no S25 (seções 5b e 5c); por decisão do dono a interrupção é **por toque, com o microfone fechado enquanto o app fala** (D-049, que substitui D-048); a entrada no chat está ligada (`AppConfig.enableDuplexVoice = true`). Itens abertos na seção 7, sem bloqueio. Decisões: D-047, D-048, D-049, D-060.
 
 ## 1. O que foi investigado (código existente)
 
@@ -111,15 +111,31 @@ Build release `1.0.47+132` com as mudanças de 2026-11-12, instalado por cima da
 | Retomar | **PASS.** Microfone aberto 0,02 s depois do toque |
 | App em segundo plano (HOME) | **PASS.** Microfone fechado em ≤0,7 s; ao voltar, "Microfone desligado" e "Iniciar conversa" |
 | Tela apagada | **PASS.** Microfone fechado 0,4 s depois de apagar |
-| "Interromper e falar" | `NOT_RUN` — na tentativa o toque foi em Pausar |
-| Encerrar (botão) | `NOT_RUN` |
-| Permissão negada / revogada | `NOT_RUN` |
+| "Interromper e falar" | **PASS** (observado pelo dono, 2026-11-13, ~22h55–23h00). Tocou durante a fala do app: a voz parou e o app voltou a ouvir; ele falou e a conversa seguiu. Sem medição de tempo |
+| Encerrar (botão) | **PASS** (observado pelo dono, 2026-11-13). A conversa terminou |
+| Permissão negada / revogada | Negada: **PASS** (observado pelo dono, 2026-11-13). Revogada no meio da conversa: não executada, dispensada por D-060. Ver seção 5c |
 
 Achados:
 
 - **Turno cortado no meio da frase:** "Quantos dias… tem em novembro?" virou o turno "Quantos dias?", respondido sozinho. O detector encerra o turno com 0,7 s de silêncio (`minSilenceDuration`), curto para uma pausa natural. Não alterado; aumentar soma o mesmo tempo à latência.
 - **Quatro turnos vazios** antes da primeira pergunta (o detector disparou, o áudio foi ao ChatGPT e voltou sem texto). Causa não apurada (fala ao fundo ou ruído).
 - "Quanto disse em novembro?" foi uma transcrição errada de "Quantos dias tem em novembro?".
+
+### 5c. Fechamento (2026-11-13)
+
+Teste com o dono falando, no app `app.segundamente` (release `1.0.47+132`), no S25, por volta de 22h55–23h00. O dono executou e relatou **Interromper e falar** e **Encerrar** como PASS. Os dois são observação dele, sem medição de tempo.
+
+Permissão negada: o dono negou o microfone pelo próprio aparelho e o app mostrou o aviso. Evidência por adb às 23:02:47: `dumpsys package app.segundamente` com `RECORD_AUDIO: granted=false` e flags `USER_SET|USER_FIXED` (negação permanente), e `cmd appops get` com `RECORD_AUDIO: ignore`. O último uso do microfone foi cerca de 3 min antes, com duração de 6,4 s. A permissão foi restaurada às 23:03 (`pm clear-permission-flags` e `pm grant`, `granted=true`, `RECORD_AUDIO: foreground`).
+
+Limitação de evidência: um observador por adb foi preparado, mas a gravação da linha do tempo (estados da tela e `appops`) não foi concluída. Os PASS de Interromper e falar e Encerrar não têm números.
+
+Permissão revogada no meio da conversa: `NOT_RUN`. O dono decidiu que o teste não tem utilidade real (D-060).
+
+Achados de código (leitura, sem teste no aparelho):
+- Com permissão negada em definitivo, a tela mostra só o texto `voiceMicDenied`, sem botão para abrir as configurações.
+- Revogar a permissão no meio da conversa levaria à mensagem genérica `duplexErrorFailed`, e não à de permissão.
+
+Continuam abertos e não bloqueiam o fechamento (D-050 e D-060): bateria fora do carregador, eco com fone e latência ponta a ponta medida no app.
 
 ## 6. Limitações conhecidas
 
@@ -137,9 +153,9 @@ Achados:
 
 1. **Decidido em D-049: opção A, implementada.** B e C ficam como reserva:
    - **A. Interrupção por toque no alto-falante:** enquanto o app fala, o microfone fica fechado; um toque cala a voz e volta a ouvir. Resolve o eco, perde o "falar por cima". É a mudança menor (o estado `speaking` deixa de alimentar o detector).
-   - **B. Falar por cima só com fone:** manter a interrupção por voz quando houver fone conectado e usar A no alto-falante. Precisa medir o eco com fone antes (`NOT_RUN`).
+   - **B. Falar por cima só com fone:** manter a interrupção por voz quando houver fone conectado e usar A no alto-falante. Precisa medir o eco com fone antes (`NOT_RUN`). Aberto, não bloqueia o fechamento (D-060).
    - **C. Modo "telefone":** voz pelo alto-falante de ouvido, aparelho no rosto. Elimina o mãos-livres; mesmo assim houve disparos falsos.
    - Recomendação: A agora; B depois, se a medida com fone for boa.
-2. Medir o consumo de bateria fora do carregador (adb por Wi-Fi) e repetir a resistência.
-3. Instalar um build com a entrada ligada num app com modelo configurado e validar no aparelho início, interrupção, pausa, cancelamento, permissão negada/revogada, tela apagada e a latência ponta a ponta.
+2. Medir o consumo de bateria fora do carregador (adb por Wi-Fi) e repetir a resistência. Aberto, não bloqueia o fechamento (D-060).
+3. **Feito em 2026-11-13 (D-060):** validado no S25 com o app do dono; detalhes nas seções 5b e 5c. A revogação no meio da conversa ficou sem teste por decisão do dono; a latência ponta a ponta segue `NOT_RUN`.
 4. F7-06 (auditoria) continua `BLOCKED`.
