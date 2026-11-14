@@ -440,3 +440,16 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A folha é uma rota do mesmo app (`/floating-chat`), com o `AgentChatDialog` em modo flutuante. Conversar abre o teclado; Falar ouve uma fala, transcreve e envia. Nada é gravado sem confirmação (D-051).
   - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
 - Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.
+
+## D-066 — Abrir a F12 pela trilha única da ponte (2026-11-14)
+- Contexto: a L6.1 do Lumen (caixa de correio no Worker) está pronta, e a auditoria do rascunho `docs/lumen/CONTRATO-SYNC.md` mostrou que tarefa e transporte batem com o código, mas nota, persona, memória, conversa e preferência não. Decisões tomadas pelo dono no questionário [questionario/2026-11-14-sync-contrato-e-roadmaps.md](questionario/2026-11-14-sync-contrato-e-roadmaps.md) (D1–D13).
+- Decisão:
+  - **Abre a F12.** O transporte continua o relay (D-054); o Google Drive como meio de sync fica descartado de novo.
+  - **Trilha única da ponte:** até o checkpoint da ponte, uma lista só em `docs/lumen/PONTE.md`, alternando passos da Segunda Mente e do Lumen. Funcionalidades novas pausam nos dois lados (F15-03 em diante aqui; etapas novas do fork lá); validações de uso real já pendentes continuam (inclusive a F15-02 no S25).
+  - **Fatia vertical:** a ponte começa só com tarefas e só pela caixa de correio. O contrato v1 fixa envelope, cifra da caixa de correio e a entidade `task`. LAN TLS e WebSocket ao vivo entram logo depois do checkpoint, sem mudar o envelope.
+  - **Checkpoint da ponte:** uma tarefa criada no PC chega uma vez ao celular na primeira consulta, e o alarme toca se ela chegou antes do horário; concluir num lado cancela o aviso no outro depois da consulta.
+  - **Consulta do celular:** ao abrir o app e a cada 1 hora em segundo plano. Custo aceito: até 1 hora de atraso com o app fechado.
+  - **Cliente no celular em Dart.** O Kotlin MIT do Coucou fica como referência.
+  - **v1.1 (depois da ponte):** notas do Lumen guardadas 1:1 numa pasta própria do celular, só para receber e comentar; nota acima de 64 KiB dividida em partes; o celular é a fonte das personas e da memória, e o Lumen só lê (e liga ou desliga personas); a memória espelha o que existe e as 4 ações ficam para fase própria; conversas do Lumen sincronizam e entram na memória do celular pelo processo normal, sem chamar a IA ao receber; preferências só `todo.shortcuts` e `comment.settings`.
+  - **Depois do checkpoint**, os dois roadmaps voltam a andar separados. Etapas que dependem dos dois lados (v1.1, testes de caos, Google, assistente ativo) seguem por dependência e, quando precisarem de passos alternados, entram na `PONTE.md` como nova etapa.
+- Difícil de reverter: o formato do envelope e da cifra da caixa de correio.
