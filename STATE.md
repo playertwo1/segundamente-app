@@ -18,7 +18,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Próxima ação
 
-1. **Portão F11:** observar AC-01 no S25 na hora real (tarefa sintética às 08h30, aviso às 08h10, `America/Sao_Paulo`), sem alterar o relógio. Depois, auditoria da fase (docs/AUDIT.md).
+1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão.
 2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
 3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
@@ -106,6 +106,8 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Ambiente: a primeira execução da suíte falhou ao compilar (`timezone-0.11.2` e `flutter_local_notifications` ausentes do cache do pub, fora do repositório). `flutter pub get --enforce-lockfile` restaurou o cache sem alterar arquivos versionados.
 - Mesmo comando de 15 arquivos acima, `--reporter expanded` → **124 testes aprovados**.
 - `flutter analyze --no-pub` → **159 issues (153 info, 6 warning, 0 error), exit 1**; nenhum em `todo_alarm_service.dart`, `todo_schedule_calculator.dart` ou `main.dart`. Igual à linha de base; não é PASS.
+- Correção D-059 (auditoria F11, HIGH): aviso no horário do prazo quando o alerta já passou. 127 testes da área aprovados; no S25, tarefa criada às 22h27 para as 22h35 recebeu `RTC_WAKEUP` às 22:35:00 e foi entregue às 22:35:00.002. Detalhes em `docs/reviews/F11.md`.
+- Concluir com o app fechado: o lembrete das 22h04 foi entregue com o processo morto, mas o Não Perturbar do dono (desde 22h00, lista suprimida) o ocultou da bandeja e a atualização do APK o removeu. `NOT_RUN`; será testado na notificação do AC-01.
 - `NOT_RUN`: AC-01 na hora real 08h30/08h10 (exige esperar a manhã; o relógio do S25 não foi alterado) e a parte “após sincronização confirmada” do AC-01, que depende da F12; suíte completa `flutter test --no-pub`; TalkBack.
 
 ### Modelo de fala em Configurações (2026-11-12)
