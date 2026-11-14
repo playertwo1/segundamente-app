@@ -6,4 +6,6 @@
     <!-- F15-02: floating chat shortcuts (English fallback; pt in values-pt). -->
     <string name="shortcut_chat_type">Chat</string>
     <string name="shortcut_chat_talk">Talk</string>
+    <!-- F15-06: Quick Settings tile label. -->
+    <string name="tile_conversar">Chat</string>
 </resources>

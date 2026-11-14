@@ -5,4 +5,6 @@
     <string name="shortcut_quick_note_long">Nota rápida</string>
     <string name="shortcut_chat_type">Conversar</string>
     <string name="shortcut_chat_talk">Falar</string>
+    <!-- F15-06: rótulo do botão no painel rápido. -->
+    <string name="tile_conversar">Conversar</string>
 </resources>

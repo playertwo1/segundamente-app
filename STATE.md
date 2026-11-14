@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-06 REVIEW (D-068; código pronto, device NOT_RUN); F15-03 a F15-05 e F15-07 BLOCKED pelas dependências | D-062 a D-068; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -41,6 +41,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-06 — botão no painel rápido (2026-11-14)
+- O que existe: `ConversarTileService` (`TileService`) abre a `FloatingChatActivity` em modo `type`; API 34+ usa `startActivityAndCollapse(PendingIntent)`, API 26 a 33 usa o `Intent`; com aparelho bloqueado, `unlockAndRun`. Rótulo "Conversar"/"Chat", ícone `ic_qs_chat`. Documento `docs/fases/F15-06-painel-rapido.md`. Decisão D-068 (abertura antes da validação da F15-02 no S25).
+- Build: `flutter pub get --enforce-lockfile` OK (lockfile intocado); `flutter build apk --flavor globalDev --debug --no-pub` exit 0, `app-globaldev-debug.apk`.
+- Aparelho: nenhum (sem adb, sem celular). Estado: REVIEW.
+- `NOT_RUN`: toque no tile do painel rápido do S25 (adicionar, abrir da tela inicial e de outro app, aparelho bloqueado, volta para a origem ao fechar, ícone claro e escuro); `flutter analyze` e `flutter test` (sem mudança em Dart).
 
 ### F15-02 — chat flutuante, implementação (2026-11-14)
 - O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.

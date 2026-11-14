@@ -440,3 +440,11 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A folha é uma rota do mesmo app (`/floating-chat`), com o `AgentChatDialog` em modo flutuante. Conversar abre o teclado; Falar ouve uma fala, transcreve e envia. Nada é gravado sem confirmação (D-051).
   - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
 - Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.
+
+## D-068 — Abrir a F15-06 (botão no painel rápido) antes da validação da F15-02 (2026-11-14)
+- Contexto: a F15-06 depende da F15-02 (BLOCKED na tabela da F15). A F15-02 tem código e testes prontos (D-065), mas a validação no S25 ainda não aconteceu. O dono pediu para fazer toda a F15 hoje.
+- Decisão:
+  - Abrir a F15-06 em código: `ConversarTileService` (`TileService`) que abre a `FloatingChatActivity` em modo `type`, com o caminho de API 34+ (`PendingIntent`) e o de API 26 a 33 (`Intent`).
+  - A F15-06 fica em REVIEW com o device `NOT_RUN`. Não vira DONE sem o toque no painel rápido do S25.
+  - A F15-02 segue IN_PROGRESS até a validação no S25. Esta decisão não muda o estado dela.
+- Limite: se a F15-02 falhar no aparelho (abertura a frio, volta para a tela de origem), o botão do painel rápido herda a falha e fica sem efeito até a correção. A ordem das subfases e o portão F15 não mudam.
