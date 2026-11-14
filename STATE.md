@@ -13,14 +13,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | F7-03 DONE (D-060; voz duplex por turnos, D-049); F7-02 adiada (D-041); F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado observados pelo dono no S25; confirmação por adb NOT_RUN. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
+| F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
 1. **F15-02 (chat flutuante):** código e testes prontos na branch feat/f15-02-chat-flutuante (D-065). Falta validar no S25: instalar o pacote dev, abrir pelos atalhos Conversar e Falar, medir a abertura a frio, conferir a volta para a tela de origem e o Abrir no app.
-2. **Limpeza F11:** remover a tarefa sintética `F11 cold start` das Atrasadas, se ainda estiver lá.
+2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
 5. **F12:** permanece BLOCKED até a fase L ter base e as decisões de sync; a F11 já está DONE.
@@ -56,11 +56,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Estado: F15-02 segue IN_PROGRESS até a evidência no S25.
 
 ### F11 — portão fechado (2026-11-14)
-- AC-01: tarefa sintética `F11 AC-01` (pacote `app.segundamente.dev`, S25 Ultra), vencimento 08h30, alerta de 20 min. Na conferência por adb da noite anterior, o alarme exato das 08h10 estava pendente (`exactAllowReason=permission`). O dono relatou que a notificação chegou às 08h10: PASS observado pelo dono. Confirmação por adb da entrega: `NOT_RUN` (aparelho fora do PC).
-- Concluir com o app fechado: o dono fechou o app e tocou em Concluir nessa notificação; a tarefa foi para Concluídas. PASS observado pelo dono; adb `NOT_RUN`.
+- AC-01: tarefa sintética `F11 AC-01` (pacote `app.segundamente.dev`, S25 Ultra), vencimento 08h30, alerta de 20 min. Confirmado por adb em 2026-11-14: `usagestats` com `time="2026-11-14 08:10:00" type=NOTIFICATION_INTERRUPTION package=app.segundamente.dev channelId=todo_reminders` e `dumpsys alarm` com `[Deliver] … rtc=2026-11-14 08:10:00.002`. O dono também viu a notificação chegar às 08h10. PASS.
+- Concluir com o app fechado, build atual (`main` 0268098a, instalado às 12:23): tarefa sintética com vencimento às 12:36; processo morto com `am kill` antes e depois da entrega (`pidof` vazio); notificação postada às 12:36:00.365; Concluir tocado às 12:36:35; novo processo iniciado e a tarefa virou "Concluída · 14 de nov. de 2026". Controle com o processo vivo (12:43) também PASS. PASS por adb.
+- Tentativa da manhã, com o app fechado, no build de 2026-11-13 (anterior às correções MEDIUM): o dono tocou em Concluir e viu a tarefa em Concluídas, mas às 12:20 "F11 AC-01" ainda estava em Atrasadas. Não persistiu; a causa não foi identificada (o logcat já tinha rodado). Discrepância aberta, não reproduzida no build atual.
 - Portão F11 fechado: F11-01 a F11-06 DONE, AC-01 observado no S25, nenhum Todo antigo perdido; auditoria `PASS` em `docs/reviews/F11.md` (detalhes lá). Pela D-062, a F15 fica liberada para a F15-02 sem nova decisão.
-- `NOT_RUN`, sem bloquear o portão: confirmação por adb da entrega das 08h10; a parte "após sincronização confirmada" do AC-01 (depende da F12); validação no S25 do build com as correções MEDIUM; TalkBack, tema claro e fonte ampliada no Todo; `flutter test` completo.
-- Limpeza pendente com o aparelho conectado: remover pelo app as tarefas sintéticas `F11 AC-01` e `F11 cold start` e confirmar que não sobra alarme.
+- `NOT_RUN`, sem bloquear o portão: a parte "após sincronização confirmada" do AC-01 (depende da F12); quarentena do `todo.json` corrompido no S25; TalkBack, tema claro e fonte ampliada no Todo; `flutter test` completo.
+- Limpeza feita pelo app: `F11 AC-01`, `F11 cold start`, `F11 MEDIUM QA` e duas `F11 cold QA` excluídas; abas vazias, 0 alarmes pendentes e 0 notificações do F11.
+- Caminho de alarmes dos achados MEDIUM validado no S25 com o build atual: alarme em T+20 para tarefa com vencimento em T+40 (`origWhen=12:44:00`, `exactAllowReason=permission`), movido para 12:49 após editar (um alarme só, mesmo PendingIntent) e cancelado ao Concluir (`alarm_cancelled`, 0 pendentes).
+- Observação, não investigada: no cold start, o logcat mostrou `E FlutterSecureStorage: EncryptedSharedPreferences initialization failed. Falling back to custom ciphers.` e `SecurityException: Could not decrypt key`. Não tem ligação com o Todo, mas esse armazenamento guarda os tokens de login do app.
 
 ### F15-01 — maquetes do widget e do chat (2026-11-14)
 - Documento `docs/fases/F15-01-maquetes.md` com as opções A (linhas) e B (teclas), o chat flutuante, os estados compartilhados, a estimativa de células (fórmula 70n−30 dp, não medida) e os riscos. Fonte: `docs/fases/f15-01/maquetes.html` (dados sintéticos). Decisão D-063. Estado da subfase: DONE (D-064).
