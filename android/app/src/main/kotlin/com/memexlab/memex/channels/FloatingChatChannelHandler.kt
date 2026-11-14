@@ -18,9 +18,14 @@ object FloatingChatChannelHandler {
     private var channel: MethodChannel? = null
     private var pendingMode: String? = null
 
-    /** Accepts only "type" and "talk"; anything else means no pending mode. */
+    /** Chat modes (F15-02), capture modes (F15-04) and Todo modes (F15-05); anything else means no pending mode. */
+    private val MODES = setOf("type", "talk", "note", "photo", "paste", "todo_add")
+    private const val TODO_COMPLETE_PREFIX = "todo_complete:"
+
     fun setPendingMode(mode: String?) {
-        pendingMode = mode?.takeIf { it == "type" || it == "talk" }
+        pendingMode = mode?.takeIf {
+            it in MODES || (it.startsWith(TODO_COMPLETE_PREFIX) && it.length > TODO_COMPLETE_PREFIX.length)
+        }
     }
 
     fun notifyOpen() {

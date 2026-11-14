@@ -27,11 +27,14 @@ typedef TodoDraft = ({
   int alertMinutes,
 });
 
+/// [notice] is shown under the fields; the floating "+ tarefa" sheet passes the
+/// F11-06 content notice (F15-05). The Todo screen passes none.
 Future<TodoDraft?> showTodoEditorDialog({
   required BuildContext context,
   required TodoShortcutSettings settings,
   TodoItem? item,
   TodoProposal? proposal,
+  Widget? notice,
 }) =>
     showDialog<TodoDraft>(
       context: context,
@@ -39,6 +42,7 @@ Future<TodoDraft?> showTodoEditorDialog({
         item: item,
         proposal: proposal,
         settings: settings,
+        notice: notice,
       ),
     );
 
@@ -692,12 +696,17 @@ Color _priorityColor(TodoPriority priority) => switch (priority) {
     };
 
 class _TodoDialog extends StatefulWidget {
-  const _TodoDialog({this.item, this.proposal, required this.settings})
-      : assert(item == null || proposal == null);
+  const _TodoDialog({
+    this.item,
+    this.proposal,
+    required this.settings,
+    this.notice,
+  }) : assert(item == null || proposal == null);
 
   final TodoItem? item;
   final TodoProposal? proposal;
   final TodoShortcutSettings settings;
+  final Widget? notice;
 
   @override
   State<_TodoDialog> createState() => _TodoDialogState();
@@ -1002,6 +1011,10 @@ class _TodoDialogState extends State<_TodoDialog> {
                     icon: const Icon(Icons.close),
                   ),
                 ),
+              if (widget.notice != null) ...[
+                const SizedBox(height: 12),
+                widget.notice!,
+              ],
             ],
           ),
         ),

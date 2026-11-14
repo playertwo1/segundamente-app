@@ -14,9 +14,36 @@ abstract final class AppRoutes {
   /// Floating chat sheet over the home screen (F15-02); the mode is a query.
   static const String floatingChat = '/floating-chat';
 
-  /// Location of the floating sheet in [mode]; `/floating-chat?mode=talk`.
+  /// Location of the floating chat sheet in [mode]; `/floating-chat?mode=talk`.
   static String floatingChatFor(FloatingChatMode mode) =>
       '$floatingChat?mode=${mode.wireName}';
+
+  /// Compact capture sheet over the home screen (F15-04); the mode is a query.
+  static const String floatingCapture = '/floating-capture';
+
+  /// Todo editor over the home screen (F15-05, "+ tarefa").
+  static const String floatingTodoAdd = '/floating-todo-add';
+
+  /// Completes one Todo task with no UI (F15-05); the task id is a query.
+  static const String floatingTodoComplete = '/floating-todo-complete';
+
+  static String floatingTodoCompleteFor(String todoId) =>
+      '$floatingTodoComplete?id=${Uri.encodeQueryComponent(todoId)}';
+
+  /// Location of whichever floating sheet [mode] belongs to.
+  static String floatingLocationFor(FloatingChatMode mode) => switch (mode) {
+        FloatingChatMode.todoAdd => floatingTodoAdd,
+        FloatingChatMode.todoComplete => floatingTodoComplete,
+        _ => mode.isCapture
+            ? '$floatingCapture?mode=${mode.wireName}'
+            : floatingChatFor(mode),
+      };
+
+  /// Location for a launch from the Android side; a Todo completion carries its id.
+  static String floatingLocationForLaunch(FloatingLaunch launch) =>
+      launch.todoId == null
+          ? floatingLocationFor(launch.mode)
+          : floatingTodoCompleteFor(launch.todoId!);
 
   /// User setup (onboarding).
   static const String userSetup = '/user-setup';

@@ -6,4 +6,16 @@
     <!-- F15-02: floating chat shortcuts (English fallback; pt in values-pt). -->
     <string name="shortcut_chat_type">Chat</string>
     <string name="shortcut_chat_talk">Talk</string>
+    <!-- F15-03: widget keys reuse the shortcut_chat_* labels. -->
+    <string name="widget_label">Segunda Mente</string>
+    <string name="widget_description">Chat and talk with Segunda Mente from the home screen.</string>
+    <!-- F15-04: medium widget capture keys. -->
+    <string name="widget_key_note">Note</string>
+    <string name="widget_key_photo">Photo</string>
+    <string name="widget_key_paste">Paste</string>
+    <!-- F15-05: large widget: tasks, "+ tarefa" key, task circle description. -->
+    <string name="widget_tasks_empty">Nothing for today</string>
+    <string name="widget_key_task_add">+ Task</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_task_complete">Complete %1$s</string>
 </resources>

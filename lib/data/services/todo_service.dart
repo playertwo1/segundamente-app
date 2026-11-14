@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
+import 'package:memex/data/services/todo_widget_snapshot_service.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/session_report.dart';
@@ -25,6 +26,11 @@ class TodoService {
       alarmSynchronizer =
       (items) => TodoAlarmService.instance.synchronize(items);
 
+  /// Test seam: production always uses [TodoWidgetSnapshotService.instance].
+  static Future<void> Function(List<TodoItem> items)
+      widgetSnapshotSynchronizer =
+      (items) => TodoWidgetSnapshotService.instance.push(items);
+
   // Alarm sync runs outside [_storageLock]. At most one run is active; a
   // request made meanwhile only sets [_alarmDirty], so exactly one more run
   // re-reads the newest list.
@@ -40,6 +46,12 @@ class TodoService {
 
   Future<TodoAlarmStatus> synchronizeAlarms(String userId) =>
       _requestAlarmSync(userId);
+
+  /// Startup: the home-screen widget gets the stored list before any write.
+  Future<void> refreshWidgetSnapshot(String userId) async {
+    final items = await _storageLock.synchronized(() => _readAll(userId));
+    await _syncWidgetSnapshot(items);
+  }
 
   /// Name of the newest legacy file kept aside as damaged, or null.
   Future<String?> damagedLegacyFileName(String userId) async {
@@ -528,9 +540,19 @@ class TodoService {
     } finally {
       if (await temp.exists()) await temp.delete();
     }
-    // Only after the rename and outside the lock: a stuck alarm channel must
-    // never block Todo reads or writes.
+    // Only after the rename and outside the lock: a stuck alarm channel or
+    // widget must never block Todo reads or writes. Both pushes are sent in
+    // write order, so the native side ends on the newest list.
+    unawaited(_syncWidgetSnapshot(items));
     unawaited(_requestAlarmSync(userId));
+  }
+
+  Future<void> _syncWidgetSnapshot(List<TodoItem> items) async {
+    try {
+      await widgetSnapshotSynchronizer(items);
+    } catch (error, stackTrace) {
+      _logger.warning('Could not update the Todo widget', error, stackTrace);
+    }
   }
 
   Future<TodoAlarmStatus> _requestAlarmSync(String userId) {

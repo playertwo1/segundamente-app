@@ -2028,5 +2028,15 @@
   "floatingListeningHint": "A mensagem parte sozinha ao fim da fala.",
   "floatingMicDenied": "Sem permissão de microfone. Use o teclado.",
   "floatingModelMissing": "Baixe o modelo de voz para falar. Use o teclado por enquanto.",
-  "floatingListenFailed": "Não deu para ouvir agora. Use o teclado."
+  "floatingListenFailed": "Não deu para ouvir agora. Use o teclado.",
+  "floatingCaptureNoteTitle": "Anotar",
+  "floatingCapturePhotoTitle": "Foto",
+  "floatingCapturePasteTitle": "Colar",
+  "floatingCaptureTextHint": "Escreva o que guardar",
+  "floatingCapturePhotoTextHint": "Texto opcional",
+  "floatingCaptureSave": "Guardar",
+  "floatingCaptureCamera": "Câmera",
+  "floatingCaptureGallery": "Galeria",
+  "floatingCapturePasteEmpty": "Nada para colar. Copie um texto e tente de novo.",
+  "floatingCaptureSaveFailed": "Não deu para guardar agora. Tente de novo."
 }

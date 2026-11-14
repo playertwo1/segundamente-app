@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-070; código pronto, S25 NOT_RUN); F15-06 e F15-07 BLOCKED | D-062 a D-070; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -41,6 +41,41 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-05 — widget grande com tarefas de hoje, código (2026-11-14)
+- O que existe: tamanho grande em `widget_large.xml` (chave `LARGE_MIN` 250×270 dp no API 31+, altura ≥ 270 no API 26–30): faixa de Conversar e Falar, faixa de captura, até três linhas de tarefa (círculo conclui, título abre `memex://open_todo`, hora) e "+ tarefa". Atrasadas primeiro, depois as de hoje por horário; só tarefas abertas com data (D-070). Snapshot Dart → nativo por `TodoWidgetSnapshotService` (`com.memexlab.memex/todo_widget`, `updateSnapshot`), com id, título, data, hora, status e fuso das dez primeiras; guardado em `SharedPreferences` privado. Envio após cada escrita do Todo (fora do lock, sem `await`) e na inicialização. Redesenho por envio, `DATE_CHANGED`, `TIME_SET`, `TIMEZONE_CHANGED` e alarme inexato no próximo instante (meia-noite SP ou hora de tarefa de hoje). Concluir pelo círculo: `FloatingChatActivity` com `todo_complete:<id>` → `/floating-todo-complete` → `setTodoDone` pelo router, sem folha, funciona a frio. "+ tarefa": `todo_add` → `/floating-todo-add` → editor do Todo com o aviso da F11-06 (parâmetro `notice` novo em `showTodoEditorDialog`, padrão nulo). Desenho e checklist do S25 (doze itens) em `docs/fases/F15-05-widget-grande.md`; decisão em D-070.
+- Comandos e saídas (branch `feat/f15-05-widget-grande`, worktree `sm-f1505`):
+  - `flutter pub get --enforce-lockfile` → `Got dependencies!` (exit 0). `analysis_options.yaml` e `android/gradle.properties` sem alteração.
+  - `dart analyze` nos arquivos alterados e novos (lib e testes): nenhum erro e nenhum aviso novo; o conjunto final tem um aviso pré-existente. Único aviso em `todo_screen.dart:419` (`unused_element_parameter`) é da busca do Todo, código que não mudou.
+  - `dart format` nos 22 arquivos Dart alterados: 10 reformatados (só linhas tocadas).
+  - `flutter test --no-pub --reporter compact` (suíte completa): `Some tests failed`, `+1853 -1`. Única falha: `floating_todo_add_screen_test` (aviso da F11-06 ainda não existia). Depois de corrigida, rodada dirigida: `test/ui/floating_chat/widgets/floating_todo_add_screen_test.dart`, `test/ui/todo` e `test/integration/floating_todo_flow_test.dart`: `All tests passed!`.
+  - Testes novos da F15-05: `todo_widget_snapshot_service_test.dart` (conteúdo, filtros, ordem, corte de 10, meia-noite com relógio fixo, envio pelo canal, falha sem exceção), grupo "widget snapshot" em `todo_service_test.dart` (envio que nunca volta, ordem, falha do envio, envio na inicialização), `floating_todo_complete_viewmodel_test.dart`, `floating_todo_add_screen_test.dart`, `floating_todo_flow_test.dart`, e casos de `FloatingLaunch` em `floating_chat_mode_test.dart`, `floating_chat_service_test.dart` e `memex://open_todo` em `app_action_service_test.dart`.
+  - `flutter build apk --flavor globalDev --debug --no-pub`: `√ Built buildpp\outputslutter-apkpp-globaldev-debug.apk` (exit 0).
+  - `git diff --check`: limpo.
+- Aparelho: nenhum (adb e celular não usados). `NOT_RUN`: tudo no S25 (checklist de doze itens em `docs/fases/F15-05-widget-grande.md`); o widget grande de fato; os broadcasts de data e hora; o alarme da meia-noite; a abertura a frio do trampolim de concluir; TalkBack; texto a 200%. Testes de Android nativo não existem no projeto; `TodoWidgetSnapshot.rows` e `nextChangeMillis` só se validam no aparelho.
+- Estado: F15-05 REVIEW (D-070) até a evidência no S25.
+
+### F15-04 — widget médio com captura, código (2026-11-14)
+- O que existe: `widget_medium.xml` (faixa de chat mais faixa de captura Anotar, Foto e Colar), com `widget_chat_row` e `widget_capture_row` compartilhados com o pequeno; `WidgetLayouts` com o mapa `SMALL_MIN` 200×60 e `MEDIUM_MIN` 200×120 dp no API 31+, e escolha por `OPTION_APPWIDGET_MIN_HEIGHT` no API 26–30 (`onAppWidgetOptionsChanged`). Cada tecla de captura abre `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. O Dart roteia para `/floating-capture` (`FloatingCaptureScreen`). Guardar envia pelo `MemexRouter.sendMessage` do Registrar (cena `super_agent_home`, sessão mais recente); Fechar, toque fora e voltar não gravam. Desenho e checklist do S25 em `docs/fases/F15-04-widget-medio.md`; decisão em D-067.
+- Comandos e saídas (branch `feat/f15-04-widget-medio`, worktree `sm-f1504`):
+  - `flutter pub get --enforce-lockfile` → exit 0.
+  - `flutter gen-l10n` → regenerou `app_localizations*.dart` com as dez chaves `floatingCapture*` pt/en.
+  - `dart analyze` nos arquivos alterados (lib e testes da F15-04): `No issues found!` (exit 0) nos 9 caminhos alterados (lib/domain, lib/routing, lib/ui/floating_chat, lib/main.dart, lib/l10n, testes da captura e do serviço), depois do `dart format`.
+  - `flutter test --no-pub --reporter compact` (domínio do modo, `test/ui/floating_chat`, integração do chat e da captura, serviço e `test/l10n`): `All tests passed!`: +56 (exit 0) em `test/domain/models/floating_chat_mode_test.dart`, `test/ui/floating_chat` (inclui `floating_capture_viewmodel_test` e `floating_capture_screen_test`), `test/integration/floating_capture_flow_test.dart`, `test/integration/floating_chat_flow_test.dart`, `test/data/services/floating_chat_service_test.dart` e `test/l10n`.
+  - `flutter build apk --flavor globalDev --debug --no-pub`: `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (exit 0).
+- Aparelho: nenhum (adb e celular não usados). `NOT_RUN`: tudo no S25 (checklist de nove itens em `docs/fases/F15-04-widget-medio.md`); câmera e galeria dentro da folha translúcida; medição da grade do médio; Android 8 a 11; TalkBack; texto a 200%.
+- Estado: F15-04 REVIEW (D-067) até a evidência no S25.
+
+### F15-03 — widget pequeno, código (2026-11-14)
+- O que existe: `SegundaMenteWidgetProvider` e `WidgetLayouts` (Kotlin, pacote `com.memexlab.memex.widget`); layout `widget_small` com as teclas Conversar (âmbar, preenchida) e Falar (contorno) na mesma faixa; `res/xml/segundamente_widget_info.xml` (home_screen, `updatePeriodMillis="0"`, resizable, minWidth 200 dp, minHeight 60 dp, targetCell 2×1); receiver no manifesto. Toques abrem `FloatingChatActivity` com `floating_chat_mode` = `type` ou `talk`, o mesmo alvo dos atalhos da F15-02 (D-066). Desenho e checklist do S25 em `docs/fases/F15-03-widget-pequeno.md`.
+- Comandos e saídas (branch `feat/f15-03-widget-pequeno`, worktree `sm-f1503`):
+  - `flutter pub get --enforce-lockfile` → `Got dependencies!` (exit 0)
+  - `flutter build apk --flavor globalDev --debug --no-pub` → `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (exit 0). O APK traz `res/layout/widget_small.xml`, `res/xml/segundamente_widget_info.xml` e os drawables; o manifesto mesclado contém `SegundaMenteWidgetProvider` e `APPWIDGET_UPDATE`.
+  - Teste Android: nenhum. `android/app/src/test` e `androidTest` não existem, e a subfase não adiciona infraestrutura de teste. Dart: nenhuma linha alterada, então `flutter test` e `flutter analyze` não foram rodados para esta subfase.
+  - `git diff --check` → limpo.
+- Aparelho: nenhum (adb não usado; o widget não foi instalado).
+- `NOT_RUN`: tudo no S25 (checklist de oito itens em `docs/fases/F15-03-widget-pequeno.md`); TalkBack; medição da grade real (a dica 2×1 e o mínimo de 200 dp podem mudar após medir); texto a 200%; abertura a frio do chat pelo widget.
+- Estado: F15-03 REVIEW (D-066) até a evidência no S25.
 
 ### F15-02 — chat flutuante, implementação (2026-11-14)
 - O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.

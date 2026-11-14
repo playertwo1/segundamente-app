@@ -35,6 +35,9 @@ class TodoRepository {
   Future<Result<TodoAlarmStatus>> synchronizeAlarms(String userId) =>
       runResult(() => _service.synchronizeAlarms(userId));
 
+  Future<Result<void>> refreshWidgetSnapshot(String userId) =>
+      runResultVoid(() => _service.refreshWidgetSnapshot(userId));
+
   Future<Result<String?>> damagedLegacyFileName(String userId) =>
       runResult(() => _service.damagedLegacyFileName(userId));
 

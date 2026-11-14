@@ -4863,4 +4863,36 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get floatingListenFailed => 'Não deu para ouvir agora. Use o teclado.';
+
+  @override
+  String get floatingCaptureNoteTitle => 'Anotar';
+
+  @override
+  String get floatingCapturePhotoTitle => 'Foto';
+
+  @override
+  String get floatingCapturePasteTitle => 'Colar';
+
+  @override
+  String get floatingCaptureTextHint => 'Escreva o que guardar';
+
+  @override
+  String get floatingCapturePhotoTextHint => 'Texto opcional';
+
+  @override
+  String get floatingCaptureSave => 'Guardar';
+
+  @override
+  String get floatingCaptureCamera => 'Câmera';
+
+  @override
+  String get floatingCaptureGallery => 'Galeria';
+
+  @override
+  String get floatingCapturePasteEmpty =>
+      'Nada para colar. Copie um texto e tente de novo.';
+
+  @override
+  String get floatingCaptureSaveFailed =>
+      'Não deu para guardar agora. Tente de novo.';
 }

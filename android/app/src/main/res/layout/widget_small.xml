@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- F15-03: small widget, two keys in one strip (D-064). Only RemoteViews-safe views here. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:padding="6dp">
+
+    <include
+        layout="@layout/widget_chat_row"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</LinearLayout>

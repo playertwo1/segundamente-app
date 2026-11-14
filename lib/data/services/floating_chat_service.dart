@@ -5,11 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:memex/domain/models/floating_chat_mode.dart';
 import 'package:memex/utils/logger.dart';
 
-/// Bridge to the Android floating chat sheet (F15-02, D-065).
+/// Bridge to the Android floating sheets (F15-02, D-065; F15-05 Todo launches).
 ///
-/// The native side keeps the pending mode from the launch intent. Dart asks
-/// for it once at start-up ([takePendingMode]) and again on each `open` signal
-/// that arrives while the app is already running ([openRequests]).
+/// The native side keeps the pending launch from the intent. Dart asks for it
+/// once at start-up ([takePendingLaunch]) and again on each `open` signal that
+/// arrives while the app is already running ([openRequests]).
 class FloatingChatService {
   FloatingChatService._() : _channel = _defaultChannel;
 
@@ -25,11 +25,11 @@ class FloatingChatService {
   static final _logger = getLogger('FloatingChatService');
 
   final MethodChannel _channel;
-  final StreamController<FloatingChatMode> _openController =
-      StreamController<FloatingChatMode>.broadcast();
+  final StreamController<FloatingLaunch> _openController =
+      StreamController<FloatingLaunch>.broadcast();
 
-  /// Modes requested while the app is running (the sheet was opened again).
-  Stream<FloatingChatMode> get openRequests => _openController.stream;
+  /// Launches requested while the app is running (the sheet was opened again).
+  Stream<FloatingLaunch> get openRequests => _openController.stream;
 
   /// Installs the handler for native `open` signals. Call once at start-up.
   void initialize() {
@@ -38,21 +38,26 @@ class FloatingChatService {
 
   Future<dynamic> _handleCall(MethodCall call) async {
     if (call.method != 'open') return null;
-    final mode = await takePendingMode();
-    if (mode != null) _openController.add(mode);
+    final launch = await takePendingLaunch();
+    if (launch != null) _openController.add(launch);
     return null;
   }
 
   /// The mode waiting to be shown, cleared on read. Null when none is pending
   /// or the platform bridge is missing (iOS, tests).
-  Future<FloatingChatMode?> takePendingMode() async {
+  Future<FloatingChatMode?> takePendingMode() async =>
+      (await takePendingLaunch())?.mode;
+
+  /// The launch waiting to be shown (a mode and, for a Todo completion, its
+  /// id), cleared on read. Null when none is pending or the bridge is missing.
+  Future<FloatingLaunch?> takePendingLaunch() async {
     try {
       final raw = await _channel.invokeMethod<String>('takePendingMode');
-      final mode = FloatingChatMode.parse(raw);
-      if (raw != null && mode == null) {
+      final launch = FloatingLaunch.parse(raw);
+      if (raw != null && launch == null) {
         _logger.warning('Ignoring unknown floating chat mode: $raw');
       }
-      return mode;
+      return launch;
     } on MissingPluginException {
       return null;
     } on PlatformException catch (error, stackTrace) {

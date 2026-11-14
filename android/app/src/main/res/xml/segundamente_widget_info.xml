@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- F15-03 to F15-05: widget provider. Home screen only (no keyguard). Small, medium and large layouts (WidgetLayouts). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/widget_small"
+    android:previewLayout="@layout/widget_small"
+    android:minWidth="200dp"
+    android:minHeight="60dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="0" />

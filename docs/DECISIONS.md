@@ -440,3 +440,30 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A folha é uma rota do mesmo app (`/floating-chat`), com o `AgentChatDialog` em modo flutuante. Conversar abre o teclado; Falar ouve uma fala, transcreve e envia. Nada é gravado sem confirmação (D-051).
   - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
 - Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.
+
+## D-066 — Abrir a F15-03 (widget pequeno) antes do S25 da F15-02 (2026-11-14)
+- Contexto: a linha da F15-03 estava BLOCKED pela F15-02, cujo código está em `main` (d787e85d) mas ainda não foi validado no S25. O dono pediu a implementação da F15-03 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
+- Decisão:
+  - Abrir a **F15-03** com o widget pequeno em código: duas teclas (Conversar em âmbar, Falar em contorno), `AppWidgetProvider` nativo, home screen apenas, sem rede e sem atualização periódica. Estado: REVIEW. A validação no S25 fica como `NOT_RUN` até o validador rodar o checklist em `docs/fases/F15-03-widget-pequeno.md`.
+  - As teclas abrem a `FloatingChatActivity` com o mesmo alvo e o mesmo extra (`floating_chat_mode` = `type` ou `talk`) dos atalhos da F15-02 (D-065). A linha da F15 falava em `AppActionService`; isso não existe para o chat flutuante, e uma segunda rota não se justifica.
+  - Médio e grande continuam fora (F15-04 e F15-05, BLOCKED).
+- Limite: o aceite da F15-03 (tocar o widget no S25) depende do S25 da F15-02, que ainda não foi feito. Não fecha a F15-02 nem o portão da F15.
+
+## D-067 — Abrir a F15-04 (widget médio) antes do S25 da F15-03 (2026-11-14)
+- Contexto: a linha da F15-04 estava BLOCKED pela F15-03, cujo código está em REVIEW (D-066) e cujo S25 ainda está `NOT_RUN`. O dono pediu toda a F15 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
+- Decisão:
+  - Abrir a **F15-04** com o tamanho médio em código: a faixa de teclas do pequeno (Conversar e Falar) mais a faixa de captura (Anotar, Foto e Colar), em `widget_medium.xml`. Faixa mínima 200×120 dp no Android 12+ (chave do mapa de `RemoteViews`); no Android 8 a 11 o provider escolhe o layout por `OPTION_APPWIDGET_MIN_HEIGHT`.
+  - As três teclas de captura abrem a `FloatingChatActivity` com o mesmo alvo e o extra `floating_chat_mode` = `note`, `photo` ou `paste` (estende D-065 e D-066). O Dart roteia esses modos para uma folha compacta de captura (`/floating-capture`), não para o chat.
+  - Guardar envia a captura pelo mesmo caminho do Registrar: `MemexRouter.sendMessage` com a cena `super_agent_home` e a sessão mais recente. Esse é o único caminho que grava. Fechar, o toque fora e o voltar descartam. Colar só pré-preenche o campo; Foto só escolhe a imagem.
+  - Confirmação: o toque em Guardar, com o texto ou a foto visível, é a confirmação de D-051. A IA organiza o registro depois, como já faz no Registrar.
+- Limite: o aceite da F15-04 depende do S25 (adicionar e redimensionar o widget, cada tecla, Guardar contra Fechar, Colar com a área de transferência, Foto com câmera e galeria) e continua `NOT_RUN`. F15-03 segue REVIEW até o próprio S25. Não fecha a F15 nem o portão da F15.
+
+## D-070 — Widget grande: tarefas de hoje, concluir e "+ tarefa" (2026-11-14)
+- Contexto: a F15-05 entrega o tamanho grande do widget (D-064: linhas). Ao implementar, três escolhas de produto e de mecanismo ficaram por decidir; esta decisão as registra.
+- Decisão:
+  - **Quais tarefas aparecem:** até três tarefas abertas com data: atrasadas primeiro (por data e hora), depois as de hoje por horário. Tarefas sem data e as de dias futuros ficam fora do widget e continuam no Todo. Motivo: sem data não há ordem nem virada do dia, e a lista fica previsível. A aba "Hoje" do Todo mostra as sem data; o widget não. Reversível.
+  - **Concluir pelo círculo:** abre a `FloatingChatActivity` no modo `todo_complete:<id>`; o Dart chama `MemexRouter.setTodoDone` (caminho normal do Todo) e fecha sem folha. Funciona com o app fechado, porque o motor compartilhado (D-065) sobe com a janela. O nativo não edita o arquivo do Todo.
+  - **Título:** abre a lista de tarefas pelo `memex://open_todo`. Abrir uma tarefa específica não existe no app; fica para depois.
+  - **"+ tarefa":** abre o editor do Todo por cima da tela inicial; Salvar grava pelo router; Cancelar e toque fora não gravam.
+  - **Dados ao widget:** só id, título, data, hora, status informativo e fuso das dez primeiras tarefas abertas com data, em `SharedPreferences` privado do app (D8).
+- Limite: a validação é no S25 (F15-05 fica REVIEW). A altura mínima do grande (270 dp) é estimativa. Se o dono quiser tarefas sem data no widget, é uma nova decisão.
