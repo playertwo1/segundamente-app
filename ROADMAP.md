@@ -2,7 +2,7 @@
 
 **Visão e escopo:** [PROJECT.md](PROJECT.md) · **Design aprovado:** [DESIGN.md](DESIGN.md) · **Índice e pranchas:** [docs/INDEX.md](docs/INDEX.md) · **Estado e próxima ação:** [STATE.md](STATE.md) · **Decisões:** [docs/DECISIONS.md](docs/DECISIONS.md) · **Regras de execução:** [docs/WATCHDOG.md](docs/WATCHDOG.md) · **Auditoria:** [docs/AUDIT.md](docs/AUDIT.md)
 
-**Atualização deste mapa:** 2026-11-14. D-062 abriu a F15 (widget e atalhos Android). D-050 abriu a expansão Todo robusto + Lumen (F11–F14; desktop no fork `playertwo1/coucou`) e pausou F9, F5V e F10; veja STATE.md para a próxima ação. Se um resumo divergir de uma evidência datada posterior, prevalece a evidência posterior.
+**Atualização deste mapa:** 2026-11-14. D-062 abriu a F15 (widget e atalhos Android); D-063 abriu só a F15-01 (maquetes), antes do portão da F11, e a F15-01 virou DONE por D-064 (teclas no pequeno, linhas no grande). D-050 abriu a expansão Todo robusto + Lumen (F11–F14; desktop no fork `playertwo1/coucou`) e pausou F9, F5V e F10; veja STATE.md para a próxima ação. Se um resumo divergir de uma evidência datada posterior, prevalece a evidência posterior.
 
 ## Como ler e executar este roadmap
 
@@ -58,7 +58,7 @@
 | [F12 — Sync com o Lumen](docs/roadmap/F12-sync-com-o-lumen.md) | Celular e Lumen trocam tarefas, notas, conversas, personas e preferências por relay + caixa de correio | D-054; F11-01 e o contrato F12-01 | BLOCKED | Cenários de caos sem perda nem duplicação |
 | [F13 — Google](docs/roadmap/F13-google.md) | Login Google próprio, backup semanal no Drive e Google Calendar | D-055; projeto Google Cloud do dono | BLOCKED | Backup restaurado e eventos lidos/criados com confirmação |
 | [F14 — Assistente ativo](docs/roadmap/F14-assistente-ativo.md) | Resumos manhã/tarde, cobrança de tarefas paradas e sugestões das personas | D-050; portões F11 e F12, F13-04 | BLOCKED | Configurável, silenciável e sem tarefa criada sem confirmação |
-| [F15 — Widget e atalhos Android](docs/roadmap/F15-widget-e-atalhos-android.md) | Widget redimensionável e chat flutuante no Android: conversar, falar, capturar e ver tarefas de hoje da tela inicial; forma da minicápsula decidida por protótipo | D-062; portão F11; paralela à fase L do fork | BLOCKED até o portão da F11 (abre sem nova decisão, D-062) | F15-01 a F15-06 DONE com evidência no S25 e forma da minicápsula decidida (F15-07) |
+| [F15 — Widget e atalhos Android](docs/roadmap/F15-widget-e-atalhos-android.md) | Widget redimensionável e chat flutuante no Android: conversar, falar, capturar e ver tarefas de hoje da tela inicial; forma da minicápsula decidida por protótipo | D-062 e D-063; portão F11 para as demais; paralela à fase L do fork | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 a F15-07 BLOCKED até o portão da F11 (abre sem nova decisão, D-062) | F15-01 a F15-06 DONE com evidência no S25 e forma da minicápsula decidida (F15-07) |
 
 **Exceções vigentes:** D-010 permitiu avançar F6 antes do fechamento do MVP. D-022 permite executar F5V em paralelo à F5. D-042 abriu F9 após o fechamento do MVP e limita seu escopo atual a Android; não fecha a fase nem reduz seu checklist. D-050 permite F11 em paralelo à fase Lumen do fork, sem fechar portões de fases pausadas.
 
@@ -68,7 +68,7 @@ Definida por D-050 (2026-11-13). Decisões completas: [questionário](docs/quest
 
 1. **F7-03:** fechada em 2026-11-13 (D-060). No S25 passaram início, turnos, pausa, retomada, tela apagada, Interromper e falar, Encerrar e permissão negada; a revogação no meio da conversa não foi testada por decisão do dono. F7-02 e F7-06 seguem BLOCKED.
 2. **F11 (celular)** em paralelo com a **fase L do fork** (`playertwo1/coucou`, `docs/roadmap/fase-l-lumen.md`): renomear para Lumen, login OAuth, anotador, e-mail. As telas de tarefas do Lumen esperam a F11-01 fixar o modelo.
-3. **F15 (celular)**, depois do portão da F11 e em paralelo à fase L do fork: widget e atalhos Android, começando pelas maquetes da F15-01 (D-062). Não depende de F12 nem de F13.
+3. **F15 (celular)**, depois do portão da F11 e em paralelo à fase L do fork: widget e atalhos Android, começando pelas maquetes da F15-01 (D-062; a F15-01 abriu antes do portão por D-063 e ficou DONE por D-064). Não depende de F12 nem de F13.
 4. **F12:** sync, depois que F11-01 e a fase L tiverem base. O contrato F12-01 pode ser escrito antes.
 5. **F13:** Google (login, backup no Drive, Calendar). O backup entra assim que o login existir.
 6. **F14:** assistente ativo, só depois dos portões F11 e F12.
@@ -110,3 +110,5 @@ Ideias já avaliadas e distribuídas em tarefas ficam nas decisões D-014, D-016
 - 2026-11-05 — D-036/D-037: F10 desenhada por questionário (debate entre personas com freio, PDF guardado e transcrito, documentos com versões); começa após o MVP. Exportador compartilhado antecipado como F4-05.
 - 2026-11-13 — D-050 a D-055: expansão Todo robusto + Lumen (fork do Coucou) + sync + Google; F11–F14 criadas; F9, F5V e F10 pausadas; NotebookLM pós-MVP.
 - 2026-11-14 — D-062: fase F15 (widget e atalhos Android) criada; começa depois do portão da F11, em paralelo à fase L do fork. Resumo no widget, captura pela minicápsula e assistente que vê a tela ficam em ideias futuras.
+- 2026-11-14 — D-063: F15-01 (maquetes) aberta antes do portão da F11, por pedido do dono; a F15-01 fica em REVIEW até a escolha do dono. F15-02 a F15-07 seguem BLOCKED.
+- 2026-11-14 — D-064: F15-01 DONE com a combinação escolhida pelo dono (teclas no pequeno, linhas no grande; médio em teclas por leitura, a confirmar pelo dono). F15-02 a F15-07 seguem BLOCKED até o portão da F11.
