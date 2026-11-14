@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>F15-01 — maquetes do widget</title>
+<style>
+  @font-face { font-family: Inter; src: url("../../../google_fonts/Inter-Regular.ttf") format("truetype"); font-weight: 400; }
+  @font-face { font-family: Inter; src: url("../../../google_fonts/Inter-Medium.ttf") format("truetype"); font-weight: 500; }
+  @font-face { font-family: Inter; src: url("../../../google_fonts/Inter-SemiBold.ttf") format("truetype"); font-weight: 600; }
+  @font-face { font-family: Inter; src: url("../../../google_fonts/Inter-Bold.ttf") format("truetype"); font-weight: 700; }
+
+  :root {
+    --bg: #000000;
+    --ivory: #F3EEE6;
+    --secondary: #AAA6A0;
+    --tertiary: #85817B;
+    --line: #33312E;
+    --amber: #E99A3D;
+    --ink: #000000;
+    --warn: #FBBF24;
+    --paper: #E6E0D4;
+    --paper-ink: #1C1915;
+    --wall: #141210;
+    --dock: #0A0908;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #242220; color: var(--ivory); }
+  body {
+    width: 1160px;
+    font-family: Inter, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  ::selection { background: #E99A3D; color: #000; }
+
+  body > header, section { padding: 28px 36px 8px; }
+  body > header { height: 132px; padding-top: 32px; }
+  h1 { font-size: 28px; line-height: 1.15; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 22px; line-height: 1.2; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.02em; }
+  p.lead, p.note { margin: 0; max-width: 78ch; color: #D2CDC4; font-size: 15px; }
+  p.note { margin-top: 8px; }
+  .row { display: flex; gap: 20px; align-items: flex-start; margin-top: 18px; }
+  .stack { display: flex; flex-direction: column; gap: 18px; width: 360px; }
+  .row > div:not(.stack) { width: 348px; flex: 0 0 348px; }
+  .cap { font-size: 13px; line-height: 1.4; color: #D2CDC4; margin: 6px 0 0; }
+
+  .phone {
+    width: 348px;
+    height: 760px;
+    background: var(--wall);
+    border-radius: 28px;
+    border: 1px solid #2A2724;
+    position: relative;
+    overflow: hidden;
+    color: var(--ivory);
+    flex: 0 0 auto;
+  }
+  .status {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status span { letter-spacing: 0.02em; }
+  .clock-block { padding: 18px 22px 8px; }
+  .clock-block .time { font-size: 52px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; }
+  .clock-block .date { margin-top: 4px; color: var(--secondary); font-size: 13px; }
+  .stage { padding: 12px 16px 0; }
+  .dock {
+    position: absolute;
+    left: 16px; right: 16px; bottom: 14px;
+    height: 62px;
+    background: var(--dock);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+  .dock i { width: 28px; height: 28px; display: block; color: var(--secondary); }
+
+  .widget {
+    background: var(--bg);
+    color: var(--ivory);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 10px 4px 6px;
+    width: 100%;
+  }
+  .widget header.w {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 12px 6px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .hair { height: 1px; background: var(--line); margin: 0 12px; }
+
+  button.row-action, button.task, button.add, button.key, button.cap-action {
+    font-family: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+    text-align: left;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button.row-action.primary { color: var(--amber); }
+  button.row-action svg, button.task svg, button.add svg, button.cap-action svg { flex: 0 0 auto; }
+  .group {
+    margin: 12px 12px 4px;
+    color: var(--secondary);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .capture {
+    display: flex;
+    gap: 6px;
+    padding: 0 8px 4px;
+  }
+  button.cap-action {
+    flex: 1;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    width: auto;
+    font-size: 14px;
+  }
+  button.task { gap: 10px; }
+  .tick {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid var(--ivory);
+    flex: 0 0 auto;
+  }
+  .tick-hit { display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 auto; margin: 0 -13px; }
+  .task-title { flex: 1; line-height: 1.4; }
+  .task-meta { color: var(--secondary); font-size: 12px; flex: 0 0 auto; }
+  .task-meta.late { color: var(--warn); }
+  button.add { color: var(--amber); font-weight: 600; }
+  .keys { display: flex; gap: 8px; padding: 4px 10px 8px; }
+  button.key {
+    flex: 1;
+    width: auto;
+    min-height: 56px;
+    justify-content: center;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    font-weight: 600;
+    font-size: 15px;
+    gap: 8px;
+  }
+  button.key.primary { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+  .empty-line {
+    padding: 8px 12px 4px;
+    color: var(--ivory);
+    font-size: 15px;
+  }
+
+  .scale .widget { font-size: 30px; }
+  .scale button.row-action, .scale button.key, .scale button.cap-action { font-size: 22px; min-height: 64px; }
+  .scale .widget header.w { font-size: 22px; min-height: 36px; }
+
+  .sheet-phone .peek { padding: 8px 22px 0; }
+  .sheet-phone .peek .time { font-size: 28px; font-weight: 500; letter-spacing: -0.03em; }
+  .scrim { position: absolute; inset: 28px 0 0; background: rgba(0,0,0,0.55); }
+  .sheet {
+    position: absolute;
+    left: 0; right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 8px 10px;
+  }
+  .sheet.talk { bottom: 0; top: auto; }
+  .sheet.type { bottom: 248px; top: auto; }
+  .sheet .head {
+    min-height: 48px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 4px 8px 0;
+    gap: 0 8px;
+  }
+  .sheet .head h3 { margin: 0; font-size: 20px; font-weight: 600; flex: 1 0 100%; }
+  button.texty {
+    width: auto;
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding: 0 8px;
+    background: transparent;
+    border: 0;
+    color: var(--amber);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  button.texty.quiet { color: var(--ivory); font-weight: 500; }
+  .body-copy { padding: 8px 12px; font-size: 15px; color: var(--ivory); }
+  .bubble {
+    margin: 8px 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .who { color: var(--secondary); font-size: 12px; margin-bottom: 2px; }
+  .composer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    margin: 8px 8px 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .composer .ph { color: var(--tertiary); font-size: 15px; flex: 1; }
+  .send {
+    position: relative;
+    width: 48px; height: 48px; margin: -8px; flex: 0 0 auto;
+    border: 0; padding: 0; background: transparent; color: var(--ink);
+    font-family: inherit;
+    display: grid; place-items: center;
+  }
+  .send::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--amber); }
+  .send svg { position: relative; }
+  .notice {
+    margin: 6px 12px 0;
+    color: var(--secondary);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .listen {
+    margin: 18px 12px;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .bars { display: flex; align-items: center; gap: 4px; height: 28px; }
+  .bars b { display: block; width: 3px; background: var(--amber); border-radius: 2px; }
+  .listen strong { font-size: 16px; font-weight: 600; }
+  .listen p { margin: 2px 0 0; color: var(--secondary); font-size: 13px; font-weight: 400; }
+  .keyboard {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 248px;
+    background: #1A1917;
+    border-top: 1px solid var(--line);
+    padding: 10px 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .krow { display: flex; gap: 5px; justify-content: center; }
+  .krow i {
+    display: block; height: 40px; flex: 1; max-width: 32px;
+    background: #2A2825; border-radius: 6px; color: var(--ivory);
+    font-style: normal; font-size: 13px; text-align: center; line-height: 40px;
+  }
+  .krow i.wide { max-width: 48px; }
+  .krow i.space { max-width: none; flex: 1; }
+
+  .field {
+    margin: 8px 12px 0;
+    min-height: 72px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--ivory);
+    font-size: 15px;
+  }
+  .actions-end { display: flex; justify-content: flex-end; gap: 8px; padding: 8px; }
+  button.commit {
+    font-family: inherit;
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 14px;
+    border: 0;
+    background: var(--amber);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .qs {
+    position: absolute; left: 0; right: 0; top: 80px; bottom: 0;
+    background: #100E0C;
+    border-top: 1px solid var(--line);
+    padding: 16px;
+  }
+  .qs h3 { margin: 0 0 12px; font-size: 13px; font-weight: 500; color: var(--secondary); }
+  .tiles { display: flex; gap: 10px; }
+  .tile {
+    width: 76px;
+    min-height: 72px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--ivory);
+    font-size: 11px;
+  }
+  .tile.on { color: var(--amber); border-color: #5A4630; }
+  .lock-time { padding: 48px 22px 0; font-size: 64px; font-weight: 500; letter-spacing: -0.04em; line-height: 1; }
+  .lock-date { padding: 8px 22px; color: var(--secondary); font-size: 14px; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<header id="topo">
+  <h1>F15-01 — widget e chat flutuante</h1>
+  <p class="lead">Duas composições na direção AMOLED já aprovada. O conteúdo é o mesmo nas duas. Tarefas, horários e a anotação são sintéticos. O corte em células da One UI no S25 ainda não foi medido.</p>
+</header>
+
+<section id="opcao-a">
+  <h2>A — Linhas</h2>
+  <p class="lead">Cada ação é uma linha, como a lista do app. O âmbar marca Conversar e “+ tarefa”, sem botão preenchido. O tamanho pequeno precisa de mais altura para caber dois alvos de 48 dp.</p>
+  <div class="row">
+    <div>
+      <div class="phone" aria-label="Tela inicial com o widget grande em linhas">
+        <div class="status"><span>09:41</span><span>S25</span></div>
+        <div class="clock-block"><div class="time">09:41</div><div class="date">sábado, 14 de novembro</div></div>
+        <div class="stage">
+          <div class="widget">
+            <header class="w">Segunda Mente</header>
+            <div class="hair"></div>
+            <button class="row-action primary"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+            <div class="hair"></div>
+            <button class="row-action"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+            <div class="group">Registrar</div>
+            <div class="capture">
+              <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Anotar</button>
+              <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Foto</button>
+              <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M4 15V5h12"/></svg>Colar</button>
+            </div>
+            <div class="group">Hoje</div>
+            <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Revisar o rascunho</span><span class="task-meta late">Atrasada</span></button>
+            <div class="hair"></div>
+            <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Ligar para a oficina</span><span class="task-meta">14:00</span></button>
+            <div class="hair"></div>
+            <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Comprar café</span><span class="task-meta">18:30</span></button>
+            <div class="hair"></div>
+            <button class="add">+ tarefa</button>
+          </div>
+        </div>
+        <div class="dock" aria-hidden="true">
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg></i>
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="4" width="14" height="16" rx="2"/></svg></i>
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h5M15 12h5M12 4v5M12 15v5"/></svg></i>
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></i>
+        </div>
+      </div>
+      <p class="cap">Grande, cerca de 4×6. Atrasada primeiro, depois o horário de hoje. O círculo conclui; o título abre a tarefa.</p>
+    </div>
+    <div class="stack">
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="hair"></div>
+          <button class="row-action primary"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+          <div class="hair"></div>
+          <button class="row-action"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+        </div>
+        <p class="cap">Pequeno, cerca de 4×3. Só Conversar e Falar.</p>
+      </div>
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="hair"></div>
+          <button class="row-action primary"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+          <div class="hair"></div>
+          <button class="row-action"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+          <div class="group">Registrar</div>
+          <div class="capture">
+            <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Anotar</button>
+            <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Foto</button>
+            <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M4 15V5h12"/></svg>Colar</button>
+          </div>
+        </div>
+        <p class="cap">Médio, cerca de 4×4. Anotar, Foto e Colar pedem confirmação antes de gravar na linha do tempo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="opcao-b">
+  <h2>B — Teclas</h2>
+  <p class="lead">No pequeno, Conversar e Falar dividem a faixa. Conversar é o único preenchido em âmbar, como o Enviar da conversa. Ao crescer, a lista de tarefas entra por baixo das teclas.</p>
+  <div class="row">
+    <div>
+      <div class="phone" aria-label="Tela inicial com o widget grande em teclas">
+        <div class="status"><span>09:41</span><span>S25</span></div>
+        <div class="clock-block"><div class="time">09:41</div><div class="date">sábado, 14 de novembro</div></div>
+        <div class="stage">
+          <div class="widget">
+            <header class="w">Segunda Mente</header>
+            <div class="keys">
+              <button class="key primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+              <button class="key"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+            </div>
+            <div class="capture">
+              <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Anotar</button>
+              <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Foto</button>
+              <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M4 15V5h12"/></svg>Colar</button>
+            </div>
+            <div class="group">Hoje</div>
+            <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Revisar o rascunho</span><span class="task-meta late">Atrasada</span></button>
+            <div class="hair"></div>
+            <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Ligar para a oficina</span><span class="task-meta">14:00</span></button>
+            <div class="hair"></div>
+            <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Comprar café</span><span class="task-meta">18:30</span></button>
+            <div class="hair"></div>
+            <button class="add">+ tarefa</button>
+          </div>
+        </div>
+        <div class="dock" aria-hidden="true">
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg></i>
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="4" width="14" height="16" rx="2"/></svg></i>
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M4 12h5M15 12h5M12 4v5M12 15v5"/></svg></i>
+          <i><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></i>
+        </div>
+      </div>
+      <p class="cap">Grande. As teclas ficam; a lista de hoje entra embaixo. Mesma regra de concluir e abrir.</p>
+    </div>
+    <div class="stack">
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="keys">
+            <button class="key primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+            <button class="key"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+          </div>
+        </div>
+        <p class="cap">Pequeno, cerca de 4×2. Cabe numa faixa baixa.</p>
+      </div>
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="keys">
+            <button class="key primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+            <button class="key"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+          </div>
+          <div class="capture">
+            <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Anotar</button>
+            <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>Foto</button>
+            <button class="cap-action"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M4 15V5h12"/></svg>Colar</button>
+          </div>
+        </div>
+        <p class="cap">Médio, cerca de 4×3. A captura soma uma faixa, sem abrir o app inteiro.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="chat">
+  <h2>Chat flutuante</h2>
+  <p class="lead">Igual nas duas opções. Uma folha por cima da tela inicial. Conversar abre teclado e conversa nova. Falar já entra ouvindo e envia ao fim da fala. Fechar volta para onde estava.</p>
+  <div class="row">
+    <div>
+      <div class="phone sheet-phone" aria-label="Chat flutuante com teclado">
+        <div class="status"><span>09:41</span><span></span></div>
+        <div class="peek"><div class="time">09:41</div></div>
+        <div class="scrim"></div>
+        <div class="sheet type">
+          <div class="head">
+            <h3>Segunda Mente</h3>
+            <button class="texty">Abrir no app</button>
+            <button class="texty quiet">Fechar</button>
+          </div>
+          <div class="body-copy">Conversa nova.</div>
+          <div class="composer"><span class="ph">Mensagem</span><button class="send" aria-label="Enviar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+          <p class="notice">Não registre dados de clientes, contas ou documentos do banco.</p>
+        </div>
+        <div class="keyboard" aria-hidden="true">
+          <div class="krow"><i>q</i><i>w</i><i>e</i><i>r</i><i>t</i><i>y</i><i>u</i><i>i</i><i>o</i><i>p</i></div>
+          <div class="krow"><i>a</i><i>s</i><i>d</i><i>f</i><i>g</i><i>h</i><i>j</i><i>k</i><i>l</i></div>
+          <div class="krow"><i class="wide">⇧</i><i>z</i><i>x</i><i>c</i><i>v</i><i>b</i><i>n</i><i>m</i><i class="wide">⌫</i></div>
+          <div class="krow"><i class="wide">?123</i><i class="space">espaço</i><i class="wide">↵</i></div>
+        </div>
+      </div>
+      <p class="cap">Conversar. Teclado do sistema aberto. O aviso da <span style="white-space:nowrap">F11-06</span> fica sob o campo.</p>
+    </div>
+    <div>
+      <div class="phone sheet-phone" aria-label="Chat flutuante ouvindo">
+        <div class="status"><span>09:41</span><span></span></div>
+        <div class="peek"><div class="time">09:41</div></div>
+        <div class="scrim"></div>
+        <div class="sheet talk">
+          <div class="head">
+            <h3>Segunda Mente</h3>
+            <button class="texty">Abrir no app</button>
+            <button class="texty quiet">Fechar</button>
+          </div>
+          <div class="listen">
+            <div class="bars" aria-hidden="true"><b style="height:8px"></b><b style="height:16px"></b><b style="height:26px"></b><b style="height:14px"></b><b style="height:20px"></b><b style="height:10px"></b></div>
+            <div><strong>Ouvindo</strong><p>A mensagem parte sozinha ao fim da fala.</p></div>
+          </div>
+          <p class="notice">Não registre dados de clientes, contas ou documentos do banco.</p>
+        </div>
+      </div>
+      <p class="cap">Falar. O app já abre ouvindo. Ao fim da fala, a frase aparece na conversa para conferir.</p>
+      <div class="widget" style="width:100%;margin-top:14px">
+        <header class="w">Depois do envio</header>
+        <div class="bubble"><div class="who">Você · agora</div>O que ficou para hoje?</div>
+        <div class="bubble"><div class="who">Segunda Mente · agora</div>Três itens: um atrasado e dois ainda hoje. Nada foi gravado além desta conversa.</div>
+      </div>
+      <p class="cap">A resposta não cria tarefa, data nem registro sozinha.</p>
+    </div>
+    <div>
+      <div class="phone sheet-phone" aria-label="Folha de anotação antes de gravar">
+        <div class="status"><span>09:41</span><span></span></div>
+        <div class="peek"><div class="time">09:41</div></div>
+        <div class="scrim"></div>
+        <div class="sheet talk">
+          <div class="head">
+            <h3>Anotar</h3>
+            <button class="texty quiet">Fechar</button>
+          </div>
+          <div class="field">Ideia sintética: testar o widget na sexta.</div>
+          <p class="notice">Não registre dados de clientes, contas ou documentos do banco.</p>
+          <div class="actions-end">
+            <button class="texty quiet">Cancelar</button>
+            <button class="commit">Gravar na linha do tempo</button>
+          </div>
+        </div>
+      </div>
+      <p class="cap">Anotar, Foto e Colar abrem esta folha. Só grava na linha do tempo depois do toque.</p>
+    </div>
+  </div>
+</section>
+
+<section id="estados">
+  <h2>Estados que as duas opções compartilham</h2>
+  <p class="lead">Vazio, título longo, texto do sistema maior, tela de bloqueio sem títulos e o atalho do painel rápido. O painel é a F15-06 e não muda a escolha entre A e B.</p>
+  <div class="row">
+    <div class="stack">
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="group">Hoje</div>
+          <p class="empty-line">Nada para hoje.</p>
+          <button class="add">+ tarefa</button>
+        </div>
+        <p class="cap">Hoje vazio. Uma frase e uma ação.</p>
+      </div>
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="group">Hoje</div>
+          <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Preparar o material da reunião de planejamento do lançamento</span><span class="task-meta">09:00</span></button>
+          <div class="hair"></div>
+          <button class="task"><span class="tick-hit"><span class="tick"></span></span><span class="task-title">Ligar para a oficina</span><span class="task-meta">14:00</span></button>
+          <button class="add">+ tarefa</button>
+        </div>
+        <p class="cap">Título longo quebra em duas linhas. O horário continua visível.</p>
+      </div>
+    </div>
+    <div class="stack scale">
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="hair"></div>
+          <button class="row-action primary"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</button>
+          <div class="hair"></div>
+          <button class="row-action"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg>Falar</button>
+        </div>
+        <p class="cap">Texto do sistema maior, nas linhas. O alvo cresce e o rótulo não corta.</p>
+      </div>
+      <div>
+        <div class="widget" style="width:100%">
+          <header class="w">Segunda Mente</header>
+          <div class="keys">
+            <button class="key primary">Conversar</button>
+            <button class="key">Falar</button>
+          </div>
+        </div>
+        <p class="cap">O mesmo aumento nas teclas. Os dois rótulos continuam inteiros.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <div>
+        <div class="phone" style="height:280px" aria-label="Tela de bloqueio sem o widget">
+          <div class="status"><span>09:41</span><span></span></div>
+          <div class="lock-time">09:41</div>
+          <div class="lock-date">sábado, 14 de novembro</div>
+        </div>
+        <p class="cap">Tela de bloqueio. Nenhum título de tarefa e nenhum trecho de conversa.</p>
+      </div>
+      <div>
+        <div class="phone" style="height:250px" aria-label="Painel de configurações rápidas">
+          <div class="status"><span>09:41</span><span></span></div>
+          <div class="qs">
+            <h3>Configurações rápidas</h3>
+            <div class="tiles">
+              <div class="tile on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16.5V7.8A2.8 2.8 0 0 1 7.8 5h8.4A2.8 2.8 0 0 1 19 7.8v5.4A2.8 2.8 0 0 1 16.2 16H9l-4 3z"/></svg>Conversar</div>
+              <div class="tile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l1 4H8zM8 7h8v2a4 4 0 0 1-8 0zM10 18h4M12 13v5"/></svg>Lanterna</div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">F15-06. O botão Conversar do painel abre o mesmo chat flutuante.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

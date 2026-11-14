@@ -15,15 +15,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | IN_PROGRESS | F11-01 a F11-06 DONE (F11-06 em D-061); portão aguarda AC-01 (08h30/08h10) no S25 |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | BLOCKED até o portão da F11 (abre sem nova decisão) | D-062; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 a F15-07 BLOCKED até o portão da F11 | D-062 e D-063; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
-1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão.
-2. **F15-01 (maquetes):** depois do portão da F11, gerar as maquetes do widget e do chat flutuante na direção AMOLED (`DESIGN.md`) para o dono escolher (D-062). Nenhum código de widget antes dessa escolha.
-3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
-4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
+1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão. O AC-01 continua pendente; D-063 não o dispensa. Depois do portão, a F15-02 (chat flutuante) vira READY sem nova decisão (D-062).
+2. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
+3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
+4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
 ## Pendências do dono
 
@@ -42,6 +41,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-01 — maquetes do widget e do chat (2026-11-14)
+- Documento `docs/fases/F15-01-maquetes.md` com as opções A (linhas) e B (teclas), o chat flutuante, os estados compartilhados, a estimativa de células (fórmula 70n−30 dp, não medida) e os riscos. Fonte: `docs/fases/f15-01/maquetes.html` (dados sintéticos). Decisão D-063. Estado da subfase: DONE (D-064).
+- Render (comando de referência): Chrome headless `--headless=new --force-device-scale-factor=1 --window-size=1160,2200 --screenshot` sobre cópias por seção do `maquetes.html`, com recorte em Pillow. Saída: `docs/imagens/f15-01-a-linhas.png` (1160×947), `f15-01-b-teclas.png` (1160×947), `f15-01-chat.png` (1160×1193) e `f15-01-estados.png` (1160×775). Revisão visual dos quatro PNG no desktop: nada cortado, o '+ tarefa' acima do dock em A e B, a folha Conversar encostada no teclado. Correções na prancha: regra do cabeçalho da página restrita a `body > header` (vazava para o cabeçalho dos widgets), '+' duplicado removido, largura das colunas fixada em 348 px, área de toque de 48 px no círculo de concluir e no botão de enviar sem mudar o desenho.
+- Aparelho: nenhum (desktop). Nenhum código de produto alterado.
+- `NOT_RUN`: medição da grade One UI no S25; abertura a frio do chat; TalkBack; texto a 200% no aparelho; `flutter test`; `flutter analyze`; qualquer instalação ou toque de widget.
+- Aceite: escolha do dono no chat em 2026-11-14, combinação (teclas no pequeno, linhas no grande; médio em teclas por leitura, D-064).
 
 ### F11 — correção dos achados MEDIUM da auditoria (2026-11-13)
 - Quatro achados MEDIUM de `docs/reviews/F11.md` corrigidos, cada um com teste escrito antes da correção: (1) `todo.json` legado corrompido vai para quarentena `todo.json.corrupt-<yyyyMMddTHHmmss>` com bytes preservados, cria `todo-v2.json` vazio, registra aviso sem conteúdo e mostra aviso na tela (`todo_legacy_damaged_banner`, chaves `todoLegacyFileDamaged` em pt e en); `todo-v2.json` corrompido continua falhando sem ser zerado; (2) sincronização de alarmes saiu de `_storageLock` e roda depois do rename; (3) sincronização serializada com um run por vez e um run extra que relê a lista mais nova; (4) `time_zone` inválido cai para `America/Sao_Paulo` em `TodoItem.fromJson` e o cálculo não lança mais exceção.

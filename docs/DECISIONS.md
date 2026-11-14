@@ -411,3 +411,21 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Vão para "Ideias futuras": resumo e próximo evento no widget (depende de F13 e F14); captura sem sair do app pela minicápsula; assistente que vê a tela (risco alto de privacidade; exige decisão própria antes de qualquer trabalho).
   - Widget, microfone, painel rápido e minicápsula só se validam no S25.
   - Não desbloqueia F12, F13 nem F14.
+
+## D-063 — Abrir a F15-01 (maquetes) antes do portão da F11 (2026-11-14)
+- Contexto: o dono pediu para trabalhar a F15 hoje, antes de fechar o portão da F11. O AC-01 no S25 (alarme às 08h10, tarefa sintética às 08h30) segue pendente em STATE.md. D-062 exige o portão da F11 para começar a fase.
+- Decisão:
+  - Abrir só a **F15-01** (maquetes do widget e do chat flutuante), documentada em `docs/fases/F15-01-maquetes.md`, com o HTML em `docs/fases/f15-01/maquetes.html`. Estado: REVIEW.
+  - Nenhum código de produto da F15 começa antes da escolha do dono entre as opções A (linhas), B (teclas) ou a combinação (teclas no pequeno e linhas no grande).
+  - A escolha do dono é a evidência de aceite da F15-01. Sem ela, a F15-01 não vira DONE.
+  - O portão da F11 não é dispensado. F15-02 a F15-07 seguem BLOCKED até o portão da F11, como D-062 prevê.
+- Limite: o estado da fase não muda para além da F15-01; a estimativa de células é só estimativa, até medir a grade One UI no S25.
+
+## D-064 — Composição do widget da F15: teclas no pequeno, linhas no grande (2026-11-14)
+- Contexto: D-063 pediu a escolha do dono entre as opções A (linhas), B (teclas) ou a combinação, em [F15-01-maquetes.md](fases/F15-01-maquetes.md). Em 2026-11-14 o dono respondeu "Combinação" no chat.
+- Decisão:
+  - **Pequeno:** teclas. Conversar preenchido em âmbar e Falar em contorno, na mesma faixa.
+  - **Médio:** teclas mais a faixa de captura (Anotar, Foto e Colar), como o médio da opção B. O dono não disse nada sobre o médio; esta é a leitura adotada, e ele pode trocá-la sem nova fase.
+  - **Grande:** linhas, com Conversar e Falar em linha, captura e até três tarefas de hoje.
+  - **Comum:** chat flutuante, folha de Anotar e estados compartilhados como nas maquetes.
+- Limite: não abre a F15-02. O portão da F11 continua exigido (D-062). Os tamanhos em células seguem estimativa até medir a grade One UI no S25. A mudança de forma entre o médio e o grande, ao redimensionar, precisa ser conferida no aparelho na F15-05.

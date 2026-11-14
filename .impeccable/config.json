@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-14T06:10:08.928Z",
+        "reason": "DESIGN.md (D-017) pins Inter as the only typeface for this app. The mockup uses that face on purpose."
+      }
+    ]
+  }
+}
