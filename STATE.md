@@ -15,7 +15,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-07 IN_PROGRESS (protótipos no build dev, D-069); F15-03 a F15-06 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-069; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -41,6 +41,17 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F15-07 — protótipos da cápsula (2026-11-14)
+- O que existe, só no flavor `globalDev` (`android/app/src/globalDev/`, D-069): A, bolha oficial (launcher "Cápsula: bolha", `Notification.BubbleMetadata` com `setAutoExpandBubble`, `setSuppressNotification`, atalho de conversa, host `CapsuleBubbleHostActivity` que reusa o motor e a rota do chat); B, sobreposição própria (launcher "Cápsula: sobreposição", `CapsuleOverlayService` com `TYPE_APPLICATION_OVERLAY`, `specialUse`, notificação com "Parar"). Medição pelo log `F1507`. Passos de uso, permissões e comandos adb em `docs/fases/F15-07-prototipos-capsula.md`.
+- Comandos e saídas:
+  - `flutter pub get --enforce-lockfile` → exit 0 (avisos de pacotes descontinuados e desatualizados); nenhum arquivo rastreado alterado.
+  - `flutter build apk --flavor globalDev --debug --no-pub` → `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk`, exit 0.
+  - `gradlew.bat :app:processGlobalDebugManifest` (flavor `global`, debug) → BUILD SUCCESSFUL; o manifesto mesclado não tem `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE_SPECIAL_USE` nem entradas `com.memexlab.memex.dev` (0 ocorrências). `android/app/src/main/AndroidManifest.xml` sem alteração.
+  - `flutter analyze` e `flutter test`: NOT_RUN, sem mudança em Dart nesta subfase.
+- Aparelho: nenhum (sem adb nesta subfase).
+- `NOT_RUN`: tudo no S25: abrir pelos dois lançadores, bolha expandida e recolhida, sobreposição com a permissão, arrastar, esconder e parar, economia de bateria, custo de bateria e os cinco critérios. A comparação e a escolha do dono vêm depois.
+- Estado: F15-07 IN_PROGRESS.
 
 ### F15-02 — chat flutuante, implementação (2026-11-14)
 - O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.

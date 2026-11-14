@@ -440,3 +440,12 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A folha é uma rota do mesmo app (`/floating-chat`), com o `AgentChatDialog` em modo flutuante. Conversar abre o teclado; Falar ouve uma fala, transcreve e envia. Nada é gravado sem confirmação (D-051).
   - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
 - Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.
+
+## D-069 — Abrir a F15-07 (protótipos da cápsula) em código antes da validação da F15-02 no S25 (2026-11-14)
+- Contexto: o dono pediu para fazer toda a F15 hoje. A tabela da F15 põe a F15-07 depois da F15-02, e a F15-02 ainda espera a validação no S25 (D-065).
+- Decisão:
+  - Abrir o código dos dois protótipos da F15-07 (bolha oficial do Android e sobreposição própria), só no build `globalDev`. Desenho e passos de uso em `docs/fases/F15-07-prototipos-capsula.md`. Estado: IN_PROGRESS.
+  - Nada vai para `src/main`, `global` ou `globalEarly`. As permissões `SYSTEM_ALERT_WINDOW` e `FOREGROUND_SERVICE_SPECIAL_USE` ficam só no manifesto do flavor dev.
+  - A forma da cápsula (D11) só se decide com a comparação no S25. F15-07 não vira DONE antes disso.
+  - F15-03 a F15-06 seguem BLOCKED; o portão da F11 continua exigido (D-062); a F15-02 não é dispensada de validação no S25.
+- Limite: os protótipos não foram medidos no aparelho. Os critérios de decisão são os cinco da D11.
