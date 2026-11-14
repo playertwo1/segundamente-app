@@ -13,12 +13,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | Só a F7-03 (voz duplex por turnos, D-049); F7-02 adiada (D-041), F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 a F11-03 e F11-05 DONE; F11-04 IN_PROGRESS (D-058; S25 entregou o alarme pós-boot; Concluir/offline/Doze/T16 pendentes); F11-06 BLOCKED |
+| F11 | IN_PROGRESS | F11-01 a F11-05 DONE; portão aguarda AC-01 (08h30/08h10) no S25; F11-06 BLOCKED |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 
 ## Próxima ação
 
-1. **F11-04:** validar Concluir, offline/Doze e T16 no S25; AC-01 08h30/08h10 ainda requer execução física (D-058).
+1. **Portão F11:** observar AC-01 no S25 na hora real (tarefa sintética às 08h30, aviso às 08h10, `America/Sao_Paulo`), sem alterar o relógio. Depois, auditoria da fase (docs/AUDIT.md).
 2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
 3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
@@ -29,7 +29,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
 - Testar no S25 os itens da F7-03 acima.
-- Concluir a validação física da F11-04 no S25: entrega pós-reinício, Concluir, offline/Doze, T16 e AC-01 08h30/08h10.
+- Observar o AC-01 no S25 às 08h10 (aviso de uma tarefa sintética das 08h30).
 
 ## Ambiente (fora do repositório)
 
@@ -93,7 +93,20 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Tarefa sintética `F11 S25 smoke abrir`, prazo 13 nov. 2026 às 21:00, alerta padrão de 20 min: `dumpsys alarm` mostrou `RTC_WAKEUP` às 20:40 com `exactAllowReason=permission`; às 20:40 o S25 entregou a notificação com título, corpo e três ações. Tocar em “Abrir” levou à lista Hoje e exibiu a tarefa com prazo correto. Tocar em “Adiar 10 min” criou novo `RTC_WAKEUP` para 20:54:04.
 - T15: após `adb reboot`, o user 0 ficou `RUNNING_LOCKED`; depois do desbloqueio, `ScheduledNotificationBootReceiver` recebeu `BOOT_COMPLETED` às 20:48:33, restaurou o alarme exato para 20:54:04 e `dumpsys alarm` registrou `Deliver` às 20:54. A notificação pós-reinício permaneceu ativa com as três ações.
 - AVD `emulator-5554` (API 36 x86_64): Maestro criou e excluiu uma tarefa sintética de amanhã às 09:00; `dumpsys alarm` confirmou o agendamento e depois `alarm_cancelled`. A assertion Maestro por título exato não correspondeu ao rótulo combinado de acessibilidade (título/data/prioridade); a inspeção mostrou o rótulo completo.
-- `NOT_RUN`: Concluir pela notificação (o servidor Maestro morreu ao tentar abrir o painel após reboot); T03 offline, Doze e recuperação após sair de Doze; T16 com permissão de notificações negada/revogada; AC-01 na hora real 08h30/08h10; replanejamento T05 por edição da tarefa; suíte completa `flutter test --no-pub`. A análise completa foi executada e encontrou 159 issues; não foi aprovada.
+- Primeira rodada: Concluir, T03, T05 e T16 ficaram `NOT_RUN` (o servidor Maestro morreu ao abrir o painel após o reboot). Fechados na segunda rodada abaixo.
+
+### F11-04 — validação física final no S25 (2026-11-13, 21:22–21:36)
+- Feita por `adb -s RQCY10934YV` (uiautomator e toques); Maestro MCP indisponível. Perfil sintético `F11 QA` no pacote `app.segundamente.dev`; o pacote estável não foi tocado.
+- Notificação pós-reboot (T15): já entregue às 20:54 (registro acima). Ao expandi-la às 21:23, um toque meu caiu durante a animação do painel e a dispensou (`notification_canceled` motivo 2); nenhuma ação foi executada e a tarefa continuou aberta. Concluir foi testado na notificação seguinte.
+- T05: tarefa `F11 S25 smoke abrir` editada no app para 21:55 → `dumpsys alarm` com um único `RTC_WAKEUP` às 21:35; editada para 21:52 → um único pendente às 21:32 (`exactAllowReason=permission`), o das 21:35 não existe mais. Cada gravação registra dois `Add` do mesmo PendingIntent com ~20 ms de diferença; o segundo substitui o primeiro, sem alarme duplicado.
+- T03 offline + Doze: app em segundo plano, `cmd connectivity airplane-mode enable` e `cmd wifi set-wifi-enabled disabled` (`Active default network: none`), `dumpsys battery unplug` e `dumpsys deviceidle force-idle` (`deep: IDLE`). Às 21:32:00.049 `notification_enqueue` e `Deliver` do alarme, ainda com Doze `IDLE` e sem rede. Restaurados depois: `deviceidle unforce`, `battery reset`, modo avião desligado e Wi‑Fi ligado (estado conferido).
+- Concluir: na notificação das 21:32, expandida pelo botão dela, “Concluir” abriu o app, removeu a notificação e moveu a tarefa para Concluídas; `dumpsys alarm` → 0 alarmes pendentes do app.
+- T16: nova tarefa sintética `F11 S25 T16` (hoje 23:30, alerta 23:10) → `RTC_WAKEUP` 23:10. `pm revoke app.segundamente.dev android.permission.POST_NOTIFICATIONS` (`granted=false`); ao abrir o Todo apareceu “As notificações de tarefas estão desativadas. Ative-as para receber avisos.” com “Configurar”, e o alarme foi cancelado (`alarm_cancelled`, 0 pendentes). “Configurar” abriu o diálogo do sistema; “Permitir” restaurou `granted=true`, o aviso sumiu e o alarme das 23:10 foi reagendado. `SCHEDULE_EXACT_ALARM` continuou `allow`.
+- Limpeza: as duas tarefas sintéticas foram excluídas pelo app; `alarm_cancelled` registrado, 0 alarmes pendentes, 0 notificações do app e as quatro abas vazias.
+- Ambiente: a primeira execução da suíte falhou ao compilar (`timezone-0.11.2` e `flutter_local_notifications` ausentes do cache do pub, fora do repositório). `flutter pub get --enforce-lockfile` restaurou o cache sem alterar arquivos versionados.
+- Mesmo comando de 15 arquivos acima, `--reporter expanded` → **124 testes aprovados**.
+- `flutter analyze --no-pub` → **159 issues (153 info, 6 warning, 0 error), exit 1**; nenhum em `todo_alarm_service.dart`, `todo_schedule_calculator.dart` ou `main.dart`. Igual à linha de base; não é PASS.
+- `NOT_RUN`: AC-01 na hora real 08h30/08h10 (exige esperar a manhã; o relógio do S25 não foi alterado) e a parte “após sincronização confirmada” do AC-01, que depende da F12; suíte completa `flutter test --no-pub`; TalkBack.
 
 ### Modelo de fala em Configurações (2026-11-12)
 - O download do modelo local saiu do microfone do chat e foi para Configurações > "Transcrição no aparelho", com progresso e exclusão. Desligado, o áudio vai direto para o ChatGPT. O microfone do chat só dita; sem modelo, ele aponta para Configurações.
