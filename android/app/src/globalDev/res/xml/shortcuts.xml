@@ -13,4 +13,30 @@
             <extra android:name="some unique action key" android:value="quick_note" />
         </intent>
     </shortcut>
+    <shortcut
+        android:shortcutId="chat_type"
+        android:enabled="true"
+        android:icon="@drawable/ic_quick_note"
+        android:shortcutShortLabel="@string/shortcut_chat_type"
+        android:shortcutLongLabel="@string/shortcut_chat_type">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.segundamente.dev"
+            android:targetClass="com.memexlab.memex.FloatingChatActivity">
+            <extra android:name="floating_chat_mode" android:value="type" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="chat_talk"
+        android:enabled="true"
+        android:icon="@drawable/ic_quick_note"
+        android:shortcutShortLabel="@string/shortcut_chat_talk"
+        android:shortcutLongLabel="@string/shortcut_chat_talk">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.segundamente.dev"
+            android:targetClass="com.memexlab.memex.FloatingChatActivity">
+            <extra android:name="floating_chat_mode" android:value="talk" />
+        </intent>
+    </shortcut>
 </shortcuts>

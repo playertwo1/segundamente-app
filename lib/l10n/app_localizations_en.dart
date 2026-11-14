@@ -4798,4 +4798,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get todoRetry => 'Try again';
+
+  @override
+  String get floatingOpenInApp => 'Open in app';
+
+  @override
+  String get floatingListening => 'Listening';
+
+  @override
+  String get floatingListeningHint =>
+      'The message sends itself when speech ends.';
+
+  @override
+  String get floatingMicDenied =>
+      'Microphone permission denied. Use the keyboard.';
+
+  @override
+  String get floatingModelMissing =>
+      'Download the voice model to talk. Use the keyboard for now.';
+
+  @override
+  String get floatingListenFailed =>
+      'Could not listen right now. Use the keyboard.';
 }

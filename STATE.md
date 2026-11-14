@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F15 — Widget e atalhos Android (F15-02 READY); F11 — Todo robusto concluída em 2026-11-14; em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`
+**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F15 — Widget e atalhos Android (IN_PROGRESS, F15-02), em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -13,16 +13,17 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | F7-03 DONE (D-060; voz duplex por turnos, D-049); F7-02 adiada (D-041); F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | DONE | F11-01 a F11-06 DONE (F11-06 em D-061); portão fechado em 2026-11-14 (AC-01 observado no S25; auditoria PASS) |
+| F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado observados pelo dono no S25; confirmação por adb NOT_RUN. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 READY (D-062); F15-03 a F15-07 BLOCKED por dependência | D-062 e D-063; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
-1. **F15-02 (chat flutuante):** READY (D-062). Ver `docs/roadmap/F15-widget-e-atalhos-android.md`.
-2. **Com o S25 no cabo:** conferir por adb a entrega das 08h10 (histórico de alarmes e `usagestats`), instalar o build com as correções MEDIUM e validar, remover pelo app as tarefas sintéticas `F11 AC-01` e `F11 cold start` e confirmar que não sobra alarme.
-3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
+1. **F15-02 (chat flutuante):** código e testes prontos na branch feat/f15-02-chat-flutuante (D-065). Falta validar no S25: instalar o pacote dev, abrir pelos atalhos Conversar e Falar, medir a abertura a frio, conferir a volta para a tela de origem e o Abrir no app.
+2. **Limpeza F11:** remover a tarefa sintética `F11 cold start` das Atrasadas, se ainda estiver lá.
+3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
+4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
+5. **F12:** permanece BLOCKED até a fase L ter base e as decisões de sync; a F11 já está DONE.
 
 ## Pendências do dono
 
@@ -41,10 +42,23 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### F15-02 — chat flutuante, implementação (2026-11-14)
+- O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.
+- Comandos e saídas:
+  - `flutter pub get --enforce-lockfile` → `Got dependencies!`
+  - `flutter analyze` → 159 issues (0 erros, 6 warnings e 153 infos, todos em arquivos que esta branch não alterou ou já presentes no HEAD)
+  - `flutter test --no-pub --reporter compact` → `+1802 ~4: All other tests passed!` (4 ignorados por ambiente: ripgrep ausente e avaliação de agente ao vivo; as 4 falhas antigas de Configurações não reproduziram)
+  - `./gradlew :app:compileGlobalDevDebugKotlin` → BUILD SUCCESSFUL
+  - `flutter build apk --flavor globalDev --debug --no-pub` → `app-globalDev-debug.apk` (≈255 MiB)
+- Testes novos: `test/data/services/floating_chat_service_test.dart`, `test/ui/floating_chat/view_models/listen_once_viewmodel_test.dart`, `test/ui/floating_chat/widgets/floating_chat_screen_test.dart`, `test/integration/floating_chat_flow_test.dart` e casos novos em `test/ui/chat/widgets/agent_chat_dialog_test.dart`.
+- Aparelho: nenhum (`adb devices` vazio).
+- `NOT_RUN`: tudo no S25 (abertura a frio medida, transparência sobre a tela inicial, troca de host entre `MainActivity` e a folha, teclado no Conversar, microfone e fim de fala no Falar, volta para a tela de origem ao fechar, Abrir no app levando a conversa); TalkBack; envio pelo botão com escuta ativa (sem teste).
+- Estado: F15-02 segue IN_PROGRESS até a evidência no S25.
+
 ### F11 — portão fechado (2026-11-14)
 - AC-01: tarefa sintética `F11 AC-01` (pacote `app.segundamente.dev`, S25 Ultra), vencimento 08h30, alerta de 20 min. Na conferência por adb da noite anterior, o alarme exato das 08h10 estava pendente (`exactAllowReason=permission`). O dono relatou que a notificação chegou às 08h10: PASS observado pelo dono. Confirmação por adb da entrega: `NOT_RUN` (aparelho fora do PC).
 - Concluir com o app fechado: o dono fechou o app e tocou em Concluir nessa notificação; a tarefa foi para Concluídas. PASS observado pelo dono; adb `NOT_RUN`.
-- Portão F11 fechado: F11-01 a F11-06 DONE, AC-01 observado no S25, nenhum Todo antigo perdido; auditoria `PASS` em `docs/reviews/F11.md`. Pela D-062, a F15-02 vira READY sem nova decisão.
+- Portão F11 fechado: F11-01 a F11-06 DONE, AC-01 observado no S25, nenhum Todo antigo perdido; auditoria `PASS` em `docs/reviews/F11.md` (detalhes lá). Pela D-062, a F15 fica liberada para a F15-02 sem nova decisão.
 - `NOT_RUN`, sem bloquear o portão: confirmação por adb da entrega das 08h10; a parte "após sincronização confirmada" do AC-01 (depende da F12); validação no S25 do build com as correções MEDIUM; TalkBack, tema claro e fonte ampliada no Todo; `flutter test` completo.
 - Limpeza pendente com o aparelho conectado: remover pelo app as tarefas sintéticas `F11 AC-01` e `F11 cold start` e confirmar que não sobra alarme.
 

@@ -3,4 +3,6 @@
     <!-- App shortcut labels for Quick Note (home-screen shortcut). -->
     <string name="shortcut_quick_note">Nota rápida</string>
     <string name="shortcut_quick_note_long">Nota rápida</string>
+    <string name="shortcut_chat_type">Conversar</string>
+    <string name="shortcut_chat_talk">Falar</string>
 </resources>

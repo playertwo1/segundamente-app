@@ -1,0 +1,56 @@
+package com.memexlab.memex.channels
+
+import android.app.Activity
+import android.content.Intent
+import com.memexlab.memex.FloatingChatActivity
+import com.memexlab.memex.MainActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+
+/**
+ * `com.memexlab.memex/floating_chat` (F15-02): the mode a floating-chat launch asked for,
+ * plus close and open-in-app. The Dart side pulls the mode with `takePendingMode`;
+ * `notifyOpen` only tells it that a mode is waiting.
+ */
+object FloatingChatChannelHandler {
+    private const val CHANNEL = "com.memexlab.memex/floating_chat"
+
+    private var channel: MethodChannel? = null
+    private var pendingMode: String? = null
+
+    /** Accepts only "type" and "talk"; anything else means no pending mode. */
+    fun setPendingMode(mode: String?) {
+        pendingMode = mode?.takeIf { it == "type" || it == "talk" }
+    }
+
+    fun notifyOpen() {
+        channel?.invokeMethod("open", null)
+    }
+
+    fun register(flutterEngine: FlutterEngine, activity: Activity) {
+        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).apply {
+            setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "takePendingMode" -> {
+                        result.success(pendingMode)
+                        pendingMode = null
+                    }
+                    // Only the floating sheet may close itself or hand off to the app; never the MainActivity.
+                    "close" -> {
+                        if (activity is FloatingChatActivity) activity.finish()
+                        result.success(null)
+                    }
+                    "openInApp" -> {
+                        if (activity is FloatingChatActivity) {
+                            activity.startActivity(
+                                Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        }
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
+    }
+}

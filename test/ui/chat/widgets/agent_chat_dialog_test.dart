@@ -31,6 +31,8 @@ import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/view_models/voice_dictation_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/agent_chat_dialog.dart';
+import 'package:memex/ui/floating_chat/floating_chat_host.dart';
+import 'package:memex/ui/floating_chat/view_models/listen_once_viewmodel.dart';
 import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/core/widgets/agent_logo_loading.dart';
@@ -43,6 +45,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
+import '../../../helpers/duplex_voice_fakes.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -1441,6 +1445,194 @@ void main() {
       expect(closeIconRect.right, greaterThan(dialogRect.right - 13));
       expect(closeIconRect.right, greaterThan(viewportSize.width - 13));
       expect(closeButtonRect.left - fullscreenButtonRect.right, 0);
+    });
+  });
+
+  group('floating chat sheet (F15-02)', () {
+    Future<void> settle(WidgetTester tester) async {
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+    }
+
+    testWidgets('header offers Open in app and Close, and no other icons',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      await _pumpDialogFrame(
+        tester,
+        dialog: AgentChatDialog(
+          floatingHost: FloatingChatHost(
+            onClose: () {},
+            onOpenInApp: (_) {},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+
+      expect(find.text(l10n.floatingOpenInApp), findsOneWidget);
+      expect(find.text(l10n.close), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('agent_chat_close_button')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('agent_chat_fullscreen_toggle')),
+        findsNothing,
+      );
+      for (final label in [l10n.floatingOpenInApp, l10n.close]) {
+        final button = find.ancestor(
+          of: find.text(label),
+          matching: find.byType(TextButton),
+        );
+        expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+        expect(tester.getSize(button).width, greaterThanOrEqualTo(48));
+      }
+    });
+
+    testWidgets('Close and a tap outside call onClose without popping',
+        (tester) async {
+      var closed = 0;
+      await _pumpDialogFrame(
+        tester,
+        dialog: AgentChatDialog(
+          floatingHost: FloatingChatHost(
+            onClose: () => closed++,
+            onOpenInApp: (_) {},
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+
+      await tester.tap(find.text(UserStorage.l10n.close));
+      await tester.pump();
+      expect(closed, 1);
+      // Still on screen: nothing popped the route under the dialog.
+      expect(find.byType(AgentChatDialog), findsOneWidget);
+
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pump();
+      expect(closed, 2);
+      expect(find.byType(AgentChatDialog), findsOneWidget);
+    });
+
+    testWidgets('Open in app passes the current session id (null when new)',
+        (tester) async {
+      final opened = <String?>[];
+      await _pumpDialogFrame(
+        tester,
+        dialog: AgentChatDialog(
+          floatingHost: FloatingChatHost(
+            onClose: () {},
+            onOpenInApp: opened.add,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+
+      await tester.tap(find.text(UserStorage.l10n.floatingOpenInApp));
+      await tester.pump();
+
+      expect(opened, [null]);
+    });
+
+    testWidgets('autofocusInput focuses the message field', (tester) async {
+      await _pumpDialogFrame(
+        tester,
+        dialog: const AgentChatDialog(autofocusInput: true),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+
+      final field = tester.widget<EditableText>(find.byType(EditableText).last);
+      expect(field.focusNode.hasFocus, isTrue);
+    });
+
+    testWidgets('listenOnStart shows Listening and sends the utterance',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      final device = FakeAudioDevice();
+      final listenOnce = ListenOnceViewModel(
+        service: device.service,
+        transcribe: (_) async => 'oi, tudo bem',
+        speechModelMissing: () async => false,
+      );
+      addTearDown(listenOnce.dispose);
+
+      await _pumpDialogFrame(
+        tester,
+        dialog: AgentChatDialog(
+          listenOnStart: true,
+          listenOnceForTesting: listenOnce,
+        ),
+      );
+      await settle(tester);
+
+      expect(device.micHeld, isTrue);
+      expect(find.text(l10n.floatingListening), findsOneWidget);
+      expect(find.text(l10n.floatingListeningHint), findsOneWidget);
+
+      device.mic.add(pcm(4, loud: true));
+      device.mic.add(pcm(2, loud: false));
+      await settle(tester);
+
+      expect(device.micHeld, isFalse);
+      expect(find.text(l10n.floatingListening), findsNothing);
+      expect(find.text('oi, tudo bem'), findsOneWidget);
+    });
+
+    testWidgets(
+        'listenOnStart explains a denied microphone and keeps the keyboard',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      final device = FakeAudioDevice()..permission = false;
+      final listenOnce = ListenOnceViewModel(
+        service: device.service,
+        speechModelMissing: () async => false,
+      );
+      addTearDown(listenOnce.dispose);
+
+      await _pumpDialogFrame(
+        tester,
+        dialog: AgentChatDialog(
+          listenOnStart: true,
+          listenOnceForTesting: listenOnce,
+        ),
+      );
+      await settle(tester);
+
+      expect(device.micStarts, 0);
+      expect(find.text(l10n.floatingMicDenied), findsOneWidget);
+      expect(find.byType(EditableText), findsOneWidget);
+    });
+
+    testWidgets('typing while listening closes the microphone and sends nothing',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      final device = FakeAudioDevice();
+      final listenOnce = ListenOnceViewModel(
+        service: device.service,
+        transcribe: (_) async => 'oi, tudo bem',
+        speechModelMissing: () async => false,
+      );
+      addTearDown(listenOnce.dispose);
+
+      await _pumpDialogFrame(
+        tester,
+        dialog: AgentChatDialog(
+          listenOnStart: true,
+          listenOnceForTesting: listenOnce,
+        ),
+      );
+      await settle(tester);
+      expect(device.micHeld, isTrue);
+
+      await tester.enterText(find.byType(EditableText).last, 'digitando');
+      await settle(tester);
+
+      expect(device.micHeld, isFalse);
+      expect(find.text(l10n.floatingListening), findsNothing);
+      expect(find.text('oi, tudo bem'), findsNothing);
+      expect(
+        tester.widget<EditableText>(find.byType(EditableText).last).controller.text,
+        'digitando',
+      );
     });
   });
 }

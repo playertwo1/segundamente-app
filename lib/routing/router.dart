@@ -40,19 +40,49 @@ import 'package:memex/ui/settings/widgets/personal_center_screen.dart';
 import 'package:memex/ui/user_setup/widgets/user_setup_screen.dart';
 import 'package:memex/routing/routes.dart';
 import 'package:memex/domain/models/character_model.dart';
+import 'package:memex/domain/models/floating_chat_mode.dart';
+import 'package:memex/ui/floating_chat/widgets/floating_chat_screen.dart';
 
 /// Creates the app [GoRouter]. Root content is built by [rootBuilder].
+/// [initialLocation] starts the app elsewhere, e.g. the floating chat sheet.
 GoRouter createAppRouter(
   GlobalKey<NavigatorState> navigatorKey,
-  Widget Function() rootBuilder,
-) {
+  Widget Function() rootBuilder, {
+  String initialLocation = AppRoutes.home,
+}) {
   return GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: AppRoutes.home,
+    initialLocation: initialLocation,
     routes: [
       GoRoute(
         path: AppRoutes.home,
         builder: (_, __) => rootBuilder(),
+      ),
+      GoRoute(
+        path: AppRoutes.floatingChat,
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          // Opaque so the screens below are not painted; the Activity itself
+          // is transparent, so the launcher shows through.
+          opaque: true,
+          barrierColor: null,
+          transitionDuration: const Duration(milliseconds: 180),
+          child: FloatingChatScreen(
+            mode: FloatingChatMode.parse(
+                  state.uri.queryParameters['mode'],
+                ) ??
+                FloatingChatMode.type,
+          ),
+          transitionsBuilder: (context, animation, _, child) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+        ),
       ),
       GoRoute(
         path: AppRoutes.userSetup,

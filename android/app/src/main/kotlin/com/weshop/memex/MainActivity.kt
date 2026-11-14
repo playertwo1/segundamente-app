@@ -9,8 +9,13 @@ import com.memexlab.memex.channels.ChannelRegistrar
 import com.memexlab.memex.channels.ExternalFileImportChannelHandler
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
+import java.lang.ref.WeakReference
 
 class MainActivity : FlutterFragmentActivity() {
+
+    companion object {
+        var current: WeakReference<MainActivity>? = null
+    }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         // If the Activity is being recreated (system killed it in background),
@@ -19,7 +24,10 @@ class MainActivity : FlutterFragmentActivity() {
         if (savedInstanceState != null) {
             intent?.removeExtra("some unique action key")
         }
+        // One engine, one host: the floating sheet gives way to the full app.
+        SharedFlutterEngine.releaseHost(FloatingChatActivity.current?.get())
         super.onCreate(savedInstanceState)
+        current = WeakReference(this)
         AppActionChannelHandler.handleIntent(this, intent)
         BackupImportChannelHandler.handleIntent(this, intent)
         ExternalFileImportChannelHandler.handleIntent(this, intent)
@@ -34,6 +42,16 @@ class MainActivity : FlutterFragmentActivity() {
         ExternalFileImportChannelHandler.handleIntent(this, intent)
         AgentBackgroundChannelHandler.handleIntent(intent)
     }
+
+    override fun onDestroy() {
+        if (current?.get() === this) current = null
+        super.onDestroy()
+    }
+
+    // The engine lives in SharedFlutterEngine so it survives this Activity.
+    override fun getCachedEngineId(): String = SharedFlutterEngine.ensure(this)
+
+    override fun shouldDestroyEngineWithHost(): Boolean = false
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
