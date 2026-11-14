@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F11 — Todo robusto (IN_PROGRESS), em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`
+**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F15 — Widget e atalhos Android (F15-02 READY); F11 — Todo robusto concluída em 2026-11-14; em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -13,14 +13,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | F7-03 DONE (D-060; voz duplex por turnos, D-049); F7-02 adiada (D-041); F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 a F11-06 DONE (F11-06 em D-061); portão aguarda AC-01 (08h30/08h10) no S25 |
+| F11 | DONE | F11-01 a F11-06 DONE (F11-06 em D-061); portão fechado em 2026-11-14 (AC-01 observado no S25; auditoria PASS) |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 a F15-07 BLOCKED até o portão da F11 | D-062 e D-063; widget e atalhos Android, paralela à fase L do fork |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 READY (D-062); F15-03 a F15-07 BLOCKED por dependência | D-062 e D-063; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
-1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão. O AC-01 continua pendente; D-063 não o dispensa. Depois do portão, a F15-02 (chat flutuante) vira READY sem nova decisão (D-062).
-2. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
+1. **F15-02 (chat flutuante):** READY (D-062). Ver `docs/roadmap/F15-widget-e-atalhos-android.md`.
+2. **Com o S25 no cabo:** conferir por adb a entrega das 08h10 (histórico de alarmes e `usagestats`), instalar o build com as correções MEDIUM e validar, remover pelo app as tarefas sintéticas `F11 AC-01` e `F11 cold start` e confirmar que não sobra alarme.
 3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
 4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
@@ -28,7 +28,6 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
-- Observar o AC-01 no S25 às 08h10 (aviso de uma tarefa sintética das 08h30).
 
 ## Ambiente (fora do repositório)
 
@@ -41,6 +40,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F11 — portão fechado (2026-11-14)
+- AC-01: tarefa sintética `F11 AC-01` (pacote `app.segundamente.dev`, S25 Ultra), vencimento 08h30, alerta de 20 min. Na conferência por adb da noite anterior, o alarme exato das 08h10 estava pendente (`exactAllowReason=permission`). O dono relatou que a notificação chegou às 08h10: PASS observado pelo dono. Confirmação por adb da entrega: `NOT_RUN` (aparelho fora do PC).
+- Concluir com o app fechado: o dono fechou o app e tocou em Concluir nessa notificação; a tarefa foi para Concluídas. PASS observado pelo dono; adb `NOT_RUN`.
+- Portão F11 fechado: F11-01 a F11-06 DONE, AC-01 observado no S25, nenhum Todo antigo perdido; auditoria `PASS` em `docs/reviews/F11.md`. Pela D-062, a F15-02 vira READY sem nova decisão.
+- `NOT_RUN`, sem bloquear o portão: confirmação por adb da entrega das 08h10; a parte "após sincronização confirmada" do AC-01 (depende da F12); validação no S25 do build com as correções MEDIUM; TalkBack, tema claro e fonte ampliada no Todo; `flutter test` completo.
+- Limpeza pendente com o aparelho conectado: remover pelo app as tarefas sintéticas `F11 AC-01` e `F11 cold start` e confirmar que não sobra alarme.
 
 ### F15-01 — maquetes do widget e do chat (2026-11-14)
 - Documento `docs/fases/F15-01-maquetes.md` com as opções A (linhas) e B (teclas), o chat flutuante, os estados compartilhados, a estimativa de células (fórmula 70n−30 dp, não medida) e os riscos. Fonte: `docs/fases/f15-01/maquetes.html` (dados sintéticos). Decisão D-063. Estado da subfase: DONE (D-064).

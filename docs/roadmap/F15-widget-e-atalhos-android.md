@@ -2,7 +2,7 @@
 
 ## F15 — Widget e atalhos Android
 
-**Estado:** F15-01 DONE (D-063, D-064): combinação escolhida pelo dono em 2026-11-14 (teclas no pequeno, linhas no grande). F15-02 a F15-07 BLOCKED até o portão da F11; vira READY ao fechá-lo, sem nova decisão (D-062).
+**Estado:** F15-01 DONE (D-063, D-064): combinação escolhida pelo dono em 2026-11-14 (teclas no pequeno, linhas no grande). Portão da F11 fechado em 2026-11-14: F15-02 READY (D-062). F15-03 a F15-07 BLOCKED por dependência das subfases anteriores.
 
 **Objetivo:** dar à Segunda Mente presença na tela inicial e no painel rápido do Android: conversar, falar, capturar e ver as tarefas de hoje sem abrir o app inteiro. A forma da minicápsula é decidida por protótipo no S25.
 
@@ -11,7 +11,7 @@
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
 | F15-01 | Maquetes do widget (pequeno, médio e grande) e do chat flutuante na direção AMOLED de `DESIGN.md`, para o dono escolher | P1 | Portão F11 (não dispensado; D-063 abre só esta subfase) | DONE (D-064): maquetes em [F15-01-maquetes.md](../fases/F15-01-maquetes.md); escolha do dono: teclas no pequeno, linhas no grande | Escolha do dono registrada |
-| F15-02 | Chat flutuante: Activity translúcida com rota de chat compacto; Conversar abre conversa nova com a Segunda Mente; Falar ouve e envia sozinho ao fim da fala; aviso da F11-06 sob o campo; botão para expandir para o app | P0 | F15-01 | BLOCKED | Abertura a frio medida no S25; teclado ou microfone conforme o toque; volta para a tela de origem ao fechar; testes de widget e de integração |
+| F15-02 | Chat flutuante: Activity translúcida com rota de chat compacto; Conversar abre conversa nova com a Segunda Mente; Falar ouve e envia sozinho ao fim da fala; aviso da F11-06 sob o campo; botão para expandir para o app | P0 | F15-01 | READY | Abertura a frio medida no S25; teclado ou microfone conforme o toque; volta para a tela de origem ao fechar; testes de widget e de integração |
 | F15-03 | Widget redimensionável, tamanho pequeno (Conversar e Falar); ações entram pelo `AppActionService` (teclas, D-064) | P0 | F15-02 | BLOCKED | Widget adicionado e tocado no S25 |
 | F15-04 | Tamanho médio: Anotar, Foto e Colar levam à linha do tempo, com confirmação antes de gravar (teclas, D-064) | P1 | F15-03 | BLOCKED | Captura gravada só após confirmação; testes de widget e de integração; fluxo tocado no S25 |
 | F15-05 | Tamanho grande: até 3 tarefas (atrasadas primeiro, depois as de hoje por horário), concluir no toque, título abre a tarefa e "+ tarefa"; atualiza a cada mudança do Todo e na virada do dia; títulos só na tela inicial (linhas, D-064) | P1 | F15-03, F11 | BLOCKED | Concluir e abrir testados no S25; lista atualizada após mudança do Todo e na virada do dia; nada visível na tela de bloqueio |
