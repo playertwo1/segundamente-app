@@ -20,10 +20,11 @@ class AppActionService {
   static final AppActionService instance = AppActionService._();
 
   static const String quickNoteAction = 'quick_note';
+  static const String openTodoAction = 'open_todo';
   static const Duration defaultLateActionTimeout = Duration(seconds: 2);
   static const Duration _dedupWindow = Duration(seconds: 2);
 
-  static const Set<String> _knownActions = {quickNoteAction};
+  static const Set<String> _knownActions = {quickNoteAction, openTodoAction};
 
   final Logger _logger = getLogger('AppActionService');
   final DateTime Function() _now;

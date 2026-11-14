@@ -1,5 +1,7 @@
 import 'package:memex/data/services/todo_service.dart';
+import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/domain/models/session_report.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/utils/result.dart';
@@ -23,6 +25,17 @@ class TodoRepository {
     bool includeDeleted = false,
   }) =>
       runResult(() => _service.load(userId, includeDeleted: includeDeleted));
+
+  Future<Result<TodoAlarmStatus>> alarmStatus() =>
+      runResult(TodoAlarmService.instance.status);
+
+  Future<Result<TodoAlarmStatus>> requestAlarmPermissions() =>
+      runResult(TodoAlarmService.instance.requestPermissions);
+
+  Future<Result<TodoAlarmStatus>> synchronizeAlarms(String userId) =>
+      runResult(() async => TodoAlarmService.instance.synchronize(
+            await _service.load(userId),
+          ));
 
   Future<Result<TodoItem>> add({
     required String userId,
@@ -101,6 +114,12 @@ class TodoRepository {
             id: id,
             done: done,
           ));
+
+  Future<Result<void>> snooze({
+    required String userId,
+    required String id,
+  }) =>
+      runResultVoid(() => _service.snooze(userId: userId, id: id));
 
   Future<Result<void>> remove({required String userId, required String id}) =>
       runResultVoid(() => _service.remove(userId: userId, id: id));

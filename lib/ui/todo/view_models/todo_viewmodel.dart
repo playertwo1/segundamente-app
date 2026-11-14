@@ -1,17 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/native_action_service.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
-import 'package:memex/domain/models/explicit_due.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/utils/result.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-enum ReminderOutcome { created, noExactTime, permissionDenied, failed }
 
 enum TodoListSection { today, upcoming, overdue, completed }
 
@@ -27,19 +22,10 @@ class TodoViewModel extends ChangeNotifier {
       String? description,
       bool allDay,
     })? openCalendar,
-    Future<bool> Function({
-      required String title,
-      required DateTime dueDate,
-      String? notes,
-    })? createReminder,
-    Future<bool> Function()? ensureReminderPermission,
     DateTime Function()? now,
   })  : _router = router,
         _now = now ?? DateTime.now,
-        _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert,
-        _createReminder = createReminder ?? NativeActionService.addReminder,
-        _ensureReminderPermission =
-            ensureReminderPermission ?? _askReminderPermission;
+        _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert;
 
   final MemexRouter _router;
   MemexRouter get router => _router;
@@ -52,35 +38,13 @@ class TodoViewModel extends ChangeNotifier {
     bool allDay,
   }) _openCalendar;
 
-  final Future<bool> Function({
-    required String title,
-    required DateTime dueDate,
-    String? notes,
-  }) _createReminder;
-  final Future<bool> Function() _ensureReminderPermission;
-
-  // Android keeps reminders in the calendar; iOS has its own store.
-  static Future<bool> _askReminderPermission() async {
-    final permission = Platform.isAndroid
-        ? Permission.calendarFullAccess
-        : Permission.reminders;
-    if ((await permission.status).isGranted) return true;
-    return (await permission.request()).isGranted;
-  }
-
-  /// A reminder needs a moment. Only a date written together with a time
-  /// qualifies; a bare date or a word like "sexta" is never turned into one.
-  static DateTime? reminderTimeFor(String due) {
-    final explicit = parseExplicitDue(due);
-    return explicit != null && explicit.hasTime ? explicit.date : null;
-  }
-
   List<TodoItem> _all = const [];
   TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
   TodoListSection section = TodoListSection.today;
   TodoPriority? priorityFilter;
   bool loading = false;
   String? errorMessage;
+  TodoAlarmStatus alarmStatus = TodoAlarmStatus.unsupported;
 
   List<TodoItem> get allItems => List.unmodifiable(_all);
 
@@ -156,8 +120,37 @@ class TodoViewModel extends ChangeNotifier {
       onOk: (value) => _all = value,
       onError: (error, _) => errorMessage = '$error',
     );
+    await refreshAlarmStatus();
     await refreshShortcutSettings();
     loading = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshAlarmStatus() async {
+    (await _router.todoAlarmStatus()).when(
+      onOk: (value) => alarmStatus = value,
+      onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
+    );
+    if (alarmStatus == TodoAlarmStatus.ready) {
+      (await _router.synchronizeTodoAlarms()).when(
+        onOk: (value) => alarmStatus = value,
+        onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
+      );
+    }
+    notifyListeners();
+  }
+
+  Future<void> configureAlarmPermissions() async {
+    (await _router.requestTodoAlarmPermissions()).when(
+      onOk: (value) => alarmStatus = value,
+      onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
+    );
+    if (alarmStatus == TodoAlarmStatus.ready) {
+      (await _router.synchronizeTodoAlarms()).when(
+        onOk: (value) => alarmStatus = value,
+        onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
+      );
+    }
     notifyListeners();
   }
 
@@ -246,22 +239,6 @@ class TodoViewModel extends ChangeNotifier {
       description: item.source?.excerpt,
       allDay: slot.allDay,
     );
-  }
-
-  /// Saves the reminder on the device. The screen asks the user first; the
-  /// calendar permission is requested only now, when the user said yes.
-  Future<ReminderOutcome> addReminder(TodoItem item) async {
-    final when = reminderTimeFor(item.due);
-    if (when == null) return ReminderOutcome.noExactTime;
-    if (!await _ensureReminderPermission()) {
-      return ReminderOutcome.permissionDenied;
-    }
-    final created = await _createReminder(
-      title: item.text,
-      dueDate: when,
-      notes: item.source?.excerpt,
-    );
-    return created ? ReminderOutcome.created : ReminderOutcome.failed;
   }
 
   Future<bool> _change<T>(Future<Result<T>> action) async {

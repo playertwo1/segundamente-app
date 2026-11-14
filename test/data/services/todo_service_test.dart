@@ -195,6 +195,32 @@ void main() {
     expect(tombstone.version, greaterThan(item.version));
   });
 
+  test('snoozes a timed task for ten minutes and persists it', () async {
+    final item = await todos.add(
+      userId: userId,
+      text: 'Reunião',
+      dueDate: '2026-11-14',
+      dueTime: '08:30',
+      now: DateTime.utc(2026, 11, 13, 18),
+    );
+    final now = DateTime.utc(2026, 11, 13, 22, 45);
+
+    await todos.snooze(userId: userId, id: item.id, now: now);
+
+    final snoozed = (await todos.load(userId)).single;
+    expect(snoozed.snoozedUntil, '2026-11-13T22:55:00.000Z');
+    expect(snoozed.version, item.version + 1);
+  });
+
+  test('an undated task cannot be snoozed', () async {
+    final item = await todos.add(userId: userId, text: 'Anotar ideia');
+
+    await expectLater(
+      todos.snooze(userId: userId, id: item.id),
+      throwsStateError,
+    );
+  });
+
   test('completing a recurrence retains history and creates one next task',
       () async {
     final item = await todos.add(

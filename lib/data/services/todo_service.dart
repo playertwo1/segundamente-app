@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:memex/data/services/file_system_service.dart';
+import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
@@ -152,6 +153,7 @@ class TodoService {
         subtasks: subtasks,
         recurrence: nextRecurrence,
         clearRecurrence: clearRecurrence,
+        clearSnoozedUntil: true,
         seriesId: item.seriesId ?? (nextRecurrence == null ? null : item.id),
         version: item.version + 1,
       );
@@ -177,6 +179,7 @@ class TodoService {
         done: done,
         doneAt: done ? moment.toIso8601String() : null,
         clearDoneAt: !done,
+        clearSnoozedUntil: true,
         version: item.version + 1,
       );
       if (done && item.recurrence != null) {
@@ -240,6 +243,26 @@ class TodoService {
             ));
   }
 
+  Future<void> snooze({
+    required String userId,
+    required String id,
+    DateTime? now,
+  }) async {
+    final moment = now ?? DateTime.now();
+    await _change(userId, id, (item) {
+      if (!item.hasAlarmTime) {
+        throw StateError('only a timed Todo alarm can be snoozed: $id');
+      }
+      return item.copyWith(
+        snoozedUntil: moment
+            .toUtc()
+            .add(const Duration(minutes: todoAlarmSnoozeMinutes))
+            .toIso8601String(),
+        version: item.version + 1,
+      );
+    });
+  }
+
   Future<void> restore({required String userId, required String id}) =>
       _storageLock.synchronized(() async {
         final items = await _readAll(userId);
@@ -249,6 +272,7 @@ class TodoService {
         if (!item.isTombstoned) return;
         items[index] = item.copyWith(
           clearDeletedAt: true,
+          clearSnoozedUntil: true,
           version: item.version + 1,
         );
         await _write(userId, items);
@@ -443,6 +467,7 @@ class TodoService {
         flush: true,
       );
       await temp.rename(file.path);
+      await TodoAlarmService.instance.synchronize(items);
     } finally {
       if (await temp.exists()) await temp.delete();
     }

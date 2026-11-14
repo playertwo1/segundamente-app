@@ -3728,6 +3728,49 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get todoAlarmChannelName => 'Task reminders';
+
+  @override
+  String get todoAlarmChannelDescription =>
+      'Time-sensitive reminders for your Todo tasks.';
+
+  @override
+  String get todoAlarmNotificationTitle => 'Task reminder';
+
+  @override
+  String todoAlarmNotificationBody(String task, String time) {
+    return '$task · due at $time';
+  }
+
+  @override
+  String get todoAlarmSnoozeAction => 'Snooze 10 min';
+
+  @override
+  String get todoAlarmCompleteAction => 'Complete';
+
+  @override
+  String get todoAlarmOpenAction => 'Open';
+
+  @override
+  String get todoAlarmNotificationsDenied =>
+      'Task notifications are off. Turn them on to receive reminders.';
+
+  @override
+  String get todoAlarmExactDenied =>
+      'Exact alarms are off. Task reminders are not guaranteed.';
+
+  @override
+  String get todoAlarmBothDenied =>
+      'Notifications and exact alarms are off. Task reminders are not guaranteed.';
+
+  @override
+  String get todoAlarmUnavailable =>
+      'Task alarm permissions could not be checked. Reminders are not guaranteed.';
+
+  @override
+  String get todoAlarmConfigure => 'Configure';
+
+  @override
   String get todoOpenSource => 'Source';
 
   @override
@@ -3752,20 +3795,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String documentCitationFrom(String name) {
     return 'comment by $name';
   }
-
-  @override
-  String get todoReminderTitle => 'Create a reminder?';
-
-  @override
-  String todoReminderBody(Object text, Object when) {
-    return '\"$text\" will be saved as a reminder in your calendar for $when. Nothing is created before you confirm.';
-  }
-
-  @override
-  String get todoReminderConfirm => 'Create reminder';
-
-  @override
-  String get todoReminderCreated => 'Reminder created';
 
   @override
   String get reportUnconfirmed => 'Unconfirmed';

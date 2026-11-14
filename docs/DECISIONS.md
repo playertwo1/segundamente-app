@@ -383,3 +383,10 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-056 — Ordem de execução da F11 enquanto alarmes aguardam o S25 (2026-11-13)
 - Contexto: o dono pediu para deixar a F11-04 pendente até haver acesso ao Galaxy S25 Ultra e avançar para a próxima subfase. A F11-04 exige evidência física de alarmes exatos em Doze, offline, após reinício e com economia de bateria.
 - Decisão: manter a F11-04 `BLOCKED` e abrir a F11-05 agora. A F11-05 depende da F11-03, já concluída, e segue as regras de confirmação de IA aceitas em D-051. Esta decisão não dispensa nem simula qualquer teste físico da F11-04 e não desbloqueia outras subfases.
+
+## D-057 — Adiar notificação do Todo (2026-11-13)
+- Decisão do dono: a ação **Adiar** reagenda o aviso para 10 minutos depois.
+
+## D-058 — Retomar F11-04 com o S25 conectado (2026-11-13)
+- Contexto: D-056 manteve a F11-04 bloqueada até haver acesso ao Galaxy S25 Ultra. O dono confirmou que o aparelho está conectado e pediu para continuar.
+- Decisão: abrir a F11-04 para implementação e validação física no S25. A F11-06 continua `BLOCKED`; esta decisão não a desbloqueia.

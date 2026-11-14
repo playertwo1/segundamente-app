@@ -4,6 +4,7 @@ import 'package:memex/config/app_flavor.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
@@ -26,6 +27,8 @@ class _FakeRouter implements MemexRouter {
           if (!item.isTombstoned) item,
       ];
   TodoShortcutSettings shortcutSettings;
+  TodoAlarmStatus alarmStatus = TodoAlarmStatus.ready;
+  TodoAlarmStatus? requestedAlarmStatus;
   bool failLoad = false;
   var _next = 0;
 
@@ -41,6 +44,17 @@ class _FakeRouter implements MemexRouter {
   @override
   Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>
       Ok(shortcutSettings);
+
+  @override
+  Future<Result<TodoAlarmStatus>> todoAlarmStatus() async => Ok(alarmStatus);
+
+  @override
+  Future<Result<TodoAlarmStatus>> requestTodoAlarmPermissions() async =>
+      Ok(requestedAlarmStatus ?? alarmStatus);
+
+  @override
+  Future<Result<TodoAlarmStatus>> synchronizeTodoAlarms() async =>
+      Ok(requestedAlarmStatus ?? alarmStatus);
 
   @override
   Future<Result<TodoItem>> addTodo({
@@ -192,22 +206,19 @@ String _timeOnly(DateTime date) =>
 
 void main() {
   late List<String> calendarTitles;
-  late List<String> reminderTitles;
-  var permissionGranted = true;
 
   setUp(() async {
     AppFlavor.init('global');
     SharedPreferences.setMockInitialValues({});
     await UserStorage.initL10n();
     calendarTitles = [];
-    reminderTitles = [];
-    permissionGranted = true;
   });
 
   Future<_FakeRouter> pump(
     WidgetTester tester,
     List<TodoItem> items, {
     TodoShortcutSettings? shortcutSettings,
+    TodoAlarmStatus alarmStatus = TodoAlarmStatus.ready,
     bool failLoad = false,
     Size viewport = const Size(800, 2000),
   }) async {
@@ -215,6 +226,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final router = _FakeRouter(items, shortcutSettings: shortcutSettings);
+    router.alarmStatus = alarmStatus;
     router.failLoad = failLoad;
     final viewModel = TodoViewModel(
       router: router,
@@ -227,11 +239,6 @@ void main() {
         allDay = false,
       }) async {
         calendarTitles.add(title);
-        return true;
-      },
-      ensureReminderPermission: () async => permissionGranted,
-      createReminder: ({required title, required dueDate, notes}) async {
-        reminderTitles.add(title);
         return true;
       },
     );
@@ -720,47 +727,26 @@ void main() {
     expect(find.text('Primeiro'), findsOneWidget);
   });
 
-  testWidgets('a reminder is created only after the user confirms',
+  testWidgets('warns when task alarm permissions are denied', (tester) async {
+    final router = await pump(
+      tester,
+      [_item('t1', 'Ligar')],
+      alarmStatus: TodoAlarmStatus.bothPermissionsDenied,
+    );
+    expect(find.byKey(const ValueKey('todo_alarm_permission_banner')),
+        findsOneWidget);
+    expect(find.text(UserStorage.l10n.todoAlarmBothDenied), findsOneWidget);
+
+    router.requestedAlarmStatus = TodoAlarmStatus.ready;
+    await tester.tap(find.byKey(const ValueKey('todo_alarm_configure')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('todo_alarm_permission_banner')),
+        findsNothing);
+  });
+
+  testWidgets('Todo tasks are not exported to native reminders',
       (tester) async {
     await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21 14:30')]);
-    await tester.tap(find.text(UserStorage.l10n.todoTabUpcoming));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('todo_actions_t1')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(UserStorage.l10n.addToReminders));
-    await tester.pumpAndSettle();
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('todo_reminder_cancel')));
-    await tester.pumpAndSettle();
-    expect(reminderTitles, isEmpty);
-
-    await tester.tap(find.byKey(const ValueKey('todo_actions_t1')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(UserStorage.l10n.addToReminders));
-    await tester.pumpAndSettle();
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('todo_reminder_confirm')));
-    await tester.pumpAndSettle();
-    expect(reminderTitles, ['Ligar']);
-  });
-
-  testWidgets('a denied permission creates no reminder', (tester) async {
-    permissionGranted = false;
-    await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21 14:30')]);
-    await tester.tap(find.text(UserStorage.l10n.todoTabUpcoming));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('todo_actions_t1')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(UserStorage.l10n.addToReminders));
-    await tester.pumpAndSettle();
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('todo_reminder_confirm')));
-    await tester.pumpAndSettle();
-    expect(reminderTitles, isEmpty);
-  });
-
-  testWidgets('a date without a time has no reminder button', (tester) async {
-    await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21')]);
     await tester.tap(find.text(UserStorage.l10n.todoTabUpcoming));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('todo_actions_t1')));

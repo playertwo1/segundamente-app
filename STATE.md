@@ -13,12 +13,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | Só a F7-03 (voz duplex por turnos, D-049); F7-02 adiada (D-041), F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 a F11-03 e F11-05 DONE; F11-04 BLOCKED (validação no S25); F11-06 BLOCKED |
+| F11 | IN_PROGRESS | F11-01 a F11-03 e F11-05 DONE; F11-04 IN_PROGRESS (D-058; S25 entregou o alarme pós-boot; Concluir/offline/Doze/T16 pendentes); F11-06 BLOCKED |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 
 ## Próxima ação
 
-1. **F11-04:** aguardar o Galaxy S25 Ultra para validar alarmes exatos, offline, após reinício e em Doze; permanece BLOCKED.
+1. **F11-04:** validar Concluir, offline/Doze e T16 no S25; AC-01 08h30/08h10 ainda requer execução física (D-058).
 2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
 3. **F7-03:** validar no S25 o que falta: Interromper e falar, Encerrar, permissão negada ou revogada. Depois fechar a subfase.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
@@ -29,7 +29,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
 - Testar no S25 os itens da F7-03 acima.
-- Testar os alarmes da F11-04 no S25 (AC-01, T05, T15 e T16).
+- Concluir a validação física da F11-04 no S25: entrega pós-reinício, Concluir, offline/Doze, T16 e AC-01 08h30/08h10.
 
 ## Ambiente (fora do repositório)
 
@@ -81,6 +81,19 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `flutter analyze --no-pub` → **159 issues encontrados** no repositório; não é PASS. `dart analyze lib/ui/todo/view_models/todo_proposal_viewmodel.dart test/ui/todo/view_models/todo_proposal_viewmodel_test.dart test/integration/todo_undo_flow_test.dart test/domain/models/todo_proposal_test.dart test/agent/todo_proposal_skill_test.dart` → `No issues found!`. A análise dirigida mais ampla apontou 15 avisos/infos em linhas legadas de `todo_screen.dart`, `card_model.dart` e `timeline_card_detail_screen.dart`; a análise final dos parsers/modelos/testes encontrou 3 `info` legados em `card_model.dart` e nenhum erro.
 - AVD `CoreFlow_API36_Clean`/`emulator-5554`: `flutter run --flavor globalDev --no-pub -d emulator-5554` abriu o app após build x86_64 local temporário (filtro restaurado). Maestro navegou até Todo, confirmou o estado vazio, abriu o editor, verificou “Sem horário” e alerta padrão de 20 min e cancelou sem gravar dados.
 - `NOT_RUN`: geração de proposta por modelo real no chat/captura/persona (o AVD mostra modelo de IA não configurado); validação física no S25 (pertence à F11-04); TalkBack; suíte geral aprovada sem as quatro falhas de Configurações.
+
+### F11-04 — alarmes locais do Todo (2026-11-13)
+- Implementado o agendamento local exato no Android, com verificação e solicitação das permissões de notificações e alarmes, ações Adiar (10 min), Concluir e Abrir, reagendamento após alterações do Todo e cancelamento de alarmes obsoletos. A F11-04 permanece `IN_PROGRESS` até concluir a matriz física.
+- `flutter test --no-pub test/domain/use_cases/todo_alarm_schedule_test.dart test/domain/use_cases/todo_schedule_calculator_test.dart test/domain/models/todo_item_test.dart test/data/services/todo_service_test.dart test/data/repositories/todo_repository_test.dart test/data/repositories/todo_repository_initialization_test.dart test/data/services/session_report_service_test.dart test/data/services/app_action_service_test.dart test/ui/todo/view_models/todo_viewmodel_test.dart test/ui/todo/widgets/todo_screen_test.dart test/integration/todo_undo_flow_test.dart test/integration/memex_router_init_test.dart test/l10n/arb_key_parity_test.dart test/l10n/locale_lookup_test.dart test/l10n/hardcoded_ui_strings_test.dart` → **124 testes aprovados**.
+- `flutter build apk --flavor globalDev --debug --no-pub` → **build arm64 concluído**. O build não valida entrega física do alarme.
+- `dart analyze` nos arquivos Dart alterados → **4 diagnósticos já existentes**: `todo_screen.dart:409` (parâmetro `key` sem uso), `todo_screen.dart:765` (`value` depreciado) e dois `prefer_const_constructors` em `todo_screen_test.dart`; nenhum diagnóstico nos novos arquivos de agendamento/modelo. `flutter analyze --no-pub` → **159 issues encontrados, exit 1**; não é PASS.
+- AVD `emulator-5554` (API 36 x86_64): Maestro abriu Todo e salvou a tarefa sintética `F11 smoke QA alarm` para 14 nov. 2026 às 09:00; a hierarquia de acessibilidade mostrou o item em Próximas. `adb shell cmd appops get app.segundamente.dev SCHEDULE_EXACT_ALARM` → `allow`. `adb shell dumpsys alarm` mostrou `RTC_WAKEUP` para `ScheduledNotificationReceiver`; após excluir a tarefa sintética no app, o dump registrou `alarm_cancelled`. O teste Maestro com correspondência exata do título não passou porque o item expõe título, data e prioridade em um único rótulo; a inspeção da tela confirmou o rótulo completo.
+- S25 Ultra (SM-S938B, Android 17 / SDK 37): `adb devices -l` enumerou o aparelho e `emulator-5554`. Foi instalado `globalDev` no pacote separado `app.segundamente.dev`; o pacote estável `app.segundamente` e seus dados não foram alterados. O workspace dev usa o perfil sintético `F11 QA`.
+- No primeiro acesso, o Todo mostrou o aviso de alarme exato negado. “Configurar” abriu a tela Android “Alarmes e lembretes”; após autorizar e voltar, o aviso sumiu. `cmd appops get app.segundamente.dev SCHEDULE_EXACT_ALARM` confirmou `allow`.
+- Tarefa sintética `F11 S25 smoke abrir`, prazo 13 nov. 2026 às 21:00, alerta padrão de 20 min: `dumpsys alarm` mostrou `RTC_WAKEUP` às 20:40 com `exactAllowReason=permission`; às 20:40 o S25 entregou a notificação com título, corpo e três ações. Tocar em “Abrir” levou à lista Hoje e exibiu a tarefa com prazo correto. Tocar em “Adiar 10 min” criou novo `RTC_WAKEUP` para 20:54:04.
+- T15: após `adb reboot`, o user 0 ficou `RUNNING_LOCKED`; depois do desbloqueio, `ScheduledNotificationBootReceiver` recebeu `BOOT_COMPLETED` às 20:48:33, restaurou o alarme exato para 20:54:04 e `dumpsys alarm` registrou `Deliver` às 20:54. A notificação pós-reinício permaneceu ativa com as três ações.
+- AVD `emulator-5554` (API 36 x86_64): Maestro criou e excluiu uma tarefa sintética de amanhã às 09:00; `dumpsys alarm` confirmou o agendamento e depois `alarm_cancelled`. A assertion Maestro por título exato não correspondeu ao rótulo combinado de acessibilidade (título/data/prioridade); a inspeção mostrou o rótulo completo.
+- `NOT_RUN`: Concluir pela notificação (o servidor Maestro morreu ao tentar abrir o painel após reboot); T03 offline, Doze e recuperação após sair de Doze; T16 com permissão de notificações negada/revogada; AC-01 na hora real 08h30/08h10; replanejamento T05 por edição da tarefa; suíte completa `flutter test --no-pub`. A análise completa foi executada e encontrou 159 issues; não foi aprovada.
 
 ### Modelo de fala em Configurações (2026-11-12)
 - O download do modelo local saiu do microfone do chat e foi para Configurações > "Transcrição no aparelho", com progresso e exclusão. Desligado, o áudio vai direto para o ChatGPT. O microfone do chat só dita; sem modelo, ele aponta para Configurações.

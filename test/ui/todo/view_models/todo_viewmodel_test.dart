@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/utils/result.dart';
@@ -18,6 +19,14 @@ class _FakeRouter implements MemexRouter {
   @override
   Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>
       Ok(TodoShortcutSettings.defaults);
+
+  @override
+  Future<Result<TodoAlarmStatus>> todoAlarmStatus() async =>
+      const Ok(TodoAlarmStatus.unsupported);
+
+  @override
+  Future<Result<TodoAlarmStatus>> synchronizeTodoAlarms() async =>
+      const Ok(TodoAlarmStatus.unsupported);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

@@ -34,6 +34,7 @@ android {
     ndkVersion = "27.0.12077973"
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -44,6 +45,7 @@ android {
 
     defaultConfig {
         applicationId = "app.segundamente"
+        multiDexEnabled = true
         minSdk = 26  // Required by health plugin 13.2.1
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -128,6 +130,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime:2.10.2")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 // O sherpa_onnx traz libonnxruntime.so 1.24.3 (símbolos versionados); o plugin pede 1.28.0 e não carrega com ela.

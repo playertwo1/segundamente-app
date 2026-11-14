@@ -51,6 +51,7 @@ import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
 import 'package:memex/data/repositories/todo_repository.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
@@ -213,6 +214,11 @@ class MemexRouter {
     registerBuiltInEventSerializers();
     SearchService.instance.init(userId);
     await migrateCardsToFactAssets(userId);
+    (await _todoRepository.synchronizeAlarms(userId)).when(
+      onOk: (_) {},
+      onError: (error, stackTrace) =>
+          _logger.warning('Could not restore Todo alarms', error, stackTrace),
+    );
     return userId;
   }
 
@@ -1752,6 +1758,25 @@ class MemexRouter {
           .valueOrThrow;
     });
   }
+
+  Future<Result<void>> snoozeTodo(String id) {
+    return runResult(() async {
+      (await _todoRepository.snooze(
+        userId: await _reportUserId(),
+        id: id,
+      ))
+          .valueOrThrow;
+    });
+  }
+
+  Future<Result<TodoAlarmStatus>> todoAlarmStatus() =>
+      _todoRepository.alarmStatus();
+
+  Future<Result<TodoAlarmStatus>> requestTodoAlarmPermissions() =>
+      _todoRepository.requestAlarmPermissions();
+
+  Future<Result<TodoAlarmStatus>> synchronizeTodoAlarms() async =>
+      _todoRepository.synchronizeAlarms(await _reportUserId());
 
   Future<Result<void>> removeTodo(String id) {
     return runResult(() async {
