@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F15 — Widget e atalhos Android (IN_PROGRESS, F15-02), em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -14,8 +14,9 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 a F15-07 BLOCKED pelas dependências (F15-02 primeiro) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
+| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; F12-02 READY (implantação do Worker pelo dono) |
+| F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
@@ -23,12 +24,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12:** permanece BLOCKED até a fase L ter base e as decisões de sync; a F11 já está DONE.
+5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Fechar a F12-01 (contrato v1, teste Dart aqui, vetores da caixa de correio e teste Rust no fork) e depois L6.2 → F12-03 → L6.3 → F12-04 → F12-05.
 
 ## Pendências do dono
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
+- Implantar o Worker com a caixa de correio (L6.1) na conta Cloudflare, com a `ACCESS_KEY`, para a evidência da F12-02 (passo 4 da PONTE.md).
 
 ## Ambiente (fora do repositório)
 
@@ -41,6 +43,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F12-01 — contrato de sync v1 (2026-11-14)
+- Decisões: questionário `docs/questionario/2026-11-14-sync-contrato-e-roadmaps.md` (D1–D13) e D-066 (abre a F12 pela trilha única da ponte, `docs/lumen/PONTE.md`).
+- Contrato `docs/lumen/CONTRATO-SYNC.md` reescrito como v1 (envelope sem `op`, cifra `coucou-mailbox/v1`, rotas reais da caixa de correio, regras de aplicação e conflito, entidade `task`) e v1.1 em rascunho.
+- Teste Dart: `flutter test --no-pub test/domain/models/todo_item_sync_contract_test.dart` → `+7: All tests passed!`; `flutter analyze --no-pub` no arquivo → `No issues found!`. O teste lê a seção 8 do contrato e confere o envelope e a paridade de campos com o `TodoItem`.
+- Fork (`playertwo1/coucou`, branch `feat/l6-contrato-v1`, commit `6e4d009`, sem merge nem push): vetores `android/relay/test-vectors-mailbox.json` com cifra de referência em Node; `npm test` no relay → 26 + 37 testes aprovados; `gen-mailbox-vectors.ts --check` → atualizados; `cargo test … contrato_sync_v1_task_envelopes_match_the_model` → 1 aprovado.
+- `NOT_RUN`: cifra da caixa de correio no Rust e no Dart (vem na L6.3 e na F12-04); `flutter test` completo. Pendente: o dono ler o texto final do contrato; o `gen-vectors.mjs --check` dos vetores antigos falha na cópia local por CRLF (`core.autocrlf`), antes desta mudança.
 
 ### F15-02 — chat flutuante, implementação (2026-11-14)
 - O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.
