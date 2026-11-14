@@ -1701,6 +1701,8 @@
   "todoAlarmBothDenied": "Notificações e alarmes exatos estão desativados. Os avisos não são garantidos.",
   "todoAlarmUnavailable": "Não foi possível verificar as permissões. Os avisos não são garantidos.",
   "todoAlarmConfigure": "Configurar",
+  "todoLegacyFileDamaged": "O arquivo antigo de tarefas estava danificado e foi guardado como {fileName}.",
+  "@todoLegacyFileDamaged": {"placeholders": {"fileName": {"type": "String"}}},
   "todoOpenSource": "Fonte",
   "todoSourceChanged": "O relatório mudou; confira a fonte antes de usar esta cópia.",
   "todoAddFromReport": "Adicionar à lista de tarefas",

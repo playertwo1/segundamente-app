@@ -6,8 +6,12 @@ import 'package:memex/ui/agent_activity/view_models/agent_activity_viewmodel.dar
 import 'package:memex/ui/agent_activity/widgets/agent_activity_screen.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:memex/utils/result.dart';
 
 class _FakeRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _FakeRouter(this.tasks, {this.error});
 
   final List<Task> tasks;

@@ -13,6 +13,9 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _ProposalRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   final List<TodoItem> items = [];
   int addCalls = 0;
   String? savedId;

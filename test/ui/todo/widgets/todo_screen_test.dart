@@ -29,6 +29,7 @@ class _FakeRouter implements MemexRouter {
   TodoShortcutSettings shortcutSettings;
   TodoAlarmStatus alarmStatus = TodoAlarmStatus.ready;
   TodoAlarmStatus? requestedAlarmStatus;
+  String? damagedLegacyFileName;
   bool failLoad = false;
   var _next = 0;
 
@@ -47,6 +48,10 @@ class _FakeRouter implements MemexRouter {
 
   @override
   Future<Result<TodoAlarmStatus>> todoAlarmStatus() async => Ok(alarmStatus);
+
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async =>
+      Ok(damagedLegacyFileName);
 
   @override
   Future<Result<TodoAlarmStatus>> requestTodoAlarmPermissions() async =>
@@ -219,6 +224,7 @@ void main() {
     List<TodoItem> items, {
     TodoShortcutSettings? shortcutSettings,
     TodoAlarmStatus alarmStatus = TodoAlarmStatus.ready,
+    String? damagedLegacyFileName,
     bool failLoad = false,
     Size viewport = const Size(800, 2000),
   }) async {
@@ -227,6 +233,7 @@ void main() {
     addTearDown(tester.view.reset);
     final router = _FakeRouter(items, shortcutSettings: shortcutSettings);
     router.alarmStatus = alarmStatus;
+    router.damagedLegacyFileName = damagedLegacyFileName;
     router.failLoad = failLoad;
     final viewModel = TodoViewModel(
       router: router,
@@ -742,6 +749,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('todo_alarm_permission_banner')),
         findsNothing);
+  });
+
+  testWidgets('warns when the old task file was damaged and kept aside',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'language': 'pt'});
+    await UserStorage.initL10n();
+    await pump(
+      tester,
+      [_item('t1', 'Ligar')],
+      damagedLegacyFileName: 'todo.json.corrupt-20261114T101500',
+    );
+    expect(
+      find.byKey(const ValueKey('todo_legacy_damaged_banner')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'O arquivo antigo de tarefas estava danificado e foi guardado como '
+        'todo.json.corrupt-20261114T101500.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(UserStorage.l10n.todoEmptyToday), findsNothing);
   });
 
   testWidgets('Todo tasks are not exported to native reminders',

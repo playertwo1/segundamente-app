@@ -6741,6 +6741,12 @@ abstract class AppLocalizations {
   /// **'Configure'**
   String get todoAlarmConfigure;
 
+  /// No description provided for @todoLegacyFileDamaged.
+  ///
+  /// In en, this message translates to:
+  /// **'The old task file was damaged and was kept as {fileName}.'**
+  String todoLegacyFileDamaged(String fileName);
+
   /// No description provided for @todoOpenSource.
   ///
   /// In en, this message translates to:

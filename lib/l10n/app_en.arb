@@ -1708,6 +1708,8 @@
   "todoAlarmBothDenied": "Notifications and exact alarms are off. Task reminders are not guaranteed.",
   "todoAlarmUnavailable": "Task alarm permissions could not be checked. Reminders are not guaranteed.",
   "todoAlarmConfigure": "Configure",
+  "todoLegacyFileDamaged": "The old task file was damaged and was kept as {fileName}.",
+  "@todoLegacyFileDamaged": {"placeholders": {"fileName": {"type": "String"}}},
   "todoOpenSource": "Source",
   "todoSourceChanged": "The report changed; check the source before relying on this copy.",
   "todoAddFromReport": "Add to to-do list",

@@ -101,6 +101,9 @@ void main() {
 }
 
 class _FakeMemexRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   int _nextMessageId = 1;
 
   @override
@@ -130,6 +133,9 @@ class _FakeMemexRouter implements MemexRouter {
 }
 
 class _PagingMemexRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   int historyCalls = 0;
   int liveCalls = 0;
   int? lastBeforeCursor;

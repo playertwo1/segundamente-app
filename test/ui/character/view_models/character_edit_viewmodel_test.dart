@@ -76,6 +76,9 @@ CharacterDraft _draft({String? characterId}) {
 }
 
 class _FakeMemexRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   Object? loadError;
   Object? saveError;
   CharacterDraft? savedDraft;

@@ -81,4 +81,26 @@ void main() {
     expect(() => TodoRecurrence.monthly(0), throwsArgumentError);
     expect(() => TodoRecurrence.monthly(32), throwsArgumentError);
   });
+
+  test('an unknown or non-text time zone falls back to the Todo default', () {
+    final base = {
+      'id': 'task-zone-1',
+      'text': 'Revisar proposta',
+      'due': '2026-11-20 09:30',
+      'created_at': '2026-11-13T09:00:00.000',
+    };
+
+    expect(
+      TodoItem.fromJson({...base, 'time_zone': 'Mars/Olympus'}).timeZone,
+      'America/Sao_Paulo',
+    );
+    expect(
+      TodoItem.fromJson({...base, 'time_zone': 42}).timeZone,
+      'America/Sao_Paulo',
+    );
+    expect(
+      TodoItem.fromJson({...base, 'time_zone': 'Europe/Lisbon'}).timeZone,
+      'Europe/Lisbon',
+    );
+  });
 }

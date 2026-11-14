@@ -74,6 +74,9 @@ void main() {
 }
 
 class _FakeMemexRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _FakeMemexRouter({required this.characters});
 
   final List<CharacterModel> characters;

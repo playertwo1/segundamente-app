@@ -15,6 +15,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Keeps documents in memory; the real storage and queue have their own tests.
 class _FakeRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   _FakeRouter(this.docs);
 
   List<ThreadDocument> docs;

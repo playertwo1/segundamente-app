@@ -1769,6 +1769,9 @@ class MemexRouter {
     });
   }
 
+  Future<Result<String?>> todoDamagedLegacyFileName() async =>
+      _todoRepository.damagedLegacyFileName(await _reportUserId());
+
   Future<Result<TodoAlarmStatus>> todoAlarmStatus() =>
       _todoRepository.alarmStatus();
 

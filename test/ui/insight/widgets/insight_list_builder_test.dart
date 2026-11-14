@@ -96,6 +96,9 @@ void main() {
 }
 
 class _FailingHtmlRouter implements MemexRouter {
+  @override
+  Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
+
   int renderCount = 0;
 
   @override

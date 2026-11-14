@@ -216,6 +216,12 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
               children: [
                 if (_alarmPermissionBanner(l10n, viewModel) case final banner?)
                   banner,
+                if (viewModel.damagedLegacyFileName case final fileName?)
+                  ListTile(
+                    key: const ValueKey('todo_legacy_damaged_banner'),
+                    leading: const Icon(Icons.warning_amber_outlined),
+                    title: Text(l10n.todoLegacyFileDamaged(fileName)),
+                  ),
                 if (viewModel.errorMessage != null)
                   MaterialBanner(
                     key: const ValueKey('todo_error'),

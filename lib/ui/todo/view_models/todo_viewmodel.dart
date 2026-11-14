@@ -45,6 +45,7 @@ class TodoViewModel extends ChangeNotifier {
   bool loading = false;
   String? errorMessage;
   TodoAlarmStatus alarmStatus = TodoAlarmStatus.unsupported;
+  String? damagedLegacyFileName;
 
   List<TodoItem> get allItems => List.unmodifiable(_all);
 
@@ -119,6 +120,10 @@ class TodoViewModel extends ChangeNotifier {
     (await _router.loadTodos()).when(
       onOk: (value) => _all = value,
       onError: (error, _) => errorMessage = '$error',
+    );
+    (await _router.todoDamagedLegacyFileName()).when(
+      onOk: (value) => damagedLegacyFileName = value,
+      onError: (_, __) => damagedLegacyFileName = null,
     );
     await refreshAlarmStatus();
     await refreshShortcutSettings();

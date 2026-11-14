@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/domain/models/explicit_due.dart';
+import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:path/path.dart' as p;
 import 'package:synchronized/synchronized.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,6 +19,42 @@ class TodoService {
   TodoService({FileSystemService? fileService}) : _fileService = fileService;
 
   static final Lock _storageLock = Lock();
+
+  /// Test seam: production always uses [TodoAlarmService.instance].
+  static Future<TodoAlarmStatus> Function(List<TodoItem> items)
+      alarmSynchronizer =
+      (items) => TodoAlarmService.instance.synchronize(items);
+
+  // Alarm sync runs outside [_storageLock]. At most one run is active; a
+  // request made meanwhile only sets [_alarmDirty], so exactly one more run
+  // re-reads the newest list.
+  static Future<TodoAlarmStatus>? _alarmRun;
+  static bool _alarmDirty = false;
+
+  /// Test hook: completes once no alarm sync run is in progress.
+  static Future<void> waitForAlarmSync() async {
+    while (_alarmRun != null) {
+      await _alarmRun;
+    }
+  }
+
+  Future<TodoAlarmStatus> synchronizeAlarms(String userId) =>
+      _requestAlarmSync(userId);
+
+  /// Name of the newest legacy file kept aside as damaged, or null.
+  Future<String?> damagedLegacyFileName(String userId) async {
+    final folder = Directory(_files.getTodoPath(userId));
+    if (!await folder.exists()) return null;
+    String? newest;
+    await for (final entity in folder.list()) {
+      final name = p.basename(entity.path);
+      if (name.startsWith(FileSystemService.legacyTodoQuarantinePrefix) &&
+          (newest == null || name.compareTo(newest) > 0)) {
+        newest = name;
+      }
+    }
+    return newest;
+  }
 
   final FileSystemService? _fileService;
   FileSystemService get _files => _fileService ?? FileSystemService.instance;
@@ -422,35 +461,54 @@ class TodoService {
 
     final backup = File(_files.getLegacyTodoBackupPath(userId));
     if (!await backup.exists()) await legacy.copy(backup.path);
+    final List<TodoItem> items;
     try {
       final raw = jsonDecode(await legacy.readAsString());
       if (raw is! Map || raw['items'] is! List) {
         throw const FormatException('legacy Todo file is malformed');
       }
-      final items = [
+      items = [
         for (final item in raw['items'] as List)
           TodoItem.fromJson((item as Map).cast<String, dynamic>()),
       ];
-      await _write(userId, items);
-    } on FormatException catch (error, stackTrace) {
-      _logger.warning(
-        'Legacy Todo migration stopped; original and backup were retained',
-        error,
-        stackTrace,
-      );
-      throw const FormatException(
-        'Legacy Todo migration failed; the original and its backup were retained',
-      );
-    } on TypeError catch (error, stackTrace) {
-      _logger.warning(
-        'Legacy Todo migration stopped; original and backup were retained',
-        error,
-        stackTrace,
-      );
-      throw const FormatException(
-        'Legacy Todo migration failed; the original and its backup were retained',
-      );
+    } on FormatException catch (_, stackTrace) {
+      await _quarantineLegacy(userId, legacy, stackTrace);
+      return;
+    } on TypeError catch (_, stackTrace) {
+      await _quarantineLegacy(userId, legacy, stackTrace);
+      return;
+    } on ArgumentError catch (_, stackTrace) {
+      await _quarantineLegacy(userId, legacy, stackTrace);
+      return;
     }
+    await _write(userId, items);
+  }
+
+  /// Keeps a copy of an unreadable legacy file and starts an empty Todo.
+  /// The log names the file only: its contents may be personal.
+  Future<void> _quarantineLegacy(
+    String userId,
+    File legacy,
+    StackTrace stackTrace,
+  ) async {
+    final quarantine = File(_files.getLegacyTodoQuarantinePath(
+      userId,
+      _quarantineStamp(DateTime.now()),
+    ));
+    await legacy.copy(quarantine.path);
+    _logger.warning(
+      'Damaged legacy Todo file kept as ${p.basename(quarantine.path)}',
+      null,
+      stackTrace,
+    );
+    await _write(userId, const []);
+  }
+
+  String _quarantineStamp(DateTime moment) {
+    String pad(int value, [int width = 2]) =>
+        value.toString().padLeft(width, '0');
+    return '${pad(moment.year, 4)}${pad(moment.month)}${pad(moment.day)}'
+        'T${pad(moment.hour)}${pad(moment.minute)}${pad(moment.second)}';
   }
 
   Future<void> _write(String userId, List<TodoItem> items) async {
@@ -467,10 +525,35 @@ class TodoService {
         flush: true,
       );
       await temp.rename(file.path);
-      await TodoAlarmService.instance.synchronize(items);
     } finally {
       if (await temp.exists()) await temp.delete();
     }
+    // Only after the rename and outside the lock: a stuck alarm channel must
+    // never block Todo reads or writes.
+    unawaited(_requestAlarmSync(userId));
+  }
+
+  Future<TodoAlarmStatus> _requestAlarmSync(String userId) {
+    _alarmDirty = true;
+    return _alarmRun ??= _runAlarmSync(userId);
+  }
+
+  Future<TodoAlarmStatus> _runAlarmSync(String userId) async {
+    var status = TodoAlarmStatus.unavailable;
+    while (_alarmDirty) {
+      _alarmDirty = false;
+      try {
+        final items = await _storageLock.synchronized(() => _readAll(userId));
+        status = await alarmSynchronizer(items);
+      } catch (error, stackTrace) {
+        _logger.warning('Could not synchronize Todo alarms', error, stackTrace);
+        status = TodoAlarmStatus.unavailable;
+      }
+    }
+    // No await between the last check and this line, so a request arriving
+    // now starts a fresh run instead of joining a finished one.
+    _alarmRun = null;
+    return status;
   }
 
   _TodoSchedule _schedule(

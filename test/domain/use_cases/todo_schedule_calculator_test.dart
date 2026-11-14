@@ -173,4 +173,27 @@ void main() {
     expect(february, DateTime.utc(2027, 2, 28));
     expect(march, DateTime.utc(2027, 3, 31));
   });
+
+  test('an unknown stored time zone falls back instead of throwing', () {
+    // 12:00 UTC is 09:00 in the Todo default zone: a 10:00 task is still ahead.
+    final now = DateTime.utc(2026, 11, 14, 12);
+
+    expect(
+      TodoScheduleCalculator.statusFor(
+        dueDate: '2026-11-14',
+        dueTime: '10:00',
+        now: now,
+        timeZone: 'Mars/Olympus',
+      ),
+      TodoDateStatus.today,
+    );
+    final alarm = TodoScheduleCalculator.alarmDateTimeFor(
+      dueDate: '2026-11-14',
+      dueTime: '10:00',
+      timeZone: 'Mars/Olympus',
+      alertMinutes: 20,
+      now: now,
+    );
+    expect(alarm?.toUtc(), DateTime.utc(2026, 11, 14, 12, 40));
+  });
 }
