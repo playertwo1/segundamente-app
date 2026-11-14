@@ -458,6 +458,14 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Confirmação: o toque em Guardar, com o texto ou a foto visível, é a confirmação de D-051. A IA organiza o registro depois, como já faz no Registrar.
 - Limite: o aceite da F15-04 depende do S25 (adicionar e redimensionar o widget, cada tecla, Guardar contra Fechar, Colar com a área de transferência, Foto com câmera e galeria) e continua `NOT_RUN`. F15-03 segue REVIEW até o próprio S25. Não fecha a F15 nem o portão da F15.
 
+## D-068 — Abrir a F15-06 (botão no painel rápido) antes da validação da F15-02 (2026-11-14)
+- Contexto: a F15-06 depende da F15-02 (BLOCKED na tabela da F15). A F15-02 tem código e testes prontos (D-065), mas a validação no S25 ainda não aconteceu. O dono pediu para fazer toda a F15 hoje.
+- Decisão:
+  - Abrir a F15-06 em código: `ConversarTileService` (`TileService`) que abre a `FloatingChatActivity` em modo `type`, com o caminho de API 34+ (`PendingIntent`) e o de API 26 a 33 (`Intent`).
+  - A F15-06 fica em REVIEW com o device `NOT_RUN`. Não vira DONE sem o toque no painel rápido do S25.
+  - A F15-02 segue IN_PROGRESS até a validação no S25. Esta decisão não muda o estado dela.
+- Limite: se a F15-02 falhar no aparelho (abertura a frio, volta para a tela de origem), o botão do painel rápido herda a falha e fica sem efeito até a correção. A ordem das subfases e o portão F15 não mudam.
+
 ## D-070 — Widget grande: tarefas de hoje, concluir e "+ tarefa" (2026-11-14)
 - Contexto: a F15-05 entrega o tamanho grande do widget (D-064: linhas). Ao implementar, três escolhas de produto e de mecanismo ficaram por decidir; esta decisão as registra.
 - Decisão:

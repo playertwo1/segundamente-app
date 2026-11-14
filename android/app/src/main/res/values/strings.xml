@@ -18,4 +18,6 @@
     <string name="widget_key_task_add">+ Task</string>
     <string name="widget_today">Today</string>
     <string name="widget_task_complete">Complete %1$s</string>
+    <!-- F15-06: Quick Settings tile label. -->
+    <string name="tile_conversar">Chat</string>
 </resources>

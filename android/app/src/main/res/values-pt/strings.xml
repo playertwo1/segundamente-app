@@ -17,4 +17,6 @@
     <string name="widget_key_task_add">+ tarefa</string>
     <string name="widget_today">Hoje</string>
     <string name="widget_task_complete">Concluir %1$s</string>
+    <!-- F15-06: rótulo do botão no painel rápido. -->
+    <string name="tile_conversar">Conversar</string>
 </resources>
