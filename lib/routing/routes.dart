@@ -1,6 +1,8 @@
 // Copyright 2024 The Memex team. All rights reserved.
 // Aligned with Compass: route path constants for go_router.
 
+import 'package:memex/domain/models/floating_chat_mode.dart';
+
 /// Route path constants for [GoRouter].
 /// ViewModels are created in route builders and passed to screens.
 abstract final class AppRoutes {
@@ -8,6 +10,13 @@ abstract final class AppRoutes {
 
   /// Home (main screen with tabs).
   static const String home = '/';
+
+  /// Floating chat sheet over the home screen (F15-02); the mode is a query.
+  static const String floatingChat = '/floating-chat';
+
+  /// Location of the floating sheet in [mode]; `/floating-chat?mode=talk`.
+  static String floatingChatFor(FloatingChatMode mode) =>
+      '$floatingChat?mode=${mode.wireName}';
 
   /// User setup (onboarding).
   static const String userSetup = '/user-setup';

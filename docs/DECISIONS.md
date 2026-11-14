@@ -429,3 +429,14 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - **Grande:** linhas, com Conversar e Falar em linha, captura e até três tarefas de hoje.
   - **Comum:** chat flutuante, folha de Anotar e estados compartilhados como nas maquetes.
 - Limite: não abre a F15-02. O portão da F11 continua exigido (D-062). Os tamanhos em células seguem estimativa até medir a grade One UI no S25. A mudança de forma entre o médio e o grande, ao redimensionar, precisa ser conferida no aparelho na F15-05.
+
+## D-065 — Chat flutuante com um motor Flutter compartilhado (2026-11-14)
+- Contexto: a F15-02 abre o chat por cima da tela inicial numa Activity translúcida (`FloatingChatActivity`). Desenho em `docs/fases/F15-02-chat-flutuante.md`.
+- Decisão:
+  - A `MainActivity` e a `FloatingChatActivity` usam o mesmo `FlutterEngine`, guardado no `FlutterEngineCache` com o ID `segundamente_main` (`SharedFlutterEngine`). Dois motores seriam dois isolates Dart no mesmo processo, cada um com seu executor de tarefas, sua conexão SQLite e seus singletons, com risco de tarefa duplicada e gravação concorrente.
+  - Um host por vez: ao nascer, uma Activity solta o fragmento Flutter da outra de forma síncrona e a encerra. O estado Dart fica no motor.
+  - Os channels são registrados antes do `main()` do Dart rodar.
+  - Fechar o app pelo voltar não destrói mais o motor: a próxima abertura é morna e volta para onde o usuário estava.
+  - A folha é uma rota do mesmo app (`/floating-chat`), com o `AgentChatDialog` em modo flutuante. Conversar abre o teclado; Falar ouve uma fala, transcreve e envia. Nada é gravado sem confirmação (D-051).
+  - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
+- Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.

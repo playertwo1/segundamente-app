@@ -3,4 +3,7 @@
     <!-- Default (Chinese) — also used by values-zh-rCN -->
     <string name="shortcut_quick_note">记一下</string>
     <string name="shortcut_quick_note_long">记一下</string>
+    <!-- F15-02: floating chat shortcuts (English fallback; pt in values-pt). -->
+    <string name="shortcut_chat_type">Chat</string>
+    <string name="shortcut_chat_talk">Talk</string>
 </resources>

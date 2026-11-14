@@ -2031,5 +2031,11 @@
   "todoShortcutsAlertAtTime": "At the task time",
   "todoShortcutsLoadFailed": "Could not load Todo shortcuts.",
   "todoShortcutsSaveFailed": "Could not save Todo shortcuts.",
-  "todoRetry": "Try again"
+  "todoRetry": "Try again",
+  "floatingOpenInApp": "Open in app",
+  "floatingListening": "Listening",
+  "floatingListeningHint": "The message sends itself when speech ends.",
+  "floatingMicDenied": "Microphone permission denied. Use the keyboard.",
+  "floatingModelMissing": "Download the voice model to talk. Use the keyboard for now.",
+  "floatingListenFailed": "Could not listen right now. Use the keyboard."
 }

@@ -4843,4 +4843,24 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get todoRetry => 'Tentar novamente';
+
+  @override
+  String get floatingOpenInApp => 'Abrir no app';
+
+  @override
+  String get floatingListening => 'Ouvindo';
+
+  @override
+  String get floatingListeningHint =>
+      'A mensagem parte sozinha ao fim da fala.';
+
+  @override
+  String get floatingMicDenied => 'Sem permissão de microfone. Use o teclado.';
+
+  @override
+  String get floatingModelMissing =>
+      'Baixe o modelo de voz para falar. Use o teclado por enquanto.';
+
+  @override
+  String get floatingListenFailed => 'Não deu para ouvir agora. Use o teclado.';
 }

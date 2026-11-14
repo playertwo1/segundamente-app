@@ -10,6 +10,8 @@ import 'package:memex/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:memex/config/dependencies.dart';
 import 'package:memex/config/app_flavor.dart';
+import 'package:memex/data/services/floating_chat_service.dart';
+import 'package:memex/domain/models/floating_chat_mode.dart';
 import 'package:memex/ui/insight/view_models/insight_viewmodel.dart';
 import 'package:memex/ui/knowledge/view_models/knowledge_base_viewmodel.dart';
 import 'package:memex/ui/timeline/view_models/timeline_viewmodel.dart';
@@ -172,9 +174,15 @@ void main() async {
     ),
   );
 
+  // A floating chat launch (F15-02) starts on the sheet, not the home screen.
+  FloatingChatService.instance.initialize();
+  final floatingMode = await FloatingChatService.instance.takePendingMode();
   final appRouter = createAppRouter(
     rootNavigatorKey,
     () => RootShell(key: rootShellKey),
+    initialLocation: floatingMode == null
+        ? AppRoutes.home
+        : AppRoutes.floatingChatFor(floatingMode),
   );
 
   // Initialize quick actions (app icon long-press shortcuts).
@@ -351,11 +359,16 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
   bool _isLocked = true; // Default to locked on start
   bool _requiresAuth = true; // Whether actual authentication is required
   DateTime? _lastPausedTime; // Track when app was paused
+  StreamSubscription<FloatingChatMode>? _floatingChatSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _floatingChatSubscription =
+        FloatingChatService.instance.openRequests.listen((mode) {
+      unawaited(widget.router.push(AppRoutes.floatingChatFor(mode)));
+    });
     _checkUser();
     _checkLockSettings();
   }
@@ -377,6 +390,7 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _floatingChatSubscription?.cancel();
     super.dispose();
   }
 

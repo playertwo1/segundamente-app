@@ -2022,5 +2022,11 @@
   "todoShortcutsAlertAtTime": "No horário da tarefa",
   "todoShortcutsLoadFailed": "Não foi possível carregar os atalhos do Todo.",
   "todoShortcutsSaveFailed": "Não foi possível salvar os atalhos do Todo.",
-  "todoRetry": "Tentar novamente"
+  "todoRetry": "Tentar novamente",
+  "floatingOpenInApp": "Abrir no app",
+  "floatingListening": "Ouvindo",
+  "floatingListeningHint": "A mensagem parte sozinha ao fim da fala.",
+  "floatingMicDenied": "Sem permissão de microfone. Use o teclado.",
+  "floatingModelMissing": "Baixe o modelo de voz para falar. Use o teclado por enquanto.",
+  "floatingListenFailed": "Não deu para ouvir agora. Use o teclado."
 }

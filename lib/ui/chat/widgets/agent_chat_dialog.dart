@@ -30,6 +30,8 @@ import 'package:memex/data/services/input_draft_service.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/ui/card_attachments/widgets/system_action_card.dart';
 import 'package:memex/ui/core/widgets/content_notice.dart';
+import 'package:memex/ui/floating_chat/floating_chat_host.dart';
+import 'package:memex/ui/floating_chat/view_models/listen_once_viewmodel.dart';
 import 'package:memex/ui/core/widgets/html_webview_card.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
 import 'package:memex/ui/core/widgets/reliable_asset_picker.dart';
@@ -489,6 +491,16 @@ class AgentChatDialog extends StatefulWidget {
   @visibleForTesting
   final DateTime Function()? scrollClockForTesting;
 
+  /// Set when the dialog is the floating chat sheet (F15-02): closing goes to
+  /// the host and the header shows "Abrir no app" and "Fechar".
+  final FloatingChatHost? floatingHost;
+  final bool autofocusInput;
+
+  /// Starts listening for one utterance, which is sent when it ends (F15-02).
+  final bool listenOnStart;
+  @visibleForTesting
+  final ListenOnceViewModel? listenOnceForTesting;
+
   @visibleForTesting
   final VoiceDictationViewModel? voiceDictationForTesting;
   @visibleForTesting
@@ -515,6 +527,10 @@ class AgentChatDialog extends StatefulWidget {
     this.initialTokenUsage,
     this.chatEventsForTesting,
     this.scrollClockForTesting,
+    this.floatingHost,
+    this.autofocusInput = false,
+    this.listenOnStart = false,
+    this.listenOnceForTesting,
     this.voiceDictationForTesting,
     this.photoAttachmentsForTesting,
     this.todoProposalViewModelForTesting,
@@ -541,6 +557,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   final InputDraftService _draftService = InputDraftService.instance;
   late final VoiceDictationViewModel _voice =
       widget.voiceDictationForTesting ?? VoiceDictationViewModel();
+  ListenOnceViewModel? _listenOnce;
 
   // State
   List<ChatDisplayItem> _items = [];
@@ -684,6 +701,34 @@ class _AgentChatDialogState extends State<AgentChatDialog>
     if (chatEvents != null) {
       _listenToChatStream(chatEvents);
     }
+    if (widget.autofocusInput) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _messageFocusNode.requestFocus();
+      });
+    }
+    if (widget.listenOnStart) {
+      final listenOnce = widget.listenOnceForTesting ?? ListenOnceViewModel();
+      listenOnce.onText = _onListenedText;
+      _listenOnce = listenOnce;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(listenOnce.start());
+      });
+    }
+  }
+
+  void _onListenedText(String text) {
+    if (!mounted) return;
+    _messageController.text = text;
+    _handleSuperAgentSubmit();
+  }
+
+  void _dismiss() {
+    final host = widget.floatingHost;
+    if (host != null) {
+      host.onClose();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   void _handleEntranceAnimationStatus(AnimationStatus status) {
@@ -696,6 +741,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   @override
   void dispose() {
     if (widget.voiceDictationForTesting == null) _voice.dispose();
+    if (widget.listenOnceForTesting == null) _listenOnce?.dispose();
     _galleryAttachments?.removeListener(_onAttachmentsChanged);
     if (widget.photoAttachmentsForTesting == null) {
       _galleryAttachments?.dispose();
@@ -1024,7 +1070,10 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   }
 
   void _handleDraftTextChanged() {
-    if (_isApplyingDraft || !_shouldPersistDraft) return;
+    if (_isApplyingDraft) return;
+    // Typing takes over from a listen in progress (F15-02).
+    unawaited(_listenOnce?.cancel());
+    if (!_shouldPersistDraft) return;
     _scheduleDraftSave();
   }
 
@@ -1525,6 +1574,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   }
 
   void _handleSuperAgentSubmit() {
+    unawaited(_listenOnce?.cancel());
     if (!_canSubmitAttachments) return;
     final message = _messageController.text;
     final images = _allSelectedImages;
@@ -2001,7 +2051,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
           FadeTransition(
             opacity: _fadeAnimation,
             child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
+              onTap: _dismiss,
               child: Container(color: Colors.black.withValues(alpha: 0.2)),
             ),
           ),
@@ -2150,6 +2200,8 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   }
 
   Widget _buildHeader() {
+    final host = widget.floatingHost;
+    if (host != null) return _buildFloatingHeader(host);
     final actions = <Widget>[
       if (_currentSessionId != null)
         _buildHeaderIconButton(
@@ -2233,6 +2285,58 @@ class _AgentChatDialogState extends State<AgentChatDialog>
     );
   }
 
+  /// Floating sheet header: the two text actions replace the icon buttons.
+  Widget _buildFloatingHeader(FloatingChatHost host) {
+    final l10n = UserStorage.l10n;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.only(start: 24, end: 4),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.background)),
+      ),
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            _buildAgentMark(size: 22),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Segunda Mente',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            TextButton(
+              key: const ValueKey('floating_chat_open_in_app_button'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size(48, 48),
+              ),
+              onPressed: () => host.onOpenInApp(_currentSessionId),
+              child: Text(l10n.floatingOpenInApp),
+            ),
+            TextButton(
+              key: const ValueKey('floating_chat_close_button'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+                minimumSize: const Size(48, 48),
+              ),
+              onPressed: host.onClose,
+              child: Text(l10n.close),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Compact header action button. Material's default [IconButton] reserves a
   /// 48x48 hit box, which leaves fullscreen/close icons floating too far from
   /// the sheet edge. A stable 36x36 box keeps the tap target predictable while
@@ -2287,6 +2391,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _buildListenOnceStatus(),
           if (!_canSubmitAttachments)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -2863,6 +2968,57 @@ class _AgentChatDialogState extends State<AgentChatDialog>
       ToastHelper.showInfo(context, UserStorage.l10n.speechModelMissingHint);
     }
     return false;
+  }
+
+  /// What the floating "Falar" sheet is doing, shown above the text field.
+  Widget _buildListenOnceStatus() {
+    final listenOnce = _listenOnce;
+    if (listenOnce == null) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: listenOnce,
+      builder: (context, _) {
+        final l10n = UserStorage.l10n;
+        final title = switch (listenOnce.state) {
+          ListenOnceState.listening => l10n.floatingListening,
+          ListenOnceState.transcribing => l10n.voiceTranscribing,
+          ListenOnceState.permissionDenied => l10n.floatingMicDenied,
+          ListenOnceState.modelMissing => l10n.floatingModelMissing,
+          ListenOnceState.error => l10n.floatingListenFailed,
+          ListenOnceState.idle =>
+            listenOnce.nothingHeard ? l10n.voiceNothingHeard : null,
+        };
+        if (title == null) return const SizedBox.shrink();
+        final hint = listenOnce.state == ListenOnceState.listening
+            ? l10n.floatingListeningHint
+            : null;
+        return Padding(
+          key: const ValueKey('floating_listen_status'),
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              if (hint != null)
+                Text(
+                  hint,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildInputIconButton({

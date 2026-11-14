@@ -26,5 +26,6 @@ object ChannelRegistrar {
         AgentBackgroundChannelHandler.register(flutterEngine, activity)
         ClipboardPreviewChannelHandler.register(flutterEngine, activity)
         TtsChannelHandler.register(flutterEngine, activity)
+        FloatingChatChannelHandler.register(flutterEngine, activity)
     }
 }

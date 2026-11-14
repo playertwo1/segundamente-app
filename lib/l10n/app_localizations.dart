@@ -8492,6 +8492,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get todoRetry;
+
+  /// No description provided for @floatingOpenInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in app'**
+  String get floatingOpenInApp;
+
+  /// No description provided for @floatingListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening'**
+  String get floatingListening;
+
+  /// No description provided for @floatingListeningHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The message sends itself when speech ends.'**
+  String get floatingListeningHint;
+
+  /// No description provided for @floatingMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission denied. Use the keyboard.'**
+  String get floatingMicDenied;
+
+  /// No description provided for @floatingModelMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the voice model to talk. Use the keyboard for now.'**
+  String get floatingModelMissing;
+
+  /// No description provided for @floatingListenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not listen right now. Use the keyboard.'**
+  String get floatingListenFailed;
 }
 
 class _AppLocalizationsDelegate
