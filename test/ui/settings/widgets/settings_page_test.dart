@@ -133,12 +133,35 @@ void main() {
     );
   });
 
+  testWidgets('settings show the content notice in pt and en', (tester) async {
+    final notices = {
+      'pt':
+          'Este app é um diário pessoal. Não digite nem importe conteúdo sensível de trabalho ou do banco.',
+      'en':
+          'This app is a personal diary. Do not type or import sensitive work or bank content.',
+    };
+    for (final entry in notices.entries) {
+      SharedPreferences.setMockInitialValues({'language': entry.key});
+      await UserStorage.initL10n();
+      await tester.pumpWidget(const MaterialApp(home: SettingsPage()));
+      await tester.pump();
+      final row = find.byKey(const ValueKey('content-notice-settings'));
+      expect(row, findsOneWidget, reason: entry.key);
+      expect(
+        find.descendant(of: row, matching: find.text(entry.value)),
+        findsOneWidget,
+        reason: entry.key,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
   testWidgets('link previews start off and the switch is remembered',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsPage()));
     await tester.pump();
     final tile = find.byKey(const ValueKey('link-preview-switch'));
-    await tester.ensureVisible(tile);
+    await tester.scrollUntilVisible(tile, 200);
     expect(tester.widget<SwitchListTile>(tile).value, isFalse);
     expect(await UserStorage.isLinkPreviewEnabled(), isFalse);
 

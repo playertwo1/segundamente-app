@@ -397,3 +397,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 ## D-060 — Fechamento da F7-03 sem o teste de revogação durante a conversa (2026-11-13)
 - Decisão do dono: não testar a revogação da permissão de microfone no meio da conversa, por não ter utilidade real. Esse caso fica `NOT_RUN` e não bloqueia o fechamento.
 - A F7-03 fecha com Interromper e falar, Encerrar e permissão negada observados no S25 em 2026-11-13 (`docs/fases/F7-03-voz-duplex.md`, seção 5c). Bateria fora do carregador, eco com fone e latência ponta a ponta seguem fora desta decisão, como pela ordem de trabalho da D-050.
+
+## D-061 — Abrir a F11-06: aviso de conteúdo (2026-11-13)
+- Contexto: o dono aprovou seguir com a F11-06, que estava `BLOCKED` na ordem de trabalho da F11. Ela depende da F11-03, já `DONE`.
+- Decisão: abrir somente a F11-06. O aviso "não registre dados de clientes, contas ou documentos do banco" aparece como legenda fixa na captura e como linha em Configurações, em pt-BR e en. Não é diálogo, não bloqueia e não exige toque extra. Nada mais é desbloqueado: F11-04 segue pendente do S25 e a F12 segue bloqueada.

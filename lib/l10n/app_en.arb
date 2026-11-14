@@ -305,6 +305,8 @@
   "comparisonChart": "Comparison chart",
   "todayTimeFlow": "Today's time flow",
   "aiInputHint": "Whether it's memories or the present, I'm here...",
+  "contentNoticeCaption": "Do not record client data, accounts or bank documents.",
+  "contentNoticeSettingsDesc": "This app is a personal diary. Do not type or import sensitive work or bank content.",
   "refreshSuperAgentStateTooltip": "Clear Segunda Mente Agent context",
   "refreshSuperAgentStateTitle": "Clear Segunda Mente Agent history context?",
   "refreshSuperAgentStateMessage": "The visible chat history will stay, but Segunda Mente Agent's historical runtime context will be cleared and future replies will start from a fresh context. Persistent memory, knowledge base files, cards, and other saved data are not affected. Use this when Segunda Mente Agent keeps behaving abnormally. Continue?",

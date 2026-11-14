@@ -615,6 +615,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Whether it\'s memories or the present, I\'m here...';
 
   @override
+  String get contentNoticeCaption =>
+      'Do not record client data, accounts or bank documents.';
+
+  @override
+  String get contentNoticeSettingsDesc =>
+      'This app is a personal diary. Do not type or import sensitive work or bank content.';
+
+  @override
   String get refreshSuperAgentStateTooltip =>
       'Clear Segunda Mente Agent context';
 

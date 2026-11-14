@@ -125,6 +125,22 @@ void main() {
     }
   });
 
+  testWidgets('capture input shows the content notice in pt and en',
+      (tester) async {
+    final notices = {
+      'pt': 'Não registre dados de clientes, contas ou documentos do banco.',
+      'en': 'Do not record client data, accounts or bank documents.',
+    };
+    for (final entry in notices.entries) {
+      SharedPreferences.setMockInitialValues({'language': entry.key});
+      await UserStorage.initL10n();
+      await _pumpDialogFrame(tester, dialog: const AgentChatDialog());
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text(entry.value), findsOneWidget, reason: entry.key);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
   testWidgets('attach menu offers camera, gallery, TXT, PDF and audio',
       (tester) async {
     await _pumpDialogFrame(tester, dialog: const AgentChatDialog());

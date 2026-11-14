@@ -13,13 +13,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F7 | IN_PROGRESS | F7-03 DONE (D-060; voz duplex por turnos, D-049); F7-02 adiada (D-041); F7-06 BLOCKED |
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
-| F11 | IN_PROGRESS | F11-01 a F11-05 DONE; portão aguarda AC-01 (08h30/08h10) no S25; F11-06 BLOCKED |
+| F11 | IN_PROGRESS | F11-01 a F11-06 DONE (F11-06 em D-061); portão aguarda AC-01 (08h30/08h10) no S25 |
 | F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
 
 ## Próxima ação
 
 1. **Portão F11:** observar AC-01 no S25 às 08h10 de 2026-11-14 (tarefa sintética `F11 AC-01` das 08h30 já agendada) e testar Concluir com o app fechado nessa notificação (`am kill` depois da entrega, antes do toque; o S25 precisa estar desbloqueado). A auditoria `docs/reviews/F11.md` está `PASS` depois da correção do HIGH (D-059, validada no S25 às 22h35). Depois, remover a tarefa sintética `F11 cold start` (Atrasadas) e fechar o portão.
-2. **F11-06:** permanece BLOCKED; D-056 não a desbloqueia.
+2. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Falta só a checagem visual no S25 e o TalkBack, ambos `NOT_RUN`.
 3. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
 4. **F12:** permanece bloqueada até a conclusão da F11 e das decisões de sync.
 
@@ -40,6 +40,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F11-06 — aviso de conteúdo (2026-11-13)
+- Aviso fixo na captura (legenda abaixo do campo, `ContentNoticeCaption` em `lib/ui/core/widgets/content_notice.dart`, usado em `lib/ui/chat/widgets/agent_chat_dialog.dart`) e linha em Configurações (`lib/ui/settings/widgets/settings_page.dart`, chave `content-notice-settings`). Textos novos em `app_pt.arb` e `app_en.arb`: `contentNoticeCaption` e `contentNoticeSettingsDesc`. `gen-l10n` regenerado. Decisão D-061.
+- Ajuste de teste: a linha nova empurrou `link-preview-switch` para fora da área construída da lista; o teste passou de `ensureVisible` para `scrollUntilVisible`, como o vizinho. Nenhum teste foi removido ou enfraquecido.
+- `flutter test --no-pub test/ui/core/widgets/content_notice_test.dart test/ui/settings/widgets/settings_page_test.dart test/ui/chat/widgets/agent_chat_dialog_test.dart test/l10n --reporter compact` → **67 aprovados, 0 falhas** (aviso pt e en na captura, pt e en nas Configurações, paridade de chaves ARB, localização e strings fixas).
+- `flutter test --no-pub test/l10n test/ui/settings test/ui/chat/widgets test/ui/core --reporter compact` → **310 aprovados, 0 falhas** (vizinhança dos arquivos tocados).
+- `dart analyze` nos seis arquivos Dart tocados → 2 infos, pré-existentes em `test/ui/chat/widgets/agent_chat_dialog_test.dart` (linhas 44 e 45, imports que não foram alterados); nenhum problema no código novo.
+- `NOT_RUN`: checagem visual da legenda e da linha no S25; leitura por TalkBack; suíte completa `flutter test` e `flutter analyze` do repositório.
 
 ### F7-03 — fechamento no S25 (2026-11-13)
 - Conversa no app `app.segundamente` (release 1.0.47+132), por volta de 22h55–23h00, com o dono falando. **Interromper e falar**: PASS, observado pelo dono (a voz parou e o app voltou a ouvir). **Encerrar**: PASS, observado pelo dono. Nenhum dos dois tem medição de tempo.
