@@ -1178,6 +1178,18 @@ abstract class AppLocalizations {
   /// **'Whether it\'s memories or the present, I\'m here...'**
   String get aiInputHint;
 
+  /// No description provided for @contentNoticeCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not record client data, accounts or bank documents.'**
+  String get contentNoticeCaption;
+
+  /// No description provided for @contentNoticeSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This app is a personal diary. Do not type or import sensitive work or bank content.'**
+  String get contentNoticeSettingsDesc;
+
   /// No description provided for @refreshSuperAgentStateTooltip.
   ///
   /// In en, this message translates to:

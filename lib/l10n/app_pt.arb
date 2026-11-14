@@ -305,6 +305,8 @@
   "comparisonChart": "Gráfico de comparação",
   "todayTimeFlow": "Fluxo de tempo de hoje",
   "aiInputHint": "Seja memória ou presente, estou aqui...",
+  "contentNoticeCaption": "Não registre dados de clientes, contas ou documentos do banco.",
+  "contentNoticeSettingsDesc": "Este app é um diário pessoal. Não digite nem importe conteúdo sensível de trabalho ou do banco.",
   "refreshSuperAgentStateTooltip": "Limpar contexto do agente da Segunda Mente",
   "refreshSuperAgentStateTitle": "Limpar contexto histórico do agente da Segunda Mente?",
   "refreshSuperAgentStateMessage": "O histórico visível do chat permanecerá, mas o contexto histórico de runtime do agente da Segunda Mente será limpo e as respostas futuras começarão com um contexto novo. Memória persistente, arquivos da base de conhecimento, cartões e outros dados salvos não serão afetados. Use isto quando o agente da Segunda Mente continuar se comportando de forma anormal. Continuar?",

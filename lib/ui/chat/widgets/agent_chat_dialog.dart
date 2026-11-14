@@ -29,6 +29,7 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/input_draft_service.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/ui/card_attachments/widgets/system_action_card.dart';
+import 'package:memex/ui/core/widgets/content_notice.dart';
 import 'package:memex/ui/core/widgets/html_webview_card.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
 import 'package:memex/ui/core/widgets/reliable_asset_picker.dart';
@@ -2409,6 +2410,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
+                const ContentNoticeCaption(),
                 const SizedBox(height: 8),
                 Row(
                   children: [

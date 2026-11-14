@@ -623,6 +623,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aiInputHint => 'Seja memória ou presente, estou aqui...';
 
   @override
+  String get contentNoticeCaption =>
+      'Não registre dados de clientes, contas ou documentos do banco.';
+
+  @override
+  String get contentNoticeSettingsDesc =>
+      'Este app é um diário pessoal. Não digite nem importe conteúdo sensível de trabalho ou do banco.';
+
+  @override
   String get refreshSuperAgentStateTooltip =>
       'Limpar contexto do agente da Segunda Mente';
 
