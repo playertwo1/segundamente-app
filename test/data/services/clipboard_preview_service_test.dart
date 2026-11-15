@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:memex/data/services/clipboard_preview_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -242,5 +243,27 @@ void main() {
         expect(await service.fetchUnhandledText(), isNull);
       },
     );
+
+    test('never writes clipboard content to the log', () async {
+      clipboardText = 'coucou://pair?v=1&host=10.0.0.1&key=SYNTHETIC_SECRET_123';
+      final records = <LogRecord>[];
+      final previousLevel = Logger.root.level;
+      Logger.root.level = Level.ALL;
+      final subscription = Logger.root.onRecord.listen(records.add);
+      try {
+        final candidate = await service.fetchUnhandledText();
+        expect(candidate, isNotNull);
+      } finally {
+        await subscription.cancel();
+        Logger.root.level = previousLevel;
+      }
+
+      expect(records, isNotEmpty);
+      final logged = records
+          .map((record) => '${record.message} ${record.error ?? ''}')
+          .join('\n');
+      expect(logged, isNot(contains('SYNTHETIC_SECRET')));
+      expect(logged, isNot(contains('coucou://pair')));
+    });
   });
 }
