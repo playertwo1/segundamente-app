@@ -27,6 +27,7 @@ data class WidgetRow(val task: WidgetTask, val overdue: Boolean)
  * after midnight without a new push.
  */
 internal object TodoWidgetSnapshot {
+    // Written by AgentBackgroundPlugin (todo_widget channel), read here.
     private const val PREFS = "todo_widget_snapshot"
     private const val KEY = "snapshot"
     private const val DEFAULT_ZONE = "America/Sao_Paulo"
@@ -35,10 +36,6 @@ internal object TodoWidgetSnapshot {
 
     // Earliest date first; a task without a time after the timed ones of its day.
     private val byDue = compareBy<WidgetRow>({ it.task.dueDate }, { it.task.dueTime ?: LocalTime.MAX })
-
-    fun save(context: Context, json: String) {
-        prefs(context).edit().putString(KEY, json).apply()
-    }
 
     fun load(context: Context): List<WidgetTask> =
         prefs(context).getString(KEY, null)?.let { parse(it) } ?: emptyList()

@@ -33,8 +33,9 @@ internal object WidgetLayouts {
     private const val REQUEST_PHOTO = 4
     private const val REQUEST_PASTE = 5
     private const val REQUEST_TODO_ADD = 6
-    private const val REQUEST_TASK_CHECK = 10 // + row index (0..2)
-    private const val REQUEST_TASK_TITLE = 20 // + row index (0..2)
+    // Bases far above the small codes; + task id hash (24 bits), so a stale RemoteViews keeps its own task.
+    private const val REQUEST_TASK_CHECK = 0x10000000
+    private const val REQUEST_TASK_TITLE = 0x20000000
 
     // Same as minWidth x minHeight in res/xml/segundamente_widget_info.xml.
     private val SMALL_MIN = SizeF(200f, 60f)
@@ -75,14 +76,14 @@ internal object WidgetLayouts {
             setCaptureKeys(context)
             setOnClickPendingIntent(R.id.widget_task_add, floatingChat(context, MODE_TODO_ADD, REQUEST_TODO_ADD))
             removeAllViews(R.id.widget_tasks_list)
-            rows.forEachIndexed { index, row -> addView(R.id.widget_tasks_list, taskRow(context, row, index)) }
+            rows.forEach { row -> addView(R.id.widget_tasks_list, taskRow(context, row)) }
             val empty = rows.isEmpty()
             setViewVisibility(R.id.widget_tasks_list, if (empty) View.GONE else View.VISIBLE)
             setViewVisibility(R.id.widget_tasks_empty, if (empty) View.VISIBLE else View.GONE)
         }
 
     /** The circle completes the task; the title opens the Todo list (memex://open_todo). */
-    private fun taskRow(context: Context, row: WidgetRow, index: Int): RemoteViews {
+    private fun taskRow(context: Context, row: WidgetRow): RemoteViews {
         val task = row.task
         return RemoteViews(context.packageName, R.layout.widget_task_row).apply {
             setTextViewText(R.id.widget_task_title, task.title)
@@ -90,11 +91,13 @@ internal object WidgetLayouts {
             setContentDescription(R.id.widget_task_check, context.getString(R.string.widget_task_complete, task.title))
             setOnClickPendingIntent(
                 R.id.widget_task_check,
-                floatingChat(context, MODE_TODO_COMPLETE + task.id, REQUEST_TASK_CHECK + index),
+                floatingChat(context, MODE_TODO_COMPLETE + task.id, REQUEST_TASK_CHECK + taskRequestSuffix(task.id)),
             )
-            setOnClickPendingIntent(R.id.widget_task_title, openTodo(context, REQUEST_TASK_TITLE + index))
+            setOnClickPendingIntent(R.id.widget_task_title, openTodo(context, REQUEST_TASK_TITLE + taskRequestSuffix(task.id)))
         }
     }
+
+    private fun taskRequestSuffix(taskId: String): Int = taskId.hashCode() and 0x00FFFFFF
 
     /** Overdue rows show their date; a task due today with no time shows "Hoje". */
     private fun timeLabel(context: Context, row: WidgetRow): String {

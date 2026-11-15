@@ -83,6 +83,7 @@ class TodoWidgetSnapshotService {
       await _channel.invokeMethod<void>('updateSnapshot', json);
     } on MissingPluginException {
       // No widget bridge here (iOS, tests).
+      _logger.fine('Todo widget bridge not available; snapshot not sent.');
     } on PlatformException catch (error, stackTrace) {
       _logger.warning('Could not update the Todo widget', error, stackTrace);
     }

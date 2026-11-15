@@ -55,7 +55,7 @@ class FloatingChatService {
       final raw = await _channel.invokeMethod<String>('takePendingMode');
       final launch = FloatingLaunch.parse(raw);
       if (raw != null && launch == null) {
-        _logger.warning('Ignoring unknown floating chat mode: $raw');
+        _logger.warning('Ignoring unknown floating chat mode (length ${raw.length})');
       }
       return launch;
     } on MissingPluginException {

@@ -16,15 +16,25 @@ public final class AgentBackgroundPlugin implements FlutterPlugin, MethodChannel
   private static final String ACTION_STOP = "com.memexlab.memex.agent_background.STOP";
   private static final String EXTRA_WATCH_BACKGROUND_WORK = "watchBackgroundWork";
   private static final int NOTIFICATION_ID = 188;
+  // Todo widget snapshot: same names as TodoWidgetSnapshot.kt, which only reads them.
+  private static final String TODO_CHANNEL = "com.memexlab.memex/todo_widget";
+  private static final String TODO_PREFS = "todo_widget_snapshot";
+  private static final String TODO_KEY = "snapshot";
+  private static final String TODO_REFRESH_ACTION = "com.memexlab.memex.widget.REFRESH";
+  private static final String TODO_PROVIDER_CLASS =
+      "com.memexlab.memex.widget.SegundaMenteWidgetProvider";
 
   private Context applicationContext;
   private MethodChannel channel;
+  private MethodChannel todoChannel;
 
   @Override
   public void onAttachedToEngine(FlutterPluginBinding binding) {
     applicationContext = binding.getApplicationContext();
     channel = new MethodChannel(binding.getBinaryMessenger(), CHANNEL);
     channel.setMethodCallHandler(this);
+    todoChannel = new MethodChannel(binding.getBinaryMessenger(), TODO_CHANNEL);
+    todoChannel.setMethodCallHandler(this::onTodoWidgetCall);
   }
 
   @Override
@@ -33,7 +43,33 @@ public final class AgentBackgroundPlugin implements FlutterPlugin, MethodChannel
       channel.setMethodCallHandler(null);
       channel = null;
     }
+    if (todoChannel != null) {
+      todoChannel.setMethodCallHandler(null);
+      todoChannel = null;
+    }
     applicationContext = null;
+  }
+
+  // Registered in every engine (app, floating sheet, WorkManager), so any of them can refresh the widget.
+  private void onTodoWidgetCall(MethodCall call, MethodChannel.Result result) {
+    if (!"updateSnapshot".equals(call.method)) {
+      result.notImplemented();
+      return;
+    }
+    if (!(call.arguments instanceof String)) {
+      result.error("bad_snapshot", "The Todo snapshot must be a JSON string.", null);
+      return;
+    }
+    // commit(), not apply(): the refresh broadcast below must find the snapshot on disk.
+    applicationContext
+        .getSharedPreferences(TODO_PREFS, Context.MODE_PRIVATE)
+        .edit()
+        .putString(TODO_KEY, (String) call.arguments)
+        .commit();
+    applicationContext.sendBroadcast(
+        new Intent(TODO_REFRESH_ACTION)
+            .setClassName(applicationContext.getPackageName(), TODO_PROVIDER_CLASS));
+    result.success(null);
   }
 
   @Override
