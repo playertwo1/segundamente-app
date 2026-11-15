@@ -24,7 +24,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no Lumen:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/lumen`.
-5. **F12:** checkpoint da ponte fechado. Próximo: F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06 (entidades v1.1). Antes, corrigir os achados do checkpoint em `docs/testes/F12-checkpoint-ponte-s25.md`: QR maior e edição de horário que não salva (Lumen); tela de pareamento presa em "Carregando", prévia da área de transferência gravando texto no log, "erro" em vez de "offline" e sync sem log (Segunda Mente). O S25 dev está revogado: parear de novo antes da F12-06.
+5. **F12:** checkpoint da ponte fechado e os 4 achados da Segunda Mente corrigidos (2026-11-15). Próximo: F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06 (entidades v1.1). Abertos no Lumen: QR maior e edição de horário que não salva. O S25 dev está revogado: parear de novo antes da F12-06 e, com ele pareado, conferir o rótulo "sem conexão" com o modo avião.
 6. **Fim da pausa da D-066:** com o checkpoint fechado, a F15-03 em diante volta a andar.
 
 ## Pendências do dono
@@ -45,6 +45,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### Achados da Segunda Mente no checkpoint da ponte (2026-11-15, 16:49–17:00)
+- Código: tela de pareamento guarda o ViewModel no `State` (não trava ao reconstruir a rota); prévia da área de transferência não grava texto no log do Dart (`<redacted len=N>`) nem no logcat do Kotlin (só o tamanho); Todo mostra "sem conexão" quando o erro é `http_0`; o sync grava uma linha por ciclo (`Todo sync (<motivo>) -> <estado>, outbox=N, error=…`) e o `TodoViewModel` registra as exceções.
+- Testes: área alterada `+119` aprovados; paridade das ARB OK; `flutter analyze` com 159 issues (linha de base, nenhuma nova). Widget test da tela de pareamento falha antes e passa depois da correção.
+- S25 (`app.segundamente.dev`, `adb install -r` → `Success`): PASS na tela de pareamento, 3 ciclos Parear de novo → leitor → Voltar → sair → entrar, sempre em "Pareado com BOOKFAEL"; PASS no log do sync (`Todo sync (lifecycle) -> revoked, outbox=0, error=null`). Removidas do log de hoje do pacote dev as 64 linhas com o início do link de pareamento gravadas pela versão antiga.
+- `NOT_RUN` no S25: a linha redigida da área de transferência (o Android devolveu `empty clipboard` nas checagens ao voltar ao app, mesmo com texto copiado à mão; a parte do Dart fica coberta pelo teste unitário); o rótulo "sem conexão" (o aparelho está revogado); a mudança no logcat do Kotlin só foi compilada.
+- Achados menores novos: a tela de pareamento ainda mostra "Pareado com …" depois da revogação; o log grava em FINE o token do servidor local de imagens (efêmero e só no aparelho).
 
 ### Checkpoint da Ponte (F12-03 a F12-05) no S25 + notebook (2026-11-15, 13:20–14:53)
 - Aparelhos: Galaxy S25 Ultra (`RQCY10934YV`), `app.segundamente.dev` 1.0.50 compilado da `main` `a6cf1300` (`flutter build apk --flavor globalDev --debug --no-pub`, `adb install -r` → `Success`); notebook com Lumen 0.7.3. Perfil sintético `F11 QA`; tarefas `PONTE 1`–`7`, todas apagadas no fim (a `PONTE 6` e a `PONTE 7` ficam para o dono apagar no Lumen).

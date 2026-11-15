@@ -119,8 +119,8 @@ class ClipboardPreviewChannelHandler(private val activity: Activity) {
 
             Log.i(
                 TAG,
-                "item[$index] selected as text: len=${trimmedText.length}, " +
-                    "preview=${shortValue(trimmedText)}",
+                // Never log clipboard content: it may hold pairing links or secrets.
+                "item[$index] selected as text: len=${trimmedText.length}",
             )
             return mapOf(
                 "type" to "text",
