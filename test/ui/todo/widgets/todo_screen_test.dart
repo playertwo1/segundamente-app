@@ -881,7 +881,19 @@ void main() {
 
   group('accessibility', () {
     final items = [
-      _item('t1', 'Ligar', due: '2026-11-21 14:30'),
+      _item(
+        't1',
+        'Ligar',
+        due: '2026-11-21 14:30',
+        source: const TodoSource(
+          sessionId: 'pdf_1',
+          itemId: 'item_1',
+          excerpt: 'Confirmar horário',
+          clock: '10:00',
+        ),
+      ).copyWith(
+        subtasks: const [TodoSubtask(id: 's1', text: 'Separar número')],
+      ),
       _item('t2', 'Enviar resumo', done: true, minute: 1),
       _item('t3', 'Revisar', sourceStale: true, minute: 2),
     ];
@@ -927,11 +939,27 @@ void main() {
           autoSyncOnLoad: false,
         );
 
-        // localOnly
+        // localOnly without pending/error hides sync bar and per-item labels
+        expect(statusBar, findsNothing);
+        expect(syncNowBtn, findsNothing);
+        expect(
+          find.byKey(const ValueKey('todo_item_sync_label_t1')),
+          findsNothing,
+        );
+
+        // localOnly with pending outbox surfaces sync bar and per-item labels
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.localOnly,
+          paired: false,
+          deviceId: '',
+          pendingOutbox: 1,
+          unsyncedItemIds: const {'t1'},
+        );
+        await tester.pumpAndSettle();
         expect(
           find.descendant(
             of: statusBar,
-            matching: find.text(l10n.todoSyncSavedOnDevice),
+            matching: find.text(l10n.todoSyncPendingChanges(1)),
           ),
           findsOneWidget,
         );
@@ -1353,5 +1381,117 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+  });
+
+  group('impeccable polish', () {
+    testWidgets('horizontal swipe switches between tabs', (tester) async {
+      await pump(tester, [
+        _item('today', 'Hoje tarefa'),
+        _item('upcoming', 'Futura tarefa', due: '2026-11-21'),
+      ]);
+      expect(find.text('Hoje tarefa'), findsOneWidget);
+      expect(find.text('Futura tarefa'), findsNothing);
+
+      await tester.drag(
+        find.byKey(const ValueKey('todo_section_today')),
+        const Offset(-600, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Futura tarefa'), findsOneWidget);
+    });
+
+    testWidgets('empty title shows inline error instead of failing silently', (
+      tester,
+    ) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(find.text(UserStorage.l10n.todoTextRequired), findsOneWidget);
+      expect(router.items, isEmpty);
+
+      await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar');
+      await tester.pump();
+      expect(find.text(UserStorage.l10n.todoTextRequired), findsNothing);
+    });
+
+    testWidgets('native date and time pickers populate the editor fields', (
+      tester,
+    ) async {
+      await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('todo_pick_date')));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      final dueField = tester.widget<TextField>(
+        find.byKey(const ValueKey('todo_due')),
+      );
+      expect(dueField.controller!.text, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
+
+      await tester.tap(find.byKey(const ValueKey('todo_pick_time')));
+      await tester.pumpAndSettle();
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      final timeField = tester.widget<TextField>(
+        find.byKey(const ValueKey('todo_time')),
+      );
+      expect(timeField.controller!.text, '09:00');
+    });
+
+    testWidgets(
+      'priority filter displays active bar and clears from filtered empty state',
+      (tester) async {
+        await pump(tester, [
+          _item('low', 'Baixa').copyWith(priority: TodoPriority.low),
+        ]);
+        await tester.tap(find.byKey(const ValueKey('todo_priority_filter')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(UserStorage.l10n.todoPriorityUrgent).last);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('todo_active_filter_bar')),
+          findsOneWidget,
+        );
+        expect(find.text(UserStorage.l10n.todoFilterEmpty), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('todo_empty_clear_filter')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const ValueKey('todo_empty_clear_filter')));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('todo_active_filter_bar')),
+          findsNothing,
+        );
+        expect(find.text('Baixa'), findsOneWidget);
+      },
+    );
+
+    testWidgets('search screen exposes a clear query button', (tester) async {
+      await pump(tester, [_item('t1', 'Revisar orçamento')]);
+      await tester.tap(find.byKey(const ValueKey('todo_open_search')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('todo_search_clear')), findsNothing);
+      await tester.enterText(find.byKey(const ValueKey('todo_search')), 'zzz');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_search_clear')), findsOneWidget);
+      expect(find.text(UserStorage.l10n.todoNoResults), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_search_clear')));
+      await tester.pumpAndSettle();
+      expect(find.text(UserStorage.l10n.todoSearchStart), findsOneWidget);
+    });
   });
 }

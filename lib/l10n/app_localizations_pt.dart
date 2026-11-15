@@ -4987,4 +4987,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get todoConflictUseRemote => 'Usar do PC';
+
+  @override
+  String get todoTextRequired => 'Digite o que precisa ser feito.';
+
+  @override
+  String get todoFilterEmpty => 'Nenhuma tarefa com essa prioridade.';
+
+  @override
+  String get todoPickDate => 'Escolher data';
+
+  @override
+  String get todoPickTime => 'Escolher horário';
 }

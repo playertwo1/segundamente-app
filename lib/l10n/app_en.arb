@@ -2077,5 +2077,9 @@
   "todoConflictLocalLabel": "On this device",
   "todoConflictRemoteLabel": "On Lumen (PC)",
   "todoConflictKeepLocal": "Keep from this device",
-  "todoConflictUseRemote": "Use from PC"
+  "todoConflictUseRemote": "Use from PC",
+  "todoTextRequired": "Enter what needs to be done.",
+  "todoFilterEmpty": "No tasks match this priority.",
+  "todoPickDate": "Choose date",
+  "todoPickTime": "Choose time"
 }

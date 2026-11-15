@@ -2068,5 +2068,9 @@
   "todoConflictLocalLabel": "Neste aparelho",
   "todoConflictRemoteLabel": "No Lumen (PC)",
   "todoConflictKeepLocal": "Manter deste aparelho",
-  "todoConflictUseRemote": "Usar do PC"
+  "todoConflictUseRemote": "Usar do PC",
+  "todoTextRequired": "Digite o que precisa ser feito.",
+  "todoFilterEmpty": "Nenhuma tarefa com essa prioridade.",
+  "todoPickDate": "Escolher data",
+  "todoPickTime": "Escolher horário"
 }
