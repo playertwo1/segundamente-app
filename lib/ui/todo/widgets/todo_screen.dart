@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
@@ -55,13 +56,21 @@ class TodoScreen extends StatefulWidget {
   State<TodoScreen> createState() => _TodoScreenState();
 }
 
-class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
+class _TodoScreenState extends State<TodoScreen>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   AppLifecycleState? _lastLifecycleState;
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _tabController = TabController(
+      length: TodoListSection.values.length,
+      vsync: this,
+      initialIndex: widget.viewModel.section.index,
+    )..addListener(_onTabChanged);
+    widget.viewModel.addListener(_syncTabControllerFromViewModel);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.viewModel.load();
@@ -69,9 +78,42 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didUpdateWidget(covariant TodoScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel != widget.viewModel) {
+      oldWidget.viewModel.removeListener(_syncTabControllerFromViewModel);
+      widget.viewModel.addListener(_syncTabControllerFromViewModel);
+      _syncTabControllerFromViewModel();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.viewModel.load();
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    widget.viewModel.removeListener(_syncTabControllerFromViewModel);
+    _tabController
+      ..removeListener(_onTabChanged)
+      ..dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onTabChanged() {
+    final target = TodoListSection.values[_tabController.index];
+    if (widget.viewModel.section != target) {
+      widget.viewModel.selectSection(target);
+    }
+  }
+
+  void _syncTabControllerFromViewModel() {
+    if (!mounted) return;
+    final targetIndex = widget.viewModel.section.index;
+    if (_tabController.index != targetIndex) {
+      _tabController.animateTo(targetIndex);
+    }
   }
 
   @override
@@ -79,7 +121,7 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed &&
         _lastLifecycleState != null &&
         _lastLifecycleState != AppLifecycleState.resumed) {
-      unawaited(widget.viewModel.load());
+      unawaited(widget.viewModel.refreshOnResume());
     }
     _lastLifecycleState = state;
   }
@@ -173,79 +215,417 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final l10n = UserStorage.l10n;
-    return DefaultTabController(
-      length: TodoListSection.values.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.todoTitle),
-          bottom: TabBar(
-            isScrollable: true,
-            onTap: (index) => widget.viewModel.selectSection(
-              TodoListSection.values[index],
-            ),
-            tabs: [
-              Tab(text: l10n.todoTabToday),
-              Tab(text: l10n.todoTabUpcoming),
-              Tab(text: l10n.todoTabOverdue),
-              Tab(text: l10n.todoTabCompleted),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.todoTitle),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: [
+            Tab(text: l10n.todoTabToday),
+            Tab(text: l10n.todoTabUpcoming),
+            Tab(text: l10n.todoTabOverdue),
+            Tab(text: l10n.todoTabCompleted),
+          ],
+        ),
+        actions: [
+          IconButton(
+            key: const ValueKey('todo_open_search'),
+            tooltip: l10n.todoSearchHint,
+            icon: const Icon(Icons.search),
+            onPressed: _openSearch,
           ),
-          actions: [
-            IconButton(
-              key: const ValueKey('todo_open_search'),
-              tooltip: l10n.todoSearchHint,
-              icon: const Icon(Icons.search),
-              onPressed: _openSearch,
+          _TodoPriorityFilterButton(viewModel: widget.viewModel),
+          IconButton(
+            key: const ValueKey('todo_add'),
+            tooltip: l10n.todoAdd,
+            icon: const Icon(Icons.add),
+            onPressed: _addOrEdit,
+          ),
+        ],
+      ),
+      body: ListenableBuilder(
+        listenable: widget.viewModel,
+        builder: (context, _) {
+          final viewModel = widget.viewModel;
+          if (viewModel.loading && !viewModel.hasAny) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (viewModel.errorMessage != null && !viewModel.hasAny) {
+            return _loadError(l10n, viewModel);
+          }
+          return Column(
+            children: [
+              if (_alarmPermissionBanner(l10n, viewModel) case final banner?)
+                banner,
+              if (viewModel.damagedLegacyFileName case final fileName?)
+                ListTile(
+                  key: const ValueKey('todo_legacy_damaged_banner'),
+                  leading: const Icon(Icons.warning_amber_outlined),
+                  title: Text(l10n.todoLegacyFileDamaged(fileName)),
+                ),
+              if (viewModel.errorMessage != null)
+                MaterialBanner(
+                  key: const ValueKey('todo_error'),
+                  content: Text(l10n.todoLoadFailed),
+                  actions: [
+                    TextButton(
+                      onPressed: viewModel.load,
+                      child: Text(l10n.todoRetry),
+                    ),
+                  ],
+                ),
+              if (_shouldShowSyncStatus(viewModel.syncStatus))
+                _syncStatusBar(l10n, viewModel, context),
+              if (viewModel.priorityFilter case final priority?)
+                _activeFilterBar(l10n, viewModel, priority, context),
+              if (viewModel.conflicts.isNotEmpty)
+                _conflictsBanner(l10n, viewModel, context),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    for (final section in TodoListSection.values)
+                      _sectionBody(viewModel, l10n, section),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _activeFilterBar(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    TodoPriority priority,
+    BuildContext context,
+  ) =>
+      Container(
+        key: const ValueKey('todo_active_filter_bar'),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.divider)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.filter_list,
+              size: 16,
+              color: _priorityColor(priority),
             ),
-            _TodoPriorityFilterButton(viewModel: widget.viewModel),
-            IconButton(
-              key: const ValueKey('todo_add'),
-              tooltip: l10n.todoAdd,
-              icon: const Icon(Icons.add),
-              onPressed: _addOrEdit,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${l10n.todoPriorityLabel}: ${_priorityLabel(l10n, priority)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+              ),
+            ),
+            TextButton(
+              key: const ValueKey('todo_clear_priority_filter'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size(48, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
+              ),
+              onPressed: () => viewModel.setPriorityFilter(null),
+              child: Text(l10n.todoFilterClear),
             ),
           ],
         ),
-        body: ListenableBuilder(
-          listenable: widget.viewModel,
-          builder: (context, _) {
-            final viewModel = widget.viewModel;
-            if (viewModel.loading && !viewModel.hasAny) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (viewModel.errorMessage != null && !viewModel.hasAny) {
-              return _loadError(l10n, viewModel);
-            }
-            return Column(
-              children: [
-                if (_alarmPermissionBanner(l10n, viewModel) case final banner?)
-                  banner,
-                if (viewModel.damagedLegacyFileName case final fileName?)
-                  ListTile(
-                    key: const ValueKey('todo_legacy_damaged_banner'),
-                    leading: const Icon(Icons.warning_amber_outlined),
-                    title: Text(l10n.todoLegacyFileDamaged(fileName)),
-                  ),
-                if (viewModel.errorMessage != null)
-                  MaterialBanner(
-                    key: const ValueKey('todo_error'),
-                    content: Text(l10n.todoLoadFailed),
-                    actions: [
-                      TextButton(
-                        onPressed: viewModel.load,
-                        child: Text(l10n.todoRetry),
+      );
+
+  Widget _syncStatusBar(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    BuildContext context,
+  ) {
+    final status = viewModel.syncStatus;
+    final isSyncing = status.state == TodoSyncBadgeState.syncing;
+    final label = switch (status.state) {
+      TodoSyncBadgeState.synced => l10n.todoSyncSynced,
+      TodoSyncBadgeState.syncing => l10n.todoSyncSyncing,
+      TodoSyncBadgeState.revoked => l10n.todoSyncRevoked,
+      TodoSyncBadgeState.error => l10n.todoSyncError,
+      TodoSyncBadgeState.offline => l10n.todoSyncOffline,
+      TodoSyncBadgeState.waitingPc => () {
+          final pending = status.pendingOutbox + (status.pendingPc ?? 0);
+          return pending > 0
+              ? l10n.todoSyncPendingChanges(pending)
+              : l10n.todoSyncSavedOnDevice;
+        }(),
+      TodoSyncBadgeState.savedOnDevice || TodoSyncBadgeState.localOnly =>
+        status.pendingOutbox > 0
+            ? l10n.todoSyncPendingChanges(status.pendingOutbox)
+            : l10n.todoSyncSavedOnDevice,
+    };
+    final formattedTime = _formatLastSyncTime(context, status.lastSyncedAt);
+    final lastSyncLabel =
+        formattedTime != null && status.paired && !status.revoked
+            ? l10n.todoSyncLastSuccess(formattedTime)
+            : null;
+    final iconColor = switch (status.state) {
+      TodoSyncBadgeState.synced => AppColors.success,
+      TodoSyncBadgeState.revoked => AppColors.danger,
+      TodoSyncBadgeState.error => AppColors.warning,
+      TodoSyncBadgeState.syncing => AppColors.primary,
+      TodoSyncBadgeState.waitingPc ||
+      TodoSyncBadgeState.savedOnDevice ||
+      TodoSyncBadgeState.offline ||
+      TodoSyncBadgeState.localOnly =>
+        AppColors.textSecondary,
+    };
+    final iconData = switch (status.state) {
+      TodoSyncBadgeState.synced => Icons.cloud_done_outlined,
+      TodoSyncBadgeState.revoked => Icons.link_off,
+      TodoSyncBadgeState.error => Icons.sync_problem_outlined,
+      TodoSyncBadgeState.offline => Icons.cloud_off_outlined,
+      TodoSyncBadgeState.syncing => Icons.sync,
+      TodoSyncBadgeState.waitingPc ||
+      TodoSyncBadgeState.savedOnDevice ||
+      TodoSyncBadgeState.localOnly =>
+        Icons.smartphone_outlined,
+    };
+
+    return Container(
+      key: const ValueKey('todo_sync_status_bar'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.divider)),
+      ),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isSyncing)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(iconData, size: 18, color: iconColor),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    if (lastSyncLabel != null)
+                      Text(
+                        lastSyncLabel,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                       ),
-                    ],
-                  ),
-                Expanded(
-                  child: _sectionBody(viewModel, l10n),
+                  ],
                 ),
-              ],
-            );
-          },
+              ),
+            ],
+          ),
+          if (status.paired && !status.revoked)
+            TextButton(
+              key: const ValueKey('todo_sync_now_button'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size(48, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
+              ),
+              onPressed: isSyncing ? null : () => viewModel.syncNow(),
+              child: Text(l10n.todoSyncNowButton),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _conflictsBanner(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    BuildContext context,
+  ) {
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.45;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final conflict in viewModel.conflicts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _conflictCard(l10n, viewModel, conflict, context),
+              ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _conflictCard(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    TaskTextConflict conflict,
+    BuildContext context,
+  ) =>
+      Container(
+        key: ValueKey('todo_conflict_card_${conflict.id}'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warning),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: AppColors.warning,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.todoConflictBannerTitle,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.todoConflictBannerSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _conflictOptionBox(
+              label: l10n.todoConflictLocalLabel,
+              value: conflict.localText,
+              context: context,
+            ),
+            const SizedBox(height: 6),
+            _conflictOptionBox(
+              label: l10n.todoConflictRemoteLabel,
+              value: conflict.remoteText,
+              context: context,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  key: ValueKey('todo_conflict_keep_local_${conflict.id}'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: const BorderSide(color: AppColors.divider),
+                    minimumSize: const Size(48, 48),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                  onPressed: () => viewModel.resolveConflict(
+                    conflict.id,
+                    keepLocal: true,
+                  ),
+                  child: Text(l10n.todoConflictKeepLocal),
+                ),
+                FilledButton(
+                  key: ValueKey('todo_conflict_use_remote_${conflict.id}'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    minimumSize: const Size(48, 48),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                  onPressed: () => viewModel.resolveConflict(
+                    conflict.id,
+                    keepLocal: false,
+                  ),
+                  child: Text(l10n.todoConflictUseRemote),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+  Widget _conflictOptionBox({
+    required String label,
+    required String value,
+    required BuildContext context,
+  }) =>
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+            ),
+          ],
+        ),
+      );
+
+  String? _formatLastSyncTime(BuildContext context, String? iso) {
+    if (iso == null || iso.trim().isEmpty) return null;
+    final parsed = DateTime.tryParse(iso.trim());
+    if (parsed == null) return null;
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.Hm(locale).format(parsed.toLocal());
   }
 
   Widget? _alarmPermissionBanner(
@@ -295,12 +675,16 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
         ),
       );
 
-  Widget _sectionBody(TodoViewModel viewModel, AppLocalizations l10n) {
-    final section = viewModel.section;
+  Widget _sectionBody(
+    TodoViewModel viewModel,
+    AppLocalizations l10n,
+    TodoListSection section,
+  ) {
     final items = viewModel.itemsFor(section);
     if (items.isEmpty) {
-      final message = viewModel.priorityFilter != null
-          ? l10n.todoNoResults
+      final hasFilter = viewModel.priorityFilter != null;
+      final message = hasFilter
+          ? l10n.todoFilterEmpty
           : switch (section) {
               TodoListSection.today => l10n.todoEmptyToday,
               TodoListSection.upcoming => l10n.todoEmptyUpcoming,
@@ -313,8 +697,21 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(message, key: const ValueKey('todo_empty')),
-              if (!viewModel.hasAny && section == TodoListSection.today) ...[
+              Text(
+                message,
+                key: const ValueKey('todo_empty'),
+                textAlign: TextAlign.center,
+              ),
+              if (hasFilter) ...[
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  key: const ValueKey('todo_empty_clear_filter'),
+                  onPressed: () => viewModel.setPriorityFilter(null),
+                  icon: const Icon(Icons.filter_list_off),
+                  label: Text(l10n.todoFilterClear),
+                ),
+              ] else if (!viewModel.hasAny &&
+                  section == TodoListSection.today) ...[
                 const SizedBox(height: 12),
                 TextButton.icon(
                   onPressed: _addOrEdit,
@@ -435,7 +832,14 @@ class _TodoSearchScreen extends StatefulWidget {
 }
 
 class _TodoSearchScreenState extends State<_TodoSearchScreen> {
+  final _searchController = TextEditingController();
   String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _action(TodoItem item, _TodoTaskAction action) async {
     switch (action) {
@@ -468,10 +872,22 @@ class _TodoSearchScreenState extends State<_TodoSearchScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: TextField(
                   key: const ValueKey('todo_search'),
+                  controller: _searchController,
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: l10n.todoSearchHint,
                     prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            key: const ValueKey('todo_search_clear'),
+                            tooltip: l10n.todoFilterClear,
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _query = '');
+                            },
+                          ),
                   ),
                   onChanged: (value) => setState(() => _query = value),
                 ),
@@ -520,6 +936,15 @@ class _TodoSearchScreenState extends State<_TodoSearchScreen> {
   }
 }
 
+bool _shouldShowSyncStatus(TodoSyncStatus status) =>
+    status.paired ||
+    status.pendingOutbox > 0 ||
+    status.state == TodoSyncBadgeState.syncing ||
+    status.state == TodoSyncBadgeState.error ||
+    status.state == TodoSyncBadgeState.offline ||
+    status.state == TodoSyncBadgeState.revoked ||
+    status.conflicts.isNotEmpty;
+
 class _TodoTaskRow extends StatelessWidget {
   const _TodoTaskRow({
     required this.item,
@@ -543,60 +968,97 @@ class _TodoTaskRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = UserStorage.l10n;
     final source = item.source;
+    final textTheme = Theme.of(context).textTheme;
+    final showSync = _shouldShowSyncStatus(viewModel.syncStatus);
+    final nextOccurrence =
+        item.done ? viewModel.nextOccurrenceFor(item) : null;
     return Column(
       key: ValueKey('todo_${item.id}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          leading: Semantics(
-            label: item.done ? l10n.todoReopenTask : l10n.todoMarkDone,
-            child: Checkbox(
-              key: ValueKey('todo_done_${item.id}'),
-              value: item.done,
-              onChanged: (value) => onDone(value ?? !item.done),
+          leading: MergeSemantics(
+            child: Semantics(
+              label: item.done ? l10n.todoReopenTask : l10n.todoMarkDone,
+              child: Checkbox(
+                key: ValueKey('todo_done_${item.id}'),
+                value: item.done,
+                onChanged: (value) => onDone(value ?? !item.done),
+              ),
             ),
           ),
           title: Text(
             item.text,
-            style: item.done
-                ? const TextStyle(decoration: TextDecoration.lineThrough)
-                : null,
+            style: textTheme.bodyLarge?.copyWith(
+              color:
+                  item.done ? AppColors.textSecondary : AppColors.textPrimary,
+              decoration: item.done ? TextDecoration.lineThrough : null,
+            ),
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _statusAndDate(item, viewModel, l10n, context),
-                key: ValueKey('todo_status_date_${item.id}'),
-              ),
-              Text(
-                _priorityLabel(l10n, item.priority),
-                key: ValueKey('todo_priority_${item.id}'),
-                style: TextStyle(color: _priorityColor(item.priority)),
-              ),
-              if (source != null)
-                InkWell(
-                  key: ValueKey('todo_source_${item.id}'),
-                  onTap: onOpenSource,
-                  child: Text(
-                    '${l10n.todoOpenSource}: ${source.clock ?? ''} '
-                    '"${source.excerpt}"',
-                  ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      _statusAndDate(item, viewModel, l10n, context),
+                      key: ValueKey('todo_status_date_${item.id}'),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    if (item.priority != TodoPriority.normal)
+                      Text(
+                        _priorityLabel(l10n, item.priority),
+                        key: ValueKey('todo_priority_${item.id}'),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: _priorityColor(item.priority),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    if (showSync)
+                      Text(
+                        viewModel.isItemSynced(item)
+                            ? l10n.todoSyncSynced
+                            : l10n.todoSyncSavedOnDevice,
+                        key: ValueKey('todo_item_sync_label_${item.id}'),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: viewModel.isItemSynced(item)
+                              ? AppColors.success
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
                 ),
-              if (item.sourceStale)
-                Text(
-                  l10n.todoSourceChanged,
-                  key: ValueKey('todo_source_stale_${item.id}'),
-                ),
-              if (item.done)
-                if (viewModel.nextOccurrenceFor(item) case final next?) ...[
-                  const SizedBox(height: 3),
-                  Text(l10n.todoSeriesActive),
+                if (item.sourceStale) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    l10n.todoSeriesNext(_formatScheduleDate(next, context)),
+                    l10n.todoSourceChanged,
+                    key: ValueKey('todo_source_stale_${item.id}'),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.warning,
+                    ),
                   ),
                 ],
-            ],
+                if (nextOccurrence != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${l10n.todoSeriesActive} · '
+                    '${l10n.todoSeriesNext(_formatScheduleDate(nextOccurrence, context))}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           onTap: onEdit,
           trailing: PopupMenuButton<_TodoTaskAction>(
@@ -620,20 +1082,51 @@ class _TodoTaskRow extends StatelessWidget {
             ],
           ),
         ),
+        if (source != null)
+          InkWell(
+            key: ValueKey('todo_source_${item.id}'),
+            onTap: onOpenSource,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(56, 8, 16, 8),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.description_outlined,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${l10n.todoOpenSource}: ${source.clock ?? ''} '
+                        '"${source.excerpt}"',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         for (final subtask in item.subtasks)
           CheckboxListTile(
             key: ValueKey('todo_subtask_${item.id}_${subtask.id}'),
-            contentPadding: const EdgeInsets.only(left: 48, right: 16),
-            dense: true,
-            visualDensity: VisualDensity.compact,
+            contentPadding: const EdgeInsets.only(left: 56, right: 16),
             controlAffinity: ListTileControlAffinity.leading,
             value: subtask.done,
             onChanged: (_) => onSubtask(subtask),
             title: Text(
               subtask.text,
-              style: subtask.done
-                  ? const TextStyle(decoration: TextDecoration.lineThrough)
-                  : null,
+              style: textTheme.bodyMedium?.copyWith(
+                color: subtask.done
+                    ? AppColors.textSecondary
+                    : AppColors.textPrimary,
+                decoration: subtask.done ? TextDecoration.lineThrough : null,
+              ),
             ),
           ),
         const Divider(height: 1, indent: 16, endIndent: 16),
@@ -736,6 +1229,7 @@ class _TodoDialogState extends State<_TodoDialog> {
       widget.item?.recurrence?.frequency == TodoRepeatFrequency.weekly
           ? widget.item!.recurrence!.weekdays.toSet()
           : {_anchorDate().weekday};
+  String? _textError;
   String? _scheduleError;
   String? _alertError;
   bool _confirmedNoDate = false;
@@ -756,7 +1250,11 @@ class _TodoDialogState extends State<_TodoDialog> {
     final l10n = UserStorage.l10n;
     final hasTime = _time.text.trim().isNotEmpty;
     return AlertDialog(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.divider),
+      ),
       title: Text(widget.proposal != null
           ? l10n.todoProposalReviewTitle
           : widget.item == null
@@ -772,7 +1270,15 @@ class _TodoDialogState extends State<_TodoDialog> {
               TextField(
                 key: const ValueKey('todo_text'),
                 controller: _text,
-                decoration: InputDecoration(hintText: l10n.todoTextHint),
+                decoration: InputDecoration(
+                  hintText: l10n.todoTextHint,
+                  errorText: _textError,
+                ),
+                onChanged: (_) {
+                  if (_textError != null) {
+                    setState(() => _textError = null);
+                  }
+                },
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<TodoPriority>(
@@ -797,6 +1303,12 @@ class _TodoDialogState extends State<_TodoDialog> {
                 decoration: InputDecoration(
                   labelText: l10n.todoDueHint,
                   hintText: 'YYYY-MM-DD',
+                  suffixIcon: IconButton(
+                    key: const ValueKey('todo_pick_date'),
+                    tooltip: l10n.todoPickDate,
+                    icon: const Icon(Icons.calendar_today_outlined),
+                    onPressed: _pickDate,
+                  ),
                 ),
                 onChanged: _dueChanged,
               ),
@@ -807,6 +1319,12 @@ class _TodoDialogState extends State<_TodoDialog> {
                 decoration: InputDecoration(
                   labelText: l10n.todoTimeLabel,
                   hintText: l10n.todoTimeHint,
+                  suffixIcon: IconButton(
+                    key: const ValueKey('todo_pick_time'),
+                    tooltip: l10n.todoPickTime,
+                    icon: const Icon(Icons.schedule_outlined),
+                    onPressed: _pickTime,
+                  ),
                 ),
                 onChanged: (_) => setState(() {
                   _scheduleError = null;
@@ -1022,13 +1540,26 @@ class _TodoDialogState extends State<_TodoDialog> {
       actions: [
         TextButton(
           key: const ValueKey('todo_dialog_cancel'),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            tapTargetSize: MaterialTapTargetSize.padded,
+          ),
           onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.cancel),
         ),
-        TextButton(
+        FilledButton(
           key: const ValueKey('todo_dialog_save'),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.onPrimary,
+            minimumSize: const Size(48, 48),
+            tapTargetSize: MaterialTapTargetSize.padded,
+          ),
           onPressed: () {
-            if (_text.text.trim().isEmpty) return;
+            if (_text.text.trim().isEmpty) {
+              setState(() => _textError = l10n.todoTextRequired);
+              return;
+            }
             final alertMinutes = int.tryParse(_alertMinutes.text.trim());
             if (alertMinutes == null || alertMinutes < 0) {
               setState(() => _alertError = l10n.todoAlertMinutesInvalid);
@@ -1074,6 +1605,51 @@ class _TodoDialogState extends State<_TodoDialog> {
         ),
       ],
     );
+  }
+
+  Future<void> _pickDate() async {
+    final anchor = _anchorDate();
+    final firstDate = DateTime(anchor.year - 5, 1, 1);
+    final lastDate = DateTime(anchor.year + 10, 12, 31);
+    final initial = DateTime(anchor.year, anchor.month, anchor.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+    if (picked == null || !mounted) return;
+    _due.text = _formatDate(picked);
+    setState(() {
+      _scheduleError = null;
+      _confirmedNoDate = false;
+    });
+  }
+
+  Future<void> _pickTime() async {
+    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(_time.text.trim());
+    var initial = const TimeOfDay(hour: 9, minute: 0);
+    if (match != null) {
+      final hour = int.parse(match.group(1)!);
+      final minute = int.parse(match.group(2)!);
+      if (hour < 24 && minute < 60) {
+        initial = TimeOfDay(hour: hour, minute: minute);
+      }
+    }
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (picked == null || !mounted) return;
+    if (!_hasValidDate && _due.text.trim().isEmpty) {
+      _due.text = _formatDate(_anchorDate());
+    }
+    _time.text = '${picked.hour.toString().padLeft(2, '0')}:'
+        '${picked.minute.toString().padLeft(2, '0')}';
+    setState(() {
+      _scheduleError = null;
+      _confirmedNoTime = false;
+    });
   }
 
   void _addSubtask() {

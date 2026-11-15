@@ -1,6 +1,6 @@
 # F15-03 — Widget pequeno
 
-> Subfase da [F15 — Widget e atalhos Android](../roadmap/F15-widget-e-atalhos-android.md). Estado: **REVIEW** (código pronto; aparelho `NOT_RUN`). Visual: teclas no pequeno (D-064). Roteamento: mesmo intent do chat flutuante (D-065), registrado em D-066. Estado atual: [STATE.md](../../STATE.md).
+> Subfase da [F15 — Widget e atalhos Android](../roadmap/F15-widget-e-atalhos-android.md). Estado: **REVIEW** (código pronto; aparelho `NOT_RUN`). Visual: teclas no pequeno (D-064). Roteamento: mesmo intent do chat flutuante (D-065), registrado em D-068. Estado atual: [STATE.md](../../STATE.md).
 
 ## O que entrega
 
@@ -36,7 +36,7 @@ Cada tecla tem um `PendingIntent.getActivity` explícito para `FloatingChatActiv
 
 Daí em diante vale o F15-02: `FloatingChatActivity` recebe o extra, `onNewIntent` cuida do caso de a folha já estar aberta, e o chat abre com teclado (`type`) ou ouvindo (`talk`).
 
-**Desvio do roadmap:** a linha da F15-03 dizia "ações entram pelo `AppActionService`". O F15-02 não usa `AppActionService` para o chat flutuante; usa intents da `FloatingChatActivity`. O widget segue o F15-02 e não cria uma segunda rota. A linha foi atualizada e a escolha está em D-066.
+**Desvio do roadmap:** a linha da F15-03 dizia "ações entram pelo `AppActionService`". O F15-02 não usa `AppActionService` para o chat flutuante; usa intents da `FloatingChatActivity`. O widget segue o F15-02 e não cria uma segunda rota. A linha foi atualizada e a escolha está em D-068.
 
 ## Tamanhos e como crescer
 

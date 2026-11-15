@@ -72,6 +72,7 @@ import 'package:quick_actions/quick_actions.dart';
 import 'package:memex/data/services/app_action_link_service.dart';
 import 'package:memex/data/services/app_action_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
 import 'package:memex/utils/wakelock_manager.dart';
@@ -160,6 +161,20 @@ void main() async {
     await Workmanager().cancelByUniqueName('workmanager.background.task');
     await Workmanager().cancelByUniqueName('dailyStepSnapshotTask');
   }
+  if (Platform.isAndroid || Platform.isIOS) {
+    try {
+      await Workmanager().registerPeriodicTask(
+        lumenTodoPeriodicSyncUniqueName,
+        lumenTodoPeriodicSyncTask,
+        frequency: const Duration(hours: 1),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+        constraints: Constraints(networkType: NetworkType.connected),
+      );
+    } catch (error, stackTrace) {
+      getLogger('TodoSyncService')
+          .warning('Todo periodic sync unavailable', error, stackTrace);
+    }
+  }
 
   // Set status bar style & enable edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -241,6 +256,14 @@ class RootShellState extends State<RootShell> {
         await OnboardingService.markOnboardingComplete();
         onboardingDone = true;
       }
+    }
+
+    if (hasUser) {
+      unawaited(
+        TodoSyncService.instance
+            .syncNow(reason: 'lifecycle')
+            .then((_) {}, onError: (_) {}),
+      );
     }
 
     if (mounted) {
@@ -409,6 +432,11 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       unawaited(LocalTaskExecutor.instance.clearGracefulShutdownMarker());
       unawaited(AgentBackgroundTaskService.instance.onAppResumed());
+      unawaited(
+        TodoSyncService.instance
+            .syncNow(reason: 'lifecycle')
+            .then((_) {}, onError: (_) {}),
+      );
       MemexRouter().scheduleAutoBackupCheck(trigger: 'foreground');
       _checkGracePeriod();
     } else if (state == AppLifecycleState.detached) {
@@ -1796,8 +1824,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       return 'image mime=${candidate.mimeType}, fileName=${candidate.fileName}, '
           'uri=${candidate.imageUri}';
     }
-    return 'text len=${candidate.text?.runes.length ?? 0}, '
-        'preview=${candidate.previewText}';
+    return 'text len=${candidate.text?.runes.length ?? 0}';
   }
 
   Future<void> _openHomeClipboardInSuperAgent() async {

@@ -1,9 +1,17 @@
 import 'dart:math';
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:logging/logging.dart';
-import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/data/services/character_service.dart';
+import 'package:memex/data/services/comment_settings_service.dart';
+import 'package:memex/domain/models/card_model.dart';
+import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:memex/utils/mention_parser.dart';
+
+typedef ReplySelectionCandidate = ({
+  CharacterModel character,
+  bool forceReply,
+});
 
 /// Selects characters to comment on a given input.
 ///
@@ -487,22 +495,29 @@ class CharacterSelectionService {
   // ---------------------------------------------------------------------------
 
   /// Use an LLM call to decide which characters should comment on this input.
-  /// Returns 1–N characters. The prompt nudges the router toward multiple
-  /// distinct voices when the user allows them, but it still respects the
-  /// model's choice when only one character is appropriate.
+  /// Returns up to [maxCharacters] (default 15) pertinent characters in the
+  /// live group chat, while respecting each persona's comment policy.
   static Future<List<CharacterModel>> selectMultipleCharacters({
     required String userId,
     required String inputContent,
     required String factId,
     required LLMClient client,
     required ModelConfig modelConfig,
-    int maxCharacters = 3,
+    int maxCharacters = CommentSettings.defaultMaxCommentCharacters,
+    List<CharacterModel>? excludeCharacters,
   }) async {
+    if (maxCharacters <= 0) return [];
+
     final characters = await CharacterService.instance.getAllCharacters(userId);
-    final enabled = characters.where((c) => c.enabled).toList();
+    final excludedIds = {
+      for (final c in excludeCharacters ?? const <CharacterModel>[]) c.id,
+    };
+    final enabled = characters
+        .where((c) => c.enabled && !excludedIds.contains(c.id))
+        .toList();
 
     if (enabled.isEmpty) return [];
-    if (enabled.length == 1) return [enabled.first];
+    if (enabled.length == 1 && excludedIds.isEmpty) return [enabled.first];
 
     // Try LLM-based selection
     try {
@@ -521,16 +536,284 @@ class CharacterSelectionService {
       }
 
       // An empty router answer should not suppress a clear policy/keyword fit.
+      if (excludedIds.isNotEmpty) return [];
       final bestMatch = _bestMatch(enabled, inputContent);
       return bestMatch == null ? [] : [bestMatch];
     } catch (e) {
       _logger.warning('LLM character selection failed, falling back: $e');
     }
 
+    if (excludedIds.isNotEmpty) return [];
     // A failed router falls back to a clear match, then the primary companion.
     final fallback =
         _bestMatch(enabled, inputContent) ?? _primaryCompanion(enabled);
     return fallback == null ? [] : [fallback];
+  }
+
+  /// Selects personas to respond to a user comment in a thread.
+  ///
+  /// Priority:
+  /// 1. Explicit `@mentions` (including multiple mentions and unique `@first_name`)
+  ///    -> all mentioned personas with `forceReply: true`.
+  /// 2. Direct reply (`replyToId != null`) -> owner persona of the replied-to
+  ///    comment with `forceReply: true`.
+  /// 3. Open follow-up user comment -> pertinent personas via LLM routing /
+  ///    affinity / recent thread speaker / primary companion, ensuring at least
+  ///    the first responder always has `forceReply: true`.
+  static Future<List<ReplySelectionCandidate>> selectReplyCharacters({
+    required String userId,
+    required String postContent,
+    required String userComment,
+    required List<CardComment> existingComments,
+    String? replyToId,
+    required bool enableCharacterComment,
+    int maxCharacters = CommentSettings.defaultMaxCommentCharacters,
+    LLMClient? client,
+    ModelConfig? modelConfig,
+    List<CharacterModel>? charactersOverride,
+  }) async {
+    final allCharacters =
+        charactersOverride ?? await CharacterService.instance.getAllCharacters(userId);
+    if (allCharacters.isEmpty) return const [];
+
+    final enabled = allCharacters.where((c) => c.enabled).toList();
+    final safeMax = maxCharacters <= 0 ? 1 : maxCharacters;
+
+    // 1. Multiple or single explicit @mentions (matches @id, @name, unique @first_name)
+    final mentionPool = _mentionSearchPool(allCharacters);
+    final mentioned = extractAllMentions<CharacterModel>(
+      userComment,
+      mentionPool,
+      idOf: (c) => c.id,
+      nameOf: (c) => c.name,
+    );
+    if (mentioned.isNotEmpty) {
+      return mentioned
+          .take(safeMax)
+          .map((c) => (character: c, forceReply: true))
+          .toList(growable: false);
+    }
+
+    // 2. Explicit reply-to-comment routing
+    if (replyToId != null && replyToId.trim().isNotEmpty) {
+      final targetCharId =
+          _resolveReplyTargetCharacterId(existingComments, replyToId);
+      if (targetCharId != null) {
+        final target =
+            allCharacters.where((c) => c.id == targetCharId).firstOrNull;
+        if (target != null) {
+          return [(character: target, forceReply: true)];
+        }
+      }
+    }
+
+    // 3. Open follow-up comment from the user without replyToId or @mention
+    final hasPersonaHistory = existingComments.any((c) => c.isAi);
+    if (!enableCharacterComment && !hasPersonaHistory) {
+      return const [];
+    }
+    if (enabled.isEmpty) return const [];
+
+    final limit = min(safeMax, enabled.length);
+    final combinedContent =
+        postContent.trim().isEmpty ? userComment : '$postContent\n$userComment';
+
+    if (client != null && modelConfig != null && enabled.length > 1 && limit > 1) {
+      try {
+        final llmPicked = await _llmSelectReplyCharacters(
+          client: client,
+          modelConfig: modelConfig,
+          characters: enabled,
+          postContent: postContent,
+          userComment: userComment,
+          existingComments: existingComments,
+          maxCharacters: limit,
+        );
+        if (llmPicked.isNotEmpty) {
+          return [
+            for (var i = 0; i < llmPicked.length; i++)
+              (character: llmPicked[i], forceReply: i == 0),
+          ];
+        }
+      } catch (e) {
+        _logger.warning('LLM reply routing failed, using fallback: $e');
+      }
+    }
+
+    // Deterministic fallback: positive affinity on user comment first -> most recent
+    // AI speaker in thread -> best affinity on post+comment / primary / first enabled.
+    final rankedUserHits = [
+      for (final c in enabled)
+        (character: c, score: scoreAffinity(c, userComment)),
+    ].where((e) => e.score > 0).toList()
+      ..sort((a, b) => b.score.compareTo(a.score));
+    if (rankedUserHits.isNotEmpty) {
+      final pickCount = min(limit, min(rankedUserHits.length, 3));
+      return [
+        for (var i = 0; i < pickCount; i++)
+          (character: rankedUserHits[i].character, forceReply: i == 0),
+      ];
+    }
+
+    final enabledById = {for (final c in enabled) c.id: c};
+    for (final existing in existingComments.reversed) {
+      if (existing.isAi && existing.characterId != null) {
+        final speaker = enabledById[existing.characterId!];
+        if (speaker != null) {
+          return [(character: speaker, forceReply: true)];
+        }
+      }
+    }
+
+    final fallback = _bestMatch(enabled, combinedContent) ??
+        _primaryCompanion(enabled) ??
+        enabled.first;
+    return [(character: fallback, forceReply: true)];
+  }
+
+  /// Coordinates which remaining personas have a genuine non-repetitive
+  /// reaction, counterpoint, question, or complement for the cross-persona wave.
+  static Future<List<CharacterModel>> selectGroupFollowupCharacters({
+    required List<CharacterModel> candidates,
+    required String postContent,
+    required List<CardComment> existingComments,
+    required LLMClient client,
+    required ModelConfig modelConfig,
+    required int maxCharacters,
+  }) async {
+    if (candidates.isEmpty || maxCharacters <= 0) return const [];
+
+    final byId = {for (final c in candidates) c.id: c};
+    final charDescriptions = _buildRoutingDescriptions(candidates);
+    final recentStart =
+        existingComments.length > 12 ? existingComments.length - 12 : 0;
+    final threadBuf = StringBuffer();
+    for (final c in existingComments.sublist(recentStart)) {
+      final speaker = c.isAi
+          ? (byId[c.characterId]?.name ?? c.characterId ?? 'Persona')
+          : 'Usuário';
+      threadBuf.writeln(
+        '- [${c.id}] $speaker: ${_selectionInputExcerpt(c.content)}',
+      );
+    }
+
+    final targetCount = min(maxCharacters, candidates.length);
+    final prompt = 'Subagentes/personas candidatas a réplica:\n'
+        '$charDescriptions\n'
+        'Post original:\n"${_selectionInputExcerpt(postContent)}"\n\n'
+        'Conversa atual no grupo:\n$threadBuf\n'
+        'Quais personas acima (até $targetCount) têm uma réplica direta, '
+        'contraponto, complemento ou pergunta pertinente a um dos comentários acima? '
+        'Responda SOMENTE os `id`s ordenados por relevância separados por vírgula '
+        '(ou deixe vazio se a discussão já estiver bem fechada).';
+
+    final response = await client.generate(
+      [
+        SystemMessage(
+          'You coordinate a live group chat between persona subagents. Pick up '
+          'to $targetCount personas that have a genuine, non-repetitive reaction '
+          'to recent comments. Reply only with comma-separated IDs or an empty string.',
+        ),
+        UserMessage([TextPart(prompt)]),
+      ],
+      modelConfig: ModelConfig(
+        model: modelConfig.model,
+        maxTokens: 160,
+        extra: modelConfig.extra,
+      ),
+    );
+
+    final text = response.textOutput;
+    if (text == null || text.trim().isEmpty) return const [];
+    return _mapIdsToCharacters(text, candidates, maxCharacters);
+  }
+
+  /// Prioritizes enabled characters first when deduplicating names, while
+  /// keeping disabled characters addressable by explicit `@id` or `@name`.
+  static List<CharacterModel> _mentionSearchPool(
+    List<CharacterModel> allCharacters,
+  ) {
+    final enabled = allCharacters.where((c) => c.enabled);
+    final disabled = allCharacters.where((c) => !c.enabled);
+    return [...enabled, ...disabled];
+  }
+
+  static String? _resolveReplyTargetCharacterId(
+    List<CardComment> comments,
+    String replyToId,
+  ) {
+    final byId = {for (final c in comments) c.id: c};
+    CardComment? current = byId[replyToId];
+    final seen = <String>{};
+    while (current != null && seen.add(current.id)) {
+      if (current.isAi && current.characterId != null) {
+        return current.characterId;
+      }
+      final nextId = current.replyToId;
+      if (nextId == null || nextId.isEmpty) break;
+      current = byId[nextId];
+    }
+    return null;
+  }
+
+  static Future<List<CharacterModel>> _llmSelectReplyCharacters({
+    required LLMClient client,
+    required ModelConfig modelConfig,
+    required List<CharacterModel> characters,
+    required String postContent,
+    required String userComment,
+    required List<CardComment> existingComments,
+    required int maxCharacters,
+  }) async {
+    final charDescriptions = _buildRoutingDescriptions(characters);
+    final participants = <String>[];
+    for (final c in existingComments.reversed) {
+      final id = c.characterId;
+      if (c.isAi && id != null && !participants.contains(id)) {
+        participants.add(id);
+      }
+    }
+
+    final recentStart =
+        existingComments.length > 10 ? existingComments.length - 10 : 0;
+    final threadBuf = StringBuffer();
+    for (final c in existingComments.sublist(recentStart)) {
+      final speaker = c.isAi ? (c.characterId ?? 'AI') : 'User';
+      threadBuf.writeln(
+        '- [${c.id}] $speaker: ${_selectionInputExcerpt(c.content)}',
+      );
+    }
+
+    final targetCount = min(maxCharacters, characters.length);
+    final prompt = 'Personas ativas:\n$charDescriptions\n'
+        '${participants.isEmpty ? '' : 'Personas que já participaram neste fio: ${participants.join(', ')}\n\n'}'
+        'Registro original:\n"${_selectionInputExcerpt(postContent)}"\n\n'
+        '${existingComments.isEmpty ? '' : 'Histórico recente:\n$threadBuf\n'}'
+        'Novo comentário aberto do usuário:\n"${_selectionInputExcerpt(userComment)}"\n\n'
+        'Escolha de 1 até $targetCount personas pertinentes para responder a essa fala '
+        'aberta do usuário no chat em grupo. Dê prioridade a quem já conversava no fio '
+        'ou cujo papel/política traz resposta direta e útil.\n'
+        'Reply with ONLY comma-separated IDs (e.g. id1,id2). No explanation.';
+
+    final response = await client.generate(
+      [
+        SystemMessage(
+          'You coordinate a live group chat and select which active personas '
+          'should reply to an open user comment (up to $targetCount). Always pick '
+          'at least 1 relevant persona. Reply with ONLY comma-separated IDs.',
+        ),
+        UserMessage([TextPart(prompt)]),
+      ],
+      modelConfig: ModelConfig(
+        model: modelConfig.model,
+        maxTokens: 200,
+        extra: modelConfig.extra,
+      ),
+    );
+
+    final text = response.textOutput;
+    if (text == null || text.trim().isEmpty) return const [];
+    return _mapIdsToCharacters(text, characters, maxCharacters);
   }
 
   /// One-shot LLM call to pick which characters should respond.
@@ -539,9 +822,41 @@ class CharacterSelectionService {
     required ModelConfig modelConfig,
     required List<CharacterModel> characters,
     required String inputContent,
-    int maxCharacters = 3,
+    int maxCharacters = CommentSettings.defaultMaxCommentCharacters,
   }) async {
-    // Build a concise character list for the prompt
+    final charDescriptions = _buildRoutingDescriptions(characters);
+    final truncatedInput = _selectionInputExcerpt(inputContent);
+
+    final targetCount = min(maxCharacters, characters.length);
+    final prompt = 'Pick which characters should comment on this user entry.\n'
+        'The user allows up to $targetCount character comments in this live group chat. For a substantive entry, usually select the best-fitting character when a natural reply is possible, even if the user did not ask a direct question. Then add every other character, up to the allowance ($targetCount, whether that means 2, 5, or all relevant ones without stopping early), that brings a different and useful angle: the user wants to hear a lively multi-voice discussion. Leave out only a voice that would repeat another or has nothing of its own to say.\n'
+        'Follow each character’s comment policy, using its reply occasions as guidance for when it fits. Do not select a character whose policy says to stay quiet. Return no IDs only for a trivial or content-free entry, when a reply would feel intrusive, or when no character has a natural reason to respond.\n'
+        'Rank selected characters from strongest fit to weakest fit. Do not include redundant or forced voices.\n\n'
+        'Characters:\n$charDescriptions\n'
+        'User entry:\n"$truncatedInput"\n\n'
+        'Reply with ONLY comma-separated IDs, e.g. id1,id2. Reply with an empty string if none fit. No explanation.';
+
+    final selectionConfig = ModelConfig(
+      model: modelConfig.model,
+      maxTokens: 256,
+      extra: modelConfig.extra,
+    );
+
+    final response = await client.generate(
+      [
+        SystemMessage(
+            'You are a character routing assistant for a live group chat. Reply with only comma-separated IDs.'),
+        UserMessage([TextPart(prompt)]),
+      ],
+      modelConfig: selectionConfig,
+    );
+
+    final text = response.textOutput;
+    if (text == null || text.isEmpty) return [];
+    return _mapIdsToCharacters(text, characters, maxCharacters);
+  }
+
+  static String _buildRoutingDescriptions(List<CharacterModel> characters) {
     final charDescriptions = StringBuffer();
     for (final c in characters) {
       final tags = c.tags.isNotEmpty ? ' [${c.tags.join(', ')}]' : '';
@@ -556,50 +871,30 @@ class CharacterSelectionService {
         '${policy.isEmpty ? '' : '\n  comment policy: $policy'}',
       );
     }
+    return charDescriptions.toString();
+  }
 
-    final truncatedInput = _selectionInputExcerpt(inputContent);
-
-    final targetCount = min(maxCharacters, characters.length);
-    final prompt = 'Pick which characters should comment on this user entry.\n'
-        'The user allows up to $targetCount character comments. For a substantive entry, usually select the best-fitting character when a natural reply is possible, even if the user did not ask a direct question. Then add every other character, up to the allowance, that brings a different and useful angle: the user wants to hear more than one voice. Leave out only a voice that would repeat another or has nothing of its own to say.\n'
-        'Follow each character’s comment policy, using its reply occasions as guidance for when it fits. Do not select a character whose policy says to stay quiet. Return no IDs only for a trivial or content-free entry, when a reply would feel intrusive, or when no character has a natural reason to respond.\n'
-        'Rank selected characters from strongest fit to weakest fit. Do not include redundant or forced voices.\n\n'
-        'Characters:\n$charDescriptions\n'
-        'User entry:\n"$truncatedInput"\n\n'
-        'Reply with ONLY comma-separated IDs, e.g. id1,id2. Reply with an empty string if none fit. No explanation.';
-
-    final selectionConfig = ModelConfig(
-      model: modelConfig.model,
-      maxTokens: 100,
-      extra: modelConfig.extra,
-    );
-
-    final response = await client.generate(
-      [
-        SystemMessage(
-            'You are a character routing assistant. Reply with only comma-separated IDs.'),
-        UserMessage([TextPart(prompt)]),
-      ],
-      modelConfig: selectionConfig,
-    );
-
-    // Extract the text response
-    final text = response.textOutput;
-    if (text == null || text.isEmpty) return [];
-
-    // Parse comma-separated IDs
-    final ids = _parseIdList(text);
+  static List<CharacterModel> _mapIdsToCharacters(
+    String raw,
+    List<CharacterModel> characters,
+    int maxCharacters,
+  ) {
+    final ids = _parseIdList(raw);
     if (ids.isEmpty) return [];
 
-    // Map IDs back to character models, preserving order
     final selected = <CharacterModel>[];
     for (final id in ids) {
-      final match = characters.where((c) => c.id == id);
+      final foldedId = foldPtAscii(id);
+      final match = characters.where(
+        (c) =>
+            c.id == id ||
+            foldPtAscii(c.id) == foldedId ||
+            foldPtAscii(c.name) == foldedId,
+      );
       if (match.isNotEmpty && !selected.contains(match.first)) {
         selected.add(match.first);
       }
     }
-
     return selected.take(maxCharacters).toList();
   }
 

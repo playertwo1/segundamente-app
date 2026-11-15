@@ -7,6 +7,7 @@ import 'package:memex/domain/models/character_initiative.dart';
 import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/domain/models/character_workspace.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:memex/utils/mention_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:synchronized/synchronized.dart';
 
@@ -39,6 +40,119 @@ class CharacterWorkspaceService {
     return _lockFor(userId, character.id).synchronized(
       () => _ensureInitializedUnlocked(userId, character),
     );
+  }
+
+  /// Renders the initial `AGENTS.md` definition for [character] when no
+  /// living file exists yet in its workspace.
+  static String renderPersonaAgentsMd(CharacterModel character) {
+    final buffer = StringBuffer()
+      ..writeln('# ${character.name.trim()} (@${character.id.trim()})')
+      ..writeln()
+      ..writeln('- Papel: Subagente vivo de perspectiva no chat em grupo');
+    if (character.tags.isNotEmpty) {
+      buffer.writeln('- Tags: ${character.tags.join(', ')}');
+    }
+    final focus = character.interestFilter?.trim();
+    if (focus != null && focus.isNotEmpty) {
+      buffer.writeln('- Foco: $focus');
+    }
+
+    final personaText = character.persona.trim();
+    if (personaText.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('## Identidade e política de atuação (SOUL & AGENTS)')
+        ..writeln(personaText);
+    }
+
+    final examples = character.mesExample?.trim();
+    if (examples != null && examples.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('## Exemplos de diálogo')
+        ..writeln(examples);
+    }
+
+    final turnInstructions = character.postHistoryInstructions?.trim();
+    if (turnInstructions != null && turnInstructions.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('## Instruções de turno')
+        ..writeln(turnInstructions);
+    }
+
+    return buffer.toString();
+  }
+
+  /// Loads the persona's living `AGENTS.md` definition (materializing it if
+  /// missing without overwriting edits) and the recent entries of `MEMORY.md`.
+  Future<({String agentsMd, String? livingMemory})> loadPersonaLivingDocs(
+    String userId,
+    CharacterModel character,
+  ) {
+    _validateCharacterId(character.id);
+    return _lockFor(userId, character.id).synchronized(() async {
+      await _ensureInitializedUnlocked(userId, character);
+      final agentsFile =
+          File(_fileSystem.getCharacterAgentsMdPath(userId, character.id));
+      final rawAgents =
+          await agentsFile.exists() ? (await agentsFile.readAsString()).trim() : '';
+      final agentsMd =
+          rawAgents.isEmpty ? renderPersonaAgentsMd(character).trim() : rawAgents;
+
+      final memoryFile =
+          File(_fileSystem.getCharacterMemoryMdPath(userId, character.id));
+      String? livingMemory;
+      if (await memoryFile.exists()) {
+        final rawMemory = await memoryFile.readAsString();
+        final lines = rawMemory
+            .split(RegExp(r'\r?\n'))
+            .map((l) => l.trim())
+            .where((l) => l.isNotEmpty)
+            .toList();
+        if (lines.isNotEmpty) {
+          final tailStart = lines.length > 20 ? lines.length - 20 : 0;
+          livingMemory = lines.sublist(tailStart).join('\n');
+        }
+      }
+      return (agentsMd: agentsMd, livingMemory: livingMemory);
+    });
+  }
+
+  /// Appends one durable bullet note to the persona's `MEMORY.md`,
+  /// deduplicating case- and accent-insensitively and capping at 30 entries.
+  Future<void> appendLivingMemory(
+    String userId,
+    String characterId,
+    String note,
+  ) {
+    _validateCharacterId(characterId);
+    final cleaned = note.replaceAll(RegExp(r'\s*\r?\n\s*'), ' ').trim();
+    if (cleaned.isEmpty) return Future.value();
+
+    return _lockFor(userId, characterId).synchronized(() async {
+      final memoryFile =
+          File(_fileSystem.getCharacterMemoryMdPath(userId, characterId));
+      final existing =
+          await memoryFile.exists() ? await memoryFile.readAsString() : '';
+      final entries = existing
+          .split(RegExp(r'\r?\n'))
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty && !l.startsWith('#'))
+          .toList();
+
+      final entry = cleaned.startsWith('- ') ? cleaned : '- $cleaned';
+      final foldedEntry = foldPtAscii(entry);
+      if (entries.any((e) => foldPtAscii(e) == foldedEntry)) {
+        return;
+      }
+
+      entries.add(entry);
+      final capped =
+          entries.length > 30 ? entries.sublist(entries.length - 30) : entries;
+      final body = '# Memória viva de @$characterId\n\n${capped.join('\n')}\n';
+      await _writeText(memoryFile, body);
+    });
   }
 
   Future<bool> isHistoryAcquaintanceComplete(
@@ -470,6 +584,13 @@ class CharacterWorkspaceService {
         File(_fileSystem.getCharacterIdentityPath(userId, character.id));
     if (!await identity.exists()) {
       await _writeText(identity, _buildInitialIdentity(character));
+    }
+
+    final agentsMd =
+        File(_fileSystem.getCharacterAgentsMdPath(userId, character.id));
+    if (!await agentsMd.exists() ||
+        (await agentsMd.readAsString()).trim().isEmpty) {
+      await _writeText(agentsMd, renderPersonaAgentsMd(character));
     }
 
     final inbox = File(

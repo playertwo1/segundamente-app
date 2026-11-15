@@ -1,18 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/native_action_service.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
+import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/result.dart';
+import 'package:memex/utils/user_storage.dart';
 
 enum TodoListSection { today, upcoming, overdue, completed }
 
 enum TodoTaskState { noDate, today, upcoming, overdue, completed }
 
 class TodoViewModel extends ChangeNotifier {
+  static final _logger = getLogger('TodoViewModel');
+
   TodoViewModel({
     required MemexRouter router,
     Future<bool> Function({
@@ -23,9 +30,17 @@ class TodoViewModel extends ChangeNotifier {
       bool allDay,
     })? openCalendar,
     DateTime Function()? now,
+    TodoSyncService? syncService,
+    Future<String?> Function()? userIdResolver,
+    bool autoSyncOnLoad = true,
   })  : _router = router,
         _now = now ?? DateTime.now,
-        _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert;
+        _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert,
+        _syncService = syncService ?? TodoSyncService.instance,
+        _userIdResolver = userIdResolver ?? UserStorage.getUserId,
+        _autoSyncOnLoad = autoSyncOnLoad {
+    _syncService.statusNotifier.addListener(_onSyncStatusChanged);
+  }
 
   final MemexRouter _router;
   MemexRouter get router => _router;
@@ -37,6 +52,9 @@ class TodoViewModel extends ChangeNotifier {
     String? description,
     bool allDay,
   }) _openCalendar;
+  final TodoSyncService _syncService;
+  final Future<String?> Function() _userIdResolver;
+  final bool _autoSyncOnLoad;
 
   List<TodoItem> _all = const [];
   TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
@@ -46,6 +64,25 @@ class TodoViewModel extends ChangeNotifier {
   String? errorMessage;
   TodoAlarmStatus alarmStatus = TodoAlarmStatus.unsupported;
   String? damagedLegacyFileName;
+  TodoSyncStatus syncStatus = TodoSyncStatus(
+    state: TodoSyncBadgeState.localOnly,
+    paired: false,
+    deviceId: '',
+    pendingOutbox: 0,
+  );
+  bool _disposed = false;
+  int _reloadSeq = 0;
+
+  List<TaskTextConflict> get conflicts => syncStatus.conflicts;
+
+  bool isItemSynced(TodoItem item) => syncStatus.isItemSynced(item.id);
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _syncService.statusNotifier.removeListener(_onSyncStatusChanged);
+    super.dispose();
+  }
 
   List<TodoItem> get allItems => List.unmodifiable(_all);
 
@@ -114,21 +151,198 @@ class TodoViewModel extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    if (_disposed) return;
     loading = true;
     errorMessage = null;
     notifyListeners();
+    await _reloadLocalData();
+    if (_disposed) return;
+    loading = false;
+    notifyListeners();
+    await _loadSyncStatus(triggerAutoSync: _autoSyncOnLoad);
+  }
+
+  Future<void> syncNow({String reason = 'manual'}) async {
+    if (_disposed) return;
+    try {
+      final userId = await _resolveUserId();
+      final status = await _syncService.loadStatus(userId: userId);
+      if (_disposed) return;
+      _applySyncStatus(status);
+      if (!status.paired || (reason != 'manual' && status.revoked)) {
+        return;
+      }
+      await _runSyncNow(userId: userId, reason: reason);
+    } catch (e, st) {
+      // Keep local tasks and last known sync status if sync fails unexpectedly.
+      _logger.warning('Todo sync ($reason) failed in view model', e, st);
+    }
+  }
+
+  Future<void> refreshOnResume() async {
+    if (_disposed) return;
+    await _reloadLocalData();
+    if (_disposed) return;
+    await syncNow(reason: 'resume');
+  }
+
+  Future<void> resolveConflict(
+    String conflictId, {
+    required bool keepLocal,
+  }) async {
+    if (_disposed) return;
+    try {
+      final userId = await _resolveUserId();
+      if (userId == null || userId.isEmpty) {
+        return;
+      }
+      final status = await _syncService.resolveConflict(
+        userId: userId,
+        conflictId: conflictId,
+        keepLocal: keepLocal,
+      );
+      if (_disposed) return;
+      _applySyncStatus(status);
+      await _reloadItems();
+    } catch (e, st) {
+      _logger.warning('Todo conflict resolution failed in view model', e, st);
+      await _reloadItems();
+    }
+  }
+
+  Future<void> _reloadLocalData() async {
     (await _router.loadTodos()).when(
       onOk: (value) => _all = value,
       onError: (error, _) => errorMessage = '$error',
     );
+    if (_disposed) return;
     (await _router.todoDamagedLegacyFileName()).when(
       onOk: (value) => damagedLegacyFileName = value,
       onError: (_, __) => damagedLegacyFileName = null,
     );
+    if (_disposed) return;
     await refreshAlarmStatus();
+    if (_disposed) return;
     await refreshShortcutSettings();
-    loading = false;
+  }
+
+  Future<void> _reloadItems() async {
+    if (_disposed) return;
+    final reqId = ++_reloadSeq;
+    (await _router.loadTodos()).when(
+      onOk: (value) {
+        if (!_disposed && reqId == _reloadSeq) {
+          _all = value;
+        }
+      },
+      onError: (error, _) {
+        if (!_disposed && reqId == _reloadSeq) {
+          errorMessage = '$error';
+        }
+      },
+    );
+    if (_disposed || reqId != _reloadSeq) return;
     notifyListeners();
+  }
+
+  Future<void> _loadSyncStatus({required bool triggerAutoSync}) async {
+    if (_disposed) return;
+    try {
+      final userId = await _resolveUserId();
+      final status = await _syncService.loadStatus(userId: userId);
+      if (_disposed) return;
+      _applySyncStatus(status);
+      if (triggerAutoSync && status.paired && !status.revoked) {
+        unawaited(_runSyncNow(userId: userId, reason: 'screen_open'));
+      }
+    } catch (e, st) {
+      // Keep safe localOnly fallback when platform bindings are unavailable.
+      _logger.warning('Todo sync status load failed in view model', e, st);
+    }
+  }
+
+  Future<void> _runSyncNow({
+    required String? userId,
+    required String reason,
+  }) async {
+    if (_disposed) return;
+    try {
+      final status = await _syncService.syncNow(
+        userId: userId,
+        reason: reason,
+      );
+      if (_disposed) return;
+      _applySyncStatus(status);
+      await _reloadItems();
+    } catch (e, st) {
+      // Keep local tasks and last known sync status if sync fails unexpectedly.
+      _logger.warning('Todo sync ($reason) failed in view model', e, st);
+    }
+  }
+
+  Future<String?> _resolveUserId() async {
+    try {
+      return await _userIdResolver();
+    } catch (e, st) {
+      _logger.warning('Todo user id resolution failed', e, st);
+      return null;
+    }
+  }
+
+  void _applySyncStatus(TodoSyncStatus status) {
+    if (_disposed || identical(syncStatus, status)) return;
+    syncStatus = status;
+    notifyListeners();
+  }
+
+  void _onSyncStatusChanged() {
+    if (_disposed) return;
+    final next = _syncService.statusNotifier.value;
+    if (next == null) return;
+    final previous = syncStatus;
+    syncStatus = next;
+    notifyListeners();
+    if (_shouldReloadItemsAfterTransition(previous, next)) {
+      unawaited(_reloadItems());
+    }
+  }
+
+  bool _shouldReloadItemsAfterTransition(
+    TodoSyncStatus previous,
+    TodoSyncStatus next,
+  ) {
+    if (previous.state == TodoSyncBadgeState.syncing &&
+        next.state != TodoSyncBadgeState.syncing) {
+      return true;
+    }
+    if (previous.state != TodoSyncBadgeState.synced &&
+        next.state == TodoSyncBadgeState.synced) {
+      return true;
+    }
+    if (previous.lastSyncedAt != next.lastSyncedAt) {
+      return true;
+    }
+    if (!_sameConflicts(previous.conflicts, next.conflicts)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _sameConflicts(List<TaskTextConflict> a, List<TaskTextConflict> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      final ca = a[i];
+      final cb = b[i];
+      if (ca.id != cb.id ||
+          ca.entityId != cb.entityId ||
+          ca.field != cb.field ||
+          ca.localText != cb.localText ||
+          ca.remoteText != cb.remoteText ||
+          ca.conflictState != cb.conflictState) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> refreshAlarmStatus() async {
@@ -136,12 +350,14 @@ class TodoViewModel extends ChangeNotifier {
       onOk: (value) => alarmStatus = value,
       onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
     );
+    if (_disposed) return;
     if (alarmStatus == TodoAlarmStatus.ready) {
       (await _router.synchronizeTodoAlarms()).when(
         onOk: (value) => alarmStatus = value,
         onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
       );
     }
+    if (_disposed) return;
     notifyListeners();
   }
 
@@ -150,12 +366,14 @@ class TodoViewModel extends ChangeNotifier {
       onOk: (value) => alarmStatus = value,
       onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
     );
+    if (_disposed) return;
     if (alarmStatus == TodoAlarmStatus.ready) {
       (await _router.synchronizeTodoAlarms()).when(
         onOk: (value) => alarmStatus = value,
         onError: (_, __) => alarmStatus = TodoAlarmStatus.unavailable,
       );
     }
+    if (_disposed) return;
     notifyListeners();
   }
 
@@ -164,6 +382,7 @@ class TodoViewModel extends ChangeNotifier {
       onOk: (value) => shortcutSettings = value,
       onError: (error, _) => errorMessage ??= '$error',
     );
+    if (_disposed) return;
     notifyListeners();
   }
 
@@ -254,6 +473,7 @@ class TodoViewModel extends ChangeNotifier {
       onError: (error, _) => actionError = error,
     );
     await load();
+    if (_disposed) return succeeded;
     if (actionError != null) {
       errorMessage = '$actionError';
       notifyListeners();

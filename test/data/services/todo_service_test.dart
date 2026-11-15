@@ -562,6 +562,105 @@ void main() {
         TodoAlarmStatus.exactAlarmsDenied,
       );
     });
+
+    test(
+        'applyRemoteMutationBatch triggers alarm synchronizer and never synthesizes nextOccurrence on remote done',
+        () async {
+      final syncCalls = <List<TodoItem>>[];
+      TodoService.alarmSynchronizer = (items) async {
+        syncCalls.add(items);
+        return TodoAlarmStatus.ready;
+      };
+
+      final recTask = await todos.add(
+        userId: userId,
+        text: 'Backup diário',
+        due: '2026-11-16 08:00',
+        dueDate: '2026-11-16',
+        dueTime: '08:00',
+        recurrence: TodoRecurrence.daily(),
+      );
+      await TodoService.waitForAlarmSync();
+      syncCalls.clear();
+
+      // Remote mutation marks the recurring task as completed (done: true).
+      final applied = await todos.applyRemoteMutationBatch(userId, (current) {
+        return [
+          for (final item in current)
+            if (item.id == recTask.id)
+              item.copyWith(
+                done: true,
+                doneAt: '2026-11-15T12:00:00Z',
+                version: item.version + 1,
+              )
+            else
+              item,
+        ];
+      });
+
+      expect(applied, isTrue);
+      await TodoService.waitForAlarmSync();
+
+      expect(syncCalls, hasLength(1));
+      expect(syncCalls.single.single.done, isTrue);
+
+      // Verify CONTRATO-SYNC.md §7.3: remote done NEVER creates nextOccurrence on receiver.
+      final allItems = await todos.load(userId);
+      expect(allItems, hasLength(1));
+      expect(allItems.single.id, recTask.id);
+      expect(allItems.single.done, isTrue);
+    });
+
+    test(
+        'local edit reschedule, snooze, and delete trigger alarm synchronization',
+        () async {
+      final syncCalls = <List<TodoItem>>[];
+      TodoService.alarmSynchronizer = (items) async {
+        syncCalls.add(items);
+        return TodoAlarmStatus.ready;
+      };
+
+      final task = await todos.add(
+        userId: userId,
+        text: 'Reunião de equipe',
+        due: '2026-11-16 09:00',
+        dueDate: '2026-11-16',
+        dueTime: '09:00',
+      );
+      await TodoService.waitForAlarmSync();
+      syncCalls.clear();
+
+      // Local edit / reschedule (T05)
+      await todos.edit(
+        userId: userId,
+        id: task.id,
+        text: 'Reunião de equipe adiada',
+        due: '2026-11-16 15:00',
+        dueDate: '2026-11-16',
+        dueTime: '15:00',
+      );
+      await TodoService.waitForAlarmSync();
+      expect(syncCalls, hasLength(1));
+      expect(syncCalls.last.single.dueTime, '15:00');
+      syncCalls.clear();
+
+      // Local snooze
+      await todos.snooze(
+        userId: userId,
+        id: task.id,
+        now: DateTime.utc(2026, 11, 15, 12),
+      );
+      await TodoService.waitForAlarmSync();
+      expect(syncCalls, hasLength(1));
+      expect(syncCalls.last.single.snoozedUntil, isNotNull);
+      syncCalls.clear();
+
+      // Local remove (tombstone)
+      await todos.remove(userId: userId, id: task.id);
+      await TodoService.waitForAlarmSync();
+      expect(syncCalls, hasLength(1));
+      expect(syncCalls.last.single.isTombstoned, isTrue);
+    });
   });
 
   group('widget snapshot (F15-05)', () {

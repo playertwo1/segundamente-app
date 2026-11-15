@@ -25,6 +25,7 @@ class CommentAgent {
     required String factId,
     String? characterId,
     String? forcedReplyToId,
+    String? fallbackReplyToId,
     bool withMemoryManagement = false,
     bool forceReply = false,
   }) async {
@@ -50,15 +51,22 @@ class CommentAgent {
     final controller = AgentController();
     addAgentLogger(controller);
     addAgentActivityCollector(controller);
-    // Load the active character before selecting its private workspace.
+    // Load the active character, its living AGENTS.md / MEMORY.md docs, and group roster.
+    final allCharacters = await characterService.getAllCharacters(userId);
+    final activeParticipants = allCharacters.where((c) => c.enabled).toList();
     CharacterModel? character;
+    String? agentsMd;
+    String? livingMemory;
     if (characterId != null) {
       character = await characterService.getCharacter(userId, characterId);
       if (character != null) {
-        await CharacterWorkspaceService.instance.ensureInitialized(
+        final livingDocs =
+            await CharacterWorkspaceService.instance.loadPersonaLivingDocs(
           userId,
           character,
         );
+        agentsMd = livingDocs.agentsMd;
+        livingMemory = livingDocs.livingMemory;
       }
     }
     final workingDirectory = character == null
@@ -92,7 +100,11 @@ class CommentAgent {
       userId: userId,
       userName: userId,
       forcedReplyToId: forcedReplyToId,
+      fallbackReplyToId: fallbackReplyToId,
       forceReply: forceReply,
+      agentsMd: agentsMd,
+      livingMemory: livingMemory,
+      activeParticipants: activeParticipants,
       forceActivate: true,
     );
     final skills = [skill];
@@ -135,6 +147,7 @@ class CommentAgent {
     String? initialInsight,
     String existingCommentsContext = '',
     String? forcedReplyToId,
+    String? fallbackReplyToId,
     DateTime? currentTime,
     DateTime? entryTime,
     String? locationContextReminder,
@@ -149,6 +162,7 @@ class CommentAgent {
       factId: factId,
       characterId: characterId,
       forcedReplyToId: forcedReplyToId,
+      fallbackReplyToId: fallbackReplyToId,
       withMemoryManagement: withMemoryManagement,
       forceReply: forceReply,
     );
@@ -176,6 +190,7 @@ class CommentAgent {
           systemReminder: systemReminder,
           existingCommentsContext: existingCommentsContext,
           forcedReplyToId: forcedReplyToId,
+          fallbackReplyToId: fallbackReplyToId,
           includePostBody:
               state.metadata['comment_task_post_body_injected'] != factId,
         ),
@@ -246,6 +261,7 @@ class CommentAgent {
     required bool includePostBody,
     String existingCommentsContext = '',
     String? forcedReplyToId,
+    String? fallbackReplyToId,
   }) {
     final b = StringBuffer();
     b.write(systemReminder);
@@ -300,6 +316,7 @@ class CommentAgent {
     }
 
     final fixedReplyTarget = forcedReplyToId?.trim();
+    final defaultReplyTarget = fallbackReplyToId?.trim();
     if (fixedReplyTarget != null && fixedReplyTarget.isNotEmpty) {
       b.writeln('');
       b.writeln('## Reply Routing');
@@ -308,6 +325,14 @@ class CommentAgent {
       );
       b.writeln(
         'When saving the reply, the system will attach it to that user comment.',
+      );
+    } else if (defaultReplyTarget != null && defaultReplyTarget.isNotEmpty) {
+      b.writeln('');
+      b.writeln('## Reply Routing');
+      b.writeln(
+        'You are entering the group thread to reply directly to comment id: '
+        '$defaultReplyTarget. Pass `reply_to_id: "$defaultReplyTarget"` '
+        '(or another target comment id if referencing a different participant).',
       );
     }
 

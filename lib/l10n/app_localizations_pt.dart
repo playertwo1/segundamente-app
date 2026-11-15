@@ -2760,7 +2760,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get maxCommentCharactersDesc =>
-      'Quantos personagens podem comentar em cada registro. O padrão permite até duas vozes quando há algo útil a acrescentar.';
+      'Quantas personas podem participar e responder ao vivo em cada registro quando for pertinente. O padrão permite até 15 vozes.';
 
   @override
   String replyTo(String name) {
@@ -3143,45 +3143,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get earlyUpdateSettingsDesc =>
-      'Procure uma versão Android mais nova no repositório privado do GitHub e baixe o APK correspondente.';
+      'Procure uma versão Android mais nova no repositório público do GitHub e baixe o APK correspondente.';
 
   @override
   String get earlyUpdateUnsupported =>
       'Atualizações estão disponíveis apenas nas builds Android Stable e Early.';
-
-  @override
-  String get earlyUpdateGitHubTokenTitle => 'Token de leitura do GitHub';
-
-  @override
-  String get earlyUpdateGitHubTokenDesc =>
-      'Use um token refinado limitado somente a este repositório, com Contents: read. Ele fica protegido neste aparelho.';
-
-  @override
-  String get earlyUpdateGitHubTokenHint => 'Token de acesso pessoal refinado';
-
-  @override
-  String get earlyUpdateGitHubTokenSave => 'Salvar token';
-
-  @override
-  String get earlyUpdateGitHubTokenReplace => 'Trocar token';
-
-  @override
-  String get earlyUpdateGitHubTokenRemove => 'Remover token';
-
-  @override
-  String get earlyUpdateGitHubTokenConfigured =>
-      'Um token de leitura está salvo neste aparelho.';
-
-  @override
-  String get earlyUpdateGitHubTokenRequired =>
-      'Adicione um token de leitura do GitHub para consultar releases privadas.';
-
-  @override
-  String get earlyUpdateGitHubTokenSaved =>
-      'Token do GitHub salvo com segurança neste aparelho.';
-
-  @override
-  String get earlyUpdateGitHubTokenRemoved => 'Token do GitHub removido.';
 
   @override
   String get earlyUpdateAutoCheckTitle =>
@@ -4895,4 +4861,143 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get floatingCaptureSaveFailed =>
       'Não deu para guardar agora. Tente de novo.';
+
+  @override
+  String get lumenPairingTitle => 'Pareamento com o Lumen';
+
+  @override
+  String get lumenPairingSubtitle =>
+      'Vincule o celular ao Lumen no computador via QR Code';
+
+  @override
+  String get lumenPairingStatusUnpaired => 'Não pareado';
+
+  @override
+  String lumenPairingStatusPaired(String desktopName) {
+    return 'Pareado com $desktopName';
+  }
+
+  @override
+  String get lumenPairingStatusHintUnpaired =>
+      'Escaneie o QR Code exibido em Configurações → Celular Android no Lumen ou cole o link de pareamento.';
+
+  @override
+  String get lumenPairingRelayLabel => 'Relay';
+
+  @override
+  String get lumenPairingLanHostLabel => 'Endereço LAN salvo';
+
+  @override
+  String get lumenPairingDeviceIdLabel => 'ID deste aparelho';
+
+  @override
+  String get lumenPairingScanQr => 'Escanear QR Code';
+
+  @override
+  String get lumenPairingPasteLink => 'Colar link de pareamento';
+
+  @override
+  String get lumenPairingRepair => 'Parear de novo';
+
+  @override
+  String get lumenPairingUnlink => 'Desvincular';
+
+  @override
+  String get lumenPairingPasteDialogTitle => 'Colar link de pareamento';
+
+  @override
+  String get lumenPairingPasteHint => 'coucou://pair?v=1&...';
+
+  @override
+  String get lumenPairingConfirm => 'Vincular';
+
+  @override
+  String get lumenPairingUnlinkConfirmTitle => 'Desvincular do Lumen?';
+
+  @override
+  String get lumenPairingUnlinkConfirmBody =>
+      'A caixa de correio atual será revogada no relay e este aparelho deixará de sincronizar até ler um novo QR Code.';
+
+  @override
+  String get lumenPairingPairedSuccess => 'Pareado com o Lumen com sucesso.';
+
+  @override
+  String get lumenPairingUnlinkedSuccess =>
+      'Aparelho desvinculado e caixa de correio revogada.';
+
+  @override
+  String get lumenPairingUnlinkedLocalOnlyWarning =>
+      'Desvinculado neste aparelho. Não foi possível contatar o relay agora; use \'Parear de novo\' no PC se necessário.';
+
+  @override
+  String get lumenPairingInvalidQrError =>
+      'Código ou link de pareamento inválido.';
+
+  @override
+  String get lumenPairingScannerTitle => 'Aponte a câmera para o QR do Lumen';
+
+  @override
+  String get lumenPairingLoading => 'Carregando estado do pareamento...';
+
+  @override
+  String get todoSyncSavedOnDevice => 'Salvo no aparelho';
+
+  @override
+  String get todoSyncSynced => 'Sincronizado';
+
+  @override
+  String get todoSyncSyncing => 'Sincronizando…';
+
+  @override
+  String get todoSyncError => 'Salvo no aparelho · erro ao sincronizar';
+
+  @override
+  String get todoSyncRevoked => 'Salvo no aparelho · pareamento revogado';
+
+  @override
+  String get todoSyncOffline => 'Salvo no aparelho · sem conexão';
+
+  @override
+  String todoSyncPendingChanges(int count) {
+    return 'Salvo no aparelho · $count pendente(s) de sync';
+  }
+
+  @override
+  String get todoSyncNowButton => 'Sincronizar agora';
+
+  @override
+  String todoSyncLastSuccess(String time) {
+    return 'Último sync às $time';
+  }
+
+  @override
+  String get todoConflictBannerTitle => 'Conflito de edição detectado';
+
+  @override
+  String get todoConflictBannerSubtitle =>
+      'Esta tarefa foi editada aqui e no Lumen (PC). Escolha qual texto manter.';
+
+  @override
+  String get todoConflictLocalLabel => 'Neste aparelho';
+
+  @override
+  String get todoConflictRemoteLabel => 'No Lumen (PC)';
+
+  @override
+  String get todoConflictKeepLocal => 'Manter deste aparelho';
+
+  @override
+  String get todoConflictUseRemote => 'Usar do PC';
+
+  @override
+  String get todoTextRequired => 'Digite o que precisa ser feito.';
+
+  @override
+  String get todoFilterEmpty => 'Nenhuma tarefa com essa prioridade.';
+
+  @override
+  String get todoPickDate => 'Escolher data';
+
+  @override
+  String get todoPickTime => 'Escolher horário';
 }

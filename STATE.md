@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F15 — Widget e atalhos Android (IN_PROGRESS, F15-02), em paralelo à Fase L (Lumen) do fork `playertwo1/coucou`; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.50+135 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066); checkpoint da ponte fechado em 2026-11-15, então a pausa da D-066 acabou; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -14,21 +14,25 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12, F13, F14 | BLOCKED | Sync (D-054), Google (D-055), assistente ativo (D-050) |
-| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-066; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-067; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-070; código pronto, S25 NOT_RUN); F15-06 REVIEW (D-068; código pronto, device NOT_RUN); F15-07 IN_PROGRESS (D-069; protótipos no build dev) | D-062 a D-070; widget e atalhos Android, paralela à fase L do fork |
+| F12 | IN_PROGRESS (D-066) | **Checkpoint da ponte fechado em 2026-11-15** no S25 + notebook. F12-01 IN_PROGRESS (falta o dono ler o contrato); F12-02 a F12-05 DONE; F12-06 e F12-07 READY. Portão F12 ainda depende do AC-04 (v1.1) |
+| F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
+| F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-068; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-069; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-072; código pronto, S25 NOT_RUN); F15-06 REVIEW (D-070; código pronto, device NOT_RUN); F15-07 IN_PROGRESS (D-071; protótipos no build dev) | D-062 a D-072; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
-1. **Validar F15-02 a F15-07 no S25 com um APK integrado** (branch `feat/f15-integracao`, que junta F15-05 com F15-03 e F15-04, F15-06 e F15-07). Depois, o dono escolhe a forma da minicápsula pela comparação da F15-07 (D-069). Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
+1. **Validar F15-02 a F15-07 no S25 com um APK integrado** (branch `feat/f15-integracao`, que junta F15-05 com F15-03 e F15-04, F15-06 e F15-07). Depois, o dono escolhe a forma da minicápsula pela comparação da F15-07 (D-071). Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
-4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12:** permanece BLOCKED até a fase L ter base e as decisões de sync; a F11 já está DONE.
+4. **Em paralelo, no Lumen:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/lumen`.
+5. **F12:** checkpoint da ponte fechado e os 4 achados da Segunda Mente corrigidos (2026-11-15). Próximo: F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06 (entidades v1.1). Abertos no Lumen: QR maior e edição de horário que não salva. O S25 dev está revogado: parear de novo antes da F12-06 e, com ele pareado, conferir o rótulo "sem conexão" com o modo avião.
+6. **Fim da pausa da D-066:** com o checkpoint fechado, a F15-03 em diante volta a andar.
 
 ## Pendências do dono
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
+- Ler o texto final de `docs/lumen/CONTRATO-SYNC.md` (F12-01).
+- Apagar a `PONTE 6` e a `PONTE 7` no Lumen, e o link `coucou://pair…` do histórico da área de transferência do teclado do S25.
 
 ## Ambiente (fora do repositório)
 
@@ -42,8 +46,107 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Achados da Segunda Mente no checkpoint da ponte (2026-11-15, 16:49–17:00)
+- Código: tela de pareamento guarda o ViewModel no `State` (não trava ao reconstruir a rota); prévia da área de transferência não grava texto no log do Dart (`<redacted len=N>`) nem no logcat do Kotlin (só o tamanho); Todo mostra "sem conexão" quando o erro é `http_0`; o sync grava uma linha por ciclo (`Todo sync (<motivo>) -> <estado>, outbox=N, error=…`) e o `TodoViewModel` registra as exceções.
+- Testes: área alterada `+119` aprovados; paridade das ARB OK; `flutter analyze` com 159 issues (linha de base, nenhuma nova). Widget test da tela de pareamento falha antes e passa depois da correção.
+- S25 (`app.segundamente.dev`, `adb install -r` → `Success`): PASS na tela de pareamento, 3 ciclos Parear de novo → leitor → Voltar → sair → entrar, sempre em "Pareado com BOOKFAEL"; PASS no log do sync (`Todo sync (lifecycle) -> revoked, outbox=0, error=null`). Removidas do log de hoje do pacote dev as 64 linhas com o início do link de pareamento gravadas pela versão antiga.
+- `NOT_RUN` no S25: a linha redigida da área de transferência (o Android devolveu `empty clipboard` nas checagens ao voltar ao app, mesmo com texto copiado à mão; a parte do Dart fica coberta pelo teste unitário); o rótulo "sem conexão" (o aparelho está revogado); a mudança no logcat do Kotlin só foi compilada.
+- Achados menores novos: a tela de pareamento ainda mostra "Pareado com …" depois da revogação; o log grava em FINE o token do servidor local de imagens (efêmero e só no aparelho).
+
+### Checkpoint da Ponte (F12-03 a F12-05) no S25 + notebook (2026-11-15, 13:20–14:53)
+- Aparelhos: Galaxy S25 Ultra (`RQCY10934YV`), `app.segundamente.dev` 1.0.50 compilado da `main` `a6cf1300` (`flutter build apk --flavor globalDev --debug --no-pub`, `adb install -r` → `Success`); notebook com Lumen 0.7.3. Perfil sintético `F11 QA`; tarefas `PONTE 1`–`7`, todas apagadas no fim (a `PONTE 6` e a `PONTE 7` ficam para o dono apagar no Lumen).
+- PASS: pareamento (pelo link), entrega na primeira consulta uma vez, T06, celular → PC, alarme nos dois aparelhos (AC-08), concluir no PC cancela alarme e notificação no S25 (`notification_cancel` reason 8), adiar no S25 tira o toast do PC (T05), AC-02 e T08 offline com modo avião, WorkManager periódico com o app fechado (`Worker result SUCCESS` 14:28:52) e T18 (Parear de novo no Lumen → `revoked: true`, a `PONTE 7` não chegou).
+- FAIL / achados: o QR do Lumen não foi lido pela câmera em 2 tentativas; editar o horário no Lumen não salvou; mais 4 achados na Segunda Mente. Lista completa e evidência passo a passo em [docs/testes/F12-checkpoint-ponte-s25.md](docs/testes/F12-checkpoint-ponte-s25.md).
+- `NOT_RUN`: suíte completa `flutter test` / `flutter analyze` (só documentação mudou nesta rodada); TalkBack.
+
+### Personas vivas em chat em grupo (`AGENTS.md` + `MEMORY.md`, até 15 personas, onda cruzada) (2026-11-15)
+- **Limites e seleção (`CommentSettingsService`, `CharacterSelectionService`, Settings UI & l10n):**
+  - `lib/data/services/comment_settings_service.dart`, `lib/ui/settings/widgets/settings_page.dart`, `lib/l10n/{app_en.arb,app_pt.arb,app_localizations_en.dart,app_localizations_pt.dart}`: teto e padrão elevados para `15` personas (`_version = 3`, migrando legados v1 `1` e v2 padrão `2` para `15`, preservando escolhas explícitas em `1..15`, slider `1..15`).
+  - `lib/utils/mention_parser.dart`: adicionados `foldPtAscii`, `indexOfFoldedStandaloneMention` e `extractAllMentions<T>` com ordenação por ocorrência, folding de acentos/caixa, `@primeiro_nome` único (>= 3 caracteres) e filtro de e-mails.
+  - `lib/data/services/character_selection_service.dart`: `selectMultipleCharacters` (padrão `15`, `excludeCharacters`), `selectReplyCharacters` (menções múltiplas com `forceReply: true`, resposta direta via `reply_to_id`, comentários abertos do usuário sempre com pelo menos 1 persona respondendo) e `selectGroupFollowupCharacters`.
+- **Personas vivas (`AGENTS.md` + `MEMORY.md`) e ferramentas de grupo:**
+  - `lib/data/services/file_system_service.dart` e `lib/data/services/character_workspace_service.dart`: materialização de `AGENTS.md` (sem sobrescrever edições existentes), `loadPersonaLivingDocs` e `appendLivingMemory` (deduplicação com folding pt-BR e limite de 30 itens em `MEMORY.md`).
+  - `lib/agent/skills/comment_agent/{comment_agent_skill.dart,tools/comment_tools.dart}`, `lib/agent/comment_agent/comment_agent.dart` e `lib/data/repositories/post_comment.dart`: injeção de `<persona_agents_md>`, `<persona_living_memory>`, participantes ativos e fio completo formatado (`formatGroupCommentsContext`), extração e limpeza de `[REPLY:id]` / `[MEMORY: ...]` (`parseGroupCommentOutput`), resolução de `replyToId` por `@menção` e emissão ao vivo via `EventBusService`.
+- **Onda inicial + onda cruzada entre personas:**
+  - `lib/data/services/task_handlers/comment_agent_handler.dart`: suporte a múltiplas menções e até 15 personas na onda inicial + `runCrossPersonaFollowupWave` (despertando personas `@mencionadas` por outras personas e convites do coordenador dentro de `maxCrossTalkRepliesPerWave = 5` e `maxGroupPersonaTurnsPerUserMessage = 15`), mantendo `maxPersonaTurnsPerUserMessage = 4` e `runPersonaDebate`.
+- **Testes e análise:**
+  - `python3 scripts/check_arb_key_parity.py` -> `ARB key parity OK across 1 locales.` (exit `0`).
+  - `flutter.bat test --no-pub --reporter compact test/data/services/comment_settings_service_test.dart test/data/services/task_handlers/comment_reply_target_test.dart test/data/services/task_handlers/persona_debate_limit_test.dart test/data/services/character_workspace_service_test.dart test/agent/comment_tool_factory_test.dart test/agent/comment_agent_policy_test.dart test/data/services/character_service_default_seed_test.dart test/ui/settings/widgets/settings_page_test.dart test/agent/agent_tool_error_result_test.dart test/l10n/` -> `+110: All tests passed!` (exit `0`).
+  - `dart.bat analyze` nos 17 arquivos `lib/` e `test/` tocados -> `1 issue found` (`info - lib\data\services\file_system_service.dart:288:7` pré-existente fora do diff; zero erros/warnings e zero issues nas linhas adicionadas/editadas; exit `0`).
+- **Não executado nesta rodada:** validação em aparelho físico (Galaxy S25 Ultra) e suítes integrais (`flutter test` / `flutter analyze` em todo o repositório) seguem `NOT_RUN`.
+
+### Release v1.0.50+135 — Atualizador sem token para repositório público (2026-11-15)
+- Notas completas em [docs/releases/v1.0.50.md](docs/releases/v1.0.50.md).
+- Build e assinatura: `flutter.bat build apk --flavor global --release` gerou `segundamente_global_1.0.50_135.apk` (`127690647` bytes, SHA-256 `c2a9ea2845c4723c0d84446d080041b3707b5deb453e519ee6ec604133e76920`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='135'`, `versionName='1.0.50'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao da `v1.0.49`).
+- Testes e análise pós-bump: `flutter.bat test --no-pub --reporter compact test/data/services/app_update_service_test.dart test/ui/settings/widgets/early_update_settings_card_test.dart test/l10n/` -> `+39: All tests passed!`; `dart.bat analyze` nesses 4 arquivos -> `No issues found!`.
+- Galaxy S25 Ultra e suítes completas (`flutter test` / `flutter analyze` integrais): `NOT_RUN`.
+
+### Repositório público e atualizador sem token (D-067) (2026-11-15)
+- `gh repo edit playertwo1/segundamente-app --visibility public --accept-visibility-change-consequences -d "Segunda Mente"` -> confirmado `"visibility":"PUBLIC"` e `"isPrivate":false`.
+- Teste real sem autenticação na `v1.0.49`: `GET https://api.github.com/repos/playertwo1/segundamente-app/releases?per_page=5`, `asset.url` e `browser_download_url` retornaram `200`/`302` sem cabeçalho `Authorization`.
+- `AppUpdateService` (`lib/data/services/app_update_service.dart`), `EarlyUpdateSettingsCard` (`lib/ui/settings/widgets/early_update_settings_card.dart`), l10n (`app_pt.arb`/`app_en.arb`), `AGENTS.md`, `README.md` e `docs/DECISIONS.md` (`D-067`, substituindo `D-046`) atualizados para operar sem token GitHub.
+- Testes e análise:
+  - `flutter.bat gen-l10n` + `python3 scripts/check_arb_key_parity.py`: `ARB key parity OK across 1 locales.`
+  - `flutter.bat test --no-pub --reporter compact test/data/services/app_update_service_test.dart test/ui/settings/widgets/early_update_settings_card_test.dart test/l10n/`: `+39: All tests passed!`
+  - `dart.bat analyze lib/data/services/app_update_service.dart lib/ui/settings/widgets/early_update_settings_card.dart test/data/services/app_update_service_test.dart test/ui/settings/widgets/early_update_settings_card_test.dart`: `No issues found!`
+- Galaxy S25 Ultra e suítes completas (`flutter test` / `flutter analyze` integrais): `NOT_RUN`.
+
+### Release v1.0.49+134 — Lista de tarefas (crítica Impeccable) + F12-05 (2026-11-15)
+- Notas completas em [docs/releases/v1.0.49.md](docs/releases/v1.0.49.md).
+- Testes alvo: `flutter.bat test --no-pub --reporter compact test/ui/todo/ test/l10n/ test/integration/todo_undo_flow_test.dart test/data/services/todo_alarm_service_test.dart test/data/services/todo_service_test.dart test/data/services/todo_sync_service_test.dart` -> `+118: All tests passed!`.
+- Análise alvo: `dart.bat analyze lib/ui/todo/widgets/todo_screen.dart test/ui/todo/widgets/todo_screen_test.dart` -> `4 issues found` (`1 warning` e `3 info` pré-existentes; zero erros).
+- Build e assinatura: `flutter.bat build apk --flavor global --release` gerou `segundamente_global_1.0.49_134.apk` (`127756183` bytes, SHA-256 `445aa47ddede4a6b48a38349adb82790657631410dc89d04ebec726a38f5dd2f`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='134'`, `versionName='1.0.49'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao da `v1.0.48`).
+- Galaxy S25 Ultra (instalação/execução/notificações/áudio/segundo plano) e suítes completas (`flutter test` / `flutter analyze` integrais): `NOT_RUN`.
+
+### F12-05 (Passo 9 da PONTE — cancelamento cruzado de avisos AC-08 / T05) — implementação sintética (2026-11-15)
+- **Segunda Mente (integrada na `main`, commit `110775ea`):**
+  - Spec e plano em `docs/superpowers/specs/2026-11-15-f1205-cancelamento-avisos-ponte.md` e `docs/superpowers/plans/2026-11-15-f1205-cancelamento-avisos-ponte.md`.
+  - `lib/data/services/todo_alarm_service.dart`: `TodoAlarmBackend` + `@visibleForTesting TodoAlarmService.forTesting(...)`, método `cancelNotificationsForTaskIds`, unificação sem duplicação de `deterministicNotificationId`/`notificationIdsForTaskIds`, rastreamento determinístico de reagendamento `_lastScheduledDates` (T05: `dueDate`, `dueTime`, `timeZone`, `alertMinutes`), cancelamento dedup (`cancel`) para concluídas/excluídas/sem alarme futuro mesmo já ausentes de `pendingNotificationRequests()`, pré-cancelamento ao adiar (`snoozedUntil != null`) ou reagendar antes de `zonedSchedule` e varredura segura de `getActiveNotifications()` no canal `todo_reminders`.
+  - Testes novos e fortalecidos: `test/data/services/todo_alarm_service_test.dart` (`11` testes), `test/data/services/todo_service_test.dart` (alarme sync e garantia de que `done: true` remoto não cria `nextOccurrence` em tarefa recorrente) e grupo `F12-05 alarm sync integration (AC-08 & T05)` em `test/data/services/todo_sync_service_test.dart` (testes 12 a 16).
+- **Lumen (`playertwo1/lumen`, integrado na `main`, release `windows-v0.7.3` publicada):**
+  - `windows/src-tauri/src/tasks/{mod,sync}.rs`: `due_trigger_for_now` ignora incrementos apenas de `version` no mesmo `trigger_ms`; `handle_toast_action` (`Snooze`/`Complete`) e comandos locais chamam `dismiss_if_active` (WinRT Toast + `"task-dismiss"`); testes para re-disparo e `dismiss_ids` em `done`, `deleted_at` e `snoozed_until`.
+- **Comandos e saídas:**
+  - Segunda Mente (`flutter test --no-pub ...` nos 16 alvos da F12-04/F12-05 + l10n + integration) → `+145: All tests passed!` (exit `0`), com `+103` testes de serviço/UI/alarme rodando verde localmente.
+  - Segunda Mente (`flutter analyze --no-pub`) → `159 issues found.` (mesmo baseline pré-existente; zero issues novos nos arquivos tocados).
+  - Lumen (`cargo test --manifest-path windows/src-tauri/Cargo.toml --lib`) → `726 passed; 0 failed; 9 ignored` (incluindo `tasks`: `27 passed; 0 failed`); `npx tsc --noEmit` em `windows/` → exit `0`; release `windows-v0.7.3` publicada.
+- **`NOT_RUN` (pendente):** teste físico com o Galaxy S25 Ultra + Lumen no PC (`Passo 9 real` / `Checkpoint da Ponte` / `F12-05 real`: `adb devices` vazio no momento da execução, celular não conectado via depuração USB) e execução real do Toast WinRT no Windows; pronto para o teste físico do dono.
+
+### F12-04 (Passo 8 da PONTE) — sync de tarefas pela caixa de correio HTTP, implementação sintética (2026-11-15)
+- **Segunda Mente (integrada na `main`, commit `293a96de`):**
+  - Spec e plano em `docs/superpowers/specs/2026-11-15-f1204-sync-tarefas-mailbox.md` e `docs/superpowers/plans/2026-11-15-f1204-sync-tarefas-mailbox.md`.
+  - Cifra `coucou-mailbox/v1` em `lib/data/services/lumen_relay_crypto.dart` validada contra todos os vetores (`messages` e `mustRefuse`) copiados em `test/fixtures/lumen_mailbox_test_vectors.json`, mais `LumenMailboxClient` em `lib/data/services/lumen_mailbox_client.dart` e `pointycastle: ^3.9.1` no `pubspec.yaml` (`flutter pub get --enforce-lockfile`).
+  - Motor offline-first em `lib/data/services/todo_sync_service.dart` (`todo-sync-v1.json`, SHA-256 de `room`, outbox com coalescência, pull paginado, idempotência com cap 2000 / 90d, merge 3-vias simétrico, conflitos `pending_review`, quarentena de desconhecidas e venenosas após 3 falhas), hooks nos 9 métodos do `TodoService`, aplicação remota sem gerar nova `nextOccurrence` e ressincronização de alarmes, além de `Workmanager` (`lumenTodoPeriodicSyncTask`, 1h) + ciclo em `lib/main.dart` e `lib/data/services/health_service.dart`.
+  - UI e L10n em `lib/ui/todo/view_models/todo_viewmodel.dart`, `lib/ui/todo/widgets/todo_screen.dart` e `lib/l10n/app_{pt,en}.arb` separando `"Salvo no aparelho"` vs `"Sincronizado"`, botão `"Sincronizar agora"` e cards de conflito `pending_review` (`Manter deste aparelho` / `Usar do PC`).
+- **Comandos e saídas:**
+  - `python3 scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+  - `flutter test --no-pub test/data/services/lumen_relay_crypto_test.dart test/data/services/lumen_mailbox_client_test.dart test/data/services/todo_sync_service_test.dart test/data/services/todo_service_test.dart test/data/services/lumen_pairing_service_test.dart test/data/repositories/todo_repository_test.dart test/domain/models/todo_item_sync_contract_test.dart test/data/services/health_service_test.dart test/ui/todo/view_models/todo_viewmodel_test.dart test/ui/todo/widgets/todo_screen_test.dart test/ui/lumen/ test/integration/todo_undo_flow_test.dart test/l10n/arb_key_parity_test.dart test/l10n/locale_lookup_test.dart test/l10n/hardcoded_ui_strings_test.dart` → `+133: All tests passed!` (exit `0`).
+  - `flutter analyze --no-pub` → `159 issues found.` (mesmo baseline pré-existente da F12-03; zero erros ou alertas novos).
+- **`NOT_RUN`:** sync real S25 Ultra ↔ Lumen no notebook contra o Worker na Cloudflare, execução real de `Workmanager` em segundo plano e suíte completa global (`flutter test` sem filtro); ficam para a validação conjunta no Passo 9 (`F12-05 / L6.4`).
+
+### F12-02 (Passo 4 da PONTE) — deploy real do Worker na Cloudflare e medição (2026-11-15)
+- **Deploy (`relay/` do Lumen):** `npm test` passou antes do deploy (`26` testes Worker + `37` testes Node); `npx wrangler deploy` publicou `coucou-link` em `https://coucou-link.<seu-subdominio>.workers.dev` (versão `f55c97a2-1e61-45e3-a6cc-232f9e274bbd`).
+- **Segredo e configuração local:** `ACCESS_KEY` (43 chars base64url) rotacionado via `wrangler secret put ACCESS_KEY`, gravado no cofre do Windows (`phone-relay-access.fr.louisraille.coucou`) e configurado no Lumen (`phoneRelay = true`).
+- **Ciclo real e medição `freePlan` em sala efêmera:** `GET /` `200`, `POST /v1/mailbox/<room>/messages?to=phone` `201` (`storedBytes: 413`, idempotente `200` no reenvio), `GET /messages` `200` + decifragem `coucou-mailbox/v1` exata, `GET /stats` (`pendingPhone: 1`, `dailyWrites: 2/100000`, `dailyWritePct: 0.002%`, `dailyRequests: 2/100000`, `roomBytes: 413/16777216`), `POST /ack` `200` (`deleted: 1`, `remaining: 0`, `dailyWrites: 4`) e `POST /revoke` `200` (`revoked: true`, `410 Gone` subsequente em `GET /messages`, `dailyWrites: 6`).
+- **Passo 7 (L6.3 no Lumen):** integrado na `main` do Lumen (release `windows-v0.7.3` publicada).
+
+### F12-03 (e L6.2 no Lumen) — pareamento QR e revogação, implementação (2026-11-14)
+- **Lumen (`playertwo1/lumen`, L6.2 integrado na `main`, release `windows-v0.7.3`):** QR com `k_mailbox`, `http_base_url` e `shown: true`; revogação em `POST /v1/mailbox/<room>/revoke` ao gerar novo pareamento. Validação no fork: `cargo test --lib phone_link` (206 aprovados, 2 ignorados), `npx tsc --noEmit`, `phone-relay.test.mjs` (4 aprovados) e `android/relay` `npm test` (26 + 37 aprovados).
+- **Segunda Mente (integrada na `main`, commit `b25d0226`):** `LumenPairing` (`lib/domain/models/lumen_pairing.dart`), HKDF `LumenRelayCrypto` (`lib/data/services/lumen_relay_crypto.dart`) contra vetores em `test/fixtures/lumen_relay_test_vectors.json`, `LumenPairingService` (`lib/data/services/lumen_pairing_service.dart`, segredos e `device_id` só em `SecretStorage`, revogação best-effort com timeout de 5 s), `MemexRouter`, `LumenPairingViewModel`, `LumenPairingPage` (`mobile_scanner` + colar link, sem expor `key`/`access`/`token`), entrada em `SettingsPage` e `SettingsRegistry`, e 23 chaves + metadado em `app_pt.arb` e `app_en.arb`.
+- **Comandos e saídas:**
+  - `python3 scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+  - `flutter test --no-pub --reporter compact test/domain/models/lumen_pairing_test.dart test/data/services/lumen_relay_crypto_test.dart test/data/services/lumen_pairing_service_test.dart test/ui/lumen/lumen_pairing_page_test.dart test/l10n/arb_key_parity_test.dart test/l10n/locale_lookup_test.dart test/l10n/hardcoded_ui_strings_test.dart test/ui/settings/widgets/settings_page_test.dart test/data/services/settings_registry_todo_test.dart test/ui/lazy_secondary_loads_test.dart` → `+57: All tests passed!`
+  - `flutter analyze --no-pub` → `159 issues found.` (mesmo número de issues pré-existentes da linha de base; sem erros novos nos arquivos da F12-03).
+- **`NOT_RUN`:** leitura real de QR pela câmera e `SecretStorage` no Galaxy S25 Ultra, pareamento/revogação reais contra o Worker Cloudflare (passo 4) e suíte completa `flutter test`.
+
+### F12-01 — contrato de sync v1 (2026-11-14)
+- Decisões: questionário `docs/questionario/2026-11-14-sync-contrato-e-roadmaps.md` (D1–D13) e D-066 (abre a F12 pela trilha única da ponte, `docs/lumen/PONTE.md`).
+- Contrato `docs/lumen/CONTRATO-SYNC.md` reescrito como v1 (envelope sem `op`, cifra `coucou-mailbox/v1`, rotas reais da caixa de correio, regras de aplicação e conflito, entidade `task`) e v1.1 em rascunho.
+- Teste Dart: `flutter test --no-pub test/domain/models/todo_item_sync_contract_test.dart` → `+7: All tests passed!`; `flutter analyze --no-pub` no arquivo → `No issues found!`. O teste lê a seção 8 do contrato e confere o envelope e a paridade de campos com o `TodoItem`.
+- Lumen (`playertwo1/lumen`, integrado na `main`): vetores `android/relay/test-vectors-mailbox.json` com cifra de referência em Node; `npm test` no relay → 26 + 37 testes aprovados; `gen-mailbox-vectors.ts --check` → atualizados; `cargo test … contrato_sync_v1_task_envelopes_match_the_model` → 1 aprovado.
+- `NOT_RUN`: cifra da caixa de correio no Rust e no Dart (vem na L6.3 e na F12-04); `flutter test` completo. Pendente: o dono ler o texto final do contrato; o `gen-vectors.mjs --check` dos vetores antigos falha na cópia local por CRLF (`core.autocrlf`), antes desta mudança.
+
 ### F15-07 — protótipos da cápsula (2026-11-14)
-- O que existe, só no flavor `globalDev` (`android/app/src/globalDev/`, D-069): A, bolha oficial (launcher "Cápsula: bolha", `Notification.BubbleMetadata` com `setAutoExpandBubble`, `setSuppressNotification`, atalho de conversa, host `CapsuleBubbleHostActivity` que reusa o motor e a rota do chat); B, sobreposição própria (launcher "Cápsula: sobreposição", `CapsuleOverlayService` com `TYPE_APPLICATION_OVERLAY`, `specialUse`, notificação com "Parar"). Medição pelo log `F1507`. Passos de uso, permissões e comandos adb em `docs/fases/F15-07-prototipos-capsula.md`.
+- O que existe, só no flavor `globalDev` (`android/app/src/globalDev/`, D-071): A, bolha oficial (launcher "Cápsula: bolha", `Notification.BubbleMetadata` com `setAutoExpandBubble`, `setSuppressNotification`, atalho de conversa, host `CapsuleBubbleHostActivity` que reusa o motor e a rota do chat); B, sobreposição própria (launcher "Cápsula: sobreposição", `CapsuleOverlayService` com `TYPE_APPLICATION_OVERLAY`, `specialUse`, notificação com "Parar"). Medição pelo log `F1507`. Passos de uso, permissões e comandos adb em `docs/fases/F15-07-prototipos-capsula.md`.
 - Comandos e saídas:
   - `flutter pub get --enforce-lockfile` → exit 0 (avisos de pacotes descontinuados e desatualizados); nenhum arquivo rastreado alterado.
   - `flutter build apk --flavor globalDev --debug --no-pub` → `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk`, exit 0.
@@ -54,13 +157,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Estado: F15-07 IN_PROGRESS.
 
 ### F15-06 — botão no painel rápido (2026-11-14)
-- O que existe: `ConversarTileService` (`TileService`) abre a `FloatingChatActivity` em modo `type`; API 34+ usa `startActivityAndCollapse(PendingIntent)`, API 26 a 33 usa o `Intent`; com aparelho bloqueado, `unlockAndRun`. Rótulo "Conversar"/"Chat", ícone `ic_qs_chat`. Documento `docs/fases/F15-06-painel-rapido.md`. Decisão D-068 (abertura antes da validação da F15-02 no S25).
+- O que existe: `ConversarTileService` (`TileService`) abre a `FloatingChatActivity` em modo `type`; API 34+ usa `startActivityAndCollapse(PendingIntent)`, API 26 a 33 usa o `Intent`; com aparelho bloqueado, `unlockAndRun`. Rótulo "Conversar"/"Chat", ícone `ic_qs_chat`. Documento `docs/fases/F15-06-painel-rapido.md`. Decisão D-070 (abertura antes da validação da F15-02 no S25).
 - Build: `flutter pub get --enforce-lockfile` OK (lockfile intocado); `flutter build apk --flavor globalDev --debug --no-pub` exit 0, `app-globaldev-debug.apk`.
 - Aparelho: nenhum (sem adb, sem celular). Estado: REVIEW.
 - `NOT_RUN`: toque no tile do painel rápido do S25 (adicionar, abrir da tela inicial e de outro app, aparelho bloqueado, volta para a origem ao fechar, ícone claro e escuro); `flutter analyze` e `flutter test` (sem mudança em Dart).
 
 ### F15-05 — widget grande com tarefas de hoje, código (2026-11-14)
-- O que existe: tamanho grande em `widget_large.xml` (chave `LARGE_MIN` 250×270 dp no API 31+, altura ≥ 270 no API 26–30): faixa de Conversar e Falar, faixa de captura, até três linhas de tarefa (círculo conclui, título abre `memex://open_todo`, hora) e "+ tarefa". Atrasadas primeiro, depois as de hoje por horário; só tarefas abertas com data (D-070). Snapshot Dart → nativo por `TodoWidgetSnapshotService` (`com.memexlab.memex/todo_widget`, `updateSnapshot`), com id, título, data, hora, status e fuso das dez primeiras; guardado em `SharedPreferences` privado. Envio após cada escrita do Todo (fora do lock, sem `await`) e na inicialização. Redesenho por envio, `DATE_CHANGED`, `TIME_SET`, `TIMEZONE_CHANGED` e alarme inexato no próximo instante (meia-noite SP ou hora de tarefa de hoje). Concluir pelo círculo: `FloatingChatActivity` com `todo_complete:<id>` → `/floating-todo-complete` → `setTodoDone` pelo router, sem folha, funciona a frio. "+ tarefa": `todo_add` → `/floating-todo-add` → editor do Todo com o aviso da F11-06 (parâmetro `notice` novo em `showTodoEditorDialog`, padrão nulo). Desenho e checklist do S25 (doze itens) em `docs/fases/F15-05-widget-grande.md`; decisão em D-070.
+- O que existe: tamanho grande em `widget_large.xml` (chave `LARGE_MIN` 250×270 dp no API 31+, altura ≥ 270 no API 26–30): faixa de Conversar e Falar, faixa de captura, até três linhas de tarefa (círculo conclui, título abre `memex://open_todo`, hora) e "+ tarefa". Atrasadas primeiro, depois as de hoje por horário; só tarefas abertas com data (D-072). Snapshot Dart → nativo por `TodoWidgetSnapshotService` (`com.memexlab.memex/todo_widget`, `updateSnapshot`), com id, título, data, hora, status e fuso das dez primeiras; guardado em `SharedPreferences` privado. Envio após cada escrita do Todo (fora do lock, sem `await`) e na inicialização. Redesenho por envio, `DATE_CHANGED`, `TIME_SET`, `TIMEZONE_CHANGED` e alarme inexato no próximo instante (meia-noite SP ou hora de tarefa de hoje). Concluir pelo círculo: `FloatingChatActivity` com `todo_complete:<id>` → `/floating-todo-complete` → `setTodoDone` pelo router, sem folha, funciona a frio. "+ tarefa": `todo_add` → `/floating-todo-add` → editor do Todo com o aviso da F11-06 (parâmetro `notice` novo em `showTodoEditorDialog`, padrão nulo). Desenho e checklist do S25 (doze itens) em `docs/fases/F15-05-widget-grande.md`; decisão em D-072.
 - Comandos e saídas (branch `feat/f15-05-widget-grande`, worktree `sm-f1505`):
   - `flutter pub get --enforce-lockfile` → `Got dependencies!` (exit 0). `analysis_options.yaml` e `android/gradle.properties` sem alteração.
   - `dart analyze` nos arquivos alterados e novos (lib e testes): nenhum erro e nenhum aviso novo; o conjunto final tem um aviso pré-existente. Único aviso em `todo_screen.dart:419` (`unused_element_parameter`) é da busca do Todo, código que não mudou.
@@ -70,10 +173,10 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
   - `flutter build apk --flavor globalDev --debug --no-pub`: `√ Built buildpp\outputslutter-apkpp-globaldev-debug.apk` (exit 0).
   - `git diff --check`: limpo.
 - Aparelho: nenhum (adb e celular não usados). `NOT_RUN`: tudo no S25 (checklist de doze itens em `docs/fases/F15-05-widget-grande.md`); o widget grande de fato; os broadcasts de data e hora; o alarme da meia-noite; a abertura a frio do trampolim de concluir; TalkBack; texto a 200%. Testes de Android nativo não existem no projeto; `TodoWidgetSnapshot.rows` e `nextChangeMillis` só se validam no aparelho.
-- Estado: F15-05 REVIEW (D-070) até a evidência no S25.
+- Estado: F15-05 REVIEW (D-072) até a evidência no S25.
 
 ### F15-04 — widget médio com captura, código (2026-11-14)
-- O que existe: `widget_medium.xml` (faixa de chat mais faixa de captura Anotar, Foto e Colar), com `widget_chat_row` e `widget_capture_row` compartilhados com o pequeno; `WidgetLayouts` com o mapa `SMALL_MIN` 200×60 e `MEDIUM_MIN` 200×120 dp no API 31+, e escolha por `OPTION_APPWIDGET_MIN_HEIGHT` no API 26–30 (`onAppWidgetOptionsChanged`). Cada tecla de captura abre `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. O Dart roteia para `/floating-capture` (`FloatingCaptureScreen`). Guardar envia pelo `MemexRouter.sendMessage` do Registrar (cena `super_agent_home`, sessão mais recente); Fechar, toque fora e voltar não gravam. Desenho e checklist do S25 em `docs/fases/F15-04-widget-medio.md`; decisão em D-067.
+- O que existe: `widget_medium.xml` (faixa de chat mais faixa de captura Anotar, Foto e Colar), com `widget_chat_row` e `widget_capture_row` compartilhados com o pequeno; `WidgetLayouts` com o mapa `SMALL_MIN` 200×60 e `MEDIUM_MIN` 200×120 dp no API 31+, e escolha por `OPTION_APPWIDGET_MIN_HEIGHT` no API 26–30 (`onAppWidgetOptionsChanged`). Cada tecla de captura abre `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. O Dart roteia para `/floating-capture` (`FloatingCaptureScreen`). Guardar envia pelo `MemexRouter.sendMessage` do Registrar (cena `super_agent_home`, sessão mais recente); Fechar, toque fora e voltar não gravam. Desenho e checklist do S25 em `docs/fases/F15-04-widget-medio.md`; decisão em D-069.
 - Comandos e saídas (branch `feat/f15-04-widget-medio`, worktree `sm-f1504`):
   - `flutter pub get --enforce-lockfile` → exit 0.
   - `flutter gen-l10n` → regenerou `app_localizations*.dart` com as dez chaves `floatingCapture*` pt/en.
@@ -81,10 +184,10 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
   - `flutter test --no-pub --reporter compact` (domínio do modo, `test/ui/floating_chat`, integração do chat e da captura, serviço e `test/l10n`): `All tests passed!`: +56 (exit 0) em `test/domain/models/floating_chat_mode_test.dart`, `test/ui/floating_chat` (inclui `floating_capture_viewmodel_test` e `floating_capture_screen_test`), `test/integration/floating_capture_flow_test.dart`, `test/integration/floating_chat_flow_test.dart`, `test/data/services/floating_chat_service_test.dart` e `test/l10n`.
   - `flutter build apk --flavor globalDev --debug --no-pub`: `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (exit 0).
 - Aparelho: nenhum (adb e celular não usados). `NOT_RUN`: tudo no S25 (checklist de nove itens em `docs/fases/F15-04-widget-medio.md`); câmera e galeria dentro da folha translúcida; medição da grade do médio; Android 8 a 11; TalkBack; texto a 200%.
-- Estado: F15-04 REVIEW (D-067) até a evidência no S25.
+- Estado: F15-04 REVIEW (D-069) até a evidência no S25.
 
 ### F15-03 — widget pequeno, código (2026-11-14)
-- O que existe: `SegundaMenteWidgetProvider` e `WidgetLayouts` (Kotlin, pacote `com.memexlab.memex.widget`); layout `widget_small` com as teclas Conversar (âmbar, preenchida) e Falar (contorno) na mesma faixa; `res/xml/segundamente_widget_info.xml` (home_screen, `updatePeriodMillis="0"`, resizable, minWidth 200 dp, minHeight 60 dp, targetCell 2×1); receiver no manifesto. Toques abrem `FloatingChatActivity` com `floating_chat_mode` = `type` ou `talk`, o mesmo alvo dos atalhos da F15-02 (D-066). Desenho e checklist do S25 em `docs/fases/F15-03-widget-pequeno.md`.
+- O que existe: `SegundaMenteWidgetProvider` e `WidgetLayouts` (Kotlin, pacote `com.memexlab.memex.widget`); layout `widget_small` com as teclas Conversar (âmbar, preenchida) e Falar (contorno) na mesma faixa; `res/xml/segundamente_widget_info.xml` (home_screen, `updatePeriodMillis="0"`, resizable, minWidth 200 dp, minHeight 60 dp, targetCell 2×1); receiver no manifesto. Toques abrem `FloatingChatActivity` com `floating_chat_mode` = `type` ou `talk`, o mesmo alvo dos atalhos da F15-02 (D-068). Desenho e checklist do S25 em `docs/fases/F15-03-widget-pequeno.md`.
 - Comandos e saídas (branch `feat/f15-03-widget-pequeno`, worktree `sm-f1503`):
   - `flutter pub get --enforce-lockfile` → `Got dependencies!` (exit 0)
   - `flutter build apk --flavor globalDev --debug --no-pub` → `√ Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (exit 0). O APK traz `res/layout/widget_small.xml`, `res/xml/segundamente_widget_info.xml` e os drawables; o manifesto mesclado contém `SegundaMenteWidgetProvider` e `APPWIDGET_UPDATE`.
@@ -92,7 +195,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
   - `git diff --check` → limpo.
 - Aparelho: nenhum (adb não usado; o widget não foi instalado).
 - `NOT_RUN`: tudo no S25 (checklist de oito itens em `docs/fases/F15-03-widget-pequeno.md`); TalkBack; medição da grade real (a dica 2×1 e o mínimo de 200 dp podem mudar após medir); texto a 200%; abertura a frio do chat pelo widget.
-- Estado: F15-03 REVIEW (D-066) até a evidência no S25.
+- Estado: F15-03 REVIEW (D-068) até a evidência no S25.
 
 ### F15-02 — chat flutuante, implementação (2026-11-14)
 - O que existe: `FloatingChatActivity` translúcida com motor Flutter compartilhado (`SharedFlutterEngine`, D-065); channel `com.memexlab.memex/floating_chat`; rota `/floating-chat` com o `AgentChatDialog` em modo flutuante (cabeçalho "Abrir no app" e "Fechar", Conversar com o campo focado, Falar com `ListenOnceViewModel`: ouve uma fala, transcreve e envia; digitar ou enviar cancela a escuta); atalhos do ícone "Conversar" e "Falar". Desenho em `docs/fases/F15-02-chat-flutuante.md`.

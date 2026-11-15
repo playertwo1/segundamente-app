@@ -299,6 +299,49 @@ void main() {
       expect(prompt, isNot(contains('forget you are an AI')));
       expect(prompt, isNot(contains('calm, warm, and lightly sweet')));
     });
+
+    test('comment prompt injects living AGENTS.md, MEMORY.md, and group participants',
+        () {
+      final skill = CommentAgentSkill(
+        character: CharacterModel(
+          id: 'socio',
+          name: 'Sócio Direto',
+          tags: const ['decisão'],
+          persona: _policyPersona,
+          enabled: true,
+        ),
+        factId: '2026/06/08.md#ts_3',
+        workingDirectory: tempRoot.path,
+        userId: 'policy_test_user',
+        agentsMd: '# Persona: Sócio Direto\nAtue como subagente crítico.',
+        livingMemory: '- O dono prefere opções com trade-offs claros.',
+        activeParticipants: [
+          CharacterModel(
+            id: 'socio',
+            name: 'Sócio Direto',
+            tags: const [],
+            persona: '',
+            enabled: true,
+          ),
+          CharacterModel(
+            id: 'advogado',
+            name: 'Advogado do Diabo',
+            tags: const [],
+            persona: '',
+            enabled: true,
+          ),
+        ],
+      );
+
+      final prompt = skill.systemPrompt;
+      expect(prompt, contains('<persona_agents_md>'));
+      expect(prompt, contains('Atue como subagente crítico.'));
+      expect(prompt, contains('<persona_living_memory>'));
+      expect(prompt, contains('trade-offs claros'));
+      expect(prompt, contains('@advogado'));
+      expect(prompt, contains('[REPLY:comment_id]'));
+      expect(prompt, contains('[MEMORY:'));
+    });
   });
 }
 

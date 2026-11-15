@@ -1,6 +1,6 @@
 # F15-07 — Protótipos da minicápsula
 
-> Subfase da [F15](../roadmap/F15-widget-e-atalhos-android.md). Decisão de forma em D11 do [questionário](../questionario/2026-11-14-widget-e-capsula.md). Abertura em código antes da validação da F15-02 no S25: [D-069](../DECISIONS.md).
+> Subfase da [F15](../roadmap/F15-widget-e-atalhos-android.md). Decisão de forma em D11 do [questionário](../questionario/2026-11-14-widget-e-capsula.md). Abertura em código antes da validação da F15-02 no S25: [D-071](../DECISIONS.md).
 
 **Estado:** IN_PROGRESS. Os dois protótipos existem no build dev e compilam. A comparação no S25 e a escolha do dono estão pendentes. Nada foi medido no aparelho ainda (`NOT_RUN`).
 

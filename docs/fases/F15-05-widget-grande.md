@@ -1,6 +1,6 @@
 # F15-05 — Widget grande com tarefas de hoje
 
-> Subfase da [F15 — Widget e atalhos Android](../roadmap/F15-widget-e-atalhos-android.md). Estado: **REVIEW** (código e testes prontos; aparelho `NOT_RUN`). Visual: linhas no grande (D-064). Escolhas de produto: D-070. Estado atual: [STATE.md](../../STATE.md).
+> Subfase da [F15 — Widget e atalhos Android](../roadmap/F15-widget-e-atalhos-android.md). Estado: **REVIEW** (código e testes prontos; aparelho `NOT_RUN`). Visual: linhas no grande (D-064). Escolhas de produto: D-072. Estado atual: [STATE.md](../../STATE.md).
 
 ## O que entrega
 
@@ -11,7 +11,7 @@ O tamanho grande do widget "Segunda Mente" (faixa mínima 250×270 dp), no desen
 - **Embaixo:** a tecla **+ tarefa** (pt) / **+ Task** (en).
 - Sem tarefas: "Nada para hoje" (pt) / "Nothing for today" (en) no lugar das linhas.
 
-## Quais tarefas aparecem (D-070)
+## Quais tarefas aparecem (D-072)
 
 - Só tarefas abertas (não concluídas, não apagadas) **com data**.
 - Atrasadas: data anterior a hoje, ou hoje com hora já passada (mesma regra de `TodoScheduleCalculator.statusFor`, fuso America/Sao_Paulo).

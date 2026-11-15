@@ -6,7 +6,7 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 
-/** Quick Settings tile "Conversar" (F15-06, D-068): opens the floating chat in type mode from any app. */
+/** Quick Settings tile "Conversar" (F15-06, D-070): opens the floating chat in type mode from any app. */
 class ConversarTileService : TileService() {
 
     override fun onStartListening() {

@@ -16,6 +16,8 @@ import 'package:memex/ui/settings/widgets/data_import_page.dart';
 import 'package:memex/ui/settings/widgets/backup_restore_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
 import 'package:memex/ui/settings/widgets/experimental_lab_page.dart';
+import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
+import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
 import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_shortcut_settings_page.dart';
 import 'package:memex/ui/settings/view_models/data_import_viewmodel.dart';
@@ -338,6 +340,31 @@ class SettingsRegistry {
           navigationTarget: NavigationTarget(
             pageBuilder: (_) => TodoShortcutSettingsPage(
               viewModel: TodoShortcutSettingsViewModel(router: MemexRouter()),
+            ),
+          ),
+          parentPathGetter: () => [
+            UserStorage.l10n.personalCenter,
+            UserStorage.l10n.settings,
+          ],
+        ),
+        SettingsItem(
+          id: 'settings.lumen_pairing',
+          titleGetter: () => UserStorage.l10n.lumenPairingTitle,
+          descriptionGetter: () => UserStorage.l10n.lumenPairingSubtitle,
+          keywords: const [
+            'lumen',
+            'desktop',
+            'pc',
+            'pareamento',
+            'pair',
+            'qr',
+            'sync',
+            'sincronizar',
+          ],
+          icon: Icons.devices_outlined,
+          navigationTarget: NavigationTarget(
+            pageBuilder: (_) => LumenPairingPage(
+              viewModel: LumenPairingViewModel(router: MemexRouter()),
             ),
           ),
           parentPathGetter: () => [

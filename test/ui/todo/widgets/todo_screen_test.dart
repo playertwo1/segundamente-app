@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:memex/config/app_flavor.dart';
 import 'package:memex/data/repositories/memex_router.dart';
+import 'package:memex/data/services/file_system_service.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
@@ -177,6 +182,90 @@ class _FakeRouter implements MemexRouter {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _FakeTodoSyncService extends TodoSyncService {
+  _FakeTodoSyncService({
+    TodoSyncStatus? initialStatus,
+    this.onSyncNow,
+    this.onResolveConflict,
+  }) : currentStatus = initialStatus ??
+            TodoSyncStatus(
+              state: TodoSyncBadgeState.localOnly,
+              paired: false,
+              deviceId: '',
+              pendingOutbox: 0,
+            );
+
+  TodoSyncStatus currentStatus;
+  final Future<TodoSyncStatus> Function(String? userId, String reason)?
+      onSyncNow;
+  final Future<TodoSyncStatus> Function({
+    required String userId,
+    required String conflictId,
+    required bool keepLocal,
+  })? onResolveConflict;
+
+  final List<String> syncReasons = [];
+  final List<({String userId, String conflictId, bool keepLocal})>
+      resolvedConflicts = [];
+
+  @override
+  Future<TodoSyncStatus> loadStatus({
+    String? userId,
+    FileSystemService? files,
+  }) async {
+    statusNotifier.value = currentStatus;
+    return currentStatus;
+  }
+
+  @override
+  Future<TodoSyncStatus> syncNow({
+    String? userId,
+    String reason = 'manual',
+    FileSystemService? files,
+  }) async {
+    syncReasons.add(reason);
+    statusNotifier.value = TodoSyncStatus(
+      state: TodoSyncBadgeState.syncing,
+      paired: currentStatus.paired,
+      deviceId: currentStatus.deviceId,
+      pendingOutbox: currentStatus.pendingOutbox,
+      pendingPc: currentStatus.pendingPc,
+      lastSyncedAt: currentStatus.lastSyncedAt,
+      conflicts: currentStatus.conflicts,
+      unsyncedItemIds: currentStatus.unsyncedItemIds,
+      hasCompletedSync: currentStatus.hasCompletedSync,
+    );
+    if (onSyncNow != null) {
+      currentStatus = await onSyncNow!(userId, reason);
+    }
+    statusNotifier.value = currentStatus;
+    return currentStatus;
+  }
+
+  @override
+  Future<TodoSyncStatus> resolveConflict({
+    required String userId,
+    required String conflictId,
+    required bool keepLocal,
+    FileSystemService? files,
+  }) async {
+    resolvedConflicts.add((
+      userId: userId,
+      conflictId: conflictId,
+      keepLocal: keepLocal,
+    ));
+    if (onResolveConflict != null) {
+      currentStatus = await onResolveConflict!(
+        userId: userId,
+        conflictId: conflictId,
+        keepLocal: keepLocal,
+      );
+    }
+    statusNotifier.value = currentStatus;
+    return currentStatus;
+  }
+}
+
 TodoItem _item(
   String id,
   String text, {
@@ -227,6 +316,9 @@ void main() {
     String? damagedLegacyFileName,
     bool failLoad = false,
     Size viewport = const Size(800, 2000),
+    TodoSyncService? syncService,
+    Future<String?> Function()? userIdResolver,
+    bool autoSyncOnLoad = true,
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
@@ -238,6 +330,9 @@ void main() {
     final viewModel = TodoViewModel(
       router: router,
       now: () => DateTime.utc(2026, 11, 13, 15),
+      syncService: syncService,
+      userIdResolver: userIdResolver,
+      autoSyncOnLoad: autoSyncOnLoad,
       openCalendar: ({
         required title,
         required start,
@@ -786,7 +881,19 @@ void main() {
 
   group('accessibility', () {
     final items = [
-      _item('t1', 'Ligar', due: '2026-11-21 14:30'),
+      _item(
+        't1',
+        'Ligar',
+        due: '2026-11-21 14:30',
+        source: const TodoSource(
+          sessionId: 'pdf_1',
+          itemId: 'item_1',
+          excerpt: 'Confirmar horário',
+          clock: '10:00',
+        ),
+      ).copyWith(
+        subtasks: const [TodoSubtask(id: 's1', text: 'Separar número')],
+      ),
       _item('t2', 'Enviar resumo', done: true, minute: 1),
       _item('t3', 'Revisar', sourceStale: true, minute: 2),
     ];
@@ -804,6 +911,639 @@ void main() {
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       await pump(tester, items);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('sync status and conflicts', () {
+    testWidgets('offline says saved on device with no connection, not sync failed',
+        (tester) async {
+      for (final language in ['pt', 'en']) {
+        SharedPreferences.setMockInitialValues({'language': language});
+        await UserStorage.initL10n();
+        final l10n = UserStorage.l10n;
+        final statusBar = find.byKey(const ValueKey('todo_sync_status_bar'));
+        final fakeSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.savedOnDevice,
+            paired: true,
+            deviceId: 'dev-1',
+            pendingOutbox: 1,
+          ),
+        );
+        await pump(
+          tester,
+          [_item('t1', 'Local')],
+          syncService: fakeSync,
+          autoSyncOnLoad: false,
+        );
+
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.offline,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 1,
+          lastError: 'http_0',
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncOffline)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncError)),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.byIcon(Icons.cloud_off_outlined),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('todo_sync_now_button')),
+          findsOneWidget,
+        );
+      }
+    });
+
+    testWidgets(
+      'separates Saved on device from Synced across states and per item',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({'language': 'pt'});
+        await UserStorage.initL10n();
+        final l10n = UserStorage.l10n;
+        final statusBar = find.byKey(const ValueKey('todo_sync_status_bar'));
+        final syncNowBtn = find.byKey(const ValueKey('todo_sync_now_button'));
+
+        final fakeSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.localOnly,
+            paired: false,
+            deviceId: '',
+            pendingOutbox: 0,
+          ),
+        );
+        await pump(
+          tester,
+          [_item('t1', 'Local'), _item('t2', 'Pendente', minute: 1)],
+          syncService: fakeSync,
+          autoSyncOnLoad: false,
+        );
+
+        // localOnly without pending/error hides sync bar and per-item labels
+        expect(statusBar, findsNothing);
+        expect(syncNowBtn, findsNothing);
+        expect(
+          find.byKey(const ValueKey('todo_item_sync_label_t1')),
+          findsNothing,
+        );
+
+        // localOnly with pending outbox surfaces sync bar and per-item labels
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.localOnly,
+          paired: false,
+          deviceId: '',
+          pendingOutbox: 1,
+          unsyncedItemIds: const {'t1'},
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncPendingChanges(1)),
+          ),
+          findsOneWidget,
+        );
+        expect(syncNowBtn, findsNothing);
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(const ValueKey('todo_item_sync_label_t1')),
+              )
+              .data,
+          l10n.todoSyncSavedOnDevice,
+        );
+
+        // savedOnDevice with pending outbox
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.savedOnDevice,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 2,
+          unsyncedItemIds: const {'t1', 't2'},
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncPendingChanges(2)),
+          ),
+          findsOneWidget,
+        );
+        expect(syncNowBtn, findsOneWidget);
+
+        // waitingPc keeps item labeled Saved on device
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.waitingPc,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 0,
+          pendingPc: 1,
+          hasCompletedSync: true,
+          awaitingPcIds: const {'t1'},
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncPendingChanges(1)),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(const ValueKey('todo_item_sync_label_t1')),
+              )
+              .data,
+          l10n.todoSyncSavedOnDevice,
+        );
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(const ValueKey('todo_item_sync_label_t2')),
+              )
+              .data,
+          l10n.todoSyncSynced,
+        );
+
+        // error keeps retry button visible
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.error,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 1,
+          lastError: 'network_timeout',
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncError),
+          ),
+          findsOneWidget,
+        );
+        expect(syncNowBtn, findsOneWidget);
+
+        // revoked hides Sync now button
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.revoked,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 0,
+          revoked: true,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncRevoked),
+          ),
+          findsOneWidget,
+        );
+        expect(syncNowBtn, findsNothing);
+
+        // synced shows last success time and per-item mixed sync labels
+        const syncedIso = '2026-11-15T14:30:00.000Z';
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.synced,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 0,
+          pendingPc: 0,
+          hasCompletedSync: true,
+          lastSyncedAt: syncedIso,
+          unsyncedItemIds: const {'t2'},
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncSynced),
+          ),
+          findsOneWidget,
+        );
+        final expectedTime =
+            DateFormat.Hm('pt').format(DateTime.parse(syncedIso).toLocal());
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.text(l10n.todoSyncLastSuccess(expectedTime)),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(const ValueKey('todo_item_sync_label_t1')),
+              )
+              .data,
+          l10n.todoSyncSynced,
+        );
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(const ValueKey('todo_item_sync_label_t2')),
+              )
+              .data,
+          l10n.todoSyncSavedOnDevice,
+        );
+      },
+    );
+
+    testWidgets(
+      'Sync now button triggers manual sync without hiding tasks and resume refreshes',
+      (tester) async {
+        final l10n = UserStorage.l10n;
+        final syncGate = Completer<void>();
+        late _FakeRouter router;
+        var syncCounter = 0;
+
+        final fakeSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.savedOnDevice,
+            paired: true,
+            deviceId: 'dev-1',
+            pendingOutbox: 1,
+            unsyncedItemIds: const {'t1'},
+          ),
+          onSyncNow: (_, reason) async {
+            syncCounter++;
+            if (syncCounter == 1) {
+              await syncGate.future;
+              router._stored.add(_item('t2', 'Do PC', minute: 1));
+            }
+            return TodoSyncStatus(
+              state: TodoSyncBadgeState.synced,
+              paired: true,
+              deviceId: 'dev-1',
+              pendingOutbox: 0,
+              pendingPc: 0,
+              hasCompletedSync: true,
+              lastSyncedAt: '2026-11-15T15:00:00.000Z',
+            );
+          },
+        );
+
+        router = await pump(
+          tester,
+          [_item('t1', 'Local')],
+          syncService: fakeSync,
+          autoSyncOnLoad: false,
+        );
+
+        await tester.tap(find.byKey(const ValueKey('todo_sync_now_button')));
+        await tester.pump();
+
+        expect(find.text(l10n.todoSyncSyncing), findsOneWidget);
+        expect(find.text('Local'), findsOneWidget);
+
+        syncGate.complete();
+        await tester.pumpAndSettle();
+
+        expect(fakeSync.syncReasons, ['manual']);
+        expect(find.text('Do PC'), findsOneWidget);
+        expect(
+          tester
+              .widget<Text>(
+                find.byKey(const ValueKey('todo_item_sync_label_t2')),
+              )
+              .data,
+          l10n.todoSyncSynced,
+        );
+
+        // Returning to foreground triggers refreshOnResume -> syncNow('resume').
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        tester.binding
+            .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        await tester.pumpAndSettle();
+        expect(fakeSync.syncReasons, ['manual', 'resume']);
+      },
+    );
+
+    testWidgets(
+      'empty list with sync bar and conflict card renders zero ListTiles',
+      (tester) async {
+        final l10n = UserStorage.l10n;
+        const conflict1 = TaskTextConflict(
+          id: 't1:text',
+          entityId: 't1',
+          field: 'text',
+          localText: 'Comprar leite integral',
+          remoteText: 'Comprar leite sem lactose',
+          winnerSide: 'remote',
+          winnerText: 'Comprar leite sem lactose',
+          loserText: 'Comprar leite integral',
+          localUpdatedAt: '2026-11-15T10:00:00Z',
+          remoteUpdatedAt: '2026-11-15T10:05:00Z',
+        );
+        final fakeSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.savedOnDevice,
+            paired: true,
+            deviceId: 'dev-1',
+            pendingOutbox: 0,
+            conflicts: const [conflict1],
+          ),
+        );
+
+        await pump(
+          tester,
+          const [],
+          syncService: fakeSync,
+          userIdResolver: () async => 'u1',
+          autoSyncOnLoad: false,
+        );
+
+        expect(find.text(l10n.todoEmptyToday), findsOneWidget);
+        expect(find.byType(ListTile), findsNothing);
+        expect(
+          find.byKey(const ValueKey('todo_conflict_card_t1:text')),
+          findsOneWidget,
+        );
+        expect(find.text(l10n.todoConflictBannerTitle), findsOneWidget);
+        expect(find.text(l10n.todoConflictBannerSubtitle), findsOneWidget);
+        expect(find.text(l10n.todoConflictLocalLabel), findsOneWidget);
+        expect(find.text('Comprar leite integral'), findsOneWidget);
+        expect(find.text(l10n.todoConflictRemoteLabel), findsOneWidget);
+        expect(find.text('Comprar leite sem lactose'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'conflict buttons resolve pending_review with Keep local and Use from PC',
+      (tester) async {
+        const conflict1 = TaskTextConflict(
+          id: 't1:text',
+          entityId: 't1',
+          field: 'text',
+          localText: 'Comprar leite integral',
+          remoteText: 'Comprar leite sem lactose',
+          winnerSide: 'remote',
+          winnerText: 'Comprar leite sem lactose',
+          loserText: 'Comprar leite integral',
+          localUpdatedAt: '2026-11-15T10:00:00Z',
+          remoteUpdatedAt: '2026-11-15T10:05:00Z',
+        );
+        const conflict2 = TaskTextConflict(
+          id: 't2:text',
+          entityId: 't2',
+          field: 'text',
+          localText: 'Ligar para Ana',
+          remoteText: 'Ligar para Ana às 15h',
+          winnerSide: 'remote',
+          winnerText: 'Ligar para Ana às 15h',
+          loserText: 'Ligar para Ana',
+          localUpdatedAt: '2026-11-15T10:00:00Z',
+          remoteUpdatedAt: '2026-11-15T10:05:00Z',
+        );
+        late _FakeRouter router;
+        final activeConflicts = <TaskTextConflict>[conflict1, conflict2];
+        final interactiveSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.savedOnDevice,
+            paired: true,
+            deviceId: 'dev-1',
+            pendingOutbox: 0,
+            conflicts: activeConflicts,
+          ),
+          onResolveConflict: ({
+            required userId,
+            required conflictId,
+            required keepLocal,
+          }) async {
+            final resolved =
+                activeConflicts.firstWhere((c) => c.id == conflictId);
+            activeConflicts.removeWhere((c) => c.id == conflictId);
+            final chosen = keepLocal ? resolved.localText : resolved.remoteText;
+            final idx =
+                router._stored.indexWhere((t) => t.id == resolved.entityId);
+            if (idx >= 0) {
+              router._stored[idx] = router._stored[idx].copyWith(text: chosen);
+            }
+            return TodoSyncStatus(
+              state: TodoSyncBadgeState.synced,
+              paired: true,
+              deviceId: 'dev-1',
+              pendingOutbox: 0,
+              pendingPc: 0,
+              hasCompletedSync: true,
+              lastSyncedAt: '2026-11-15T16:00:00.000Z',
+              conflicts: [...activeConflicts],
+            );
+          },
+        );
+
+        router = await pump(
+          tester,
+          [
+            _item('t1', 'Comprar leite integral'),
+            _item('t2', 'Ligar para Ana', minute: 1),
+          ],
+          syncService: interactiveSync,
+          userIdResolver: () async => 'u1',
+          autoSyncOnLoad: false,
+        );
+
+        await tester.tap(
+          find.byKey(const ValueKey('todo_conflict_keep_local_t1:text')),
+        );
+        await tester.pumpAndSettle();
+        expect(interactiveSync.resolvedConflicts.last.keepLocal, isTrue);
+        expect(
+          find.byKey(const ValueKey('todo_conflict_card_t1:text')),
+          findsNothing,
+        );
+        expect(router.items.first.text, 'Comprar leite integral');
+
+        await tester.tap(
+          find.byKey(const ValueKey('todo_conflict_use_remote_t2:text')),
+        );
+        await tester.pumpAndSettle();
+        expect(interactiveSync.resolvedConflicts.last.keepLocal, isFalse);
+        expect(
+          find.byKey(const ValueKey('todo_conflict_card_t2:text')),
+          findsNothing,
+        );
+        expect(find.text('Ligar para Ana às 15h'), findsAtLeastNWidgets(1));
+      },
+    );
+
+    testWidgets(
+      'sync bar and conflict card satisfy tap target guidelines and 2.0x text scale on 320dp',
+      (tester) async {
+        const conflict = TaskTextConflict(
+          id: 't1:text',
+          entityId: 't1',
+          field: 'text',
+          localText: 'Revisar contrato com o jurídico amanhã cedo',
+          remoteText: 'Revisar contrato e enviar parecer até 17h',
+          winnerSide: 'remote',
+          winnerText: 'Revisar contrato e enviar parecer até 17h',
+          loserText: 'Revisar contrato com o jurídico amanhã cedo',
+          localUpdatedAt: '2026-11-15T10:00:00Z',
+          remoteUpdatedAt: '2026-11-15T10:05:00Z',
+        );
+        final fakeSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.synced,
+            paired: true,
+            deviceId: 'dev-1',
+            pendingOutbox: 0,
+            pendingPc: 0,
+            hasCompletedSync: true,
+            lastSyncedAt: '2026-11-15T14:30:00.000Z',
+            conflicts: const [conflict],
+          ),
+        );
+
+        final handle = tester.ensureSemantics();
+        await pump(
+          tester,
+          [_item('t1', 'Revisar contrato com o jurídico amanhã cedo')],
+          syncService: fakeSync,
+          userIdResolver: () async => 'u1',
+          autoSyncOnLoad: false,
+        );
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        handle.dispose();
+
+        tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await pump(
+          tester,
+          [_item('t1', 'Revisar contrato com o jurídico amanhã cedo')],
+          viewport: const Size(320, 720),
+          syncService: fakeSync,
+          userIdResolver: () async => 'u1',
+          autoSyncOnLoad: false,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  });
+
+  group('impeccable polish', () {
+    testWidgets('horizontal swipe switches between tabs', (tester) async {
+      await pump(tester, [
+        _item('today', 'Hoje tarefa'),
+        _item('upcoming', 'Futura tarefa', due: '2026-11-21'),
+      ]);
+      expect(find.text('Hoje tarefa'), findsOneWidget);
+      expect(find.text('Futura tarefa'), findsNothing);
+
+      await tester.drag(
+        find.byKey(const ValueKey('todo_section_today')),
+        const Offset(-600, 0),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Futura tarefa'), findsOneWidget);
+    });
+
+    testWidgets('empty title shows inline error instead of failing silently', (
+      tester,
+    ) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(find.text(UserStorage.l10n.todoTextRequired), findsOneWidget);
+      expect(router.items, isEmpty);
+
+      await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar');
+      await tester.pump();
+      expect(find.text(UserStorage.l10n.todoTextRequired), findsNothing);
+    });
+
+    testWidgets('native date and time pickers populate the editor fields', (
+      tester,
+    ) async {
+      await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('todo_pick_date')));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      final dueField = tester.widget<TextField>(
+        find.byKey(const ValueKey('todo_due')),
+      );
+      expect(dueField.controller!.text, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
+
+      await tester.tap(find.byKey(const ValueKey('todo_pick_time')));
+      await tester.pumpAndSettle();
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      final timeField = tester.widget<TextField>(
+        find.byKey(const ValueKey('todo_time')),
+      );
+      expect(timeField.controller!.text, '09:00');
+    });
+
+    testWidgets(
+      'priority filter displays active bar and clears from filtered empty state',
+      (tester) async {
+        await pump(tester, [
+          _item('low', 'Baixa').copyWith(priority: TodoPriority.low),
+        ]);
+        await tester.tap(find.byKey(const ValueKey('todo_priority_filter')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(UserStorage.l10n.todoPriorityUrgent).last);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('todo_active_filter_bar')),
+          findsOneWidget,
+        );
+        expect(find.text(UserStorage.l10n.todoFilterEmpty), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('todo_empty_clear_filter')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const ValueKey('todo_empty_clear_filter')));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('todo_active_filter_bar')),
+          findsNothing,
+        );
+        expect(find.text('Baixa'), findsOneWidget);
+      },
+    );
+
+    testWidgets('search screen exposes a clear query button', (tester) async {
+      await pump(tester, [_item('t1', 'Revisar orçamento')]);
+      await tester.tap(find.byKey(const ValueKey('todo_open_search')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('todo_search_clear')), findsNothing);
+      await tester.enterText(find.byKey(const ValueKey('todo_search')), 'zzz');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_search_clear')), findsOneWidget);
+      expect(find.text(UserStorage.l10n.todoNoResults), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_search_clear')));
+      await tester.pumpAndSettle();
+      expect(find.text(UserStorage.l10n.todoSearchStart), findsOneWidget);
     });
   });
 }

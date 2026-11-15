@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/data/services/todo_widget_snapshot_service.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
@@ -17,7 +18,9 @@ import 'package:uuid/uuid.dart';
 
 /// Local Todo storage and the compatibility bridge used by session reports.
 class TodoService {
-  TodoService({FileSystemService? fileService}) : _fileService = fileService;
+  TodoService({FileSystemService? fileService, TodoSyncService? syncService})
+      : _fileService = fileService,
+        _syncService = syncService;
 
   static final Lock _storageLock = Lock();
 
@@ -69,9 +72,24 @@ class TodoService {
   }
 
   final FileSystemService? _fileService;
+  final TodoSyncService? _syncService;
   FileSystemService get _files => _fileService ?? FileSystemService.instance;
   final _logger = getLogger('TodoService');
   final _uuid = const Uuid();
+
+  /// Applies remote sync mutations or conflict resolutions atomically under
+  /// [_storageLock], refreshing local alarms without echoing back to outbox.
+  Future<bool> applyRemoteMutationBatch(
+    String userId,
+    FutureOr<List<TodoItem>?> Function(List<TodoItem> current) transform,
+  ) =>
+      _storageLock.synchronized(() async {
+        final current = await _readAll(userId);
+        final updated = await transform(current);
+        if (updated == null) return false;
+        await _write(userId, updated);
+        return true;
+      });
 
   Future<List<TodoItem>> load(
     String userId, {
@@ -149,6 +167,11 @@ class TodoService {
           );
           items[existingIndex] = restored;
           await _write(userId, items);
+          await _recordLocalSync(
+            userId,
+            [(item: restored, baseVersion: existing.version)],
+            items,
+          );
           return restored;
         }
         return _addUnlocked(
@@ -226,13 +249,15 @@ class TodoService {
       if (index < 0) throw StateError('todo item not found: $id');
       final item = items[index];
       if (item.done == done) return;
-      items[index] = item.copyWith(
+      final updated = item.copyWith(
         done: done,
         doneAt: done ? moment.toIso8601String() : null,
         clearDoneAt: !done,
         clearSnoozedUntil: true,
         version: item.version + 1,
       );
+      items[index] = updated;
+      TodoItem? nextOccurrence;
       if (done && item.recurrence != null) {
         final dueDate = item.dueDate;
         if (dueDate == null) {
@@ -257,7 +282,7 @@ class TodoService {
             dueDate: _dateOnly(nextDate),
             dueTime: item.dueTime,
           );
-          items.add(TodoItem(
+          nextOccurrence = TodoItem(
             id: _uuid.v4(),
             text: item.text,
             due: schedule.label,
@@ -276,10 +301,19 @@ class TodoService {
             createdAt: moment.toIso8601String(),
             source: item.source,
             sourceStale: item.sourceStale,
-          ));
+          );
+          items.add(nextOccurrence);
         }
       }
       await _write(userId, items);
+      await _recordLocalSync(
+        userId,
+        [
+          (item: updated, baseVersion: item.version),
+          if (nextOccurrence != null) (item: nextOccurrence, baseVersion: 0),
+        ],
+        items,
+      );
     });
   }
 
@@ -321,12 +355,18 @@ class TodoService {
         if (index < 0) throw StateError('todo item not found: $id');
         final item = items[index];
         if (!item.isTombstoned) return;
-        items[index] = item.copyWith(
+        final restored = item.copyWith(
           clearDeletedAt: true,
           clearSnoozedUntil: true,
           version: item.version + 1,
         );
+        items[index] = restored;
         await _write(userId, items);
+        await _recordLocalSync(
+          userId,
+          [(item: restored, baseVersion: item.version)],
+          items,
+        );
       });
 
   /// Deleting a session tombstones its open copies and detaches completed ones.
@@ -336,22 +376,24 @@ class TodoService {
   }) =>
       _storageLock.synchronized(() async {
         final items = await _readAll(userId);
-        var changed = false;
         final now = DateTime.now().toIso8601String();
-        final kept = [
-          for (final item in items)
-            if (item.source?.sessionId != sessionId || item.isTombstoned)
-              item
-            else if (item.done)
-              item.copyWith(clearSource: true, version: item.version + 1)
-            else
-              item.copyWith(deletedAt: now, version: item.version + 1),
-        ];
-        changed = kept
-            .asMap()
-            .entries
-            .any((entry) => !identical(entry.value, items[entry.key]));
-        if (changed) await _write(userId, kept);
+        final kept = <TodoItem>[];
+        final mutations = <({TodoItem item, int baseVersion})>[];
+        for (final item in items) {
+          if (item.source?.sessionId != sessionId || item.isTombstoned) {
+            kept.add(item);
+          } else {
+            final next = item.done
+                ? item.copyWith(clearSource: true, version: item.version + 1)
+                : item.copyWith(deletedAt: now, version: item.version + 1);
+            kept.add(next);
+            mutations.add((item: next, baseVersion: item.version));
+          }
+        }
+        if (mutations.isNotEmpty) {
+          await _write(userId, kept);
+          await _recordLocalSync(userId, mutations, kept);
+        }
       });
 
   Future<void> markReportItemStale({
@@ -361,22 +403,25 @@ class TodoService {
   }) =>
       _storageLock.synchronized(() async {
         final items = await _readAll(userId);
-        var changed = false;
-        final updated = [
-          for (final item in items)
-            if (item.source?.sessionId == sessionId &&
-                item.source?.itemId == itemId &&
-                !item.sourceStale &&
-                !item.isTombstoned)
-              item.copyWith(sourceStale: true, version: item.version + 1)
-            else
-              item,
-        ];
-        changed = updated
-            .asMap()
-            .entries
-            .any((entry) => !identical(entry.value, items[entry.key]));
-        if (changed) await _write(userId, updated);
+        final updated = <TodoItem>[];
+        final mutations = <({TodoItem item, int baseVersion})>[];
+        for (final item in items) {
+          if (item.source?.sessionId == sessionId &&
+              item.source?.itemId == itemId &&
+              !item.sourceStale &&
+              !item.isTombstoned) {
+            final next =
+                item.copyWith(sourceStale: true, version: item.version + 1);
+            updated.add(next);
+            mutations.add((item: next, baseVersion: item.version));
+          } else {
+            updated.add(item);
+          }
+        }
+        if (mutations.isNotEmpty) {
+          await _write(userId, updated);
+          await _recordLocalSync(userId, mutations, updated);
+        }
       });
 
   Future<void> _change(
@@ -389,8 +434,15 @@ class TodoService {
         final index =
             items.indexWhere((item) => item.id == id && !item.isTombstoned);
         if (index < 0) throw StateError('todo item not found: $id');
-        items[index] = change(items[index]);
+        final previous = items[index];
+        final next = change(previous);
+        items[index] = next;
         await _write(userId, items);
+        await _recordLocalSync(
+          userId,
+          [(item: next, baseVersion: previous.version)],
+          items,
+        );
       });
 
   Future<TodoItem> _addUnlocked({
@@ -435,7 +487,13 @@ class TodoService {
       createdAt: (now ?? DateTime.now()).toIso8601String(),
       source: source,
     );
-    await _write(userId, [...items, item]);
+    final updated = [...items, item];
+    await _write(userId, updated);
+    await _recordLocalSync(
+      userId,
+      [(item: item, baseVersion: 0)],
+      updated,
+    );
     return item;
   }
 
@@ -552,6 +610,40 @@ class TodoService {
       await widgetSnapshotSynchronizer(items);
     } catch (error, stackTrace) {
       _logger.warning('Could not update the Todo widget', error, stackTrace);
+    }
+  }
+
+  Future<void> _recordLocalSync(
+    String userId,
+    List<({TodoItem item, int baseVersion})> mutations,
+    List<TodoItem> allItems,
+  ) async {
+    if (mutations.isEmpty) return;
+    try {
+      final sync = _syncService ?? TodoSyncService.instance;
+      final shouldPush = await sync.recordLocalMutations(
+        userId: userId,
+        mutations: mutations,
+        allItems: allItems,
+        files: _files,
+      );
+      if (shouldPush && sync.autoSyncEnabled) {
+        unawaited(
+          sync
+              .syncNow(
+                userId: userId,
+                reason: 'local_mutation',
+                files: _files,
+              )
+              .then((_) {}, onError: (_) {}),
+        );
+      }
+    } catch (error, stackTrace) {
+      _logger.warning(
+        'Local todo sync recording skipped (${error.runtimeType})',
+        null,
+        stackTrace,
+      );
     }
   }
 

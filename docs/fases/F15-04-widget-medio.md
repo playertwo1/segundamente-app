@@ -1,6 +1,6 @@
 # F15-04 — Widget médio com captura
 
-> Subfase da [F15 — Widget e atalhos Android](../roadmap/F15-widget-e-atalhos-android.md). Estado: **REVIEW** (código e testes prontos; aparelho `NOT_RUN`). Visual: teclas no pequeno e captura no médio (D-064). Abertura antes do S25 da F15-03: D-067. Estado atual: [STATE.md](../../STATE.md).
+> Subfase da [F15 — Widget e atalhos Android](../roadmap/F15-widget-e-atalhos-android.md). Estado: **REVIEW** (código e testes prontos; aparelho `NOT_RUN`). Visual: teclas no pequeno e captura no médio (D-064). Abertura antes do S25 da F15-03: D-069. Estado atual: [STATE.md](../../STATE.md).
 
 ## O que entrega
 
@@ -25,7 +25,7 @@ O resultado conta como salvo quando o super agent aceita: o primeiro evento cheg
 
 ## Roteamento
 
-1. Toque em Anotar, Foto ou Colar: `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. Mesmo alvo e mesmo extra de D-065 e D-066; request codes 3, 4 e 5 separam os `PendingIntent`s.
+1. Toque em Anotar, Foto ou Colar: `FloatingChatActivity` com `floating_chat_mode` = `note`, `photo` ou `paste`. Mesmo alvo e mesmo extra de D-065 e D-068; request codes 3, 4 e 5 separam os `PendingIntent`s.
 2. `FloatingChatChannelHandler.setPendingMode` aceita os cinco modos (chat e captura).
 3. Dart: `takePendingMode` ou o sinal `open` devolve o modo; `AppRoutes.floatingLocationFor(mode)` escolhe `/floating-chat` (type, talk) ou `/floating-capture` (note, photo, paste).
 4. `/floating-capture` cria `FloatingCaptureViewModel(router: context.read<MemexRouter>(), mode)` e mostra `FloatingCaptureScreen`.

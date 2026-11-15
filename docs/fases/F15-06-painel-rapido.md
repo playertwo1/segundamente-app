@@ -1,6 +1,6 @@
 # F15-06 — botão "Conversar" no painel rápido
 
-> Subfase da [F15](../roadmap/F15-widget-e-atalhos-android.md). Decisão D9 do [questionário](../questionario/2026-11-14-widget-e-capsula.md). Abertura em código antes da validação da F15-02 no S25: [D-068](../DECISIONS.md).
+> Subfase da [F15](../roadmap/F15-widget-e-atalhos-android.md). Decisão D9 do [questionário](../questionario/2026-11-14-widget-e-capsula.md). Abertura em código antes da validação da F15-02 no S25: [D-070](../DECISIONS.md).
 
 ## O que entrega
 

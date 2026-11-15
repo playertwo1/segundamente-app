@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:memex/agent/skills/comment_agent/tools/comment_tools.dart';
+import 'package:memex/data/services/character_workspace_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/db/app_database.dart';
 import 'package:memex/domain/models/card_model.dart';
+import 'package:memex/domain/models/character_model.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test/test.dart';
@@ -217,6 +219,87 @@ void main() {
       expect(latest.todoProposal?.title, 'Enviar relatório');
       expect(latest.todoProposal?.datePhrase, 'sexta');
       expect(latest.todoProposal?.dueDate, isNull);
+    });
+
+    test('parseGroupCommentOutput extracts [REPLY:] and [MEMORY:] without leaking tags',
+        () {
+      const raw = '[REPLY: other-char-comment]\n'
+          'Concordo com o @Sócio, mas falta orçamento.\n\n'
+          'Vale checar antes de assinar.\n'
+          '[MEMORY: Usuário negocia orçamento anual em maio.]\n'
+          '[MEMORY: Preferência por validação jurídica prévia.]';
+
+      final parsed = parseGroupCommentOutput(raw);
+      expect(parsed.replyToId, 'other-char-comment');
+      expect(parsed.memoryNotes, [
+        'Usuário negocia orçamento anual em maio.',
+        'Preferência por validação jurídica prévia.',
+      ]);
+      expect(
+        parsed.content,
+        'Concordo com o @Sócio, mas falta orçamento.\n\nVale checar antes de assinar.',
+      );
+      expect(parsed.content, isNot(contains('[REPLY:')));
+      expect(parsed.content, isNot(contains('[MEMORY:')));
+    });
+
+    test('SaveComment strips [REPLY:]/[MEMORY:], persists MEMORY.md, and resolves @mention replyToId',
+        () async {
+      await CharacterWorkspaceService.instance.ensureInitialized(
+        userId,
+        CharacterModel(
+          id: characterId,
+          name: 'Sócio Direto',
+          tags: const [],
+          persona: 'Objetivo.',
+          enabled: true,
+        ),
+      );
+
+      final tool = CommentToolFactory(
+        userId: userId,
+        cardId: cardId,
+        characterId: characterId,
+        fallbackReplyToId: 'user-comment',
+        activeCharacters: [
+          CharacterModel(
+            id: characterId,
+            name: 'Sócio Direto',
+            tags: const [],
+            persona: '',
+            enabled: true,
+          ),
+          CharacterModel(
+            id: 'char-b',
+            name: 'Advogado do Diabo',
+            tags: const [],
+            persona: '',
+            enabled: true,
+          ),
+        ],
+      ).buildSaveCommentTool();
+
+      await Function.apply(tool.executable!, [
+        '@Advogado bom ponto sobre a cláusula.\n[MEMORY: Usuário valoriza análise de risco contratual.]',
+        null,
+      ]);
+
+      final latest = await _latestComment(userId, cardId);
+      expect(latest.content, '@Advogado bom ponto sobre a cláusula.');
+      expect(latest.content, isNot(contains('[MEMORY:')));
+      expect(latest.replyToId, 'other-char-comment');
+
+      final docs = await CharacterWorkspaceService.instance.loadPersonaLivingDocs(
+        userId,
+        CharacterModel(
+          id: characterId,
+          name: 'Sócio Direto',
+          tags: const [],
+          persona: 'Objetivo.',
+          enabled: true,
+        ),
+      );
+      expect(docs.livingMemory, contains('análise de risco contratual'));
     });
   });
 }

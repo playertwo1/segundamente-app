@@ -1,7 +1,7 @@
 name: memex
 description: A personal knowledge management and insights app
 publish_to: "none"
-version: 1.0.47+132
+version: 1.0.50+135
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -53,6 +53,7 @@ dependencies:
   uuid: ^4.3.3
   collection: ^1.18.0
   crypto: ^3.0.7
+  pointycastle: ^3.9.1
   dart_jsonwebtoken: ^2.9.1
   logging: ^1.2.0
   share_handler: ^0.0.25
@@ -99,6 +100,7 @@ dependencies:
   pdfrx: ^2.12.0
   timezone: 0.11.2
   flutter_local_notifications: 22.3.3
+  mobile_scanner: ^7.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -4914,7 +4914,7 @@ abstract class AppLocalizations {
   /// No description provided for @maxCommentCharactersDesc.
   ///
   /// In en, this message translates to:
-  /// **'How many characters can comment on each record. By default, up to two voices can respond when they add something useful.'**
+  /// **'How many characters can participate in the live group discussion on each record. Defaults to up to 15 relevant voices.'**
   String get maxCommentCharactersDesc;
 
   /// No description provided for @replyTo.
@@ -5580,7 +5580,7 @@ abstract class AppLocalizations {
   /// No description provided for @earlyUpdateSettingsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Check the private GitHub repository for a newer matching Android build and download its APK.'**
+  /// **'Check the public GitHub repository for a newer matching Android build and download its APK.'**
   String get earlyUpdateSettingsDesc;
 
   /// No description provided for @earlyUpdateUnsupported.
@@ -5588,66 +5588,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App updates are only available on Android Stable and Early builds.'**
   String get earlyUpdateUnsupported;
-
-  /// No description provided for @earlyUpdateGitHubTokenTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub read token'**
-  String get earlyUpdateGitHubTokenTitle;
-
-  /// No description provided for @earlyUpdateGitHubTokenDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Use a fine-grained token limited to this repository with Contents: read. It is stored securely on this device.'**
-  String get earlyUpdateGitHubTokenDesc;
-
-  /// No description provided for @earlyUpdateGitHubTokenHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Fine-grained personal access token'**
-  String get earlyUpdateGitHubTokenHint;
-
-  /// No description provided for @earlyUpdateGitHubTokenSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Save token'**
-  String get earlyUpdateGitHubTokenSave;
-
-  /// No description provided for @earlyUpdateGitHubTokenReplace.
-  ///
-  /// In en, this message translates to:
-  /// **'Replace token'**
-  String get earlyUpdateGitHubTokenReplace;
-
-  /// No description provided for @earlyUpdateGitHubTokenRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove token'**
-  String get earlyUpdateGitHubTokenRemove;
-
-  /// No description provided for @earlyUpdateGitHubTokenConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'A read token is saved on this device.'**
-  String get earlyUpdateGitHubTokenConfigured;
-
-  /// No description provided for @earlyUpdateGitHubTokenRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a GitHub read token to check private releases.'**
-  String get earlyUpdateGitHubTokenRequired;
-
-  /// No description provided for @earlyUpdateGitHubTokenSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub token saved securely on this device.'**
-  String get earlyUpdateGitHubTokenSaved;
-
-  /// No description provided for @earlyUpdateGitHubTokenRemoved.
-  ///
-  /// In en, this message translates to:
-  /// **'GitHub token removed.'**
-  String get earlyUpdateGitHubTokenRemoved;
 
   /// No description provided for @earlyUpdateAutoCheckTitle.
   ///
@@ -8588,6 +8528,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save right now. Try again.'**
   String get floatingCaptureSaveFailed;
+
+  /// No description provided for @lumenPairingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lumen Pairing'**
+  String get lumenPairingTitle;
+
+  /// No description provided for @lumenPairingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link your phone to Lumen on desktop via QR Code'**
+  String get lumenPairingSubtitle;
+
+  /// No description provided for @lumenPairingStatusUnpaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paired'**
+  String get lumenPairingStatusUnpaired;
+
+  /// No description provided for @lumenPairingStatusPaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired with {desktopName}'**
+  String lumenPairingStatusPaired(String desktopName);
+
+  /// No description provided for @lumenPairingStatusHintUnpaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the QR Code shown in Settings → Android phone in Lumen or paste the pairing link.'**
+  String get lumenPairingStatusHintUnpaired;
+
+  /// No description provided for @lumenPairingRelayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Relay'**
+  String get lumenPairingRelayLabel;
+
+  /// No description provided for @lumenPairingLanHostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved LAN address'**
+  String get lumenPairingLanHostLabel;
+
+  /// No description provided for @lumenPairingDeviceIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'This device ID'**
+  String get lumenPairingDeviceIdLabel;
+
+  /// No description provided for @lumenPairingScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR Code'**
+  String get lumenPairingScanQr;
+
+  /// No description provided for @lumenPairingPasteLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste pairing link'**
+  String get lumenPairingPasteLink;
+
+  /// No description provided for @lumenPairingRepair.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair again'**
+  String get lumenPairingRepair;
+
+  /// No description provided for @lumenPairingUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get lumenPairingUnlink;
+
+  /// No description provided for @lumenPairingPasteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste pairing link'**
+  String get lumenPairingPasteDialogTitle;
+
+  /// No description provided for @lumenPairingPasteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'coucou://pair?v=1&...'**
+  String get lumenPairingPasteHint;
+
+  /// No description provided for @lumenPairingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair'**
+  String get lumenPairingConfirm;
+
+  /// No description provided for @lumenPairingUnlinkConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink from Lumen?'**
+  String get lumenPairingUnlinkConfirmTitle;
+
+  /// No description provided for @lumenPairingUnlinkConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The current mailbox will be revoked on the relay and this device will stop syncing until a new QR Code is scanned.'**
+  String get lumenPairingUnlinkConfirmBody;
+
+  /// No description provided for @lumenPairingPairedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully paired with Lumen.'**
+  String get lumenPairingPairedSuccess;
+
+  /// No description provided for @lumenPairingUnlinkedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Device unlinked and mailbox revoked.'**
+  String get lumenPairingUnlinkedSuccess;
+
+  /// No description provided for @lumenPairingUnlinkedLocalOnlyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlinked on this device. Could not reach the relay right now; use \'Pair again\' on your PC if needed.'**
+  String get lumenPairingUnlinkedLocalOnlyWarning;
+
+  /// No description provided for @lumenPairingInvalidQrError.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid pairing code or link.'**
+  String get lumenPairingInvalidQrError;
+
+  /// No description provided for @lumenPairingScannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the Lumen QR Code'**
+  String get lumenPairingScannerTitle;
+
+  /// No description provided for @lumenPairingLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading pairing status...'**
+  String get lumenPairingLoading;
+
+  /// No description provided for @todoSyncSavedOnDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device'**
+  String get todoSyncSavedOnDevice;
+
+  /// No description provided for @todoSyncSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get todoSyncSynced;
+
+  /// No description provided for @todoSyncSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get todoSyncSyncing;
+
+  /// No description provided for @todoSyncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · sync failed'**
+  String get todoSyncError;
+
+  /// No description provided for @todoSyncRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · pairing revoked'**
+  String get todoSyncRevoked;
+
+  /// No description provided for @todoSyncOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · offline'**
+  String get todoSyncOffline;
+
+  /// No description provided for @todoSyncPendingChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · {count} pending sync'**
+  String todoSyncPendingChanges(int count);
+
+  /// No description provided for @todoSyncNowButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get todoSyncNowButton;
+
+  /// No description provided for @todoSyncLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced at {time}'**
+  String todoSyncLastSuccess(String time);
+
+  /// No description provided for @todoConflictBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit conflict detected'**
+  String get todoConflictBannerTitle;
+
+  /// No description provided for @todoConflictBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This task was edited here and on Lumen (PC). Choose which text to keep.'**
+  String get todoConflictBannerSubtitle;
+
+  /// No description provided for @todoConflictLocalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get todoConflictLocalLabel;
+
+  /// No description provided for @todoConflictRemoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'On Lumen (PC)'**
+  String get todoConflictRemoteLabel;
+
+  /// No description provided for @todoConflictKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep from this device'**
+  String get todoConflictKeepLocal;
+
+  /// No description provided for @todoConflictUseRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Use from PC'**
+  String get todoConflictUseRemote;
+
+  /// No description provided for @todoTextRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter what needs to be done.'**
+  String get todoTextRequired;
+
+  /// No description provided for @todoFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks match this priority.'**
+  String get todoFilterEmpty;
+
+  /// No description provided for @todoPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose date'**
+  String get todoPickDate;
+
+  /// No description provided for @todoPickTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose time'**
+  String get todoPickTime;
 }
 
 class _AppLocalizationsDelegate

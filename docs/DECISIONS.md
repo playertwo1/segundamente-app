@@ -55,6 +55,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-054 | 2026-11-13 | Sync: relay do Coucou + caixa de correio no Cloudflare; escopo, avisos e backup semanal | ACCEPTED |
 | D-055 | 2026-11-13 | Google: login próprio, Drive (backup) e Calendar; NotebookLM pós-MVP sem previsão | ACCEPTED |
 | D-056 | 2026-11-13 | Manter F11-04 pendente do S25 e avançar F11-05 | ACCEPTED |
+| D-067 | 2026-11-15 | Repositório `playertwo1/segundamente-app` público; atualizador Android sem token GitHub (substitui D-046) | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -288,7 +289,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Implementação: o mesmo SuperAgent e modelo configurado produzem a resposta central e a fala identificada, mantendo-a no histórico da conversa e sem chamada adicional ao modelo.
 - Limite de validação: testes focados locais; resposta de modelo real e visualização no S25: `NOT_RUN`.
 
-## D-046 — Atualizador Android para releases do repositório privado (2026-11-10)
+## D-046 — Atualizador Android para releases do repositório privado (2026-11-10) — SUPERSEDED por D-067
 - Contexto: o dono pediu uma opção nas Configurações para procurar e baixar atualizações do repositório GitHub do fork.
 - Decisão: reutilizar o atualizador existente e apontá-lo ao `origin` privado (`playertwo1/segundamente-app`). Stable e Early no Android podem buscar o APK do mesmo flavor; Dev fica indisponível. Para acessar releases privadas, a pessoa configura um token fine-grained limitado ao repositório, com `Contents: read`, salvo pelo `SecretStorage` no cofre do aparelho; o token não é incluído no código, nas preferências ou no backup. A checagem automática só roda se o token estiver salvo e a preferência estiver ativa; download e instalador continuam sujeitos às opções existentes.
 - Limite: é necessário configurar o token em cada instalação e publicar uma release com APK do flavor compatível. Testes Flutter, análise, geração de localizações e validação no S25: `NOT_RUN` neste ambiente, que não tem Flutter/Dart disponível.
@@ -441,7 +442,28 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Até existir o widget (F15-03), a folha abre por dois atalhos do ícone: "Conversar" e "Falar".
 - Limite: a troca de host, a abertura a frio e a transparência só se validam no S25. Se a troca de host falhar no aparelho, a alternativa registrada é um segundo motor com `FlutterEngineGroup` e um ponto de entrada leve, o que exige nova decisão por causa do risco de dois isolates.
 
-## D-066 — Abrir a F15-03 (widget pequeno) antes do S25 da F15-02 (2026-11-14)
+## D-066 — Abrir a F12 pela trilha única da ponte (2026-11-14)
+- Contexto: a L6.1 do Lumen (caixa de correio no Worker) está pronta, e a auditoria do rascunho `docs/lumen/CONTRATO-SYNC.md` mostrou que tarefa e transporte batem com o código, mas nota, persona, memória, conversa e preferência não. Decisões tomadas pelo dono no questionário [questionario/2026-11-14-sync-contrato-e-roadmaps.md](questionario/2026-11-14-sync-contrato-e-roadmaps.md) (D1–D13).
+- Decisão:
+  - **Abre a F12.** O transporte continua o relay (D-054); o Google Drive como meio de sync fica descartado de novo.
+  - **Trilha única da ponte:** até o checkpoint da ponte, uma lista só em `docs/lumen/PONTE.md`, alternando passos da Segunda Mente e do Lumen. Funcionalidades novas pausam nos dois lados (F15-03 em diante aqui; etapas novas do fork lá); validações de uso real já pendentes continuam (inclusive a F15-02 no S25).
+  - **Fatia vertical:** a ponte começa só com tarefas e só pela caixa de correio. O contrato v1 fixa envelope, cifra da caixa de correio e a entidade `task`. LAN TLS e WebSocket ao vivo entram logo depois do checkpoint, sem mudar o envelope.
+  - **Checkpoint da ponte:** uma tarefa criada no PC chega uma vez ao celular na primeira consulta, e o alarme toca se ela chegou antes do horário; concluir num lado cancela o aviso no outro depois da consulta.
+  - **Consulta do celular:** ao abrir o app e a cada 1 hora em segundo plano. Custo aceito: até 1 hora de atraso com o app fechado.
+  - **Cliente no celular em Dart.** O Kotlin MIT do Coucou fica como referência.
+  - **v1.1 (depois da ponte):** notas do Lumen guardadas 1:1 numa pasta própria do celular, só para receber e comentar; nota acima de 64 KiB dividida em partes; o celular é a fonte das personas e da memória, e o Lumen só lê (e liga ou desliga personas); a memória espelha o que existe e as 4 ações ficam para fase própria; conversas do Lumen sincronizam e entram na memória do celular pelo processo normal, sem chamar a IA ao receber; preferências só `todo.shortcuts` e `comment.settings`.
+  - **Depois do checkpoint**, os dois roadmaps voltam a andar separados. Etapas que dependem dos dois lados (v1.1, testes de caos, Google, assistente ativo) seguem por dependência e, quando precisarem de passos alternados, entram na `PONTE.md` como nova etapa.
+- Difícil de reverter: o formato do envelope e da cifra da caixa de correio.
+
+## D-067 — Repositório público e atualizador Android sem token GitHub (2026-11-15)
+- Contexto: o dono tornou o repositório `playertwo1/segundamente-app` público no GitHub e pediu que o atualizador no app deixe de exigir token/senha.
+- Decisão:
+  - `playertwo1/segundamente-app` passa a público (`AGENTS.md` atualizado); não há mais necessidade de token fine-grained para consultar releases ou baixar APKs.
+  - `AppUpdateService` passa a consultar `https://api.github.com/repos/playertwo1/segundamente-app/releases?per_page=20` sem cabeçalho `Authorization` e prioriza `browser_download_url` (`https://github.com/playertwo1/segundamente-app/releases/download/...`) com fallback para `asset['url']`, também sem autenticação.
+  - A UI de configurações (`EarlyUpdateSettingsCard`) remove o campo de token e os botões/mensagens de cadastro de token; `shouldRunAutoCheck()` depende apenas da preferência automática e do intervalo de 12h.
+- Supera: D-046 (exigência de token e menção a repositório privado).
+- Limite: instalações antigas que já gravaram token local param de usá-lo ao atualizar; validação física do download automático no Galaxy S25 Ultra segue dependente de nova release publicada após esta mudança.
+## D-068 — Abrir a F15-03 (widget pequeno) antes do S25 da F15-02 (2026-11-14)
 - Contexto: a linha da F15-03 estava BLOCKED pela F15-02, cujo código está em `main` (d787e85d) mas ainda não foi validado no S25. O dono pediu a implementação da F15-03 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
 - Decisão:
   - Abrir a **F15-03** com o widget pequeno em código: duas teclas (Conversar em âmbar, Falar em contorno), `AppWidgetProvider` nativo, home screen apenas, sem rede e sem atualização periódica. Estado: REVIEW. A validação no S25 fica como `NOT_RUN` até o validador rodar o checklist em `docs/fases/F15-03-widget-pequeno.md`.
@@ -449,16 +471,16 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Médio e grande continuam fora (F15-04 e F15-05, BLOCKED).
 - Limite: o aceite da F15-03 (tocar o widget no S25) depende do S25 da F15-02, que ainda não foi feito. Não fecha a F15-02 nem o portão da F15.
 
-## D-067 — Abrir a F15-04 (widget médio) antes do S25 da F15-03 (2026-11-14)
-- Contexto: a linha da F15-04 estava BLOCKED pela F15-03, cujo código está em REVIEW (D-066) e cujo S25 ainda está `NOT_RUN`. O dono pediu toda a F15 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
+## D-069 — Abrir a F15-04 (widget médio) antes do S25 da F15-03 (2026-11-14)
+- Contexto: a linha da F15-04 estava BLOCKED pela F15-03, cujo código está em REVIEW (D-068) e cujo S25 ainda está `NOT_RUN`. O dono pediu toda a F15 hoje. AGENTS.md exige decisão registrada para abrir uma subfase BLOCKED.
 - Decisão:
   - Abrir a **F15-04** com o tamanho médio em código: a faixa de teclas do pequeno (Conversar e Falar) mais a faixa de captura (Anotar, Foto e Colar), em `widget_medium.xml`. Faixa mínima 200×120 dp no Android 12+ (chave do mapa de `RemoteViews`); no Android 8 a 11 o provider escolhe o layout por `OPTION_APPWIDGET_MIN_HEIGHT`.
-  - As três teclas de captura abrem a `FloatingChatActivity` com o mesmo alvo e o extra `floating_chat_mode` = `note`, `photo` ou `paste` (estende D-065 e D-066). O Dart roteia esses modos para uma folha compacta de captura (`/floating-capture`), não para o chat.
+  - As três teclas de captura abrem a `FloatingChatActivity` com o mesmo alvo e o extra `floating_chat_mode` = `note`, `photo` ou `paste` (estende D-065 e D-068). O Dart roteia esses modos para uma folha compacta de captura (`/floating-capture`), não para o chat.
   - Guardar envia a captura pelo mesmo caminho do Registrar: `MemexRouter.sendMessage` com a cena `super_agent_home` e a sessão mais recente. Esse é o único caminho que grava. Fechar, o toque fora e o voltar descartam. Colar só pré-preenche o campo; Foto só escolhe a imagem.
   - Confirmação: o toque em Guardar, com o texto ou a foto visível, é a confirmação de D-051. A IA organiza o registro depois, como já faz no Registrar.
 - Limite: o aceite da F15-04 depende do S25 (adicionar e redimensionar o widget, cada tecla, Guardar contra Fechar, Colar com a área de transferência, Foto com câmera e galeria) e continua `NOT_RUN`. F15-03 segue REVIEW até o próprio S25. Não fecha a F15 nem o portão da F15.
 
-## D-068 — Abrir a F15-06 (botão no painel rápido) antes da validação da F15-02 (2026-11-14)
+## D-070 — Abrir a F15-06 (botão no painel rápido) antes da validação da F15-02 (2026-11-14)
 - Contexto: a F15-06 depende da F15-02 (BLOCKED na tabela da F15). A F15-02 tem código e testes prontos (D-065), mas a validação no S25 ainda não aconteceu. O dono pediu para fazer toda a F15 hoje.
 - Decisão:
   - Abrir a F15-06 em código: `ConversarTileService` (`TileService`) que abre a `FloatingChatActivity` em modo `type`, com o caminho de API 34+ (`PendingIntent`) e o de API 26 a 33 (`Intent`).
@@ -466,7 +488,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - A F15-02 segue IN_PROGRESS até a validação no S25. Esta decisão não muda o estado dela.
 - Limite: se a F15-02 falhar no aparelho (abertura a frio, volta para a tela de origem), o botão do painel rápido herda a falha e fica sem efeito até a correção. A ordem das subfases e o portão F15 não mudam.
 
-## D-069 — Abrir a F15-07 (protótipos da cápsula) em código antes da validação da F15-02 no S25 (2026-11-14)
+## D-071 — Abrir a F15-07 (protótipos da cápsula) em código antes da validação da F15-02 no S25 (2026-11-14)
 - Contexto: o dono pediu para fazer toda a F15 hoje. A tabela da F15 põe a F15-07 depois da F15-02, e a F15-02 ainda espera a validação no S25 (D-065).
 - Decisão:
   - Abrir o código dos dois protótipos da F15-07 (bolha oficial do Android e sobreposição própria), só no build `globalDev`. Desenho e passos de uso em `docs/fases/F15-07-prototipos-capsula.md`. Estado: IN_PROGRESS.
@@ -475,7 +497,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - F15-03 a F15-06 seguem BLOCKED; o portão da F11 continua exigido (D-062); a F15-02 não é dispensada de validação no S25.
 - Limite: os protótipos não foram medidos no aparelho. Os critérios de decisão são os cinco da D11.
 
-## D-070 — Widget grande: tarefas de hoje, concluir e "+ tarefa" (2026-11-14)
+## D-072 — Widget grande: tarefas de hoje, concluir e "+ tarefa" (2026-11-14)
 - Contexto: a F15-05 entrega o tamanho grande do widget (D-064: linhas). Ao implementar, três escolhas de produto e de mecanismo ficaram por decidir; esta decisão as registra.
 - Decisão:
   - **Quais tarefas aparecem:** até três tarefas abertas com data: atrasadas primeiro (por data e hora), depois as de hoje por horário. Tarefas sem data e as de dias futuros ficam fora do widget e continuam no Todo. Motivo: sem data não há ordem nem virada do dia, e a lista fica previsível. A aba "Hoje" do Todo mostra as sem data; o widget não. Reversível.
