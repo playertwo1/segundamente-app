@@ -207,4 +207,110 @@ void main() {
       }
     });
   });
+
+  group('runCrossPersonaFollowupWave', () {
+    late List<CardComment> thread;
+
+    test('supports up to 15 group persona turns per user message', () {
+      expect(maxGroupPersonaTurnsPerUserMessage, 15);
+      final twelveReplies = [
+        _c('u1', ai: false),
+        for (var i = 0; i < 12; i++) _c('a$i', ai: true),
+      ];
+      expect(
+        remainingPersonaTurns(
+          twelveReplies,
+          max: maxGroupPersonaTurnsPerUserMessage,
+        ),
+        3,
+      );
+    });
+
+    test('wakes @mentioned personas from Wave 1 with forceReply and adds coordinator followups within budget',
+        () async {
+      final chars = <CharacterModel>[
+        CharacterModel(
+          id: 'socio',
+          name: 'Sócio Direto',
+          tags: const [],
+          persona: '',
+          enabled: true,
+        ),
+        CharacterModel(
+          id: 'advogado',
+          name: 'Advogado do Diabo',
+          tags: const [],
+          persona: '',
+          enabled: true,
+        ),
+        CharacterModel(
+          id: 'pesquisador',
+          name: 'Pesquisador Cético',
+          tags: const [],
+          persona: '',
+          enabled: true,
+        ),
+      ];
+      final wave1 = [
+        const CardComment(
+          id: 'c_w1',
+          content: 'Concordo com o rumo, @advogado o que acha do risco?',
+          isAi: true,
+          timestamp: 2,
+          characterId: 'socio',
+          replyToId: 'u1',
+        ),
+      ];
+      thread = [
+        const CardComment(
+          id: 'u1',
+          content: 'Estou avaliando essa proposta.',
+          isAi: false,
+          timestamp: 1,
+        ),
+        ...wave1,
+      ];
+
+      final forcedCalls = <String>[];
+      final turns = await runCrossPersonaFollowupWave(
+        wave1Comments: wave1,
+        initialSpokenIds: const {'socio'},
+        allCharacters: chars,
+        maxCrossTalkReplies: 2,
+        maxTotalTurns: maxGroupPersonaTurnsPerUserMessage,
+        loadComments: () async => [...thread],
+        selectCoordinatorFollowups: ({
+          required candidates,
+          required existingComments,
+          required maxCharacters,
+        }) async =>
+            candidates.take(maxCharacters).toList(),
+        speak: ({
+          required character,
+          required fallbackReplyToId,
+          required bool forceReply,
+        }) async {
+          if (forceReply) forcedCalls.add(character.id);
+          final created = CardComment(
+            id: 'c_${thread.length}',
+            content: 'Resposta de ${character.id}',
+            isAi: true,
+            timestamp: 3 + thread.length,
+            characterId: character.id,
+            replyToId: fallbackReplyToId,
+          );
+          thread.add(created);
+          return created;
+        },
+      );
+
+      expect(turns, 2);
+      expect(forcedCalls, ['advogado']);
+      expect(
+        thread.where((c) => c.isAi).map((c) => c.characterId).toList(),
+        ['socio', 'advogado', 'pesquisador'],
+      );
+      expect(thread[2].replyToId, 'c_w1');
+    });
+  });
 }

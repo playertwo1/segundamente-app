@@ -1246,7 +1246,7 @@
   "enableCharacterCommentTitle": "Comentário automático de personagem",
   "enableCharacterCommentDesc": "Personagens comentam automaticamente em novos registros.",
   "maxCommentCharactersTitle": "Máximo de personagens comentando",
-  "maxCommentCharactersDesc": "Quantos personagens podem comentar em cada registro. O padrão permite até duas vozes quando há algo útil a acrescentar.",
+  "maxCommentCharactersDesc": "Quantas personas podem participar e responder ao vivo em cada registro quando for pertinente. O padrão permite até 15 vozes.",
   "replyTo": "Responder a {name}",
   "@replyTo": {
     "placeholders": {

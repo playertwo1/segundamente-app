@@ -265,5 +265,62 @@ void main() {
       await service.resolvePendingThought('wujia', 'yaoyao', revised.id);
       expect(await service.loadPendingThoughts('wujia', 'yaoyao'), isEmpty);
     });
+
+    test('materializes AGENTS.md without overwriting user edits and manages MEMORY.md',
+        () async {
+      final livingCharacter = CharacterModel(
+        id: 'socio',
+        name: 'Sócio Direto',
+        tags: const ['decisão', 'execução'],
+        persona: 'Vai direto ao ponto sem rodeios.',
+        enabled: true,
+        interestFilter: 'decisao, risco, meta',
+      );
+
+      await service.ensureInitialized('u1', livingCharacter);
+      final agentsFile =
+          File(fileSystem.getCharacterAgentsMdPath('u1', 'socio'));
+      expect(await agentsFile.exists(), isTrue);
+      final generated = await agentsFile.readAsString();
+      expect(generated, contains('# Sócio Direto (@socio)'));
+      expect(generated, contains('Vai direto ao ponto sem rodeios.'));
+
+      // User custom edit must not be overwritten on future initialization
+      await agentsFile.writeAsString('# Custom AGENTS\nRegra própria do dono.');
+      await service.ensureInitialized('u1', livingCharacter);
+      expect(
+        await agentsFile.readAsString(),
+        '# Custom AGENTS\nRegra própria do dono.',
+      );
+
+      // Living memory deduplicates via accent folding and enforces 30-entry cap
+      await service.appendLivingMemory('u1', 'socio', 'Prefere resposta curta.');
+      await service.appendLivingMemory('u1', 'socio', 'prefere resposta curta.');
+      for (var i = 0; i < 35; i++) {
+        await service.appendLivingMemory('u1', 'socio', 'Aprendizado #$i');
+      }
+
+      final docs = await service.loadPersonaLivingDocs('u1', livingCharacter);
+      expect(docs.agentsMd, contains('Regra própria do dono.'));
+      expect(docs.livingMemory, isNotNull);
+      final memoryFile =
+          File(fileSystem.getCharacterMemoryMdPath('u1', 'socio'));
+      final diskLines = (await memoryFile.readAsString())
+          .split('\n')
+          .where((l) => l.trimLeft().startsWith('- '))
+          .toList();
+      expect(diskLines, hasLength(30));
+      expect(diskLines.last, contains('Aprendizado #34'));
+      expect(
+        diskLines.where((l) => l.toLowerCase().contains('prefere resposta')),
+        isEmpty,
+      );
+      final promptLines = docs.livingMemory!
+          .split('\n')
+          .where((l) => l.trimLeft().startsWith('- '))
+          .toList();
+      expect(promptLines, hasLength(20));
+      expect(promptLines.last, contains('Aprendizado #34'));
+    });
   });
 }

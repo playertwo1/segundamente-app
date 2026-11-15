@@ -1,3 +1,4 @@
+import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:memex/agent/prompts.dart';
@@ -37,18 +38,39 @@ Future<void> handleCommentAgentImpl(
     // Load per-user comment settings
     final settings = await CommentSettingsService.load(userId);
 
-    // If character_id is explicitly provided in payload, use it (single
-    // character). Also support lightweight @mentions in the input text.
-    String? selectedCharId = payload['character_id'] as String?;
-    selectedCharId ??= await _resolveMentionedCharacterId(
-      userId: userId,
-      content: combinedText,
-    );
-    final forceReply = selectedCharId != null;
+    // Explicit single-character override from payload (e.g. direct retry/ask)
+    final explicitCharId = payload['character_id'] as String?;
+    final allCharacters =
+        await CharacterService.instance.getAllCharacters(userId);
 
-    // Check if character comments are enabled. Directly mentioned characters
-    // still answer because the user explicitly routed the turn to them.
-    if (!forceReply && !settings.enableCharacterComment) {
+    if (explicitCharId != null) {
+      final llmConfig = await UserStorage.getAgentLLMConfig(
+        AgentDefinitions.commentAgent,
+        defaultClientKey: LLMConfig.defaultClientKey,
+      );
+      if (!llmConfig.isValid) {
+        _logger.info('No LLM configured — skipping comment agent for $factId');
+        return;
+      }
+      _logger.info("Using explicitly routed character $explicitCharId");
+      await processAICommentReply(
+        cardId: factId,
+        userId: userId,
+        userContent: Prompts.commentAgentInitialCommentPrompt,
+        characterId: explicitCharId,
+        rawInputContent: combinedText,
+        inputDateTime: inputDateTime,
+        locationContextReminder: locationContextReminder,
+        forceReply: true,
+      );
+      return;
+    }
+
+    // Support multiple @mentions in the post text (even if auto comments are off)
+    final mentionedChars = resolveMentionedCharacters(combinedText, allCharacters);
+    final hasExplicitMention = mentionedChars.isNotEmpty;
+
+    if (!hasExplicitMention && !settings.enableCharacterComment) {
       _logger.info(
         'Character comments disabled — skipping comment agent for $factId',
       );
@@ -65,88 +87,100 @@ Future<void> handleCommentAgentImpl(
       return;
     }
 
-    if (selectedCharId != null) {
-      // Explicit character — single comment
-      _logger.info("Using explicitly routed character $selectedCharId");
-      await processAICommentReply(
-        cardId: factId,
-        userId: userId,
-        userContent: Prompts.commentAgentInitialCommentPrompt,
-        characterId: selectedCharId,
-        rawInputContent: combinedText,
-        inputDateTime: inputDateTime,
-        locationContextReminder: locationContextReminder,
-        forceReply: forceReply,
-      );
+    final wave1Queue = <({CharacterModel character, bool forceReply})>[
+      for (final char in mentionedChars) (character: char, forceReply: true),
+    ];
+
+    final maxChars = settings.maxCommentCharacters;
+    ({LLMClient client, ModelConfig modelConfig})? cachedResources;
+    Future<({LLMClient client, ModelConfig modelConfig})> ensureResources() async =>
+        cachedResources ??= await UserStorage.getAgentLLMResources(
+          AgentDefinitions.commentAgent,
+          defaultClientKey: LLMConfig.defaultClientKey,
+        );
+
+    if (settings.enableCharacterComment) {
+      if (maxChars <= 1 && !hasExplicitMention) {
+        // Single-character mode: keyword-based selection (no LLM call)
+        final selectedChar = await CharacterSelectionService.selectCharacter(
+          userId: userId,
+          inputContent: combinedText,
+          factId: factId,
+        );
+        if (selectedChar != null) {
+          wave1Queue.add((character: selectedChar, forceReply: false));
+        }
+      } else if (maxChars > mentionedChars.length) {
+        // Multi-character mode: LLM-based selection for remaining slots
+        final resources = await ensureResources();
+        final selectedChars =
+            await CharacterSelectionService.selectMultipleCharacters(
+          userId: userId,
+          inputContent: combinedText,
+          factId: factId,
+          client: resources.client,
+          modelConfig: resources.modelConfig,
+          maxCharacters: maxChars - mentionedChars.length,
+          excludeCharacters: mentionedChars,
+        );
+        for (final char in selectedChars) {
+          wave1Queue.add((character: char, forceReply: false));
+        }
+      }
+    }
+
+    if (wave1Queue.isEmpty) {
+      _logger.info("No character selected, skipping comment agent");
       return;
     }
 
-    final maxChars = settings.maxCommentCharacters;
-
-    if (maxChars <= 1) {
-      // Single-character mode: keyword-based selection (no LLM call)
-      final selectedChar = await CharacterSelectionService.selectCharacter(
-        userId: userId,
-        inputContent: combinedText,
-        factId: factId,
-      );
-
-      if (selectedChar == null) {
-        _logger.info("No clear character match, skipping comment agent");
-        return;
-      }
-
+    // Process Wave 1 sequentially so each persona sees prior comments immediately
+    final wave1Comments = <CardComment>[];
+    final spokenIds = <String>{};
+    for (final item in wave1Queue) {
       _logger.info(
-        "Selected character ${selectedChar.name} (${selectedChar.id}) for comment",
+        "Processing comment from character ${item.character.name} (${item.character.id})",
       );
-      await processAICommentReply(
+      final created = await processAICommentReply(
         cardId: factId,
         userId: userId,
         userContent: Prompts.commentAgentInitialCommentPrompt,
-        characterId: selectedChar.id,
+        characterId: item.character.id,
         rawInputContent: combinedText,
         inputDateTime: inputDateTime,
         locationContextReminder: locationContextReminder,
-        forceReply: false,
+        forceReply: item.forceReply,
       );
-    } else {
-      // Multi-character mode: LLM-based selection
-      final resources = await UserStorage.getAgentLLMResources(
-        AgentDefinitions.commentAgent,
-        defaultClientKey: LLMConfig.defaultClientKey,
-      );
+      if (created != null) {
+        wave1Comments.add(created);
+        spokenIds.add(item.character.id);
+      }
+    }
 
-      final selectedChars =
-          await CharacterSelectionService.selectMultipleCharacters(
+    // Wave 2: Live cross-persona replies & counterpoints
+    final crossBudget =
+        (maxChars - wave1Comments.length).clamp(0, maxCrossTalkRepliesPerWave);
+    if (settings.enableCharacterComment &&
+        maxChars > 1 &&
+        crossBudget > 0 &&
+        wave1Comments.isNotEmpty) {
+      final resources = await ensureResources();
+      await _runCrossTalkWave(
         userId: userId,
-        inputContent: combinedText,
-        factId: factId,
-        client: resources.client,
-        modelConfig: resources.modelConfig,
-        maxCharacters: maxChars,
+        cardId: factId,
+        postContent: combinedText,
+        wave1Comments: wave1Comments,
+        initialSpokenIds: spokenIds,
+        allCharacters: allCharacters,
+        resources: resources,
+        maxCrossTalkReplies: crossBudget,
+        maxTotalTurns: maxChars.clamp(1, maxGroupPersonaTurnsPerUserMessage),
+        checkUserTurnBudget: false,
+        inputDateTime: inputDateTime,
+        locationContextReminder: locationContextReminder,
+        withMemoryManagement: false,
+        readAttachedPdfs: false,
       );
-
-      if (selectedChars.isEmpty) {
-        _logger.info("No character selected, skipping comment agent");
-        return;
-      }
-
-      // Process characters sequentially so later characters can see earlier comments
-      for (final char in selectedChars) {
-        _logger.info(
-          "Processing comment from character ${char.name} (${char.id})",
-        );
-        await processAICommentReply(
-          cardId: factId,
-          userId: userId,
-          userContent: Prompts.commentAgentInitialCommentPrompt,
-          characterId: char.id,
-          rawInputContent: combinedText,
-          inputDateTime: inputDateTime,
-          locationContextReminder: locationContextReminder,
-          forceReply: false,
-        );
-      }
     }
   } catch (e, stack) {
     _logger.severe("CommentAgentHandler failed: $e", e, stack);
@@ -172,127 +206,342 @@ Future<void> handleProcessAiReplyImpl(
     'HandleProcessAiReply: Processing AI reply for card $cardId, user $userId',
   );
 
-  // If the user replied to a specific comment, resolve the target character
-  String? targetCharacterId;
-  if (replyToId != null) {
-    try {
-      final cardData = await FileSystemService.instance.readCardFile(
-        userId,
-        cardId,
-      );
-      if (cardData != null) {
-        targetCharacterId = resolveReplyTargetCharacterId(
-          cardData.comments,
-          replyToId,
-        );
-        if (targetCharacterId != null) {
-          _logger.info(
-            'User replied to comment $replyToId, routing to character $targetCharacterId',
-          );
-        }
-      }
-    } catch (e) {
-      _logger.warning('Failed to resolve reply target character: $e');
-    }
-  }
-  var routedByMention = false;
-  if (targetCharacterId == null) {
-    targetCharacterId = await _resolveMentionedCharacterId(
-      userId: userId,
-      content: content,
-    );
-    routedByMention = targetCharacterId != null;
+  final settings = await CommentSettingsService.load(userId);
+  final llmConfig = await UserStorage.getAgentLLMConfig(
+    AgentDefinitions.commentAgent,
+    defaultClientKey: LLMConfig.defaultClientKey,
+  );
+  if (!llmConfig.isValid) {
+    _logger.info('No LLM configured — skipping process_ai_reply for $cardId');
+    return;
   }
 
-  await processAICommentReply(
-    cardId: cardId,
+  final cardData = await FileSystemService.instance.readCardFile(
+    userId,
+    cardId,
+  );
+  if (cardData == null) {
+    _logger.warning('Card $cardId not found — skipping process_ai_reply');
+    return;
+  }
+
+  final resources = await UserStorage.getAgentLLMResources(
+    AgentDefinitions.commentAgent,
+    defaultClientKey: LLMConfig.defaultClientKey,
+  );
+  final allCharacters =
+      await CharacterService.instance.getAllCharacters(userId);
+
+  final selectedReplies = await CharacterSelectionService.selectReplyCharacters(
     userId: userId,
-    userContent: content,
-    userCommentId: commentId,
-    characterId: targetCharacterId,
-    inputDateTime: inputDateTime,
-    locationContextReminder: locationContextReminder,
-    withMemoryManagement: true,
-    forceReply: targetCharacterId != null,
-    readAttachedPdfs: true,
+    postContent: cardData.fact ?? cardData.title ?? '',
+    userComment: content,
+    existingComments: cardData.comments,
+    replyToId: replyToId,
+    enableCharacterComment: settings.enableCharacterComment,
+    maxCharacters: settings.maxCommentCharacters,
+    client: resources.client,
+    modelConfig: resources.modelConfig,
+    charactersOverride: allCharacters,
   );
 
-  // An @mention calls exactly one persona; otherwise others may join in (F10-01).
-  if (!routedByMention) {
-    await _debateAfterReply(userId: userId, cardId: cardId);
+  if (selectedReplies.isEmpty) {
+    _logger.info('No reply persona selected for card $cardId');
+    return;
+  }
+
+  final normalizedCommentId =
+      (commentId != null && commentId.trim().isNotEmpty)
+          ? commentId.trim()
+          : null;
+  final normalizedReplyToId =
+      (replyToId != null && replyToId.trim().isNotEmpty)
+          ? replyToId.trim()
+          : null;
+
+  final wave1Comments = <CardComment>[];
+  final spokenIds = <String>{};
+  for (var i = 0; i < selectedReplies.length; i++) {
+    final target = selectedReplies[i];
+    final created = await processAICommentReply(
+      cardId: cardId,
+      userId: userId,
+      userContent: content,
+      userCommentId: i == 0 ? normalizedCommentId : null,
+      fallbackReplyToId: i == 0
+          ? normalizedReplyToId
+          : (normalizedCommentId ?? normalizedReplyToId),
+      characterId: target.character.id,
+      inputDateTime: inputDateTime,
+      locationContextReminder: locationContextReminder,
+      withMemoryManagement: true,
+      forceReply: target.forceReply,
+      readAttachedPdfs: true,
+    );
+    if (created != null) {
+      wave1Comments.add(created);
+      spokenIds.add(target.character.id);
+    }
+  }
+
+  // Wave 2: live cross-talk between personas (explicit @mentions + coordinator)
+  if (settings.enableCharacterComment &&
+      settings.maxCommentCharacters > 1 &&
+      wave1Comments.isNotEmpty) {
+    await _runCrossTalkWave(
+      userId: userId,
+      cardId: cardId,
+      postContent: cardData.fact ?? cardData.title ?? '',
+      wave1Comments: wave1Comments,
+      initialSpokenIds: spokenIds,
+      allCharacters: allCharacters,
+      resources: resources,
+      maxCrossTalkReplies: maxCrossTalkRepliesPerWave,
+      maxTotalTurns: maxGroupPersonaTurnsPerUserMessage,
+      checkUserTurnBudget: true,
+      inputDateTime: inputDateTime,
+      locationContextReminder: locationContextReminder,
+      withMemoryManagement: true,
+      readAttachedPdfs: true,
+    );
   }
 }
 
-/// Best-effort: the user's reply is already answered, so a failure here must
-/// not make the task retry and answer it twice.
-Future<void> _debateAfterReply({
+/// Best-effort: Wave 1 replies are already saved, so an error in Wave 2 must
+/// not cause `LocalTaskExecutor` to retry the whole task and duplicate Wave 1.
+Future<void> _runCrossTalkWave({
   required String userId,
   required String cardId,
+  required String postContent,
+  required List<CardComment> wave1Comments,
+  required Set<String> initialSpokenIds,
+  required List<CharacterModel> allCharacters,
+  required ({LLMClient client, ModelConfig modelConfig}) resources,
+  required int maxCrossTalkReplies,
+  required int maxTotalTurns,
+  required bool checkUserTurnBudget,
+  required DateTime? inputDateTime,
+  required String? locationContextReminder,
+  required bool withMemoryManagement,
+  required bool readAttachedPdfs,
 }) async {
   try {
-    final settings = await CommentSettingsService.load(userId);
-    if (!settings.enableCharacterComment ||
-        settings.maxCommentCharacters <= 1) {
-      return;
-    }
-    final turns = await runPersonaDebate(
+    final turns = await runCrossPersonaFollowupWave(
+      wave1Comments: wave1Comments,
+      initialSpokenIds: initialSpokenIds,
+      allCharacters: allCharacters,
+      maxCrossTalkReplies: maxCrossTalkReplies,
+      maxTotalTurns: maxTotalTurns,
+      checkUserTurnBudget: checkUserTurnBudget,
       loadComments: () async =>
           (await FileSystemService.instance.readCardFile(userId, cardId))
               ?.comments ??
           const [],
-      loadCharacters: () => CharacterService.instance.getAllCharacters(userId),
-      speak: (next, replyToId) => processAICommentReply(
+      selectCoordinatorFollowups: ({
+        required List<CharacterModel> candidates,
+        required List<CardComment> existingComments,
+        required int maxCharacters,
+      }) async {
+        try {
+          return await CharacterSelectionService.selectGroupFollowupCharacters(
+            candidates: candidates,
+            postContent: postContent,
+            existingComments: existingComments,
+            client: resources.client,
+            modelConfig: resources.modelConfig,
+            maxCharacters: maxCharacters,
+          );
+        } catch (e) {
+          _logger.warning('Coordinator follow-up failed for $cardId: $e');
+          final fallback = pickNextDebater(candidates, existingComments);
+          return fallback == null ? const [] : [fallback];
+        }
+      },
+      speak: ({
+        required CharacterModel character,
+        required String fallbackReplyToId,
+        required bool forceReply,
+      }) =>
+          processAICommentReply(
         cardId: cardId,
         userId: userId,
-        userContent: Prompts.personaDebatePrompt(replyToId),
-        characterId: next.id,
-        withMemoryManagement: true,
-        readAttachedPdfs: true,
+        userContent: Prompts.personaDebatePrompt(fallbackReplyToId),
+        characterId: character.id,
+        fallbackReplyToId: fallbackReplyToId,
+        inputDateTime: inputDateTime,
+        locationContextReminder: locationContextReminder,
+        withMemoryManagement: withMemoryManagement,
+        forceReply: forceReply,
+        readAttachedPdfs: readAttachedPdfs,
       ),
     );
-    _logger.info('Persona debate on $cardId added $turns turn(s)');
+    _logger.info('Live group cross-talk on $cardId added $turns turn(s)');
   } catch (e, stack) {
-    _logger.warning('Persona debate failed for $cardId: $e', e, stack);
+    _logger.warning('Live group cross-talk failed for $cardId: $e', e, stack);
   }
 }
 
-Future<String?> _resolveMentionedCharacterId({
-  required String userId,
-  required String content,
+/// Resolves all `@mentioned` characters in [content] in order of appearance,
+/// supporting `@id`, full `@name`, diacritic/case folding, and unique
+/// `@first_name` (>= 3 chars), while ignoring email addresses.
+@visibleForTesting
+List<CharacterModel> resolveMentionedCharacters(
+  String content,
+  List<CharacterModel> characters,
+) {
+  return extractAllMentions<CharacterModel>(
+    content,
+    characters,
+    idOf: (c) => c.id,
+    nameOf: (c) => c.name,
+  );
+}
+
+/// Total AI turns allowed per user message across Wave 1 and Wave 2.
+const maxGroupPersonaTurnsPerUserMessage = 15;
+
+/// Maximum cross-persona follow-up replies allowed in Wave 2 per trigger.
+const maxCrossTalkRepliesPerWave = 5;
+
+/// Coordinates Wave 2 cross-persona replies:
+/// 1) Wakes any enabled persona `@mentioned` inside [wave1Comments] (forced reply).
+/// 2) Asks the coordinator which remaining personas have a non-repetitive
+///    counterpoint, question, or complement within budget.
+@visibleForTesting
+Future<int> runCrossPersonaFollowupWave({
+  required List<CardComment> wave1Comments,
+  required Set<String> initialSpokenIds,
+  required List<CharacterModel> allCharacters,
+  required int maxCrossTalkReplies,
+  required int maxTotalTurns,
+  required Future<List<CardComment>> Function() loadComments,
+  required Future<List<CharacterModel>> Function({
+    required List<CharacterModel> candidates,
+    required List<CardComment> existingComments,
+    required int maxCharacters,
+  }) selectCoordinatorFollowups,
+  required Future<CardComment?> Function({
+    required CharacterModel character,
+    required String fallbackReplyToId,
+    required bool forceReply,
+  }) speak,
+  bool checkUserTurnBudget = true,
 }) async {
-  if (!content.contains('@')) return null;
+  if (wave1Comments.isEmpty || maxCrossTalkReplies <= 0) {
+    return 0;
+  }
 
-  try {
-    final characters = await CharacterService.instance.getAllCharacters(userId);
-    final candidates = <({String id, String token, int index})>[];
+  final enabledCharacters =
+      allCharacters.where((c) => c.enabled).toList(growable: false);
+  if (enabledCharacters.isEmpty) {
+    return 0;
+  }
 
-    for (final character in characters) {
-      for (final token in {character.id, character.name}) {
-        final trimmed = token.trim();
-        if (trimmed.isEmpty) continue;
-        final mention = '@$trimmed';
-        final index = indexOfStandaloneMention(content, mention);
-        if (index >= 0) {
-          candidates.add((id: character.id, token: mention, index: index));
-        }
+  final mentionQueue = <({CharacterModel character, String replyToId})>[];
+  final crossWokenIds = <String>{};
+  final wokenIdsAll = <String>{...initialSpokenIds};
+
+  for (final comment in wave1Comments) {
+    if (!comment.isAi || comment.content.trim().isEmpty) continue;
+    final mentioned =
+        resolveMentionedCharacters(comment.content, enabledCharacters);
+    for (final target in mentioned) {
+      if (target.id == comment.characterId) continue;
+      if (!crossWokenIds.add(target.id)) continue;
+      mentionQueue.add((character: target, replyToId: comment.id));
+    }
+  }
+
+  var turns = 0;
+
+  // Phase 2A: wake explicitly cross-mentioned personas
+  for (final item in mentionQueue) {
+    if (turns >= maxCrossTalkReplies) {
+      return turns;
+    }
+    if (checkUserTurnBudget) {
+      final comments = await loadComments();
+      if (remainingPersonaTurns(comments, max: maxTotalTurns) <= 0) {
+        return turns;
       }
     }
-
-    if (candidates.isEmpty) return null;
-    candidates.sort((a, b) {
-      final indexCompare = a.index.compareTo(b.index);
-      if (indexCompare != 0) return indexCompare;
-      return b.token.length.compareTo(a.token.length);
-    });
-    final selected = candidates.first;
-    _logger.info(
-      'Resolved character mention ${selected.token} to ${selected.id}',
+    wokenIdsAll.add(item.character.id);
+    final created = await speak(
+      character: item.character,
+      fallbackReplyToId: item.replyToId,
+      forceReply: true,
     );
-    return selected.id;
-  } catch (e) {
-    _logger.warning('Failed to resolve character mention: $e');
-    return null;
+    if (created != null) {
+      turns++;
+    }
   }
+
+  // Phase 2B: coordinator-selected counterpoints among remaining personas
+  var remainingCross = maxCrossTalkReplies - turns;
+  if (remainingCross <= 0) {
+    return turns;
+  }
+
+  var latestComments = await loadComments();
+  if (checkUserTurnBudget) {
+    final userRemaining =
+        remainingPersonaTurns(latestComments, max: maxTotalTurns);
+    if (userRemaining <= 0) {
+      return turns;
+    }
+    if (userRemaining < remainingCross) {
+      remainingCross = userRemaining;
+    }
+  }
+
+  final coordinatorCandidates = enabledCharacters
+      .where((c) => !wokenIdsAll.contains(c.id))
+      .toList(growable: false);
+  if (coordinatorCandidates.isEmpty) {
+    return turns;
+  }
+
+  final selectedFollowups = await selectCoordinatorFollowups(
+    candidates: coordinatorCandidates,
+    existingComments: latestComments,
+    maxCharacters: remainingCross,
+  );
+  if (selectedFollowups.isEmpty) {
+    return turns;
+  }
+
+  var skips = 0;
+  for (final candidate in selectedFollowups) {
+    if (!candidate.enabled) continue;
+    if (!wokenIdsAll.add(candidate.id)) continue;
+    if (turns >= maxCrossTalkReplies) break;
+
+    latestComments = await loadComments();
+    if (checkUserTurnBudget &&
+        remainingPersonaTurns(latestComments, max: maxTotalTurns) <= 0) {
+      break;
+    }
+
+    final fallbackTarget = latestComments.lastWhere(
+      (c) => c.isAi,
+      orElse: () => wave1Comments.last,
+    );
+    final created = await speak(
+      character: candidate,
+      fallbackReplyToId: fallbackTarget.id,
+      forceReply: false,
+    );
+    if (created == null) {
+      skips++;
+      if (skips >= maxPersonaSkipsPerDebate) {
+        break;
+      }
+      continue;
+    }
+    turns++;
+  }
+
+  return turns;
 }
 
 /// Walks `reply_to_id` until it finds an AI comment with a character.

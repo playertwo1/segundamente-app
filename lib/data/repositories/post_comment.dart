@@ -1,9 +1,12 @@
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:logging/logging.dart';
 import 'package:memex/agent/comment_agent/comment_agent.dart';
+import 'package:memex/agent/skills/comment_agent/tools/comment_tools.dart';
 import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/data/services/card_pdf_service.dart';
+import 'package:memex/data/services/character_service.dart';
+import 'package:memex/data/services/character_workspace_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/character_execution_coordinator.dart';
 import 'package:memex/utils/user_storage.dart';
@@ -122,21 +125,59 @@ Future<Map<String, dynamic>> postCommentEndpoint(
   }
 }
 
-/// Process AI comment reply (async task)
+/// Formats the full group discussion thread showing comment IDs, author
+/// names + `@id` handles, and parent reply targets.
+String formatGroupCommentsContext(
+  List<CardComment> comments,
+  Map<String, String> characterNamesById, {
+  String? userLabel,
+  String? fallbackAiLabel,
+}) {
+  if (comments.isEmpty) return '';
+  final resolvedUserLabel = userLabel ?? 'Usuário';
+  final resolvedAiFallback = fallbackAiLabel ?? 'AI';
+  final byId = {for (final c in comments) c.id: c};
+
+  final buf = StringBuffer();
+  buf.writeln('\n<existing_comments>');
+  for (final c in comments) {
+    final charId = c.characterId;
+    final author = c.isAi
+        ? '${charId != null ? (characterNamesById[charId] ?? charId) : resolvedAiFallback} (@${charId ?? 'ai'})'
+        : '$resolvedUserLabel (@user)';
+    final parent = c.replyToId != null ? byId[c.replyToId!] : null;
+    final parentAuthor = parent == null
+        ? null
+        : (parent.isAi
+            ? (parent.characterId != null
+                ? (characterNamesById[parent.characterId!] ??
+                    parent.characterId!)
+                : resolvedAiFallback)
+            : resolvedUserLabel);
+    final replyInfo = parent != null
+        ? ' (em resposta a [${parent.id}] $parentAuthor)'
+        : (c.replyToId != null ? ' (replying to ${c.replyToId})' : '');
+    final commentTime = formatLocalDateTimeWithZone(
+      DateTime.fromMillisecondsSinceEpoch(c.timestamp * 1000),
+    );
+    buf.writeln(
+      '- [${c.id}] $author$replyInfo ($commentTime): ${c.content}',
+    );
+  }
+  buf.writeln('</existing_comments>');
+  return buf.toString();
+}
+
+/// Process AI comment reply (async task).
 ///
-/// Args:
-///   cardId: card ID (fact_id)
-///   userId: user ID
-///   userContent: user comment or prompt
-///   userCommentId: optional, for reply scenario
-///   characterId: optional, from existing comment if not provided
-///   rawInputContent: optional, read from file if not provided
-///   sendEventBus: whether to send event bus update (default true)
-Future<void> processAICommentReply({
+/// Returns the newly created [CardComment] if a visible comment was saved, or
+/// `null` if the character skipped commenting.
+Future<CardComment?> processAICommentReply({
   required String cardId,
   required String userId,
   required String userContent,
   String? userCommentId,
+  String? fallbackReplyToId,
   String? characterId,
   String? rawInputContent,
   String? locationContextReminder,
@@ -155,16 +196,12 @@ Future<void> processAICommentReply({
     final cardData = await _fileSystemService.readCardFile(userId, cardId);
     if (cardData == null) {
       _logger.warning('Card not found for AI reply: $cardId');
-      return;
+      return null;
     }
 
+    final initialCount = cardData.comments.length;
     final initialInsight = cardData.insight?.text;
 
-    // Location for the comment: prefer the caller-supplied device location
-    // (e.g. a live user reply). When absent (e.g. a new card created through
-    // SuperAgent re-publishes userInputSubmitted without device location),
-    // fall back to the card's own place — where the recorded moment happened.
-    // Card display priority: user-marked address first, then address.
     var effectiveLocationReminder = locationContextReminder?.trim();
     if (effectiveLocationReminder == null ||
         effectiveLocationReminder.isEmpty) {
@@ -179,9 +216,6 @@ Future<void> processAICommentReply({
     }
 
     // 2. Character ID Fallback
-    // When no explicit characterId: pick the most recent AI commenter
-    // (the character most recently active in the conversation).
-    // Falls back to the insight character if no AI comments exist.
     if (characterId == null) {
       for (final c in cardData.comments.reversed) {
         if (c.isAi && c.characterId != null) {
@@ -199,24 +233,16 @@ Future<void> processAICommentReply({
     }
 
     // 3. Raw Input Content
-    // The card's own `fact` field is the source-of-truth original input
-    // (including any image/audio content the user captured); use it when the
-    // caller did not pass rawInputContent explicitly.
     String contentToUse = rawInputContent ?? '';
     if (contentToUse.isEmpty) {
       contentToUse = cardData.fact ?? '';
     }
 
-    // Entry time comes from the card's own timestamp (content/creation time).
     final entryDateTime = cardData.timestamp > 0
         ? DateTime.fromMillisecondsSinceEpoch(cardData.timestamp * 1000)
         : null;
 
-    // 4. PKM Context
-    // CommentAgent.run handles searching PKM context if not passed.
-
-    // 5. Initialize Agent
-    // 5. Initialize Agent (Default to Responses for Comments)
+    // 4-5. Initialize Agent
     final resources = await UserStorage.getAgentLLMResources(
       AgentDefinitions.commentAgent,
       defaultClientKey: LLMConfig.defaultClientKey,
@@ -224,27 +250,17 @@ Future<void> processAICommentReply({
     final client = resources.client;
     final modelConfig = resources.modelConfig;
 
-    // 6. Build existing comments context for multi-character interaction
-    String existingCommentsContext = '';
-    if (cardData.comments.isNotEmpty) {
-      final buf = StringBuffer();
-      buf.writeln('\n<existing_comments>');
-      for (final c in cardData.comments) {
-        final author = c.isAi
-            ? (c.characterId ?? UserStorage.l10n.commentAuthorAi)
-            : UserStorage.l10n.commentAuthorUser;
-        final replyInfo =
-            c.replyToId != null ? ' (replying to ${c.replyToId})' : '';
-        final commentTime = formatLocalDateTimeWithZone(
-          DateTime.fromMillisecondsSinceEpoch(c.timestamp * 1000),
-        );
-        buf.writeln(
-          '- [$author] (id: ${c.id}, time: $commentTime)$replyInfo: ${c.content}',
-        );
-      }
-      buf.writeln('</existing_comments>');
-      existingCommentsContext = buf.toString();
-    }
+    // 6. Build existing comments context for live group-chat interaction
+    final allCharacters = await CharacterService.instance.getAllCharacters(userId);
+    final characterNamesById = {
+      for (final c in allCharacters) c.id: c.name,
+    };
+    String existingCommentsContext = formatGroupCommentsContext(
+      cardData.comments,
+      characterNamesById,
+      userLabel: UserStorage.l10n.commentAuthorUser,
+      fallbackAiLabel: UserStorage.l10n.commentAuthorAi,
+    );
 
     if (readAttachedPdfs) {
       existingCommentsContext +=
@@ -253,8 +269,9 @@ Future<void> processAICommentReply({
 
     // 7. Run the comment agent. Failures must propagate so LocalTaskExecutor
     // retries process_ai_reply / comment_agent_task instead of marking success.
+    var textOutput = '';
     Future<void> runComment() async {
-      await CommentAgent.runWithContent(
+      textOutput = await CommentAgent.runWithContent(
         userContent,
         client: client,
         modelConfig: modelConfig,
@@ -265,6 +282,7 @@ Future<void> processAICommentReply({
         existingCommentsContext: existingCommentsContext,
         characterId: characterId,
         forcedReplyToId: userCommentId,
+        fallbackReplyToId: fallbackReplyToId,
         currentTime: inputDateTime ?? DateTime.now(),
         entryTime: entryDateTime,
         locationContextReminder: effectiveLocationReminder,
@@ -283,12 +301,82 @@ Future<void> processAICommentReply({
       );
     }
 
+    // Check if tool saved a comment; if model answered in plain text without
+    // calling SaveComment when forced (or emitted [REPLY:]/[MEMORY:]), persist
+    // cleanly while stripping tags.
+    var latestCard = await _fileSystemService.readCardFile(userId, cardId);
+    CardComment? createdComment;
+    if (latestCard != null && latestCard.comments.length > initialCount) {
+      createdComment = latestCard.comments.last;
+    } else if (textOutput.trim().isNotEmpty) {
+      final parsed = parseGroupCommentOutput(textOutput);
+      final upper = parsed.content.toUpperCase();
+      final isSkipText =
+          !forceReply && (upper == '[SKIP]' || upper == 'SKIP' || upper.contains('[SKIP]'));
+      if (!isSkipText &&
+          parsed.content.isNotEmpty &&
+          (forceReply ||
+              parsed.replyToId != null ||
+              parsed.memoryNotes.isNotEmpty)) {
+        if (parsed.memoryNotes.isNotEmpty &&
+            characterId != null &&
+            characterId.isNotEmpty) {
+          for (final note in parsed.memoryNotes) {
+            try {
+              await CharacterWorkspaceService.instance.appendLivingMemory(
+                userId,
+                characterId,
+                note,
+              );
+            } catch (e) {
+              _logger.warning('Failed to append fallback memory: $e');
+            }
+          }
+        }
+        final activeChars = allCharacters.where((c) => c.enabled).toList();
+        final newCommentId = const Uuid().v4();
+        final nowTs = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        final updated = await _fileSystemService.updateCardFile(
+          userId,
+          cardId,
+          (card) {
+            final replyTo = CommentToolFactory.resolveEffectiveReplyToId(
+              card: card,
+              characterId: characterId,
+              cleanContent: parsed.content,
+              fixedReplyTarget: userCommentId?.trim().isNotEmpty == true
+                  ? userCommentId!.trim()
+                  : null,
+              tagReplyToId: parsed.replyToId,
+              fallbackReplyTarget: fallbackReplyToId?.trim().isNotEmpty == true
+                  ? fallbackReplyToId!.trim()
+                  : null,
+              activeCharacters: activeChars,
+            );
+            final entry = CardComment(
+              id: newCommentId,
+              content: parsed.content,
+              isAi: true,
+              timestamp: nowTs,
+              characterId: characterId,
+              replyToId: replyTo,
+            );
+            createdComment = entry;
+            return card.copyWith(comments: [...card.comments, entry]);
+          },
+        );
+        latestCard = updated;
+      }
+    }
+
     // 8. EventBus Update
     if (sendEventBus) {
       EventBusService.instance.emitEvent(
         CardDetailUpdatedMessage(cardId: cardId),
       );
     }
+
+    return createdComment;
   } catch (e) {
     _logger.severe('Failed to process AI comment reply for card $cardId: $e');
     rethrowIfNonRetryable(e);

@@ -9,14 +9,15 @@ import 'package:memex/utils/logger.dart';
 /// Fields:
 /// - `show_insight_text` (bool, default true): show insight as pinned comment
 /// - `enable_character_comment` (bool, default true): auto-generate character comments
-/// - `max_comment_characters` (int, default 2): max characters that comment per record
+/// - `max_comment_characters` (int, default 15, range 1..15): max characters that comment per record
 ///
 /// When `max_comment_characters` == 1, the original single-character selection
 /// is used (keyword-based, no LLM call). When > 1, an LLM call decides which
-/// characters participate.
+/// characters participate in the live group chat.
 class CommentSettings {
-  static const int _version = 2;
-  static const int _defaultMaxCommentCharacters = 2;
+  static const int maxCommentCharactersLimit = 15;
+  static const int defaultMaxCommentCharacters = 15;
+  static const int _version = 3;
 
   final bool showInsightText;
   final bool enableCharacterComment;
@@ -25,27 +26,37 @@ class CommentSettings {
   const CommentSettings({
     this.showInsightText = true,
     this.enableCharacterComment = true,
-    this.maxCommentCharacters = _defaultMaxCommentCharacters,
+    this.maxCommentCharacters = defaultMaxCommentCharacters,
   });
 
   factory CommentSettings.fromYaml(Map yaml) {
-    final version = yaml['version'] as int? ?? 0;
-    final maxCharacters =
-        yaml['max_comment_characters'] as int? ?? _defaultMaxCommentCharacters;
+    final version = (yaml['version'] as num?)?.toInt() ?? 0;
+    final rawMax = (yaml['max_comment_characters'] as num?)?.toInt();
+    final int resolvedMax;
+    if (rawMax == null) {
+      resolvedMax = defaultMaxCommentCharacters;
+    } else if (version < 2 && rawMax == 1) {
+      // Legacy v1 default was 1.
+      resolvedMax = defaultMaxCommentCharacters;
+    } else if (version < _version && rawMax == 2) {
+      // Legacy v2 default was 2; explicit choices like 1 or 4 in v2 are kept.
+      resolvedMax = defaultMaxCommentCharacters;
+    } else {
+      resolvedMax = rawMax.clamp(1, maxCommentCharactersLimit);
+    }
     return CommentSettings(
       showInsightText: yaml['show_insight_text'] as bool? ?? true,
       enableCharacterComment: yaml['enable_character_comment'] as bool? ?? true,
-      maxCommentCharacters: version < _version && maxCharacters == 1
-          ? _defaultMaxCommentCharacters
-          : maxCharacters,
+      maxCommentCharacters: resolvedMax,
     );
   }
 
   String toYaml() {
+    final clamped = maxCommentCharacters.clamp(1, maxCommentCharactersLimit);
     return 'version: $_version\n'
         'show_insight_text: $showInsightText\n'
         'enable_character_comment: $enableCharacterComment\n'
-        'max_comment_characters: $maxCommentCharacters\n';
+        'max_comment_characters: $clamped\n';
   }
 
   CommentSettings copyWith({
@@ -57,7 +68,8 @@ class CommentSettings {
       showInsightText: showInsightText ?? this.showInsightText,
       enableCharacterComment:
           enableCharacterComment ?? this.enableCharacterComment,
-      maxCommentCharacters: maxCommentCharacters ?? this.maxCommentCharacters,
+      maxCommentCharacters: (maxCommentCharacters ?? this.maxCommentCharacters)
+          .clamp(1, maxCommentCharactersLimit),
     );
   }
 }

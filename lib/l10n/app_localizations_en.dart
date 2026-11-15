@@ -2732,7 +2732,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get maxCommentCharactersDesc =>
-      'How many characters can comment on each record. By default, up to two voices can respond when they add something useful.';
+      'How many characters can participate in the live group discussion on each record. Defaults to up to 15 relevant voices.';
 
   @override
   String replyTo(String name) {
