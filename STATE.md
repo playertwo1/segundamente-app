@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.50+135 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.50+135 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066); checkpoint da ponte fechado em 2026-11-15, então a pausa da D-066 acabou; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; **F12-02 DONE**; **F12-03**, **F12-04** e **F12-05** com código e testes sintéticos concluídos na `main` da Segunda Mente, e **L6.2**, **L6.3**, **L6.4 (tarefas)** e **P3** concluídos na `main` do Lumen (release `windows-v0.7.3` publicada); validação física ponta a ponta no Galaxy S25 Ultra + notebook (`Passo 9 real` / `Checkpoint da Ponte`) explicitamente mantida como `NOT_RUN` / pendente (celular não conectado via depuração USB) para fechar os portões |
+| F12 | IN_PROGRESS (D-066) | **Checkpoint da ponte fechado em 2026-11-15** no S25 + notebook. F12-01 IN_PROGRESS (falta o dono ler o contrato); F12-02 a F12-05 DONE; F12-06 e F12-07 READY. Portão F12 ainda depende do AC-04 (v1.1) |
 | F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
@@ -24,13 +24,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no Lumen:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/lumen`.
-5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Todos os passos sintéticos 1–9 da ponte (F12-01 a F12-05 na Segunda Mente e L6.1 a L6.4 + P3 no Lumen `windows-v0.7.3`) estão concluídos em código e testes sintéticos (`+103` testes de serviço/UI/alarme locais e release Windows `windows-v0.7.3` publicada); o teste físico ponta a ponta no Galaxy S25 Ultra + notebook (`Passo 9 real` / `Checkpoint da Ponte`: pareamento, entrega na consulta, alarme e cancelamento cruzado de avisos) segue explicitamente `NOT_RUN` / pendente (celular não conectado via depuração USB durante esta execução).
+5. **F12:** checkpoint da ponte fechado. Próximo: F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06 (entidades v1.1). Antes, corrigir os achados do checkpoint em `docs/testes/F12-checkpoint-ponte-s25.md`: QR maior e edição de horário que não salva (Lumen); tela de pareamento presa em "Carregando", prévia da área de transferência gravando texto no log, "erro" em vez de "offline" e sync sem log (Segunda Mente). O S25 dev está revogado: parear de novo antes da F12-06.
+6. **Fim da pausa da D-066:** com o checkpoint fechado, a F15-03 em diante volta a andar.
 
 ## Pendências do dono
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
-- Ler o texto final de `docs/lumen/CONTRATO-SYNC.md` (F12-01) e validar pareamento + sync ponta a ponta no S25 e notebook no Passo 9.
+- Ler o texto final de `docs/lumen/CONTRATO-SYNC.md` (F12-01).
+- Apagar a `PONTE 6` e a `PONTE 7` no Lumen, e o link `coucou://pair…` do histórico da área de transferência do teclado do S25.
 
 ## Ambiente (fora do repositório)
 
@@ -43,6 +45,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### Checkpoint da Ponte (F12-03 a F12-05) no S25 + notebook (2026-11-15, 13:20–14:53)
+- Aparelhos: Galaxy S25 Ultra (`RQCY10934YV`), `app.segundamente.dev` 1.0.50 compilado da `main` `a6cf1300` (`flutter build apk --flavor globalDev --debug --no-pub`, `adb install -r` → `Success`); notebook com Lumen 0.7.3. Perfil sintético `F11 QA`; tarefas `PONTE 1`–`7`, todas apagadas no fim (a `PONTE 6` e a `PONTE 7` ficam para o dono apagar no Lumen).
+- PASS: pareamento (pelo link), entrega na primeira consulta uma vez, T06, celular → PC, alarme nos dois aparelhos (AC-08), concluir no PC cancela alarme e notificação no S25 (`notification_cancel` reason 8), adiar no S25 tira o toast do PC (T05), AC-02 e T08 offline com modo avião, WorkManager periódico com o app fechado (`Worker result SUCCESS` 14:28:52) e T18 (Parear de novo no Lumen → `revoked: true`, a `PONTE 7` não chegou).
+- FAIL / achados: o QR do Lumen não foi lido pela câmera em 2 tentativas; editar o horário no Lumen não salvou; mais 4 achados na Segunda Mente. Lista completa e evidência passo a passo em [docs/testes/F12-checkpoint-ponte-s25.md](docs/testes/F12-checkpoint-ponte-s25.md).
+- `NOT_RUN`: suíte completa `flutter test` / `flutter analyze` (só documentação mudou nesta rodada); TalkBack.
 
 ### Personas vivas em chat em grupo (`AGENTS.md` + `MEMORY.md`, até 15 personas, onda cruzada) (2026-11-15)
 - **Limites e seleção (`CommentSettingsService`, `CharacterSelectionService`, Settings UI & l10n):**
