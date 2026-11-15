@@ -30,3 +30,14 @@ Checkpoint da Ponte **PASS** no Galaxy S25 Ultra (`app.segundamente.dev` 1.0.50,
 4. **Lumen: editar o horário da `PONTE 5` no PC não salvou** (o horário não mudou). A mesma edição feita no celular chegou ao Lumen normalmente.
 5. **SM: sem rede, o rótulo diz "erro ao sincronizar"** em vez de indicar offline/pendente. Logo após religar a rede, o "Sincronizar agora" ficou ~1 min sem resposta visível (rótulo parado em "2 pendentes · 13:49") e o sync concluiu às 14:05; a causa não aparece porque `TodoViewModel` engole exceções sem log.
 6. **SM: o sync não registra nada no log.** Sem linha de início, fim ou erro, a evidência depende só da tela e do `dumpsys`.
+
+### Correções na Segunda Mente (2026-11-15, à tarde)
+
+| Achado | Correção | No S25 |
+|---|---|---|
+| 2 | ViewModel guardado no `State` da tela | PASS: 3 ciclos Parear de novo → leitor → Voltar → reentrar, sempre "Pareado com BOOKFAEL" |
+| 3 | Log do Dart só com `<redacted len=N>`; logcat do Kotlin só com o tamanho | `NOT_RUN`: o Android devolveu `empty clipboard` ao voltar ao app; coberto por teste unitário |
+| 5 | Rótulo "sem conexão" para `http_0`; exceções do `TodoViewModel` no log | `NOT_RUN`: o aparelho está revogado; conferir depois de parear de novo |
+| 6 | Uma linha de log por ciclo de sync | PASS: `Todo sync (lifecycle) -> revoked, outbox=0, error=null` |
+
+Achados 1 e 4 seguem abertos no repositório do Lumen.

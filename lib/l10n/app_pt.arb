@@ -2048,6 +2048,7 @@
   "todoSyncSyncing": "Sincronizando…",
   "todoSyncError": "Salvo no aparelho · erro ao sincronizar",
   "todoSyncRevoked": "Salvo no aparelho · pareamento revogado",
+  "todoSyncOffline": "Salvo no aparelho · sem conexão",
   "todoSyncPendingChanges": "Salvo no aparelho · {count} pendente(s) de sync",
   "@todoSyncPendingChanges": {"placeholders": {"count": {"type": "int"}}},
   "todoSyncNowButton": "Sincronizar agora",

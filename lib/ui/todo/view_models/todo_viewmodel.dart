@@ -9,6 +9,7 @@ import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
+import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/utils/user_storage.dart';
 
@@ -17,6 +18,8 @@ enum TodoListSection { today, upcoming, overdue, completed }
 enum TodoTaskState { noDate, today, upcoming, overdue, completed }
 
 class TodoViewModel extends ChangeNotifier {
+  static final _logger = getLogger('TodoViewModel');
+
   TodoViewModel({
     required MemexRouter router,
     Future<bool> Function({
@@ -170,8 +173,9 @@ class TodoViewModel extends ChangeNotifier {
         return;
       }
       await _runSyncNow(userId: userId, reason: reason);
-    } catch (_) {
+    } catch (e, st) {
       // Keep local tasks and last known sync status if sync fails unexpectedly.
+      _logger.warning('Todo sync ($reason) failed in view model', e, st);
     }
   }
 
@@ -200,7 +204,8 @@ class TodoViewModel extends ChangeNotifier {
       if (_disposed) return;
       _applySyncStatus(status);
       await _reloadItems();
-    } catch (_) {
+    } catch (e, st) {
+      _logger.warning('Todo conflict resolution failed in view model', e, st);
       await _reloadItems();
     }
   }
@@ -250,8 +255,9 @@ class TodoViewModel extends ChangeNotifier {
       if (triggerAutoSync && status.paired && !status.revoked) {
         unawaited(_runSyncNow(userId: userId, reason: 'screen_open'));
       }
-    } catch (_) {
+    } catch (e, st) {
       // Keep safe localOnly fallback when platform bindings are unavailable.
+      _logger.warning('Todo sync status load failed in view model', e, st);
     }
   }
 
@@ -268,15 +274,17 @@ class TodoViewModel extends ChangeNotifier {
       if (_disposed) return;
       _applySyncStatus(status);
       await _reloadItems();
-    } catch (_) {
+    } catch (e, st) {
       // Keep local tasks and last known sync status if sync fails unexpectedly.
+      _logger.warning('Todo sync ($reason) failed in view model', e, st);
     }
   }
 
   Future<String?> _resolveUserId() async {
     try {
       return await _userIdResolver();
-    } catch (_) {
+    } catch (e, st) {
+      _logger.warning('Todo user id resolution failed', e, st);
       return null;
     }
   }

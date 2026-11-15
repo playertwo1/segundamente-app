@@ -1823,8 +1823,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       return 'image mime=${candidate.mimeType}, fileName=${candidate.fileName}, '
           'uri=${candidate.imageUri}';
     }
-    return 'text len=${candidate.text?.runes.length ?? 0}, '
-        'preview=${candidate.previewText}';
+    return 'text len=${candidate.text?.runes.length ?? 0}';
   }
 
   Future<void> _openHomeClipboardInSuperAgent() async {

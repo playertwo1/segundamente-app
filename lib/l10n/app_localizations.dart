@@ -8637,6 +8637,12 @@ abstract class AppLocalizations {
   /// **'Saved on device · pairing revoked'**
   String get todoSyncRevoked;
 
+  /// No description provided for @todoSyncOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · offline'**
+  String get todoSyncOffline;
+
   /// No description provided for @todoSyncPendingChanges.
   ///
   /// In en, this message translates to:

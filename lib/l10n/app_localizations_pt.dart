@@ -4923,6 +4923,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoSyncRevoked => 'Salvo no aparelho · pareamento revogado';
 
   @override
+  String get todoSyncOffline => 'Salvo no aparelho · sem conexão';
+
+  @override
   String todoSyncPendingChanges(int count) {
     return 'Salvo no aparelho · $count pendente(s) de sync';
   }

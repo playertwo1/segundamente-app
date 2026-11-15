@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:logging/logging.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/lumen_mailbox_client.dart';
 import 'package:memex/data/services/lumen_pairing_service.dart';
@@ -935,6 +936,86 @@ void main() {
 
     final localTasks = await todos.load(userId);
     expect(localTasks.map((t) => t.id), [keptTask.id]);
+  });
+
+  test('8b. network failure (status 0) is offline and keeps local tasks pending',
+      () async {
+    final pairing = _makeTestPairing(roomSeed: 'room-offline');
+    await savePairing(pairing);
+    final sync = createSync(
+      mailboxClient: LumenMailboxClient(
+        httpClient: MockClient((request) async {
+          throw const SocketException('offline');
+        }),
+      ),
+    );
+    final todos = TodoService(fileService: files, syncService: sync);
+
+    final task = await todos.add(userId: userId, text: 'Sem rede');
+    final before = await sync.loadStatus(userId: userId);
+    expect(before.pendingOutbox, greaterThan(0));
+
+    final status = await sync.syncNow(userId: userId);
+    expect(status.state, TodoSyncBadgeState.offline);
+    expect(status.lastError, 'http_0');
+    expect(status.pendingOutbox, before.pendingOutbox);
+    expect(status.isItemSynced(task.id), isFalse);
+    expect((await todos.load(userId)).map((t) => t.id), [task.id]);
+  });
+
+  test('8c. HTTP 500 stays error, not offline', () async {
+    final pairing = _makeTestPairing(roomSeed: 'room-http-500');
+    await savePairing(pairing);
+    final sync = createSync(
+      mailboxClient: LumenMailboxClient(
+        httpClient: MockClient((request) async => http.Response('{}', 500)),
+      ),
+    );
+    final todos = TodoService(fileService: files, syncService: sync);
+    await todos.add(userId: userId, text: 'Erro do servidor');
+
+    final status = await sync.syncNow(userId: userId);
+    expect(status.state, TodoSyncBadgeState.error);
+    expect(status.lastError, 'http_500');
+  });
+
+  test('8d. syncNow logs one info line with reason and state, never task text',
+      () async {
+    final pairing = _makeTestPairing(roomSeed: 'room-sync-log');
+    await savePairing(pairing);
+    final relay = _FakeRelayMailbox(pairing);
+    final sync = createSync(
+      mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+    );
+    final todos = TodoService(fileService: files, syncService: sync);
+    await todos.add(userId: userId, text: 'Título secreto do log');
+
+    final records = <LogRecord>[];
+    final previousLevel = Logger.root.level;
+    Logger.root.level = Level.ALL;
+    final subscription = Logger.root.onRecord.listen(records.add);
+    final TodoSyncStatus status;
+    try {
+      status = await sync.syncNow(userId: userId, reason: 'manual');
+    } finally {
+      await subscription.cancel();
+      Logger.root.level = previousLevel;
+    }
+
+    final syncLines = records
+        .where((r) => r.loggerName == 'TodoSyncService' && r.level == Level.INFO)
+        .map((r) => r.message)
+        .toList();
+    expect(syncLines, [
+      'Todo sync (manual) -> ${status.state.name}, '
+          'outbox=${status.pendingOutbox}, error=${status.lastError}',
+    ]);
+    expect(
+      records.any((r) =>
+          r.message.contains('Título secreto do log') ||
+          (r.error?.toString().contains('Título secreto do log') ?? false)),
+      isFalse,
+    );
   });
 
   test('9. remote done, remove, and snooze trigger TodoService.alarmSynchronizer',

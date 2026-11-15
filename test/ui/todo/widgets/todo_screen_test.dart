@@ -915,6 +915,58 @@ void main() {
   });
 
   group('sync status and conflicts', () {
+    testWidgets('offline says saved on device with no connection, not sync failed',
+        (tester) async {
+      for (final language in ['pt', 'en']) {
+        SharedPreferences.setMockInitialValues({'language': language});
+        await UserStorage.initL10n();
+        final l10n = UserStorage.l10n;
+        final statusBar = find.byKey(const ValueKey('todo_sync_status_bar'));
+        final fakeSync = _FakeTodoSyncService(
+          initialStatus: TodoSyncStatus(
+            state: TodoSyncBadgeState.savedOnDevice,
+            paired: true,
+            deviceId: 'dev-1',
+            pendingOutbox: 1,
+          ),
+        );
+        await pump(
+          tester,
+          [_item('t1', 'Local')],
+          syncService: fakeSync,
+          autoSyncOnLoad: false,
+        );
+
+        fakeSync.statusNotifier.value = TodoSyncStatus(
+          state: TodoSyncBadgeState.offline,
+          paired: true,
+          deviceId: 'dev-1',
+          pendingOutbox: 1,
+          lastError: 'http_0',
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncOffline)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncError)),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: statusBar,
+            matching: find.byIcon(Icons.cloud_off_outlined),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('todo_sync_now_button')),
+          findsOneWidget,
+        );
+      }
+    });
+
     testWidgets(
       'separates Saved on device from Synced across states and per item',
       (tester) async {
