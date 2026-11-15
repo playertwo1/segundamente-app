@@ -24,10 +24,13 @@ class LumenPairingPage extends StatefulWidget {
 }
 
 class _LumenPairingPageState extends State<LumenPairingPage> {
+  // Route builders may rebuild and pass a fresh, never-loaded ViewModel; keep the first one.
+  late final LumenPairingViewModel _viewModel = widget.viewModel;
+
   @override
   void initState() {
     super.initState();
-    widget.viewModel.load();
+    _viewModel.load();
   }
 
   String _devicePrefix(String? deviceId) {
@@ -49,7 +52,7 @@ class _LumenPairingPageState extends State<LumenPairingPage> {
               Navigator.of(scannerContext).pop();
             }
             if (!mounted) return;
-            await widget.viewModel.pairFromUri(code);
+            await _viewModel.pairFromUri(code);
           }
 
           return Scaffold(
@@ -87,7 +90,7 @@ class _LumenPairingPageState extends State<LumenPairingPage> {
       builder: (_) => const _PastePairingLinkDialog(),
     );
     if (raw == null || !mounted) return;
-    await widget.viewModel.pairFromUri(raw);
+    await _viewModel.pairFromUri(raw);
   }
 
   Future<void> _showRepairOptions() async {
@@ -160,7 +163,7 @@ class _LumenPairingPageState extends State<LumenPairingPage> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    await widget.viewModel.unlink();
+    await _viewModel.unlink();
   }
 
   @override
@@ -175,9 +178,9 @@ class _LumenPairingPageState extends State<LumenPairingPage> {
         foregroundColor: AppColors.textPrimary,
       ),
       body: ListenableBuilder(
-        listenable: widget.viewModel,
+        listenable: _viewModel,
         builder: (context, _) {
-          final vm = widget.viewModel;
+          final vm = _viewModel;
           if (vm.loading && vm.status == null) {
             return Center(
               child: Padding(
