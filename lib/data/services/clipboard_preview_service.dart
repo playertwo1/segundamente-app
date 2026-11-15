@@ -369,13 +369,10 @@ class ClipboardPreviewService {
     return hash.length <= 10 ? hash : hash.substring(0, 10);
   }
 
+  // Clipboard content must never reach logs; only its length is logged.
   String _logPreview(String? value) {
     if (value == null || value.isEmpty) return '<none>';
-    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (normalized.isEmpty) return '<blank>';
-    return normalized.length <= 96
-        ? normalized
-        : '${normalized.substring(0, 96)}...';
+    return '<redacted len=${value.runes.length}>';
   }
 }
 
