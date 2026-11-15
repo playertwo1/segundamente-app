@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -10,13 +11,17 @@ import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/lumen_mailbox_client.dart';
 import 'package:memex/data/services/lumen_pairing_service.dart';
 import 'package:memex/data/services/lumen_relay_crypto.dart';
+import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/lumen_pairing.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/utils/user_storage.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class _InMemorySecretStore implements LumenSecretStore {
   final Map<String, String> values = {};
@@ -282,6 +287,7 @@ Map<String, dynamic> _taskPayload({
   String due = '',
   String? dueDate,
   String? dueTime,
+  int alertMinutes = 20,
   bool done = false,
   String? doneAt,
   String? deletedAt,
@@ -299,7 +305,7 @@ Map<String, dynamic> _taskPayload({
       'due_date': dueDate,
       'due_time': dueTime,
       'time_zone': todoTimeZone,
-      'alert_minutes': 20,
+      'alert_minutes': alertMinutes,
       'priority': 'normal',
       'subtasks': subtasks,
       'recurrence': recurrence,
@@ -315,7 +321,97 @@ Map<String, dynamic> _taskPayload({
       ...extras,
     };
 
+class _FakeSyncAlarmBackend implements TodoAlarmBackend {
+  final List<String> operations = [];
+  final List<int> cancelledIds = [];
+  final List<({int id, tz.TZDateTime scheduledDate, String payload})>
+      scheduledCalls = [];
+  final Map<int, PendingNotificationRequest> pending = {};
+  final Map<int, ActiveNotification> active = {};
+
+  @override
+  bool get isSupported => true;
+
+  @override
+  Future<bool?> initialize({required TodoAlarmActionHandler onAction}) async =>
+      true;
+
+  @override
+  Future<NotificationAppLaunchDetails?>
+      getNotificationAppLaunchDetails() async =>
+          const NotificationAppLaunchDetails(false);
+
+  @override
+  Future<TodoAlarmStatus> readStatus({required String channelId}) async =>
+      TodoAlarmStatus.ready;
+
+  @override
+  Future<bool?> areNotificationsEnabled() async => true;
+
+  @override
+  Future<bool?> openAppNotificationSettings() async => true;
+
+  @override
+  Future<bool?> requestNotificationsPermission() async => true;
+
+  @override
+  Future<bool?> requestExactAlarmsPermission() async => true;
+
+  @override
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests() async =>
+      pending.values.toList(growable: false);
+
+  @override
+  Future<List<ActiveNotification>> getActiveNotifications() async =>
+      active.values.toList(growable: false);
+
+  @override
+  Future<void> cancel({required int id}) async {
+    operations.add('cancel:$id');
+    cancelledIds.add(id);
+    pending.remove(id);
+    active.remove(id);
+  }
+
+  @override
+  Future<void> zonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required NotificationDetails notificationDetails,
+    required AndroidScheduleMode androidScheduleMode,
+    required String payload,
+  }) async {
+    final utcIso = scheduledDate.toUtc().toIso8601String();
+    operations.add('schedule:$id@$utcIso');
+    scheduledCalls.add(
+      (id: id, scheduledDate: scheduledDate, payload: payload),
+    );
+    pending[id] = PendingNotificationRequest(id, title, body, payload);
+  }
+
+  void simulateFiredNotification(int id, {bool keepInTray = true}) {
+    final prior = pending.remove(id);
+    if (keepInTray) {
+      active[id] = ActiveNotification(
+        id: id,
+        channelId: 'todo_reminders',
+        title: prior?.title ?? 'Lembrete',
+        body: prior?.body ?? 'Tarefa',
+      );
+    }
+  }
+
+  void clearRecordedCalls() {
+    operations.clear();
+    cancelledIds.clear();
+    scheduledCalls.clear();
+  }
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const userId = 'u1';
   late Directory tempDir;
   late FileSystemService files;
@@ -1066,5 +1162,337 @@ void main() {
     final pushedIds = {for (final e in pushedToB) e['entity_id']};
     expect(pushedIds, {'keep-me', 'del-recent'});
     expect(pushedIds.contains('del-old'), isFalse);
+  });
+
+  group('F12-05 alarm sync integration (AC-08 & T05)', () {
+    late _FakeSyncAlarmBackend alarmBackend;
+    late TodoAlarmService alarmService;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({'language': 'pt'});
+      await UserStorage.initL10n();
+      alarmBackend = _FakeSyncAlarmBackend();
+      alarmService = TodoAlarmService.forTesting(
+        backend: alarmBackend,
+        now: () => fakeNow,
+      );
+      TodoService.alarmSynchronizer = alarmService.synchronize;
+    });
+
+    test(
+        '12. AC-08: task from PC schedules exact alarm at due - alertMinutes and replay is idempotent',
+        () async {
+      final pairing = _makeTestPairing(roomSeed: 'room-alarm-ac08');
+      await savePairing(pairing);
+      final relay = _FakeRelayMailbox(pairing);
+      final sync = createSync(
+        mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+      );
+      final todos = TodoService(fileService: files, syncService: sync);
+
+      final envelope = _pcEnvelope(
+        mutationId: 'pc-alarm-create-1',
+        entityId: 'pc-alarm-1',
+        baseVersion: 0,
+        newVersion: 1,
+        updatedAt: '2026-11-15T12:05:00Z',
+        payload: _taskPayload(
+          id: 'pc-alarm-1',
+          text: 'Entregar parecer',
+          due: '2026-11-16 09:00',
+          dueDate: '2026-11-16',
+          dueTime: '09:00',
+          alertMinutes: 20,
+        ),
+      );
+      relay.enqueueFromPcMap(envelope);
+
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      final loaded = await todos.load(userId);
+      expect(loaded.map((t) => t.id), ['pc-alarm-1']);
+      expect(alarmBackend.cancelledIds, isEmpty);
+      expect(alarmBackend.scheduledCalls, hasLength(1));
+      final scheduled = alarmBackend.scheduledCalls.single;
+      expect(scheduled.payload, 'todoAlarm:pc-alarm-1');
+      // 09:00 America/Sao_Paulo (UTC-3) - 20 min = 08:40 BRT = 11:40 UTC.
+      expect(
+        scheduled.scheduledDate.toUtc(),
+        DateTime.utc(2026, 11, 16, 11, 40),
+      );
+
+      // Re-deliver the exact same mutation_id (replay): no duplicate task or reschedule.
+      alarmBackend.clearRecordedCalls();
+      relay.enqueueFromPcMap(envelope);
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      expect(await todos.load(userId), hasLength(1));
+      expect(alarmBackend.scheduledCalls, isEmpty);
+      expect(alarmBackend.cancelledIds, isEmpty);
+      expect(alarmBackend.pending.keys, [scheduled.id]);
+    });
+
+    test(
+        '13. AC-08: remote done or delete cancels fired alarm even without pendingNotificationRequests',
+        () async {
+      final pairing = _makeTestPairing(roomSeed: 'room-alarm-cancel');
+      await savePairing(pairing);
+      final relay = _FakeRelayMailbox(pairing);
+      final sync = createSync(
+        mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+      );
+      final todos = TodoService(fileService: files, syncService: sync);
+
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-create-done',
+          entityId: 'pc-done-task',
+          baseVersion: 0,
+          newVersion: 1,
+          updatedAt: '2026-11-15T12:01:00Z',
+          payload: _taskPayload(
+            id: 'pc-done-task',
+            text: 'Concluir no PC',
+            due: '2026-11-16 09:00',
+            dueDate: '2026-11-16',
+            dueTime: '09:00',
+          ),
+        ),
+      );
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-create-del',
+          entityId: 'pc-del-task',
+          baseVersion: 0,
+          newVersion: 1,
+          updatedAt: '2026-11-15T12:01:05Z',
+          payload: _taskPayload(
+            id: 'pc-del-task',
+            text: 'Excluir no PC',
+            due: '2026-11-16 10:00',
+            dueDate: '2026-11-16',
+            dueTime: '10:00',
+          ),
+        ),
+      );
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      final doneAlarmId = alarmBackend.scheduledCalls
+          .firstWhere((c) => c.payload == 'todoAlarm:pc-done-task')
+          .id;
+      final delAlarmId = alarmBackend.scheduledCalls
+          .firstWhere((c) => c.payload == 'todoAlarm:pc-del-task')
+          .id;
+
+      // Both alarms already fired on Android: neither is pending anymore.
+      alarmBackend.simulateFiredNotification(doneAlarmId, keepInTray: false);
+      alarmBackend.simulateFiredNotification(delAlarmId, keepInTray: true);
+      expect(alarmBackend.pending, isEmpty);
+      alarmBackend.clearRecordedCalls();
+
+      // PC completes one and deletes the other.
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-complete-1',
+          entityId: 'pc-done-task',
+          baseVersion: 1,
+          newVersion: 2,
+          updatedAt: '2026-11-15T12:10:00Z',
+          payload: _taskPayload(
+            id: 'pc-done-task',
+            text: 'Concluir no PC',
+            due: '2026-11-16 09:00',
+            dueDate: '2026-11-16',
+            dueTime: '09:00',
+            version: 2,
+            done: true,
+            doneAt: '2026-11-15T12:10:00Z',
+          ),
+        ),
+      );
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-delete-1',
+          entityId: 'pc-del-task',
+          baseVersion: 1,
+          newVersion: 2,
+          updatedAt: '2026-11-15T12:11:00Z',
+          payload: _taskPayload(
+            id: 'pc-del-task',
+            text: 'Excluir no PC',
+            due: '2026-11-16 10:00',
+            dueDate: '2026-11-16',
+            dueTime: '10:00',
+            version: 2,
+            deletedAt: '2026-11-15T12:11:00Z',
+          ),
+        ),
+      );
+
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      expect(alarmBackend.scheduledCalls, isEmpty);
+      expect(alarmBackend.cancelledIds, containsAll([doneAlarmId, delAlarmId]));
+      expect(alarmBackend.active, isEmpty);
+      expect(alarmBackend.pending, isEmpty);
+
+      final remaining = await todos.load(userId);
+      expect(remaining.single.id, 'pc-done-task');
+      expect(remaining.single.done, isTrue);
+    });
+
+    test(
+        '14. T05: remote snooze from PC cancels prior notification and reschedules new instant',
+        () async {
+      final pairing = _makeTestPairing(roomSeed: 'room-alarm-remote-snooze');
+      await savePairing(pairing);
+      final relay = _FakeRelayMailbox(pairing);
+      final sync = createSync(
+        mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+      );
+      final todos = TodoService(fileService: files, syncService: sync);
+
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-create-snooze',
+          entityId: 'pc-snooze-task',
+          baseVersion: 0,
+          newVersion: 1,
+          updatedAt: '2026-11-15T12:01:00Z',
+          payload: _taskPayload(
+            id: 'pc-snooze-task',
+            text: 'Ligar para fornecedor',
+            due: '2026-11-16 09:00',
+            dueDate: '2026-11-16',
+            dueTime: '09:00',
+          ),
+        ),
+      );
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      final alarmId = alarmBackend.scheduledCalls.single.id;
+      alarmBackend.simulateFiredNotification(alarmId, keepInTray: true);
+      alarmBackend.clearRecordedCalls();
+
+      const snoozeIso = '2026-11-15T12:30:00.000Z';
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-snooze-update',
+          entityId: 'pc-snooze-task',
+          baseVersion: 1,
+          newVersion: 2,
+          updatedAt: '2026-11-15T12:05:00Z',
+          payload: _taskPayload(
+            id: 'pc-snooze-task',
+            text: 'Ligar para fornecedor',
+            due: '2026-11-16 09:00',
+            dueDate: '2026-11-16',
+            dueTime: '09:00',
+            version: 2,
+            snoozedUntil: snoozeIso,
+          ),
+        ),
+      );
+
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      expect(alarmBackend.cancelledIds, [alarmId]);
+      expect(alarmBackend.active, isEmpty);
+      expect(alarmBackend.scheduledCalls, hasLength(1));
+      expect(
+        alarmBackend.scheduledCalls.single.scheduledDate.toUtc(),
+        DateTime.utc(2026, 11, 15, 12, 30),
+      );
+      expect(
+        alarmBackend.operations,
+        ['cancel:$alarmId', 'schedule:$alarmId@$snoozeIso'],
+      );
+      expect((await todos.load(userId)).single.snoozedUntil, snoozeIso);
+    });
+
+    test(
+        '15. local snooze and completion trigger alarmSynchronizer and queue outbox envelopes for PC',
+        () async {
+      final pairing = _makeTestPairing(roomSeed: 'room-alarm-local-ops');
+      await savePairing(pairing);
+      final relay = _FakeRelayMailbox(pairing);
+      final sync = createSync(
+        mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+      );
+      final todos = TodoService(fileService: files, syncService: sync);
+
+      final task = await todos.add(
+        userId: userId,
+        id: 'phone-alarm-1',
+        text: 'Enviar relatório semanal',
+        due: '2026-11-16 09:00',
+        now: fakeNow,
+      );
+      await sync.syncNow(userId: userId);
+      relay.consumePcQueue();
+      await TodoService.waitForAlarmSync();
+
+      // Creating the first todo triggers legacy migration + add writes, which
+      // may run alarmSynchronizer twice idempotently before settling on one alarm.
+      expect(alarmBackend.pending, hasLength(1));
+      final alarmId = alarmBackend.pending.values.single.id;
+      expect(alarmBackend.scheduledCalls, isNotEmpty);
+      expect(alarmBackend.scheduledCalls.every((c) => c.id == alarmId), isTrue);
+      alarmBackend.simulateFiredNotification(alarmId, keepInTray: true);
+      alarmBackend.clearRecordedCalls();
+
+      // Local snooze cancels prior tray notification, reschedules locally, and queues outbox.
+      final snoozeBase = fakeNow;
+      final expectedSnoozeUtc =
+          snoozeBase.toUtc().add(const Duration(minutes: todoAlarmSnoozeMinutes));
+      await todos.snooze(userId: userId, id: task.id, now: snoozeBase);
+      await TodoService.waitForAlarmSync();
+
+      expect(
+        alarmBackend.operations,
+        [
+          'cancel:$alarmId',
+          'schedule:$alarmId@${expectedSnoozeUtc.toIso8601String()}',
+        ],
+      );
+      expect((await sync.loadStatus(userId: userId)).pendingOutbox, 1);
+
+      await sync.syncNow(userId: userId);
+      final snoozePushed = relay.consumePcQueue();
+      expect(snoozePushed, hasLength(1));
+      expect(snoozePushed.single['entity_id'], task.id);
+      expect(
+        snoozePushed.single['payload']['snoozed_until'],
+        expectedSnoozeUtc.toIso8601String(),
+      );
+
+      // Local completion cancels fired alarm locally even with empty pending queue and queues outbox.
+      alarmBackend.simulateFiredNotification(alarmId, keepInTray: false);
+      alarmBackend.clearRecordedCalls();
+
+      await todos.setDone(
+        userId: userId,
+        id: task.id,
+        done: true,
+        now: fakeNow,
+      );
+      await TodoService.waitForAlarmSync();
+
+      expect(alarmBackend.cancelledIds, [alarmId]);
+      expect(alarmBackend.scheduledCalls, isEmpty);
+      expect((await sync.loadStatus(userId: userId)).pendingOutbox, 1);
+
+      await sync.syncNow(userId: userId);
+      final donePushed = relay.consumePcQueue();
+      expect(donePushed, hasLength(1));
+      expect(donePushed.single['entity_id'], task.id);
+      expect(donePushed.single['payload']['done'], isTrue);
+    });
   });
 }

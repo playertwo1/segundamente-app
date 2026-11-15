@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logging/logging.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
@@ -15,8 +16,152 @@ typedef TodoAlarmActionHandler = FutureOr<void> Function(
   NotificationResponse response,
 );
 
+/// Abstraction over platform local notifications so [TodoAlarmService] can be
+/// tested deterministically without Android channels.
+abstract interface class TodoAlarmBackend {
+  bool get isSupported;
+
+  Future<bool?> initialize({
+    required TodoAlarmActionHandler onAction,
+  });
+
+  Future<NotificationAppLaunchDetails?> getNotificationAppLaunchDetails();
+
+  Future<TodoAlarmStatus> readStatus({required String channelId});
+
+  Future<bool?> areNotificationsEnabled();
+
+  Future<bool?> openAppNotificationSettings();
+
+  Future<bool?> requestNotificationsPermission();
+
+  Future<bool?> requestExactAlarmsPermission();
+
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests();
+
+  Future<List<ActiveNotification>> getActiveNotifications();
+
+  Future<void> cancel({required int id});
+
+  Future<void> zonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required NotificationDetails notificationDetails,
+    required AndroidScheduleMode androidScheduleMode,
+    required String payload,
+  });
+}
+
+class _PluginTodoAlarmBackend implements TodoAlarmBackend {
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
+
+  AndroidFlutterLocalNotificationsPlugin? get _androidNotifications =>
+      _notifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+  @override
+  bool get isSupported => Platform.isAndroid;
+
+  @override
+  Future<bool?> initialize({required TodoAlarmActionHandler onAction}) =>
+      _notifications.initialize(
+        settings: const InitializationSettings(
+          android: AndroidInitializationSettings('ic_todo_notification'),
+        ),
+        onDidReceiveNotificationResponse: onAction,
+      );
+
+  @override
+  Future<NotificationAppLaunchDetails?> getNotificationAppLaunchDetails() =>
+      _notifications.getNotificationAppLaunchDetails();
+
+  @override
+  Future<TodoAlarmStatus> readStatus({required String channelId}) async {
+    final android = _androidNotifications;
+    if (android == null) return TodoAlarmStatus.unavailable;
+    final appNotificationsEnabled =
+        await android.areNotificationsEnabled() ?? false;
+    final channels = await android.getNotificationChannels();
+    final todoChannel = channels?.where((channel) => channel.id == channelId);
+    final todoChannelEnabled = todoChannel == null ||
+        todoChannel.isEmpty ||
+        todoChannel.first.importance != Importance.none;
+    final exactAlarmsEnabled =
+        await android.canScheduleExactNotifications() ?? false;
+    return switch ((
+      appNotificationsEnabled && todoChannelEnabled,
+      exactAlarmsEnabled,
+    )) {
+      (true, true) => TodoAlarmStatus.ready,
+      (false, false) => TodoAlarmStatus.bothPermissionsDenied,
+      (false, true) => TodoAlarmStatus.notificationsDenied,
+      (true, false) => TodoAlarmStatus.exactAlarmsDenied,
+    };
+  }
+
+  @override
+  Future<bool?> areNotificationsEnabled() async =>
+      _androidNotifications?.areNotificationsEnabled();
+
+  @override
+  Future<bool?> openAppNotificationSettings() async =>
+      _androidNotifications?.openAppNotificationSettings();
+
+  @override
+  Future<bool?> requestNotificationsPermission() async =>
+      _androidNotifications?.requestNotificationsPermission();
+
+  @override
+  Future<bool?> requestExactAlarmsPermission() async =>
+      _androidNotifications?.requestExactAlarmsPermission();
+
+  @override
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests() =>
+      _notifications.pendingNotificationRequests();
+
+  @override
+  Future<List<ActiveNotification>> getActiveNotifications() =>
+      _notifications.getActiveNotifications();
+
+  @override
+  Future<void> cancel({required int id}) => _notifications.cancel(id: id);
+
+  @override
+  Future<void> zonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required NotificationDetails notificationDetails,
+    required AndroidScheduleMode androidScheduleMode,
+    required String payload,
+  }) =>
+      _notifications.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: scheduledDate,
+        notificationDetails: notificationDetails,
+        androidScheduleMode: androidScheduleMode,
+        payload: payload,
+      );
+}
+
 class TodoAlarmService {
-  TodoAlarmService._();
+  TodoAlarmService._({
+    TodoAlarmBackend? backend,
+    DateTime Function()? now,
+  })  : _backend = backend ?? _PluginTodoAlarmBackend(),
+        _now = now ?? DateTime.now;
+
+  @visibleForTesting
+  TodoAlarmService.forTesting({
+    required TodoAlarmBackend backend,
+    DateTime Function()? now,
+  }) : this._(backend: backend, now: now);
 
   static final TodoAlarmService instance = TodoAlarmService._();
   static const _payloadPrefix = 'todoAlarm:';
@@ -25,8 +170,8 @@ class TodoAlarmService {
   static const _notificationIdRange = 1000000000;
 
   final Logger _logger = getLogger('TodoAlarmService');
-  final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
+  final TodoAlarmBackend _backend;
+  final DateTime Function() _now;
 
   bool _initialized = false;
   bool _requestedNotificationPermission = false;
@@ -37,20 +182,17 @@ class TodoAlarmService {
     TodoAlarmActionHandler? onAction,
   }) async {
     if (onAction != null) _actionHandler = onAction;
-    if (!Platform.isAndroid) return null;
+    if (!_backend.isSupported) return null;
     if (!_initialized) {
       tzdata.initializeTimeZones();
-      final initialized = await _notifications.initialize(
-        settings: const InitializationSettings(
-          android: AndroidInitializationSettings('ic_todo_notification'),
-        ),
-        onDidReceiveNotificationResponse: _dispatchAction,
+      final initialized = await _backend.initialize(
+        onAction: _dispatchAction,
       );
       if (initialized != true) {
         throw StateError('Todo notifications failed to initialize');
       }
       _initialized = true;
-      final launch = await _notifications.getNotificationAppLaunchDetails();
+      final launch = await _backend.getNotificationAppLaunchDetails();
       if (launch?.didNotificationLaunchApp == true) {
         _launchResponse = launch?.notificationResponse;
       }
@@ -61,10 +203,10 @@ class TodoAlarmService {
   }
 
   Future<TodoAlarmStatus> status() async {
-    if (!Platform.isAndroid) return TodoAlarmStatus.unsupported;
+    if (!_backend.isSupported) return TodoAlarmStatus.unsupported;
     try {
       await initialize();
-      return await _readStatus();
+      return await _backend.readStatus(channelId: _channelId);
     } catch (error, stackTrace) {
       _logger.warning(
           'Could not read Todo alarm permissions', error, stackTrace);
@@ -73,31 +215,32 @@ class TodoAlarmService {
   }
 
   Future<TodoAlarmStatus> requestPermissions() async {
-    if (!Platform.isAndroid) return TodoAlarmStatus.unsupported;
+    if (!_backend.isSupported) return TodoAlarmStatus.unsupported;
     try {
       await initialize();
-      final android = _androidNotifications;
-      if (android == null) return TodoAlarmStatus.unavailable;
+      var currentStatus = await _backend.readStatus(channelId: _channelId);
+      if (currentStatus == TodoAlarmStatus.unavailable) {
+        return currentStatus;
+      }
 
-      var permissions = await _readPermissions(android);
-      if (!permissions.$1) {
+      if (!_hasNotificationPermission(currentStatus)) {
         final appNotificationsEnabled =
-            await android.areNotificationsEnabled() ?? false;
+            await _backend.areNotificationsEnabled() ?? false;
         if (appNotificationsEnabled || _requestedNotificationPermission) {
-          await android.openAppNotificationSettings();
+          await _backend.openAppNotificationSettings();
         } else {
           _requestedNotificationPermission = true;
-          await android.requestNotificationsPermission();
+          await _backend.requestNotificationsPermission();
         }
-        permissions = await _readPermissions(android);
-        if (!permissions.$1) return _statusFor(permissions);
+        currentStatus = await _backend.readStatus(channelId: _channelId);
+        if (!_hasNotificationPermission(currentStatus)) return currentStatus;
       }
 
-      if (!permissions.$2) {
-        await android.requestExactAlarmsPermission();
-        permissions = await _readPermissions(android);
+      if (!_hasExactAlarmPermission(currentStatus)) {
+        await _backend.requestExactAlarmsPermission();
+        currentStatus = await _backend.readStatus(channelId: _channelId);
       }
-      return _statusFor(permissions);
+      return currentStatus;
     } catch (error, stackTrace) {
       _logger.warning(
           'Could not request Todo alarm permissions', error, stackTrace);
@@ -106,16 +249,17 @@ class TodoAlarmService {
   }
 
   Future<TodoAlarmStatus> synchronize(List<TodoItem> items) async {
-    if (!Platform.isAndroid) return TodoAlarmStatus.unsupported;
+    if (!_backend.isSupported) return TodoAlarmStatus.unsupported;
     try {
       await initialize();
-      final status = await _readStatus();
-      final pending = await _notifications.pendingNotificationRequests();
+      final status = await _backend.readStatus(channelId: _channelId);
+      final pending = await _backend.pendingNotificationRequests();
+      final activeNotifications = await _readActiveChannelNotifications();
       final active = [
         for (final item in items)
           if (!item.done && !item.isTombstoned && item.hasAlarmTime) item,
       ];
-      final now = DateTime.now();
+      final now = _now();
       final scheduledDates = <String, tz.TZDateTime>{};
       for (final item in active) {
         final date = TodoScheduleCalculator.alarmDateTimeFor(
@@ -128,24 +272,65 @@ class TodoAlarmService {
         );
         if (date != null) scheduledDates[item.id] = date;
       }
-      final ids = _notificationIds(active);
+      final allIds = _notificationIds(items);
+      final itemById = <int, TodoItem>{
+        for (final item in items) allIds[item.id]!: item,
+      };
+      final cancelledIds = <int>{};
+      Future<void> cancelOnce(int id) async {
+        if (cancelledIds.add(id)) {
+          await _backend.cancel(id: id);
+        }
+      }
+
       for (final request in pending) {
         final payload = request.payload;
         if (payload?.startsWith(_payloadPrefix) != true) continue;
         final taskId = payload!.substring(_payloadPrefix.length);
         if (status != TodoAlarmStatus.ready ||
             !scheduledDates.containsKey(taskId) ||
-            request.id != ids[taskId]) {
-          await _notifications.cancel(id: request.id);
+            request.id != allIds[taskId]) {
+          await cancelOnce(request.id);
         }
       }
+
+      // Cancel by deterministic id even when the notification already fired
+      // and left pendingNotificationRequests().
+      for (final item in items) {
+        final hasFutureSchedule = scheduledDates.containsKey(item.id);
+        final isActiveSnoozed = !item.done &&
+            !item.isTombstoned &&
+            item.snoozedUntil != null &&
+            hasFutureSchedule;
+        if (item.done ||
+            item.isTombstoned ||
+            !hasFutureSchedule ||
+            isActiveSnoozed) {
+          await cancelOnce(allIds[item.id]!);
+        }
+      }
+
+      for (final notification in activeNotifications) {
+        final id = notification.id;
+        if (id == null) continue;
+        final item = itemById[id];
+        final shouldKeep = item != null &&
+            !item.done &&
+            !item.isTombstoned &&
+            scheduledDates.containsKey(item.id) &&
+            item.snoozedUntil == null;
+        if (!shouldKeep) {
+          await cancelOnce(id);
+        }
+      }
+
       if (status != TodoAlarmStatus.ready) return status;
 
       for (final item in active) {
         final scheduledDate = scheduledDates[item.id];
         if (scheduledDate == null) continue;
-        await _notifications.zonedSchedule(
-          id: ids[item.id]!,
+        await _backend.zonedSchedule(
+          id: allIds[item.id]!,
           title: UserStorage.l10n.todoAlarmNotificationTitle,
           body: UserStorage.l10n.todoAlarmNotificationBody(
             item.text,
@@ -192,6 +377,23 @@ class TodoAlarmService {
     }
   }
 
+  Future<List<ActiveNotification>> _readActiveChannelNotifications() async {
+    try {
+      final active = await _backend.getActiveNotifications();
+      return [
+        for (final notification in active)
+          if (notification.channelId == _channelId) notification,
+      ];
+    } catch (error, stackTrace) {
+      _logger.fine(
+        'Active Todo notifications unavailable',
+        error,
+        stackTrace,
+      );
+      return const [];
+    }
+  }
+
   void _dispatchAction(NotificationResponse response) {
     final handler = _actionHandler;
     if (handler != null) {
@@ -204,41 +406,16 @@ class TodoAlarmService {
     }
   }
 
-  AndroidFlutterLocalNotificationsPlugin? get _androidNotifications =>
-      _notifications.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+  bool _hasNotificationPermission(TodoAlarmStatus status) =>
+      status == TodoAlarmStatus.ready ||
+      status == TodoAlarmStatus.exactAlarmsDenied;
 
-  Future<TodoAlarmStatus> _readStatus() async {
-    final android = _androidNotifications;
-    if (android == null) return TodoAlarmStatus.unavailable;
-    return _statusFor(await _readPermissions(android));
-  }
-
-  Future<(bool, bool)> _readPermissions(
-    AndroidFlutterLocalNotificationsPlugin android,
-  ) async {
-    final appNotificationsEnabled =
-        await android.areNotificationsEnabled() ?? false;
-    final channels = await android.getNotificationChannels();
-    final todoChannel = channels?.where((channel) => channel.id == _channelId);
-    final todoChannelEnabled = todoChannel == null ||
-        todoChannel.isEmpty ||
-        todoChannel.first.importance != Importance.none;
-    return (
-      appNotificationsEnabled && todoChannelEnabled,
-      await android.canScheduleExactNotifications() ?? false,
-    );
-  }
-
-  TodoAlarmStatus _statusFor((bool, bool) permissions) => switch (permissions) {
-        (true, true) => TodoAlarmStatus.ready,
-        (false, false) => TodoAlarmStatus.bothPermissionsDenied,
-        (false, true) => TodoAlarmStatus.notificationsDenied,
-        (true, false) => TodoAlarmStatus.exactAlarmsDenied,
-      };
+  bool _hasExactAlarmPermission(TodoAlarmStatus status) =>
+      status == TodoAlarmStatus.ready ||
+      status == TodoAlarmStatus.notificationsDenied;
 
   Map<String, int> _notificationIds(Iterable<TodoItem> items) {
-    final ids = items.map((item) => item.id).toList()..sort();
+    final ids = items.map((item) => item.id).toSet().toList()..sort();
     final used = <int>{};
     final result = <String, int>{};
     for (final id in ids) {
