@@ -2057,6 +2057,7 @@
   "todoSyncSyncing": "Syncing…",
   "todoSyncError": "Saved on device · sync failed",
   "todoSyncRevoked": "Saved on device · pairing revoked",
+  "todoSyncOffline": "Saved on device · offline",
   "todoSyncPendingChanges": "Saved on device · {count} pending sync",
   "@todoSyncPendingChanges": {"placeholders": {"count": {"type": "int"}}},
   "todoSyncNowButton": "Sync now",

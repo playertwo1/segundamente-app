@@ -4880,6 +4880,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoSyncRevoked => 'Saved on device · pairing revoked';
 
   @override
+  String get todoSyncOffline => 'Saved on device · offline';
+
+  @override
   String todoSyncPendingChanges(int count) {
     return 'Saved on device · $count pending sync';
   }
