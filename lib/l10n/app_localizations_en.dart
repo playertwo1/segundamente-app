@@ -4944,4 +4944,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get todoConflictUseRemote => 'Use from PC';
+
+  @override
+  String get todoTextRequired => 'Enter what needs to be done.';
+
+  @override
+  String get todoFilterEmpty => 'No tasks match this priority.';
+
+  @override
+  String get todoPickDate => 'Choose date';
+
+  @override
+  String get todoPickTime => 'Choose time';
 }

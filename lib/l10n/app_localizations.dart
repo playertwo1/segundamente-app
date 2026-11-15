@@ -8750,6 +8750,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use from PC'**
   String get todoConflictUseRemote;
+
+  /// No description provided for @todoTextRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter what needs to be done.'**
+  String get todoTextRequired;
+
+  /// No description provided for @todoFilterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks match this priority.'**
+  String get todoFilterEmpty;
+
+  /// No description provided for @todoPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose date'**
+  String get todoPickDate;
+
+  /// No description provided for @todoPickTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose time'**
+  String get todoPickTime;
 }
 
 class _AppLocalizationsDelegate
