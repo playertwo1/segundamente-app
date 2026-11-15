@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.49+134 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.50+135 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -43,6 +43,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### Release v1.0.50+135 — Atualizador sem token para repositório público (2026-11-15)
+- Notas completas em [docs/releases/v1.0.50.md](docs/releases/v1.0.50.md).
+- Build e assinatura: `flutter.bat build apk --flavor global --release` gerou `segundamente_global_1.0.50_135.apk` (`127690647` bytes, SHA-256 `c2a9ea2845c4723c0d84446d080041b3707b5deb453e519ee6ec604133e76920`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='135'`, `versionName='1.0.50'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao da `v1.0.49`).
+- Testes e análise pós-bump: `flutter.bat test --no-pub --reporter compact test/data/services/app_update_service_test.dart test/ui/settings/widgets/early_update_settings_card_test.dart test/l10n/` -> `+39: All tests passed!`; `dart.bat analyze` nesses 4 arquivos -> `No issues found!`.
+- Galaxy S25 Ultra e suítes completas (`flutter test` / `flutter analyze` integrais): `NOT_RUN`.
 
 ### Repositório público e atualizador sem token (D-067) (2026-11-15)
 - `gh repo edit playertwo1/segundamente-app --visibility public --accept-visibility-change-consequences -d "Segunda Mente"` -> confirmado `"visibility":"PUBLIC"` e `"isPrivate":false`.
