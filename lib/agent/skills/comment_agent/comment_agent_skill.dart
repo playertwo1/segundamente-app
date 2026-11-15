@@ -16,7 +16,11 @@ class CommentAgentSkill extends Skill {
     required String userId,
     String userName = '',
     String? forcedReplyToId,
+    String? fallbackReplyToId,
     bool forceReply = false,
+    String? agentsMd,
+    String? livingMemory,
+    List<CharacterModel> activeParticipants = const [],
     super.forceActivate,
   }) : super(
           name: "persona_comment",
@@ -25,6 +29,9 @@ class CommentAgentSkill extends Skill {
             character: character,
             userName: userName,
             forceReply: forceReply,
+            agentsMd: agentsMd,
+            livingMemory: livingMemory,
+            activeParticipants: activeParticipants,
           ),
           tools: _buildTools(
             userId: userId,
@@ -32,7 +39,9 @@ class CommentAgentSkill extends Skill {
             factId: factId,
             characterId: character?.id,
             forcedReplyToId: forcedReplyToId,
+            fallbackReplyToId: fallbackReplyToId,
             forceReply: forceReply,
+            activeParticipants: activeParticipants,
           ),
         );
 
@@ -40,17 +49,20 @@ class CommentAgentSkill extends Skill {
     CharacterModel? character,
     required String userName,
     required bool forceReply,
+    String? agentsMd,
+    String? livingMemory,
+    List<CharacterModel> activeParticipants = const [],
   }) {
-    StringBuffer personaBuffer = StringBuffer();
+    final personaBuffer = StringBuffer();
     if (character != null) {
       final charName = character.name;
       String m(String text) =>
           TavernMacro.resolve(text, userName: userName, charName: charName);
-      personaBuffer.writeln("Name: $charName");
+      personaBuffer.writeln("Name: $charName (@${character.id})");
       personaBuffer.writeln("Tags: ${character.tags.join(', ')}");
       personaBuffer.writeln("### Persona: \n${m(character.persona)}");
     }
-    String persona = personaBuffer.toString();
+    final persona = personaBuffer.toString();
 
     final systemPrompt = Prompts.commentSkillSystemPrompt(
       persona,
@@ -88,6 +100,58 @@ class CommentAgentSkill extends Skill {
     );
 
     if (character != null) {
+      final charName = character.name;
+      String m(String text) =>
+          TavernMacro.resolve(text, userName: userName, charName: charName);
+
+      b.writeln('');
+      b.writeln('## Living Group Subagent (AGENTS.md)');
+      b.writeln(
+        'You act as a living AI subagent executing the persona\'s `AGENTS.md` '
+        'definition inside an active collaborative group chat on the user\'s '
+        'notes. React naturally in voice: agree, add a counterpoint, ask a '
+        'sharp follow-up, or reply directly to another persona when relevant.',
+      );
+
+      final trimmedAgentsMd = agentsMd?.trim();
+      if (trimmedAgentsMd != null && trimmedAgentsMd.isNotEmpty) {
+        b.writeln('');
+        b.writeln('<persona_agents_md>');
+        b.writeln(m(trimmedAgentsMd));
+        b.writeln('</persona_agents_md>');
+      }
+
+      final trimmedMemory = livingMemory?.trim();
+      if (trimmedMemory != null && trimmedMemory.isNotEmpty) {
+        b.writeln('');
+        b.writeln('<persona_living_memory>');
+        b.writeln(m(trimmedMemory));
+        b.writeln('</persona_living_memory>');
+      }
+
+      final otherParticipants = activeParticipants
+          .where((p) => p.id != character.id)
+          .toList(growable: false);
+      if (otherParticipants.isNotEmpty) {
+        b.writeln('');
+        b.writeln(
+          'Active group participants (you may mention with `@id` or reply to '
+          'one of their comments by `reply_to_id` or `[REPLY:comment_id]`): '
+          '${otherParticipants.map((p) => '${p.name} (@${p.id})').join(', ')}',
+        );
+      }
+
+      b.writeln('');
+      b.writeln(
+        'Group coordination hints: When replying to a specific comment from '
+        'another persona or user inside `<existing_comments>`, set '
+        '`reply_to_id` (or prefix with `[REPLY:comment_id]`) and/or mention '
+        '`@id`. If a durable user preference or learning emerges, you can '
+        'record it via `Remember` or end on a new line with '
+        '`[MEMORY: objective 1-sentence note]` (it is persisted to `MEMORY.md` '
+        'and stripped from the visible comment).',
+      );
+
       b.writeln('');
       b.writeln('## Character Continuity');
       b.writeln(
@@ -136,7 +200,9 @@ class CommentAgentSkill extends Skill {
     required String factId,
     String? characterId,
     String? forcedReplyToId,
+    String? fallbackReplyToId,
     required bool forceReply,
+    List<CharacterModel> activeParticipants = const [],
   }) {
     if (characterId != null) {
       final commentFactory = CommentToolFactory(
@@ -144,6 +210,8 @@ class CommentAgentSkill extends Skill {
         cardId: factId,
         characterId: characterId,
         forcedReplyToId: forcedReplyToId,
+        fallbackReplyToId: fallbackReplyToId,
+        activeCharacters: activeParticipants,
       );
       return [
         ...CharacterWorkspaceMemoryTools(

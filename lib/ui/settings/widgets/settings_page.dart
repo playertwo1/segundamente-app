@@ -760,10 +760,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 12),
                   Slider(
-                    value: _commentSettings.maxCommentCharacters.toDouble(),
+                    value: _commentSettings.maxCommentCharacters
+                        .clamp(1, CommentSettings.maxCommentCharactersLimit)
+                        .toDouble(),
                     min: 1,
-                    max: 5,
-                    divisions: 4,
+                    max: CommentSettings.maxCommentCharactersLimit.toDouble(),
+                    divisions: CommentSettings.maxCommentCharactersLimit - 1,
                     activeColor: AppColors.primary,
                     onChanged: (v) => _updateMaxCommentCharacters(v.round()),
                   ),

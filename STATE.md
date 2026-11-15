@@ -44,6 +44,22 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Personas vivas em chat em grupo (`AGENTS.md` + `MEMORY.md`, até 15 personas, onda cruzada) (2026-11-15)
+- **Limites e seleção (`CommentSettingsService`, `CharacterSelectionService`, Settings UI & l10n):**
+  - `lib/data/services/comment_settings_service.dart`, `lib/ui/settings/widgets/settings_page.dart`, `lib/l10n/{app_en.arb,app_pt.arb,app_localizations_en.dart,app_localizations_pt.dart}`: teto e padrão elevados para `15` personas (`_version = 3`, migrando legados v1 `1` e v2 padrão `2` para `15`, preservando escolhas explícitas em `1..15`, slider `1..15`).
+  - `lib/utils/mention_parser.dart`: adicionados `foldPtAscii`, `indexOfFoldedStandaloneMention` e `extractAllMentions<T>` com ordenação por ocorrência, folding de acentos/caixa, `@primeiro_nome` único (>= 3 caracteres) e filtro de e-mails.
+  - `lib/data/services/character_selection_service.dart`: `selectMultipleCharacters` (padrão `15`, `excludeCharacters`), `selectReplyCharacters` (menções múltiplas com `forceReply: true`, resposta direta via `reply_to_id`, comentários abertos do usuário sempre com pelo menos 1 persona respondendo) e `selectGroupFollowupCharacters`.
+- **Personas vivas (`AGENTS.md` + `MEMORY.md`) e ferramentas de grupo:**
+  - `lib/data/services/file_system_service.dart` e `lib/data/services/character_workspace_service.dart`: materialização de `AGENTS.md` (sem sobrescrever edições existentes), `loadPersonaLivingDocs` e `appendLivingMemory` (deduplicação com folding pt-BR e limite de 30 itens em `MEMORY.md`).
+  - `lib/agent/skills/comment_agent/{comment_agent_skill.dart,tools/comment_tools.dart}`, `lib/agent/comment_agent/comment_agent.dart` e `lib/data/repositories/post_comment.dart`: injeção de `<persona_agents_md>`, `<persona_living_memory>`, participantes ativos e fio completo formatado (`formatGroupCommentsContext`), extração e limpeza de `[REPLY:id]` / `[MEMORY: ...]` (`parseGroupCommentOutput`), resolução de `replyToId` por `@menção` e emissão ao vivo via `EventBusService`.
+- **Onda inicial + onda cruzada entre personas:**
+  - `lib/data/services/task_handlers/comment_agent_handler.dart`: suporte a múltiplas menções e até 15 personas na onda inicial + `runCrossPersonaFollowupWave` (despertando personas `@mencionadas` por outras personas e convites do coordenador dentro de `maxCrossTalkRepliesPerWave = 5` e `maxGroupPersonaTurnsPerUserMessage = 15`), mantendo `maxPersonaTurnsPerUserMessage = 4` e `runPersonaDebate`.
+- **Testes e análise:**
+  - `python3 scripts/check_arb_key_parity.py` -> `ARB key parity OK across 1 locales.` (exit `0`).
+  - `flutter.bat test --no-pub --reporter compact test/data/services/comment_settings_service_test.dart test/data/services/task_handlers/comment_reply_target_test.dart test/data/services/task_handlers/persona_debate_limit_test.dart test/data/services/character_workspace_service_test.dart test/agent/comment_tool_factory_test.dart test/agent/comment_agent_policy_test.dart test/data/services/character_service_default_seed_test.dart test/ui/settings/widgets/settings_page_test.dart test/agent/agent_tool_error_result_test.dart test/l10n/` -> `+110: All tests passed!` (exit `0`).
+  - `dart.bat analyze` nos 17 arquivos `lib/` e `test/` tocados -> `1 issue found` (`info - lib\data\services\file_system_service.dart:288:7` pré-existente fora do diff; zero erros/warnings e zero issues nas linhas adicionadas/editadas; exit `0`).
+- **Não executado nesta rodada:** validação em aparelho físico (Galaxy S25 Ultra) e suítes integrais (`flutter test` / `flutter analyze` em todo o repositório) seguem `NOT_RUN`.
+
 ### Release v1.0.50+135 — Atualizador sem token para repositório público (2026-11-15)
 - Notas completas em [docs/releases/v1.0.50.md](docs/releases/v1.0.50.md).
 - Build e assinatura: `flutter.bat build apk --flavor global --release` gerou `segundamente_global_1.0.50_135.apk` (`127690647` bytes, SHA-256 `c2a9ea2845c4723c0d84446d080041b3707b5deb453e519ee6ec604133e76920`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='135'`, `versionName='1.0.50'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao da `v1.0.49`).

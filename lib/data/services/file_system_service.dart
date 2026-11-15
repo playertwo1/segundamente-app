@@ -1448,6 +1448,20 @@ class FileSystemService {
     );
   }
 
+  String getCharacterAgentsMdPath(String userId, String characterId) {
+    return path.join(
+      getCharacterWorkspacePath(userId, characterId),
+      'AGENTS.md',
+    );
+  }
+
+  String getCharacterMemoryMdPath(String userId, String characterId) {
+    return path.join(
+      getCharacterWorkspacePath(userId, characterId),
+      'MEMORY.md',
+    );
+  }
+
   String getCharacterWorldPath(String userId, String characterId) {
     return path.join(
       getCharacterWorkspacePath(userId, characterId),

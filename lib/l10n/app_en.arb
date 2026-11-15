@@ -1253,7 +1253,7 @@
   "enableCharacterCommentTitle": "Character auto-comment",
   "enableCharacterCommentDesc": "Characters automatically comment on new records.",
   "maxCommentCharactersTitle": "Max commenting characters",
-  "maxCommentCharactersDesc": "How many characters can comment on each record. By default, up to two voices can respond when they add something useful.",
+  "maxCommentCharactersDesc": "How many characters can participate in the live group discussion on each record. Defaults to up to 15 relevant voices.",
   "replyTo": "Reply to {name}",
   "@replyTo": {
     "placeholders": {
