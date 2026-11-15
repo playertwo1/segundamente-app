@@ -1,0 +1,23 @@
+{
+  "_about": "Subset of synthetic vectors from coucou/android/relay/test-vectors.json and test-vectors-mailbox.json for Lumen HKDF/key derivation tests.",
+  "version": 1,
+  "label": "coucou-relay/v1",
+  "rfc5869_a1": {
+    "ikm": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+    "salt": "000102030405060708090a0b0c",
+    "info": "f0f1f2f3f4f5f6f7f8f9",
+    "length": 42,
+    "okm": "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
+  },
+  "inputs": {
+    "key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "roomBytes": "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+    "room": "oKGio6SlpqeoqaqrrK2urw"
+  },
+  "derived": {
+    "kAuth": "b90415a0b01277ef3c2a977ab590c7742a20e417594852389803878fd3a209cb",
+    "kJoin": "546f9013ca6f8a7c824bd86aba705f9a56daa753a1307a6970ad1e0ceca671f2",
+    "joinVerifier": "b7eb4bc0a777b749e1203a08081f45860917461f8a8f19f9b00190cda9027b42",
+    "kMailbox": "494f666da0bde55349f11fd8933c49d714a9c61d5734f4c5f6f5d99af8e6fc63"
+  }
+}

@@ -4820,4 +4820,81 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get floatingListenFailed =>
       'Could not listen right now. Use the keyboard.';
+
+  @override
+  String get lumenPairingTitle => 'Lumen Pairing';
+
+  @override
+  String get lumenPairingSubtitle =>
+      'Link your phone to Lumen on desktop via QR Code';
+
+  @override
+  String get lumenPairingStatusUnpaired => 'Not paired';
+
+  @override
+  String lumenPairingStatusPaired(String desktopName) {
+    return 'Paired with $desktopName';
+  }
+
+  @override
+  String get lumenPairingStatusHintUnpaired =>
+      'Scan the QR Code shown in Settings → Android phone in Lumen or paste the pairing link.';
+
+  @override
+  String get lumenPairingRelayLabel => 'Relay';
+
+  @override
+  String get lumenPairingLanHostLabel => 'Saved LAN address';
+
+  @override
+  String get lumenPairingDeviceIdLabel => 'This device ID';
+
+  @override
+  String get lumenPairingScanQr => 'Scan QR Code';
+
+  @override
+  String get lumenPairingPasteLink => 'Paste pairing link';
+
+  @override
+  String get lumenPairingRepair => 'Pair again';
+
+  @override
+  String get lumenPairingUnlink => 'Unlink';
+
+  @override
+  String get lumenPairingPasteDialogTitle => 'Paste pairing link';
+
+  @override
+  String get lumenPairingPasteHint => 'coucou://pair?v=1&...';
+
+  @override
+  String get lumenPairingConfirm => 'Pair';
+
+  @override
+  String get lumenPairingUnlinkConfirmTitle => 'Unlink from Lumen?';
+
+  @override
+  String get lumenPairingUnlinkConfirmBody =>
+      'The current mailbox will be revoked on the relay and this device will stop syncing until a new QR Code is scanned.';
+
+  @override
+  String get lumenPairingPairedSuccess => 'Successfully paired with Lumen.';
+
+  @override
+  String get lumenPairingUnlinkedSuccess =>
+      'Device unlinked and mailbox revoked.';
+
+  @override
+  String get lumenPairingUnlinkedLocalOnlyWarning =>
+      'Unlinked on this device. Could not reach the relay right now; use \'Pair again\' on your PC if needed.';
+
+  @override
+  String get lumenPairingInvalidQrError => 'Invalid pairing code or link.';
+
+  @override
+  String get lumenPairingScannerTitle =>
+      'Point the camera at the Lumen QR Code';
+
+  @override
+  String get lumenPairingLoading => 'Loading pairing status...';
 }

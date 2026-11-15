@@ -109,6 +109,8 @@ import 'package:memex/data/services/avatar_media_service.dart';
 import 'package:memex/data/services/hydrated_card_cache.dart';
 import 'package:memex/agent/state_util.dart';
 import 'package:memex/agent/skills/knowledge_insight/native_widgets.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:memex/data/services/lumen_pairing_service.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/domain/models/insight_trigger.dart';
 import 'package:memex/domain/models/system_event.dart';
@@ -125,6 +127,12 @@ class MemexRouter {
   final CharacterEditorRepository _characterEditorRepository =
       CharacterEditorRepository();
   final TodoRepository _todoRepository = TodoRepository();
+  LumenPairingService _lumenPairingService = LumenPairingService();
+
+  @visibleForTesting
+  void setLumenPairingServiceForTesting(LumenPairingService service) {
+    _lumenPairingService = service;
+  }
 
   Future<void>? _initFuture;
   Future<void>? _fullInitFuture;
@@ -2483,4 +2491,17 @@ class MemexRouter {
     if (userId == null) return;
     await CardDetailNotifier.instance.dismissOnViewed(userId, factId);
   }
+
+  // ---------------------------------------------------------------------------
+  // Lumen pairing
+  // ---------------------------------------------------------------------------
+
+  Future<Result<LumenPairingStatus>> getLumenPairingStatus() =>
+      runResult(_lumenPairingService.loadStatus);
+
+  Future<Result<LumenPairingStatus>> pairWithLumen(String rawUri) =>
+      runResult(() => _lumenPairingService.pairFromUri(rawUri));
+
+  Future<Result<LumenUnlinkResult>> unlinkLumen() =>
+      runResult(_lumenPairingService.unlink);
 }

@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; F12-02 READY (implantação do Worker pelo dono) |
+| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; F12-02 READY (implantação do Worker pelo dono); F12-03 IN_PROGRESS (implementação e testes sintéticos em `feat/f1203-pareamento-lumen`, L6.2 na `main` local do Lumen em `3ef24d1`) |
 | F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
@@ -24,7 +24,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Fechar a F12-01 (contrato v1, teste Dart aqui, vetores da caixa de correio e teste Rust no fork) e depois L6.2 → F12-03 → L6.3 → F12-04 → F12-05.
+5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Implantar o Worker (passo 4), mesclar e validar a F12-03 no S25 contra o Lumen, e seguir no código pela trilha L6.3 (passo 7) → F12-04 (passo 8) → F12-05 (passo 9).
 
 ## Pendências do dono
 
@@ -43,6 +43,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F12-03 (e L6.2 no Lumen) — pareamento QR e revogação, implementação (2026-11-14)
+- **Lumen (`playertwo1/coucou`, L6.2 mesclado localmente na `main`, commit `3ef24d1`, sem push):** QR com `k_mailbox`, `http_base_url` e `shown: true`; revogação em `POST /v1/mailbox/<room>/revoke` ao gerar novo pareamento. Validação no fork: `cargo test --lib phone_link` (206 aprovados, 2 ignorados), `npx tsc --noEmit`, `phone-relay.test.mjs` (4 aprovados) e `android/relay` `npm test` (26 + 37 aprovados).
+- **Segunda Mente (`feat/f1203-pareamento-lumen`):** `LumenPairing` (`lib/domain/models/lumen_pairing.dart`), HKDF `LumenRelayCrypto` (`lib/data/services/lumen_relay_crypto.dart`) contra vetores em `test/fixtures/lumen_relay_test_vectors.json`, `LumenPairingService` (`lib/data/services/lumen_pairing_service.dart`, segredos e `device_id` só em `SecretStorage`, revogação best-effort com timeout de 5 s), `MemexRouter`, `LumenPairingViewModel`, `LumenPairingPage` (`mobile_scanner` + colar link, sem expor `key`/`access`/`token`), entrada em `SettingsPage` e `SettingsRegistry`, e 23 chaves + metadado em `app_pt.arb` e `app_en.arb`.
+- **Comandos e saídas:**
+  - `python3 scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+  - `flutter test --no-pub --reporter compact test/domain/models/lumen_pairing_test.dart test/data/services/lumen_relay_crypto_test.dart test/data/services/lumen_pairing_service_test.dart test/ui/lumen/lumen_pairing_page_test.dart test/l10n/arb_key_parity_test.dart test/l10n/locale_lookup_test.dart test/l10n/hardcoded_ui_strings_test.dart test/ui/settings/widgets/settings_page_test.dart test/data/services/settings_registry_todo_test.dart test/ui/lazy_secondary_loads_test.dart` → `+57: All tests passed!`
+  - `flutter analyze --no-pub` → `159 issues found.` (mesmo número de issues pré-existentes da linha de base; sem erros novos nos arquivos da F12-03).
+- **`NOT_RUN`:** leitura real de QR pela câmera e `SecretStorage` no Galaxy S25 Ultra, pareamento/revogação reais contra o Worker Cloudflare (passo 4) e suíte completa `flutter test`.
 
 ### F12-01 — contrato de sync v1 (2026-11-14)
 - Decisões: questionário `docs/questionario/2026-11-14-sync-contrato-e-roadmaps.md` (D1–D13) e D-066 (abre a F12 pela trilha única da ponte, `docs/lumen/PONTE.md`).

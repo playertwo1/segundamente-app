@@ -4863,4 +4863,81 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get floatingListenFailed => 'Não deu para ouvir agora. Use o teclado.';
+
+  @override
+  String get lumenPairingTitle => 'Pareamento com o Lumen';
+
+  @override
+  String get lumenPairingSubtitle =>
+      'Vincule o celular ao Lumen no computador via QR Code';
+
+  @override
+  String get lumenPairingStatusUnpaired => 'Não pareado';
+
+  @override
+  String lumenPairingStatusPaired(String desktopName) {
+    return 'Pareado com $desktopName';
+  }
+
+  @override
+  String get lumenPairingStatusHintUnpaired =>
+      'Escaneie o QR Code exibido em Configurações → Celular Android no Lumen ou cole o link de pareamento.';
+
+  @override
+  String get lumenPairingRelayLabel => 'Relay';
+
+  @override
+  String get lumenPairingLanHostLabel => 'Endereço LAN salvo';
+
+  @override
+  String get lumenPairingDeviceIdLabel => 'ID deste aparelho';
+
+  @override
+  String get lumenPairingScanQr => 'Escanear QR Code';
+
+  @override
+  String get lumenPairingPasteLink => 'Colar link de pareamento';
+
+  @override
+  String get lumenPairingRepair => 'Parear de novo';
+
+  @override
+  String get lumenPairingUnlink => 'Desvincular';
+
+  @override
+  String get lumenPairingPasteDialogTitle => 'Colar link de pareamento';
+
+  @override
+  String get lumenPairingPasteHint => 'coucou://pair?v=1&...';
+
+  @override
+  String get lumenPairingConfirm => 'Vincular';
+
+  @override
+  String get lumenPairingUnlinkConfirmTitle => 'Desvincular do Lumen?';
+
+  @override
+  String get lumenPairingUnlinkConfirmBody =>
+      'A caixa de correio atual será revogada no relay e este aparelho deixará de sincronizar até ler um novo QR Code.';
+
+  @override
+  String get lumenPairingPairedSuccess => 'Pareado com o Lumen com sucesso.';
+
+  @override
+  String get lumenPairingUnlinkedSuccess =>
+      'Aparelho desvinculado e caixa de correio revogada.';
+
+  @override
+  String get lumenPairingUnlinkedLocalOnlyWarning =>
+      'Desvinculado neste aparelho. Não foi possível contatar o relay agora; use \'Parear de novo\' no PC se necessário.';
+
+  @override
+  String get lumenPairingInvalidQrError =>
+      'Código ou link de pareamento inválido.';
+
+  @override
+  String get lumenPairingScannerTitle => 'Aponte a câmera para o QR do Lumen';
+
+  @override
+  String get lumenPairingLoading => 'Carregando estado do pareamento...';
 }
