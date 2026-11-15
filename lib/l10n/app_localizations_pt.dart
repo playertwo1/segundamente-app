@@ -3143,45 +3143,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get earlyUpdateSettingsDesc =>
-      'Procure uma versão Android mais nova no repositório privado do GitHub e baixe o APK correspondente.';
+      'Procure uma versão Android mais nova no repositório público do GitHub e baixe o APK correspondente.';
 
   @override
   String get earlyUpdateUnsupported =>
       'Atualizações estão disponíveis apenas nas builds Android Stable e Early.';
-
-  @override
-  String get earlyUpdateGitHubTokenTitle => 'Token de leitura do GitHub';
-
-  @override
-  String get earlyUpdateGitHubTokenDesc =>
-      'Use um token refinado limitado somente a este repositório, com Contents: read. Ele fica protegido neste aparelho.';
-
-  @override
-  String get earlyUpdateGitHubTokenHint => 'Token de acesso pessoal refinado';
-
-  @override
-  String get earlyUpdateGitHubTokenSave => 'Salvar token';
-
-  @override
-  String get earlyUpdateGitHubTokenReplace => 'Trocar token';
-
-  @override
-  String get earlyUpdateGitHubTokenRemove => 'Remover token';
-
-  @override
-  String get earlyUpdateGitHubTokenConfigured =>
-      'Um token de leitura está salvo neste aparelho.';
-
-  @override
-  String get earlyUpdateGitHubTokenRequired =>
-      'Adicione um token de leitura do GitHub para consultar releases privadas.';
-
-  @override
-  String get earlyUpdateGitHubTokenSaved =>
-      'Token do GitHub salvo com segurança neste aparelho.';
-
-  @override
-  String get earlyUpdateGitHubTokenRemoved => 'Token do GitHub removido.';
 
   @override
   String get earlyUpdateAutoCheckTitle =>
