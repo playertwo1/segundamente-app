@@ -12,7 +12,7 @@
 |---|---|---:|---|---|---|
 | F12-01 | Contrato de sync (entidades, eventos, versões, conflitos) em `docs/lumen/CONTRATO-SYNC.md`, lido pelos dois repositórios | P0 | F11-01 | IN_PROGRESS | Revisado pelo dono; exemplos fictícios validados por teste nos dois lados |
 | F12-02 | Caixa de correio persistente no relay (Worker + Durable Objects/SQLite), no repositório do fork | P0 | F12-01 | READY (código e testes sintéticos na L6.1; falta a implantação e a medição na conta do dono) | Mensagem enviada com o outro lado desligado é entregue uma vez ao reconectar; uso medido contra o plano Free |
-| F12-03 | Pareamento Segunda Mente ↔ Lumen por QR (protocolo do Coucou), com revogação | P0 | F12-01 | IN_PROGRESS (branch `feat/f1203-pareamento-lumen` com testes sintéticos; falta merge na `main` e validação real no S25 + Worker) | Pareamento no S25 e no notebook; aparelho revogado não recebe nada novo (T18) |
+| F12-03 | Pareamento Segunda Mente ↔ Lumen por QR (protocolo do Coucou), com revogação | P0 | F12-01 | IN_PROGRESS (código e testes sintéticos integrados na `main` local, `b25d0226`; falta validação real no S25 + Worker) | Pareamento no S25 e no notebook; aparelho revogado não recebe nada novo (T18) |
 | F12-04 | Outbox e aplicação idempotente no Android, com status de sync visível; consulta ao abrir e a cada 1 hora (D-066) | P0 | F12-02, F12-03 | BLOCKED | Replay não duplica; exclusão offline não ressuscita (T06, T08, AC-02) |
 | F12-05 | Avisos nos dois aparelhos: concluir/adiar num cancela no outro | P0 | F12-04, F11-04 | BLOCKED | AC-08 e T05 nos dois aparelhos |
 | F12-06 | Personas, comentários e preferências sincronizados sem duplicar comentário | P0 | F12-04 | BLOCKED | AC-04, T10, T20 |
