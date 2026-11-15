@@ -349,6 +349,7 @@ class _TodoScreenState extends State<TodoScreen>
       TodoSyncBadgeState.syncing => l10n.todoSyncSyncing,
       TodoSyncBadgeState.revoked => l10n.todoSyncRevoked,
       TodoSyncBadgeState.error => l10n.todoSyncError,
+      TodoSyncBadgeState.offline => l10n.todoSyncOffline,
       TodoSyncBadgeState.waitingPc => () {
           final pending = status.pendingOutbox + (status.pendingPc ?? 0);
           return pending > 0
@@ -372,6 +373,7 @@ class _TodoScreenState extends State<TodoScreen>
       TodoSyncBadgeState.syncing => AppColors.primary,
       TodoSyncBadgeState.waitingPc ||
       TodoSyncBadgeState.savedOnDevice ||
+      TodoSyncBadgeState.offline ||
       TodoSyncBadgeState.localOnly =>
         AppColors.textSecondary,
     };
@@ -379,6 +381,7 @@ class _TodoScreenState extends State<TodoScreen>
       TodoSyncBadgeState.synced => Icons.cloud_done_outlined,
       TodoSyncBadgeState.revoked => Icons.link_off,
       TodoSyncBadgeState.error => Icons.sync_problem_outlined,
+      TodoSyncBadgeState.offline => Icons.cloud_off_outlined,
       TodoSyncBadgeState.syncing => Icons.sync,
       TodoSyncBadgeState.waitingPc ||
       TodoSyncBadgeState.savedOnDevice ||
@@ -934,6 +937,7 @@ bool _shouldShowSyncStatus(TodoSyncStatus status) =>
     status.pendingOutbox > 0 ||
     status.state == TodoSyncBadgeState.syncing ||
     status.state == TodoSyncBadgeState.error ||
+    status.state == TodoSyncBadgeState.offline ||
     status.state == TodoSyncBadgeState.revoked ||
     status.conflicts.isNotEmpty;
 

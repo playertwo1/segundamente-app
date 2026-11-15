@@ -64,6 +64,7 @@ enum TodoSyncBadgeState {
   synced,
   revoked,
   error,
+  offline,
 }
 
 /// Wire envelope matching `docs/lumen/CONTRATO-SYNC.md` (contract v1).
@@ -569,6 +570,22 @@ class TodoSyncService {
   Future<TodoSyncStatus> syncNow({
     String? userId,
     String reason = 'manual',
+    FileSystemService? files,
+  }) async {
+    TodoSyncStatus? status;
+    try {
+      status = await _runSyncCycle(userId: userId, files: files);
+      return status;
+    } finally {
+      _logger.info(
+        'Todo sync ($reason) -> ${status?.state.name ?? 'failed'}, '
+        'outbox=${status?.pendingOutbox}, error=${status?.lastError}',
+      );
+    }
+  }
+
+  Future<TodoSyncStatus> _runSyncCycle({
+    String? userId,
     FileSystemService? files,
   }) =>
       _syncRunLock.synchronized(() async {
@@ -1669,12 +1686,14 @@ class TodoSyncService {
         await _writeStateAtomic(filePath, state);
       });
 
-  Future<void> _recordError(String filePath, String code) =>
-      _withStateLock(filePath, () async {
-        final state = await _readOrInitState(filePath);
-        state.lastError = code;
-        await _writeStateAtomic(filePath, state);
-      });
+  Future<void> _recordError(String filePath, String code) {
+    _logger.warning('Todo sync error: $code');
+    return _withStateLock(filePath, () async {
+      final state = await _readOrInitState(filePath);
+      state.lastError = code;
+      await _writeStateAtomic(filePath, state);
+    });
+  }
 
   TodoSyncStatus _buildStatus({
     required _SyncFileState state,
@@ -1695,6 +1714,9 @@ class TodoSyncService {
       badgeState = TodoSyncBadgeState.localOnly;
     } else if (state.revoked) {
       badgeState = TodoSyncBadgeState.revoked;
+    } else if (state.lastError == 'http_0') {
+      // Status 0 is a network failure or timeout (see LumenMailboxHttpException).
+      badgeState = TodoSyncBadgeState.offline;
     } else if (state.lastError != null && state.lastError!.isNotEmpty) {
       badgeState = TodoSyncBadgeState.error;
     } else if (pendingOutbox > 0 || unsyncedIds.isNotEmpty || pendingPc == null) {
