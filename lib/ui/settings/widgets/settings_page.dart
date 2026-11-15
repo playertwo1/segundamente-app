@@ -9,6 +9,8 @@ import 'package:memex/ui/settings/widgets/backup_restore_page.dart';
 import 'package:memex/ui/settings/widgets/data_import_page.dart';
 import 'package:memex/ui/settings/widgets/data_storage_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
+import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
+import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
 import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_shortcut_settings_page.dart';
 import 'package:memex/ui/settings/widgets/early_update_settings_card.dart';
@@ -929,6 +931,66 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(height: 2),
                           Text(
                             UserStorage.l10n.dataImportSettingsDescription,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textTertiary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.divider),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const ValueKey('lumen-pairing-settings'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LumenPairingPage(
+                    viewModel: LumenPairingViewModel(
+                      router: MemexRouter(),
+                    ),
+                  ),
+                ),
+              ),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.divider)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.devices_outlined,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            UserStorage.l10n.lumenPairingTitle,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            UserStorage.l10n.lumenPairingSubtitle,
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textTertiary,

@@ -8528,6 +8528,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not listen right now. Use the keyboard.'**
   String get floatingListenFailed;
+
+  /// No description provided for @lumenPairingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lumen Pairing'**
+  String get lumenPairingTitle;
+
+  /// No description provided for @lumenPairingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link your phone to Lumen on desktop via QR Code'**
+  String get lumenPairingSubtitle;
+
+  /// No description provided for @lumenPairingStatusUnpaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paired'**
+  String get lumenPairingStatusUnpaired;
+
+  /// No description provided for @lumenPairingStatusPaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Paired with {desktopName}'**
+  String lumenPairingStatusPaired(String desktopName);
+
+  /// No description provided for @lumenPairingStatusHintUnpaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the QR Code shown in Settings → Android phone in Lumen or paste the pairing link.'**
+  String get lumenPairingStatusHintUnpaired;
+
+  /// No description provided for @lumenPairingRelayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Relay'**
+  String get lumenPairingRelayLabel;
+
+  /// No description provided for @lumenPairingLanHostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved LAN address'**
+  String get lumenPairingLanHostLabel;
+
+  /// No description provided for @lumenPairingDeviceIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'This device ID'**
+  String get lumenPairingDeviceIdLabel;
+
+  /// No description provided for @lumenPairingScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR Code'**
+  String get lumenPairingScanQr;
+
+  /// No description provided for @lumenPairingPasteLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste pairing link'**
+  String get lumenPairingPasteLink;
+
+  /// No description provided for @lumenPairingRepair.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair again'**
+  String get lumenPairingRepair;
+
+  /// No description provided for @lumenPairingUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get lumenPairingUnlink;
+
+  /// No description provided for @lumenPairingPasteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste pairing link'**
+  String get lumenPairingPasteDialogTitle;
+
+  /// No description provided for @lumenPairingPasteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'coucou://pair?v=1&...'**
+  String get lumenPairingPasteHint;
+
+  /// No description provided for @lumenPairingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair'**
+  String get lumenPairingConfirm;
+
+  /// No description provided for @lumenPairingUnlinkConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink from Lumen?'**
+  String get lumenPairingUnlinkConfirmTitle;
+
+  /// No description provided for @lumenPairingUnlinkConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The current mailbox will be revoked on the relay and this device will stop syncing until a new QR Code is scanned.'**
+  String get lumenPairingUnlinkConfirmBody;
+
+  /// No description provided for @lumenPairingPairedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully paired with Lumen.'**
+  String get lumenPairingPairedSuccess;
+
+  /// No description provided for @lumenPairingUnlinkedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Device unlinked and mailbox revoked.'**
+  String get lumenPairingUnlinkedSuccess;
+
+  /// No description provided for @lumenPairingUnlinkedLocalOnlyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlinked on this device. Could not reach the relay right now; use \'Pair again\' on your PC if needed.'**
+  String get lumenPairingUnlinkedLocalOnlyWarning;
+
+  /// No description provided for @lumenPairingInvalidQrError.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid pairing code or link.'**
+  String get lumenPairingInvalidQrError;
+
+  /// No description provided for @lumenPairingScannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the Lumen QR Code'**
+  String get lumenPairingScannerTitle;
+
+  /// No description provided for @lumenPairingLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading pairing status...'**
+  String get lumenPairingLoading;
 }
 
 class _AppLocalizationsDelegate

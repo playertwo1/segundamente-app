@@ -14,9 +14,9 @@ Até o checkpoint da ponte, esta é a única lista de trabalho dos dois reposit�
 | 2 | Lumen | Vetores sintéticos de `coucou-mailbox/v1`, teste dos exemplos de tarefa no Rust, spec L6 corrigida | L6 / F12-01 | Feito na branch `feat/l6-contrato-v1` do fork (commit `6e4d009`), sem merge |
 | 3 | SM | Teste Dart dos exemplos de tarefa do contrato | F12-01 | Feito (`test/domain/models/todo_item_sync_contract_test.dart`) |
 | 4 | Dono | Implantar o Worker com a caixa de correio na conta Cloudflare e medir o uso | F12-02 / L6.1 | READY |
-| 5 | Lumen | QR de pareamento com os dados do relay; revogação | L6.2 | BLOCKED (passo 1) |
-| 6 | SM | Ler o QR, guardar os segredos com segurança, revogar | F12-03 | BLOCKED (passo 5) |
-| 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | BLOCKED (passos 2 e 5) |
+| 5 | Lumen | QR de pareamento com os dados do relay; revogação | L6.2 | Feito (L6.2 na `main` local do fork, commit `3ef24d1`; sem push) |
+| 6 | SM | Ler o QR, guardar os segredos com segurança, revogar | F12-03 | IN_PROGRESS (implementação e testes sintéticos na branch `feat/f1203-pareamento-lumen`; falta merge na `main` e validação real no S25 + Worker) |
+| 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | READY (passos 2 e 5 concluídos localmente) |
 | 8 | SM | Cifra contra os vetores; outbox e aplicação idempotente das tarefas; consulta ao abrir e a cada 1 hora; status visível | F12-04 | BLOCKED (passos 4, 6 e 7) |
 | 9 | SM + Lumen | Avisos cancelados no outro aparelho; checkpoint da ponte | F12-05 / L6.4 (tarefas) | BLOCKED (passo 8) |
 
