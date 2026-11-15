@@ -20,7 +20,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Próxima ação
 
-1. **Validar F15-02 a F15-07 no S25 com um APK integrado** (branch `feat/f15-integracao`, que junta F15-05 com F15-03 e F15-04, F15-06 e F15-07). Depois, o dono escolhe a forma da minicápsula pela comparação da F15-07 (D-071). Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
+1. **Validar F15-02 a F15-07 no S25 com um APK da `main`** (a F15 inteira já está na `main` desde `91feef7e`, mais as correções da auditoria; o S25 estava fora do `adb` em 2026-11-15). No S25, conferir também os pontos da auditoria que só o aparelho decide (`docs/reviews/F15.md`): atalhos Conversar e Falar com a folha não exportada (R04), widget atualizado depois de um sync com o app fechado (R02), concluir pelo widget a frio (R01) e o motor compartilhado sem tela (R05). O dono decide o texto do limite de Falar (R03). Depois, o dono escolhe a forma da minicápsula pela comparação da F15-07 (D-071). Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no Lumen:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/lumen`.
@@ -43,8 +43,16 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 ## Linha de base de qualidade
 
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
+- `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### F15 integrada na `main` e auditoria (2026-11-15)
+- A `main` avançou por fast-forward para `feat/f15-integracao` (`91feef7e`). Worktrees `sm-f1503`, `sm-f1505`, `sm-f1506`, `sm-f1507` e `sm-f15int` e as seis branches da F15 removidas (`git branch -d`: todas já integradas).
+- Verificação numa worktree limpa em `91feef7e`: `flutter pub get --enforce-lockfile` → `Got dependencies!`; `flutter test --no-pub --reporter compact` → `+1972 ~4: All other tests passed!`; `flutter analyze --no-pub` → `170 issues found` (11 errors só em `tools/f610_probe`); `python3 scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`; `flutter build apk --flavor globalDev --debug --no-pub` → `Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (220.332.444 bytes).
+- Auditoria em [docs/reviews/F15.md](docs/reviews/F15.md): `AUDIT RESULT: FAIL` (portão depende do S25). Corrigidos na branch `fix/f15-auditoria`: R01 (folha flutuante a frio espera o `MemexRouter` inicializar), R02 (canal do widget passa para o `AgentBackgroundPlugin`, registrado em todo motor, inclusive o do WorkManager), R04 (`FloatingChatActivity` não exportada), R06 (request code da linha de tarefa pelo id) e R10 (log só com o tamanho).
+- Testes das correções: `flutter test --no-pub --reporter compact test/integration/ test/data/services/ test/ui/floating_chat/ test/ui/todo/` → `+827 ~3: All other tests passed!`; `flutter analyze --no-pub` nos arquivos Dart tocados → `No issues found!`; `flutter build apk --flavor globalDev --debug --no-pub` → `Built` (no commit `767d8c72`, com todas as mudanças nativas).
+- `NOT_RUN`: S25 (fora do `adb`); suíte completa depois das correções (só as pastas tocadas); teste JVM do Kotlin do widget (o projeto não tem `android/app/src/test`).
 
 ### Release v1.0.51+136 — Personas vivas em chat em grupo + correções do checkpoint da ponte (2026-11-15)
 - Notas completas em [docs/releases/v1.0.51.md](docs/releases/v1.0.51.md).
