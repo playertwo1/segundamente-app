@@ -193,6 +193,27 @@ void main() {
   });
 
   testWidgets(
+      'keeps the first ViewModel when the route rebuilds with a fresh, never-loaded one',
+      (tester) async {
+    await pumpPairingPage(tester);
+    expect(find.text(UserStorage.l10n.lumenPairingStatusUnpaired), findsOneWidget);
+
+    final rebuilt = LumenPairingViewModel(router: router);
+    addTearDown(rebuilt.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: LumenPairingPage(viewModel: rebuilt),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(UserStorage.l10n.lumenPairingLoading), findsNothing);
+    expect(find.text(UserStorage.l10n.lumenPairingStatusUnpaired), findsOneWidget);
+  });
+
+  testWidgets(
       'pasting valid pairing link switches to paired state without exposing secrets',
       (tester) async {
     await pumpPairingPage(tester);
