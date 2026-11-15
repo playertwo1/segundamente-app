@@ -4940,4 +4940,51 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get lumenPairingLoading => 'Carregando estado do pareamento...';
+
+  @override
+  String get todoSyncSavedOnDevice => 'Salvo no aparelho';
+
+  @override
+  String get todoSyncSynced => 'Sincronizado';
+
+  @override
+  String get todoSyncSyncing => 'Sincronizando…';
+
+  @override
+  String get todoSyncError => 'Salvo no aparelho · erro ao sincronizar';
+
+  @override
+  String get todoSyncRevoked => 'Salvo no aparelho · pareamento revogado';
+
+  @override
+  String todoSyncPendingChanges(int count) {
+    return 'Salvo no aparelho · $count pendente(s) de sync';
+  }
+
+  @override
+  String get todoSyncNowButton => 'Sincronizar agora';
+
+  @override
+  String todoSyncLastSuccess(String time) {
+    return 'Último sync às $time';
+  }
+
+  @override
+  String get todoConflictBannerTitle => 'Conflito de edição detectado';
+
+  @override
+  String get todoConflictBannerSubtitle =>
+      'Esta tarefa foi editada aqui e no Lumen (PC). Escolha qual texto manter.';
+
+  @override
+  String get todoConflictLocalLabel => 'Neste aparelho';
+
+  @override
+  String get todoConflictRemoteLabel => 'No Lumen (PC)';
+
+  @override
+  String get todoConflictKeepLocal => 'Manter deste aparelho';
+
+  @override
+  String get todoConflictUseRemote => 'Usar do PC';
 }

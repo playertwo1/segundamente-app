@@ -8666,6 +8666,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading pairing status...'**
   String get lumenPairingLoading;
+
+  /// No description provided for @todoSyncSavedOnDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device'**
+  String get todoSyncSavedOnDevice;
+
+  /// No description provided for @todoSyncSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get todoSyncSynced;
+
+  /// No description provided for @todoSyncSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get todoSyncSyncing;
+
+  /// No description provided for @todoSyncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · sync failed'**
+  String get todoSyncError;
+
+  /// No description provided for @todoSyncRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · pairing revoked'**
+  String get todoSyncRevoked;
+
+  /// No description provided for @todoSyncPendingChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on device · {count} pending sync'**
+  String todoSyncPendingChanges(int count);
+
+  /// No description provided for @todoSyncNowButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get todoSyncNowButton;
+
+  /// No description provided for @todoSyncLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced at {time}'**
+  String todoSyncLastSuccess(String time);
+
+  /// No description provided for @todoConflictBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit conflict detected'**
+  String get todoConflictBannerTitle;
+
+  /// No description provided for @todoConflictBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This task was edited here and on Lumen (PC). Choose which text to keep.'**
+  String get todoConflictBannerSubtitle;
+
+  /// No description provided for @todoConflictLocalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'On this device'**
+  String get todoConflictLocalLabel;
+
+  /// No description provided for @todoConflictRemoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'On Lumen (PC)'**
+  String get todoConflictRemoteLabel;
+
+  /// No description provided for @todoConflictKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep from this device'**
+  String get todoConflictKeepLocal;
+
+  /// No description provided for @todoConflictUseRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Use from PC'**
+  String get todoConflictUseRemote;
 }
 
 class _AppLocalizationsDelegate

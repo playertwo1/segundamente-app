@@ -2052,5 +2052,21 @@
   "lumenPairingUnlinkedLocalOnlyWarning": "Desvinculado neste aparelho. Não foi possível contatar o relay agora; use 'Parear de novo' no PC se necessário.",
   "lumenPairingInvalidQrError": "Código ou link de pareamento inválido.",
   "lumenPairingScannerTitle": "Aponte a câmera para o QR do Lumen",
-  "lumenPairingLoading": "Carregando estado do pareamento..."
+  "lumenPairingLoading": "Carregando estado do pareamento...",
+  "todoSyncSavedOnDevice": "Salvo no aparelho",
+  "todoSyncSynced": "Sincronizado",
+  "todoSyncSyncing": "Sincronizando…",
+  "todoSyncError": "Salvo no aparelho · erro ao sincronizar",
+  "todoSyncRevoked": "Salvo no aparelho · pareamento revogado",
+  "todoSyncPendingChanges": "Salvo no aparelho · {count} pendente(s) de sync",
+  "@todoSyncPendingChanges": {"placeholders": {"count": {"type": "int"}}},
+  "todoSyncNowButton": "Sincronizar agora",
+  "todoSyncLastSuccess": "Último sync às {time}",
+  "@todoSyncLastSuccess": {"placeholders": {"time": {"type": "String"}}},
+  "todoConflictBannerTitle": "Conflito de edição detectado",
+  "todoConflictBannerSubtitle": "Esta tarefa foi editada aqui e no Lumen (PC). Escolha qual texto manter.",
+  "todoConflictLocalLabel": "Neste aparelho",
+  "todoConflictRemoteLabel": "No Lumen (PC)",
+  "todoConflictKeepLocal": "Manter deste aparelho",
+  "todoConflictUseRemote": "Usar do PC"
 }

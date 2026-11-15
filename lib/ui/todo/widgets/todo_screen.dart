@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/explicit_due.dart';
 import 'package:memex/domain/models/session_report.dart';
@@ -65,6 +66,17 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didUpdateWidget(covariant TodoScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel != widget.viewModel) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.viewModel.load();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -75,7 +87,7 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed &&
         _lastLifecycleState != null &&
         _lastLifecycleState != AppLifecycleState.resumed) {
-      unawaited(widget.viewModel.load());
+      unawaited(widget.viewModel.refreshOnResume());
     }
     _lastLifecycleState = state;
   }
@@ -233,6 +245,9 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
                       ),
                     ],
                   ),
+                _syncStatusBar(l10n, viewModel, context),
+                if (viewModel.conflicts.isNotEmpty)
+                  _conflictsBanner(l10n, viewModel, context),
                 Expanded(
                   child: _sectionBody(viewModel, l10n),
                 ),
@@ -242,6 +257,290 @@ class _TodoScreenState extends State<TodoScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  Widget _syncStatusBar(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    BuildContext context,
+  ) {
+    final status = viewModel.syncStatus;
+    final isSyncing = status.state == TodoSyncBadgeState.syncing;
+    final label = switch (status.state) {
+      TodoSyncBadgeState.synced => l10n.todoSyncSynced,
+      TodoSyncBadgeState.syncing => l10n.todoSyncSyncing,
+      TodoSyncBadgeState.revoked => l10n.todoSyncRevoked,
+      TodoSyncBadgeState.error => l10n.todoSyncError,
+      TodoSyncBadgeState.waitingPc => () {
+          final pending = status.pendingOutbox + (status.pendingPc ?? 0);
+          return pending > 0
+              ? l10n.todoSyncPendingChanges(pending)
+              : l10n.todoSyncSavedOnDevice;
+        }(),
+      TodoSyncBadgeState.savedOnDevice || TodoSyncBadgeState.localOnly =>
+        status.pendingOutbox > 0
+            ? l10n.todoSyncPendingChanges(status.pendingOutbox)
+            : l10n.todoSyncSavedOnDevice,
+    };
+    final formattedTime = _formatLastSyncTime(context, status.lastSyncedAt);
+    final lastSyncLabel =
+        formattedTime != null && status.paired && !status.revoked
+            ? l10n.todoSyncLastSuccess(formattedTime)
+            : null;
+    final iconColor = switch (status.state) {
+      TodoSyncBadgeState.synced => AppColors.success,
+      TodoSyncBadgeState.revoked => AppColors.danger,
+      TodoSyncBadgeState.error => AppColors.warning,
+      TodoSyncBadgeState.syncing => AppColors.primary,
+      TodoSyncBadgeState.waitingPc ||
+      TodoSyncBadgeState.savedOnDevice ||
+      TodoSyncBadgeState.localOnly =>
+        AppColors.textSecondary,
+    };
+    final iconData = switch (status.state) {
+      TodoSyncBadgeState.synced => Icons.cloud_done_outlined,
+      TodoSyncBadgeState.revoked => Icons.link_off,
+      TodoSyncBadgeState.error => Icons.sync_problem_outlined,
+      TodoSyncBadgeState.syncing => Icons.sync,
+      TodoSyncBadgeState.waitingPc ||
+      TodoSyncBadgeState.savedOnDevice ||
+      TodoSyncBadgeState.localOnly =>
+        Icons.smartphone_outlined,
+    };
+
+    return Container(
+      key: const ValueKey('todo_sync_status_bar'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: AppColors.divider)),
+      ),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isSyncing)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(iconData, size: 18, color: iconColor),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    if (lastSyncLabel != null)
+                      Text(
+                        lastSyncLabel,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (status.paired && !status.revoked)
+            TextButton(
+              key: const ValueKey('todo_sync_now_button'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                minimumSize: const Size(48, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
+              ),
+              onPressed: isSyncing ? null : () => viewModel.syncNow(),
+              child: Text(l10n.todoSyncNowButton),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _conflictsBanner(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    BuildContext context,
+  ) {
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.45;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final conflict in viewModel.conflicts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _conflictCard(l10n, viewModel, conflict, context),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _conflictCard(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    TaskTextConflict conflict,
+    BuildContext context,
+  ) =>
+      Container(
+        key: ValueKey('todo_conflict_card_${conflict.id}'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warning),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: AppColors.warning,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.todoConflictBannerTitle,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.todoConflictBannerSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _conflictOptionBox(
+              label: l10n.todoConflictLocalLabel,
+              value: conflict.localText,
+              context: context,
+            ),
+            const SizedBox(height: 6),
+            _conflictOptionBox(
+              label: l10n.todoConflictRemoteLabel,
+              value: conflict.remoteText,
+              context: context,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  key: ValueKey('todo_conflict_keep_local_${conflict.id}'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: const BorderSide(color: AppColors.divider),
+                    minimumSize: const Size(48, 48),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                  onPressed: () => viewModel.resolveConflict(
+                    conflict.id,
+                    keepLocal: true,
+                  ),
+                  child: Text(l10n.todoConflictKeepLocal),
+                ),
+                FilledButton(
+                  key: ValueKey('todo_conflict_use_remote_${conflict.id}'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    minimumSize: const Size(48, 48),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                  onPressed: () => viewModel.resolveConflict(
+                    conflict.id,
+                    keepLocal: false,
+                  ),
+                  child: Text(l10n.todoConflictUseRemote),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+  Widget _conflictOptionBox({
+    required String label,
+    required String value,
+    required BuildContext context,
+  }) =>
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+            ),
+          ],
+        ),
+      );
+
+  String? _formatLastSyncTime(BuildContext context, String? iso) {
+    if (iso == null || iso.trim().isEmpty) return null;
+    final parsed = DateTime.tryParse(iso.trim());
+    if (parsed == null) return null;
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.Hm(locale).format(parsed.toLocal());
   }
 
   Widget? _alarmPermissionBanner(
@@ -569,6 +868,18 @@ class _TodoTaskRow extends StatelessWidget {
                 _priorityLabel(l10n, item.priority),
                 key: ValueKey('todo_priority_${item.id}'),
                 style: TextStyle(color: _priorityColor(item.priority)),
+              ),
+              Text(
+                viewModel.isItemSynced(item)
+                    ? l10n.todoSyncSynced
+                    : l10n.todoSyncSavedOnDevice,
+                key: ValueKey('todo_item_sync_label_${item.id}'),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: viewModel.isItemSynced(item)
+                      ? AppColors.success
+                      : AppColors.textTertiary,
+                ),
               ),
               if (source != null)
                 InkWell(

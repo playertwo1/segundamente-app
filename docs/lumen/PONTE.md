@@ -17,7 +17,7 @@ Até o checkpoint da ponte, esta é a única lista de trabalho dos dois reposit�
 | 5 | Lumen | QR de pareamento com os dados do relay; revogação | L6.2 | Feito (L6.2 na `main` local do fork, commit `3ef24d1`; sem push) |
 | 6 | SM | Ler o QR, guardar os segredos com segurança, revogar | F12-03 | Feito localmente (integrada na `main` local, commit `b25d0226`, sem push; falta validação real no S25 no Passo 9) |
 | 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | Feito localmente (mesclada na `main` local do fork em 2026-11-15; falta validação real no S25 + notebook no Passo 9) |
-| 8 | SM | Cifra contra os vetores; outbox e aplicação idempotente das tarefas; consulta ao abrir e a cada 1 hora; status visível | F12-04 | READY |
-| 9 | SM + Lumen | Avisos cancelados no outro aparelho; checkpoint da ponte | F12-05 / L6.4 (tarefas) | BLOCKED (passo 8) |
+| 8 | SM | Cifra contra os vetores; outbox e aplicação idempotente das tarefas; consulta ao abrir e a cada 1 hora; status visível | F12-04 | Feito sinteticamente na branch `feat/f1204-sync-tarefas` (cifra + HTTP mailbox + `TodoSyncService` + hooks + Workmanager + UI/conflito; 133 testes verdes e `159 issues` na análise; falta validação real S25 + PC no Passo 9) |
+| 9 | SM + Lumen | Avisos cancelados no outro aparelho; checkpoint da ponte | F12-05 / L6.4 (tarefas) | READY (aguardando aprovação do merge da `feat/f1204-sync-tarefas` e validação real S25 + PC) |
 
 **Depois do checkpoint (fora da trilha, por dependência):** LAN TLS e WebSocket ao vivo; v1.1 das entidades (F12-06 / L6.4); testes de caos (F12-07).

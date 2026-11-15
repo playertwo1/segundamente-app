@@ -4897,4 +4897,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lumenPairingLoading => 'Loading pairing status...';
+
+  @override
+  String get todoSyncSavedOnDevice => 'Saved on device';
+
+  @override
+  String get todoSyncSynced => 'Synced';
+
+  @override
+  String get todoSyncSyncing => 'Syncing…';
+
+  @override
+  String get todoSyncError => 'Saved on device · sync failed';
+
+  @override
+  String get todoSyncRevoked => 'Saved on device · pairing revoked';
+
+  @override
+  String todoSyncPendingChanges(int count) {
+    return 'Saved on device · $count pending sync';
+  }
+
+  @override
+  String get todoSyncNowButton => 'Sync now';
+
+  @override
+  String todoSyncLastSuccess(String time) {
+    return 'Last synced at $time';
+  }
+
+  @override
+  String get todoConflictBannerTitle => 'Edit conflict detected';
+
+  @override
+  String get todoConflictBannerSubtitle =>
+      'This task was edited here and on Lumen (PC). Choose which text to keep.';
+
+  @override
+  String get todoConflictLocalLabel => 'On this device';
+
+  @override
+  String get todoConflictRemoteLabel => 'On Lumen (PC)';
+
+  @override
+  String get todoConflictKeepLocal => 'Keep from this device';
+
+  @override
+  String get todoConflictUseRemote => 'Use from PC';
 }
