@@ -55,6 +55,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-054 | 2026-11-13 | Sync: relay do Coucou + caixa de correio no Cloudflare; escopo, avisos e backup semanal | ACCEPTED |
 | D-055 | 2026-11-13 | Google: login próprio, Drive (backup) e Calendar; NotebookLM pós-MVP sem previsão | ACCEPTED |
 | D-056 | 2026-11-13 | Manter F11-04 pendente do S25 e avançar F11-05 | ACCEPTED |
+| D-067 | 2026-11-15 | Repositório `playertwo1/segundamente-app` público; atualizador Android sem token GitHub (substitui D-046) | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -288,7 +289,7 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Implementação: o mesmo SuperAgent e modelo configurado produzem a resposta central e a fala identificada, mantendo-a no histórico da conversa e sem chamada adicional ao modelo.
 - Limite de validação: testes focados locais; resposta de modelo real e visualização no S25: `NOT_RUN`.
 
-## D-046 — Atualizador Android para releases do repositório privado (2026-11-10)
+## D-046 — Atualizador Android para releases do repositório privado (2026-11-10) — SUPERSEDED por D-067
 - Contexto: o dono pediu uma opção nas Configurações para procurar e baixar atualizações do repositório GitHub do fork.
 - Decisão: reutilizar o atualizador existente e apontá-lo ao `origin` privado (`playertwo1/segundamente-app`). Stable e Early no Android podem buscar o APK do mesmo flavor; Dev fica indisponível. Para acessar releases privadas, a pessoa configura um token fine-grained limitado ao repositório, com `Contents: read`, salvo pelo `SecretStorage` no cofre do aparelho; o token não é incluído no código, nas preferências ou no backup. A checagem automática só roda se o token estiver salvo e a preferência estiver ativa; download e instalador continuam sujeitos às opções existentes.
 - Limite: é necessário configurar o token em cada instalação e publicar uma release com APK do flavor compatível. Testes Flutter, análise, geração de localizações e validação no S25: `NOT_RUN` neste ambiente, que não tem Flutter/Dart disponível.
@@ -453,3 +454,12 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - **v1.1 (depois da ponte):** notas do Lumen guardadas 1:1 numa pasta própria do celular, só para receber e comentar; nota acima de 64 KiB dividida em partes; o celular é a fonte das personas e da memória, e o Lumen só lê (e liga ou desliga personas); a memória espelha o que existe e as 4 ações ficam para fase própria; conversas do Lumen sincronizam e entram na memória do celular pelo processo normal, sem chamar a IA ao receber; preferências só `todo.shortcuts` e `comment.settings`.
   - **Depois do checkpoint**, os dois roadmaps voltam a andar separados. Etapas que dependem dos dois lados (v1.1, testes de caos, Google, assistente ativo) seguem por dependência e, quando precisarem de passos alternados, entram na `PONTE.md` como nova etapa.
 - Difícil de reverter: o formato do envelope e da cifra da caixa de correio.
+
+## D-067 — Repositório público e atualizador Android sem token GitHub (2026-11-15)
+- Contexto: o dono tornou o repositório `playertwo1/segundamente-app` público no GitHub e pediu que o atualizador no app deixe de exigir token/senha.
+- Decisão:
+  - `playertwo1/segundamente-app` passa a público (`AGENTS.md` atualizado); não há mais necessidade de token fine-grained para consultar releases ou baixar APKs.
+  - `AppUpdateService` passa a consultar `https://api.github.com/repos/playertwo1/segundamente-app/releases?per_page=20` sem cabeçalho `Authorization` e prioriza `browser_download_url` (`https://github.com/playertwo1/segundamente-app/releases/download/...`) com fallback para `asset['url']`, também sem autenticação.
+  - A UI de configurações (`EarlyUpdateSettingsCard`) remove o campo de token e os botões/mensagens de cadastro de token; `shouldRunAutoCheck()` depende apenas da preferência automática e do intervalo de 12h.
+- Supera: D-046 (exigência de token e menção a repositório privado).
+- Limite: instalações antigas que já gravaram token local param de usá-lo ao atualizar; validação física do download automático no Galaxy S25 Ultra segue dependente de nova release publicada após esta mudança.

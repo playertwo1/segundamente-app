@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.49+134 (2026-11-15, GitHub Release privada) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.49+134 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -43,6 +43,16 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### Repositório público e atualizador sem token (D-067) (2026-11-15)
+- `gh repo edit playertwo1/segundamente-app --visibility public --accept-visibility-change-consequences -d "Segunda Mente"` -> confirmado `"visibility":"PUBLIC"` e `"isPrivate":false`.
+- Teste real sem autenticação na `v1.0.49`: `GET https://api.github.com/repos/playertwo1/segundamente-app/releases?per_page=5`, `asset.url` e `browser_download_url` retornaram `200`/`302` sem cabeçalho `Authorization`.
+- `AppUpdateService` (`lib/data/services/app_update_service.dart`), `EarlyUpdateSettingsCard` (`lib/ui/settings/widgets/early_update_settings_card.dart`), l10n (`app_pt.arb`/`app_en.arb`), `AGENTS.md`, `README.md` e `docs/DECISIONS.md` (`D-067`, substituindo `D-046`) atualizados para operar sem token GitHub.
+- Testes e análise:
+  - `flutter.bat gen-l10n` + `python3 scripts/check_arb_key_parity.py`: `ARB key parity OK across 1 locales.`
+  - `flutter.bat test --no-pub --reporter compact test/data/services/app_update_service_test.dart test/ui/settings/widgets/early_update_settings_card_test.dart test/l10n/`: `+39: All tests passed!`
+  - `dart.bat analyze lib/data/services/app_update_service.dart lib/ui/settings/widgets/early_update_settings_card.dart test/data/services/app_update_service_test.dart test/ui/settings/widgets/early_update_settings_card_test.dart`: `No issues found!`
+- Galaxy S25 Ultra e suítes completas (`flutter test` / `flutter analyze` integrais): `NOT_RUN`.
 
 ### Release v1.0.49+134 — Lista de tarefas (crítica Impeccable) + F12-05 (2026-11-15)
 - Notas completas em [docs/releases/v1.0.49.md](docs/releases/v1.0.49.md).

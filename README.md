@@ -47,7 +47,7 @@ A leitura de anexos e as capacidades de cada fluxo dependem do modelo configurad
 
 ## Atualizações do aplicativo
 
-No Android Stable e Early, **Configurações** permite consultar e baixar releases do GitHub. Como o repositório é privado, é necessário um token de acesso pessoal refinado, limitado a `playertwo1/segundamente-app` e com permissão `Contents: read`. O token fica no armazenamento seguro do aparelho. O canal Dev não oferece essa função.
+No Android Stable e Early, **Configurações** permite consultar e baixar releases públicas diretamente de `playertwo1/segundamente-app` no GitHub, sem necessidade de token ou senha. O canal Dev não oferece essa função.
 
 ## Como os dados circulam
 

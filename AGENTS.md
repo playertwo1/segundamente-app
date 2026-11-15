@@ -5,7 +5,7 @@ Este é o arquivo canônico de instruções para qualquer agente (Codex, Claude 
 ## Parte 1 — Projeto
 
 ### O que é
-A Segunda Mente é um fork privado do [Memex](https://github.com/memex-lab/memex) (Flutter, GPL-3.0). É um diário de vida local-first com IA, memória e personas, e está virando um assistente pessoal de trabalho com Todo robusto. Tem um lado desktop, o **Lumen**, que vive em outro repositório: o fork `playertwo1/coucou` (Tauri, Rust e TypeScript). Os dois trocam dados por sync (D-050 a D-055).
+A Segunda Mente é um fork público do [Memex](https://github.com/memex-lab/memex) (Flutter, GPL-3.0). É um diário de vida local-first com IA, memória e personas, e está virando um assistente pessoal de trabalho com Todo robusto. Tem um lado desktop, o **Lumen**, que vive em outro repositório: o fork `playertwo1/coucou` (Tauri, Rust e TypeScript). Os dois trocam dados por sync (D-050 a D-055).
 
 ### Antes de agir, leia nesta ordem
 1. [STATE.md](STATE.md): estado atual, próxima ação, pendências e evidências recentes.
@@ -40,7 +40,7 @@ A Segunda Mente é um fork privado do [Memex](https://github.com/memex-lab/memex
 - **Ambiente local:** Flutter fora do PATH e cuidados com `analysis_options.yaml`, descritos em STATE.md, seção Ambiente.
 
 ### Git
-- `origin` = `https://github.com/playertwo1/segundamente-app.git` (privado) é o único destino de push. `upstream` = `memex-lab/memex` serve só para buscar atualizações; nunca enviar para ele. O fork público antigo `playertwo1/segundamente` está arquivado e não recebe push.
+- `origin` = `https://github.com/playertwo1/segundamente-app.git` (público) é o único destino de push. `upstream` = `memex-lab/memex` serve só para buscar atualizações; nunca enviar para ele. O fork público antigo `playertwo1/segundamente` está arquivado e não recebe push.
 - Trabalhe numa branch (`feat/…`, `fix/…`, `docs/…`) e integre na `main` com merge depois dos testes. Commits em pt-BR, no estilo Conventional Commits (`feat(todo): …`).
 - Não commitar `analysis_options.yaml` nem `android/gradle.properties` reescritos pelo Flutter.
 - Release: só com pedido do dono. Siga a última nota em `docs/releases/` e registre a nova.

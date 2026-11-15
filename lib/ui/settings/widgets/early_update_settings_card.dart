@@ -23,12 +23,9 @@ class EarlyUpdateSettingsCard extends StatefulWidget {
 }
 
 class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
-  final TextEditingController _githubTokenController = TextEditingController();
   AppUpdateSettings? _settings;
   AppUpdateInfo? _availableUpdate;
   AppUpdateCacheInfo _cacheInfo = AppUpdateCacheInfo.empty;
-  bool _hasGithubToken = false;
-  bool _savingGithubToken = false;
   bool _availableUpdateDownloaded = false;
   bool _availableUpdateDownloading = false;
   bool _checking = false;
@@ -47,7 +44,6 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
   @override
   void dispose() {
     _downloadPollTimer?.cancel();
-    _githubTokenController.dispose();
     super.dispose();
   }
 
@@ -55,63 +51,12 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
     if (!widget.forceVisible && !widget.service.isSupported) return;
     final settings = await widget.service.loadSettings();
     final cacheInfo = await widget.service.getDownloadedUpdateCacheInfo();
-    final hasGithubToken = await widget.service.hasGithubToken();
     if (!mounted) return;
     setState(() {
       _settings = settings;
       _cacheInfo = cacheInfo;
-      _hasGithubToken = hasGithubToken;
       _statusText = _lastCheckedText(settings);
     });
-  }
-
-  Future<void> _saveGithubToken() async {
-    if (_savingGithubToken) return;
-    final token = _githubTokenController.text.trim();
-    if (token.isEmpty) return;
-
-    setState(() => _savingGithubToken = true);
-    try {
-      await widget.service.saveGithubToken(token);
-      if (!mounted) return;
-      setState(() {
-        _savingGithubToken = false;
-        _hasGithubToken = true;
-        _githubTokenController.clear();
-        _statusText = UserStorage.l10n.earlyUpdateGitHubTokenSaved;
-      });
-      ToastHelper.showSuccess(
-        context,
-        UserStorage.l10n.earlyUpdateGitHubTokenSaved,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _savingGithubToken = false);
-      ToastHelper.showError(context, e);
-    }
-  }
-
-  Future<void> _removeGithubToken() async {
-    if (_savingGithubToken) return;
-    setState(() => _savingGithubToken = true);
-    try {
-      await widget.service.clearGithubToken();
-      if (!mounted) return;
-      setState(() {
-        _savingGithubToken = false;
-        _hasGithubToken = false;
-        _githubTokenController.clear();
-        _statusText = UserStorage.l10n.earlyUpdateGitHubTokenRemoved;
-      });
-      ToastHelper.showSuccess(
-        context,
-        UserStorage.l10n.earlyUpdateGitHubTokenRemoved,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _savingGithubToken = false);
-      ToastHelper.showError(context, e);
-    }
   }
 
   Future<void> _saveSettings(AppUpdateSettings settings) async {
@@ -185,9 +130,7 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
         _checking = false;
         _availableUpdateDownloaded = false;
         _availableUpdateDownloading = false;
-        _statusText = e is AppUpdateGitHubTokenRequiredException
-            ? UserStorage.l10n.earlyUpdateGitHubTokenRequired
-            : UserStorage.l10n.earlyUpdateCheckFailed(e);
+        _statusText = UserStorage.l10n.earlyUpdateCheckFailed(e);
       });
       _syncDownloadPolling();
     }
@@ -251,8 +194,6 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
           UserStorage.l10n.earlyUpdateSkippedMobile,
         AppUpdateDownloadInProgressException() =>
           UserStorage.l10n.earlyUpdateDownloadInProgress,
-        AppUpdateGitHubTokenRequiredException() =>
-          UserStorage.l10n.earlyUpdateGitHubTokenRequired,
         _ => UserStorage.l10n.earlyUpdateCheckFailed(e),
       };
       setState(() {
@@ -269,11 +210,6 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
         ToastHelper.showInfo(
           context,
           UserStorage.l10n.earlyUpdateDownloadInProgress,
-        );
-      } else if (e is AppUpdateGitHubTokenRequiredException) {
-        ToastHelper.showInfo(
-          context,
-          UserStorage.l10n.earlyUpdateGitHubTokenRequired,
         );
       } else {
         ToastHelper.showError(context, e);
@@ -464,48 +400,7 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _githubTokenController,
-            obscureText: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            decoration: InputDecoration(
-              labelText: UserStorage.l10n.earlyUpdateGitHubTokenTitle,
-              hintText: UserStorage.l10n.earlyUpdateGitHubTokenHint,
-              helperText: UserStorage.l10n.earlyUpdateGitHubTokenDesc,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _hasGithubToken
-                      ? UserStorage.l10n.earlyUpdateGitHubTokenConfigured
-                      : UserStorage.l10n.earlyUpdateGitHubTokenRequired,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: _savingGithubToken ? null : _saveGithubToken,
-                child: Text(
-                  _hasGithubToken
-                      ? UserStorage.l10n.earlyUpdateGitHubTokenReplace
-                      : UserStorage.l10n.earlyUpdateGitHubTokenSave,
-                ),
-              ),
-              if (_hasGithubToken)
-                IconButton(
-                  onPressed: _savingGithubToken ? null : _removeGithubToken,
-                  tooltip: UserStorage.l10n.earlyUpdateGitHubTokenRemove,
-                  icon: const Icon(Icons.delete_outline),
-                ),
-            ],
-          ),
+          const SizedBox(height: 10),
           _buildSwitch(
             title: UserStorage.l10n.earlyUpdateAutoCheckTitle,
             subtitle: UserStorage.l10n.earlyUpdateAutoCheckDesc,
