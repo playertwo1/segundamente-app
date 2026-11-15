@@ -382,4 +382,94 @@ void main() {
     expect(backend.cancelledIds, [id]);
     expect(backend.scheduledCalls, isEmpty);
   });
+
+  test(
+      'T05: rescheduling due date/time cancels prior notification before scheduling new time',
+      () async {
+    final task = _makeTask(
+      id: 'task-reschedule-1',
+      dueDate: '2026-11-16',
+      dueTime: '09:00',
+    );
+    await service.synchronize([task]);
+    final id = backend.scheduledCalls.single.id;
+    backend.simulateFiredNotification(id, keepInTray: true);
+
+    backend.operations.clear();
+    backend.cancelledIds.clear();
+    backend.scheduledCalls.clear();
+
+    final rescheduled = _makeTask(
+      id: task.id,
+      dueDate: '2026-11-16',
+      dueTime: '15:00',
+      alertMinutes: 20,
+    );
+    final status = await service.synchronize([rescheduled]);
+
+    expect(status, TodoAlarmStatus.ready);
+    expect(backend.cancelledIds, [id]);
+    expect(backend.active, isEmpty);
+    expect(backend.scheduledCalls, hasLength(1));
+    // 15:00 BRT - 20min = 14:40 BRT = 17:40 UTC
+    expect(
+      backend.scheduledCalls.single.scheduledDate.toUtc(),
+      DateTime.utc(2026, 11, 16, 17, 40),
+    );
+    expect(
+      backend.operations,
+      ['cancel:$id', 'schedule:$id@2026-11-16T17:40:00.000Z'],
+    );
+  });
+
+  test('cancels notification when task loses its alarm time (!hasAlarmTime)',
+      () async {
+    final task = _makeTask(
+      id: 'task-no-alarm',
+      dueDate: '2026-11-16',
+      dueTime: '09:00',
+    );
+    await service.synchronize([task]);
+    final id = backend.scheduledCalls.single.id;
+    backend.simulateFiredNotification(id, keepInTray: true);
+
+    backend.cancelledIds.clear();
+    backend.scheduledCalls.clear();
+
+    final noTime = TodoItem(
+      id: task.id,
+      text: task.text,
+      due: 'Sem data',
+      done: false,
+      createdAt: task.createdAt,
+    );
+    final status = await service.synchronize([noTime]);
+
+    expect(status, TodoAlarmStatus.ready);
+    expect(backend.cancelledIds, [id]);
+    expect(backend.active, isEmpty);
+    expect(backend.scheduledCalls, isEmpty);
+  });
+
+  test(
+      'cancelNotificationsForTaskIds cancels active and pending notifications deterministically',
+      () async {
+    final task1 = _makeTask(id: 'task-batch-1');
+    final task2 = _makeTask(id: 'task-batch-2');
+    await service.synchronize([task1, task2]);
+
+    final ids =
+        TodoAlarmService.notificationIdsForTaskIds([task1.id, task2.id]);
+    final id1 = ids[task1.id]!;
+    final id2 = ids[task2.id]!;
+    backend.simulateFiredNotification(id1, keepInTray: true);
+
+    backend.cancelledIds.clear();
+
+    await service.cancelNotificationsForTaskIds([task1.id, task2.id]);
+
+    expect(backend.cancelledIds, containsAll([id1, id2]));
+    expect(backend.active.containsKey(id1), isFalse);
+    expect(backend.pending.containsKey(id2), isFalse);
+  });
 }
