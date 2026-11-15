@@ -13,11 +13,11 @@ Até o checkpoint da ponte, esta é a única lista de trabalho dos dois reposit�
 | 1 | SM | D-066, esta trilha e o contrato v1 (envelope, cifra da caixa de correio, `task`) | F12-01 | Feito; falta o dono ler o texto final do contrato |
 | 2 | Lumen | Vetores sintéticos de `coucou-mailbox/v1`, teste dos exemplos de tarefa no Rust, spec L6 corrigida | L6 / F12-01 | Feito na branch `feat/l6-contrato-v1` do fork (commit `6e4d009`), sem merge |
 | 3 | SM | Teste Dart dos exemplos de tarefa do contrato | F12-01 | Feito (`test/domain/models/todo_item_sync_contract_test.dart`) |
-| 4 | Dono | Implantar o Worker com a caixa de correio na conta Cloudflare e medir o uso | F12-02 / L6.1 | READY |
+| 4 | Dono + IA | Implantar o Worker com a caixa de correio na conta Cloudflare e medir o uso | F12-02 / L6.1 | Feito em 2026-11-15 (`https://coucou-link.<seu-subdominio>.workers.dev`, `ACCESS_KEY` no cofre do Windows, ciclo HTTP/cifra validado e `freePlan` medido em sala efêmera) |
 | 5 | Lumen | QR de pareamento com os dados do relay; revogação | L6.2 | Feito (L6.2 na `main` local do fork, commit `3ef24d1`; sem push) |
-| 6 | SM | Ler o QR, guardar os segredos com segurança, revogar | F12-03 | IN_PROGRESS (integrada na `main` local, commit `b25d0226`, sem push; falta validação real no S25 + Worker) |
-| 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | IN_PROGRESS (código e testes sintéticos na branch `feat/l63-mailbox-tarefas` do fork; falta merge na `main` e validação real contra Worker/S25) |
-| 8 | SM | Cifra contra os vetores; outbox e aplicação idempotente das tarefas; consulta ao abrir e a cada 1 hora; status visível | F12-04 | BLOCKED (passos 4, 6 e 7) |
+| 6 | SM | Ler o QR, guardar os segredos com segurança, revogar | F12-03 | Feito localmente (integrada na `main` local, commit `b25d0226`, sem push; falta validação real no S25 no Passo 9) |
+| 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | Feito localmente (mesclada na `main` local do fork em 2026-11-15; falta validação real no S25 + notebook no Passo 9) |
+| 8 | SM | Cifra contra os vetores; outbox e aplicação idempotente das tarefas; consulta ao abrir e a cada 1 hora; status visível | F12-04 | READY |
 | 9 | SM + Lumen | Avisos cancelados no outro aparelho; checkpoint da ponte | F12-05 / L6.4 (tarefas) | BLOCKED (passo 8) |
 
 **Depois do checkpoint (fora da trilha, por dependência):** LAN TLS e WebSocket ao vivo; v1.1 das entidades (F12-06 / L6.4); testes de caos (F12-07).

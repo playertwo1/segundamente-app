@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-14 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.47+132 (2026-11-11, GitHub Release privada) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066), pela trilha única da ponte em `docs/lumen/PONTE.md`; F15 só termina a validação da F15-02 no S25; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; F12-02 READY (implantação do Worker pelo dono); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push); L6.2 (`3ef24d1`) na `main` do Lumen e L6.3 implementada/testada sinteticamente em `feat/l63-mailbox-tarefas` |
+| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; **F12-02 DONE** (Worker implantado e medido em 2026-11-15); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push); L6.2 (`3ef24d1`) e L6.3 (mesclada na `main` local do Lumen em 2026-11-15); **próxima: F12-04 (Passo 8)** |
 | F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
@@ -24,13 +24,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Implantar o Worker (passo 4), revisar/mesclar L6.3 (`feat/l63-mailbox-tarefas` no Lumen) e iniciar **Passo 8 (`F12-04` na Segunda Mente)**, seguido de Passo 9 (`F12-05` / `L6.4` tarefas) e validação real no S25 + notebook.
+5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Passos 4 (deploy Worker + `ACCESS_KEY`) e 7 (merge L6.3 no Lumen) concluídos; iniciar **Passo 8 (`F12-04` na Segunda Mente)** na branch `feat/f1204-sync-tarefas`, seguido de Passo 9 (`F12-05` / `L6.4` tarefas) e validação real no S25 + notebook.
 
 ## Pendências do dono
 
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
-- Implantar o Worker com a caixa de correio (L6.1) na conta Cloudflare, com a `ACCESS_KEY`, para a evidência da F12-02 (passo 4 da PONTE.md).
+- Ler o texto final de `docs/lumen/CONTRATO-SYNC.md` (F12-01) e validar pareamento + sync ponta a ponta no S25 e notebook no Passo 9.
 
 ## Ambiente (fora do repositório)
 
@@ -43,6 +43,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F12-02 (Passo 4 da PONTE) — deploy real do Worker na Cloudflare e medição (2026-11-15)
+- **Deploy (`c:\Users\notefael\projetos\coucou\android\relay`):** `npm test` passou antes do deploy (`26` testes Worker + `37` testes Node); `npx wrangler deploy` publicou `coucou-link` em `https://coucou-link.<seu-subdominio>.workers.dev` (versão `f55c97a2-1e61-45e3-a6cc-232f9e274bbd`).
+- **Segredo e configuração local:** `ACCESS_KEY` (43 chars base64url) rotacionado via `wrangler secret put ACCESS_KEY`, gravado no cofre do Windows (`phone-relay-access.fr.louisraille.coucou`) e configurado no Lumen (`phoneRelay = true`).
+- **Ciclo real e medição `freePlan` em sala efêmera:** `GET /` `200`, `POST /v1/mailbox/<room>/messages?to=phone` `201` (`storedBytes: 413`, idempotente `200` no reenvio), `GET /messages` `200` + decifragem `coucou-mailbox/v1` exata, `GET /stats` (`pendingPhone: 1`, `dailyWrites: 2/100000`, `dailyWritePct: 0.002%`, `dailyRequests: 2/100000`, `roomBytes: 413/16777216`), `POST /ack` `200` (`deleted: 1`, `remaining: 0`, `dailyWrites: 4`) e `POST /revoke` `200` (`revoked: true`, `410 Gone` subsequente em `GET /messages`, `dailyWrites: 6`).
+- **Passo 7 (L6.3 no Lumen):** branch `feat/l63-mailbox-tarefas` mesclada localmente na `main` do `coucou`.
 
 ### F12-03 (e L6.2 no Lumen) — pareamento QR e revogação, implementação (2026-11-14)
 - **Lumen (`playertwo1/coucou`, L6.2 mesclado localmente na `main`, commit `3ef24d1`, sem push):** QR com `k_mailbox`, `http_base_url` e `shown: true`; revogação em `POST /v1/mailbox/<room>/revoke` ao gerar novo pareamento. Validação no fork: `cargo test --lib phone_link` (206 aprovados, 2 ignorados), `npx tsc --noEmit`, `phone-relay.test.mjs` (4 aprovados) e `android/relay` `npm test` (26 + 37 aprovados).
