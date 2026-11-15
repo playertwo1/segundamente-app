@@ -235,35 +235,21 @@ void main() {
       expect(ensureFull == -1 || ensureFull > nextMethod, isTrue);
     });
 
-    test('every Todo router method awaits initialization before the repository',
-        () {
-      // Cold-start launches (floating sheet, widget) call these before FileSystemService.init.
+    test('cold floating launch initializes the router before its sheet', () {
       final source =
-          File('lib/data/repositories/memex_router.dart')
-              .readAsStringSync()
-              .replaceAll('\r\n', '\n');
-      final start = source.indexOf('  Future<Result<List<TodoItem>>> loadTodos(');
-      final end = source.indexOf(
-        '  Future<Result<Map<String, ReportRevision>>> loadReportTextChanges(',
-      );
+          File('lib/main.dart').readAsStringSync().replaceAll('\r\n', '\n');
 
-      expect(start, isNonNegative);
-      expect(end, greaterThan(start));
-      // Shortcut settings are opened from the settings screen, not the cold-start path.
-      final methods = source
-          .substring(start, end)
-          .split('\n  Future<')
-          .where((method) => method.contains('_todoRepository.'))
-          .where((method) => !method.contains('ShortcutSettings('))
-          .toList();
-      expect(methods, isNotEmpty);
-      for (final method in methods) {
-        final header = method.split('\n').first;
-        final ensure = method.indexOf('await _ensureInitialized();');
-        final repository = method.indexOf('_todoRepository.');
-        expect(ensure, isNonNegative, reason: header);
-        expect(ensure, lessThan(repository), reason: header);
-      }
+      final takeLaunch = source.indexOf('takePendingLaunch();');
+      final preInit = source.indexOf(
+        'if (floatingLaunch != null) await MemexRouter().ensureInitialized();',
+      );
+      final createRouter = source.indexOf('createAppRouter(');
+
+      expect(takeLaunch, isNonNegative);
+      expect(preInit, isNonNegative);
+      expect(createRouter, isNonNegative);
+      expect(takeLaunch, lessThan(preInit));
+      expect(preInit, lessThan(createRouter));
     });
   });
 }

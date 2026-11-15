@@ -1665,7 +1665,6 @@ class MemexRouter {
 
   Future<Result<List<TodoItem>>> loadTodos({bool includeDeleted = false}) {
     return runResult(() async {
-      await _ensureInitialized();
       return (await _todoRepository.load(
         await _reportUserId(),
         includeDeleted: includeDeleted,
@@ -1695,7 +1694,6 @@ class MemexRouter {
     TodoRecurrence? recurrence,
   }) {
     return runResult(() async {
-      await _ensureInitialized();
       return (await _todoRepository.add(
         userId: await _reportUserId(),
         text: text,
@@ -1718,7 +1716,6 @@ class MemexRouter {
     required ReportItem item,
   }) {
     return runResult(() async {
-      await _ensureInitialized();
       return (await _todoRepository.addFromReport(
         userId: await _reportUserId(),
         sessionId: sessionId,
@@ -1742,7 +1739,6 @@ class MemexRouter {
     bool clearRecurrence = false,
   }) {
     return runResult(() async {
-      await _ensureInitialized();
       (await _todoRepository.edit(
         userId: await _reportUserId(),
         id: id,
@@ -1763,7 +1759,6 @@ class MemexRouter {
 
   Future<Result<void>> setTodoDone({required String id, required bool done}) {
     return runResult(() async {
-      await _ensureInitialized();
       (await _todoRepository.setDone(
         userId: await _reportUserId(),
         id: id,
@@ -1775,7 +1770,6 @@ class MemexRouter {
 
   Future<Result<void>> snoozeTodo(String id) {
     return runResult(() async {
-      await _ensureInitialized();
       (await _todoRepository.snooze(
         userId: await _reportUserId(),
         id: id,
@@ -1784,29 +1778,20 @@ class MemexRouter {
     });
   }
 
-  Future<Result<String?>> todoDamagedLegacyFileName() async {
-    await _ensureInitialized();
-    return _todoRepository.damagedLegacyFileName(await _reportUserId());
-  }
+  Future<Result<String?>> todoDamagedLegacyFileName() async =>
+      _todoRepository.damagedLegacyFileName(await _reportUserId());
 
-  Future<Result<TodoAlarmStatus>> todoAlarmStatus() async {
-    await _ensureInitialized();
-    return _todoRepository.alarmStatus();
-  }
+  Future<Result<TodoAlarmStatus>> todoAlarmStatus() =>
+      _todoRepository.alarmStatus();
 
-  Future<Result<TodoAlarmStatus>> requestTodoAlarmPermissions() async {
-    await _ensureInitialized();
-    return _todoRepository.requestAlarmPermissions();
-  }
+  Future<Result<TodoAlarmStatus>> requestTodoAlarmPermissions() =>
+      _todoRepository.requestAlarmPermissions();
 
-  Future<Result<TodoAlarmStatus>> synchronizeTodoAlarms() async {
-    await _ensureInitialized();
-    return _todoRepository.synchronizeAlarms(await _reportUserId());
-  }
+  Future<Result<TodoAlarmStatus>> synchronizeTodoAlarms() async =>
+      _todoRepository.synchronizeAlarms(await _reportUserId());
 
   Future<Result<void>> removeTodo(String id) {
     return runResult(() async {
-      await _ensureInitialized();
       (await _todoRepository.remove(
         userId: await _reportUserId(),
         id: id,
@@ -1817,7 +1802,6 @@ class MemexRouter {
 
   Future<Result<void>> restoreTodo(String id) {
     return runResult(() async {
-      await _ensureInitialized();
       (await _todoRepository.restore(
         userId: await _reportUserId(),
         id: id,

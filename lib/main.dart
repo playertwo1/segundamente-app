@@ -192,6 +192,8 @@ void main() async {
   // A floating launch (F15-02 chat, F15-04 capture) starts on its sheet, not the home screen.
   FloatingChatService.instance.initialize();
   final floatingLaunch = await FloatingChatService.instance.takePendingLaunch();
+  // A cold floating launch can complete or add a Todo right away; storage must be ready first.
+  if (floatingLaunch != null) await MemexRouter().ensureInitialized();
   final appRouter = createAppRouter(
     rootNavigatorKey,
     () => RootShell(key: rootShellKey),
