@@ -16,7 +16,7 @@ Até o checkpoint da ponte, esta é a única lista de trabalho dos dois reposit�
 | 4 | Dono | Implantar o Worker com a caixa de correio na conta Cloudflare e medir o uso | F12-02 / L6.1 | READY |
 | 5 | Lumen | QR de pareamento com os dados do relay; revogação | L6.2 | Feito (L6.2 na `main` local do fork, commit `3ef24d1`; sem push) |
 | 6 | SM | Ler o QR, guardar os segredos com segurança, revogar | F12-03 | IN_PROGRESS (integrada na `main` local, commit `b25d0226`, sem push; falta validação real no S25 + Worker) |
-| 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | READY (passos 2 e 5 concluídos localmente) |
+| 7 | Lumen | Cifra da caixa de correio contra os vetores; outbox e aplicação idempotente das tarefas; "salvo neste PC" ≠ "sincronizado" | L6.3 | IN_PROGRESS (código e testes sintéticos na branch `feat/l63-mailbox-tarefas` do fork; falta merge na `main` e validação real contra Worker/S25) |
 | 8 | SM | Cifra contra os vetores; outbox e aplicação idempotente das tarefas; consulta ao abrir e a cada 1 hora; status visível | F12-04 | BLOCKED (passos 4, 6 e 7) |
 | 9 | SM + Lumen | Avisos cancelados no outro aparelho; checkpoint da ponte | F12-05 / L6.4 (tarefas) | BLOCKED (passo 8) |
 

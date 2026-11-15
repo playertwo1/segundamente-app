@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; F12-02 READY (implantação do Worker pelo dono); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push; L6.2 na `main` local do Lumen em `3ef24d1`) |
+| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; F12-02 READY (implantação do Worker pelo dono); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push); L6.2 (`3ef24d1`) na `main` do Lumen e L6.3 implementada/testada sinteticamente em `feat/l63-mailbox-tarefas` |
 | F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
@@ -24,7 +24,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Implantar o Worker (passo 4), mesclar e validar a F12-03 no S25 contra o Lumen, e seguir no código pela trilha L6.3 (passo 7) → F12-04 (passo 8) → F12-05 (passo 9).
+5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Implantar o Worker (passo 4), revisar/mesclar L6.3 (`feat/l63-mailbox-tarefas` no Lumen) e iniciar **Passo 8 (`F12-04` na Segunda Mente)**, seguido de Passo 9 (`F12-05` / `L6.4` tarefas) e validação real no S25 + notebook.
 
 ## Pendências do dono
 
