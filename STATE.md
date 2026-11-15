@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; **F12-02 DONE** (Worker implantado e medido em 2026-11-15); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push); L6.2 (`3ef24d1`) e L6.3 (mesclada na `main` local do Lumen em 2026-11-15); F12-04 sintética pronta na branch `feat/f1204-sync-tarefas` (sem merge); **próxima: aprovação/merge da `F12-04` e Passo 9 (`F12-05` / `L6.4` + S25)** |
+| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; **F12-02 DONE**; **F12-03**, **F12-04 (`293a96de`)** e **F12-05** com código e testes sintéticos concluídos na Segunda Mente, e **L6.2**, **L6.3** e **L6.4 (fatia de tarefas)** concluídos sinteticamente no Lumen (`origin/main`); falta validação real ponta a ponta no S25 + notebook para fechar os portões |
 | F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
@@ -24,7 +24,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Passos 4 (deploy Worker + `ACCESS_KEY`), 7 (merge L6.3 no Lumen) e 8 (`F12-04` sintética na branch `feat/f1204-sync-tarefas`) concluídos; após aprovação e merge da `feat/f1204-sync-tarefas` na `main`, avançar para o **Passo 9 (`F12-05` / `L6.4` tarefas + validação real no S25 e notebook)**.
+5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Todos os passos sintéticos 1–9 da ponte (incluindo `F12-04` na `main` `293a96de` e `F12-05 / L6.4` tarefas) estão implementados e testados; falta conectar o Galaxy S25 Ultra e validar ponta a ponta no S25 + notebook (pareamento, entrega na consulta, alarme e cancelamento cruzado de avisos).
 
 ## Pendências do dono
 
@@ -43,6 +43,19 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F12-05 (Passo 9 da PONTE — cancelamento cruzado de avisos AC-08 / T05) — implementação sintética (2026-11-15)
+- **Segunda Mente (`feat/f1205-cancelamento-avisos`):**
+  - Spec e plano em `docs/superpowers/specs/2026-11-15-f1205-cancelamento-avisos-ponte.md` e `docs/superpowers/plans/2026-11-15-f1205-cancelamento-avisos-ponte.md`.
+  - `lib/data/services/todo_alarm_service.dart`: `TodoAlarmBackend` + `@visibleForTesting TodoAlarmService.forTesting(...)`, cálculo de IDs para todos os itens e cancelamento dedup (`cancel`) para concluídas/excluídas/sem alarme futuro mesmo já ausentes de `pendingNotificationRequests()`, pré-cancelamento ao adiar (`snoozedUntil != null`) antes de `zonedSchedule` e varredura segura de `getActiveNotifications()` no canal `todo_reminders`.
+  - Testes novos: `test/data/services/todo_alarm_service_test.dart` (`8` testes) e grupo `F12-05 alarm sync integration (AC-08 & T05)` em `test/data/services/todo_sync_service_test.dart`.
+- **Lumen (`playertwo1/lumen`, branch `feat/l64-cancelamento-avisos`):**
+  - `windows/src-tauri/src/tasks/{mod,sync}.rs`: `due_trigger_for_now` ignora incrementos apenas de `version` no mesmo `trigger_ms`; `handle_toast_action` (`Snooze`/`Complete`) e comandos locais chamam `dismiss_if_active` (WinRT Toast + `"task-dismiss"`); testes para re-disparo e `dismiss_ids` em `done`, `deleted_at` e `snoozed_until`.
+- **Comandos e saídas:**
+  - Segunda Mente (`flutter test --no-pub ...` nos 16 alvos da F12-04/F12-05 + l10n + integration) → `+145: All tests passed!` (exit `0`).
+  - Segunda Mente (`flutter analyze --no-pub`) → `159 issues found.` (mesmo baseline pré-existente; zero issues novos nos arquivos tocados).
+  - Lumen (`cargo test --manifest-path windows/src-tauri/Cargo.toml --lib`) → `726 passed; 0 failed; 9 ignored` (incluindo `tasks`: `27 passed; 0 failed`); `npx tsc --noEmit` em `windows/` → exit `0`.
+- **`NOT_RUN`:** validação física no Galaxy S25 Ultra + notebook (`adb devices` vazio no momento da execução) e execução real do Toast WinRT no Windows; pronto para o teste visual do dono.
 
 ### F12-04 (Passo 8 da PONTE) — sync de tarefas pela caixa de correio HTTP, implementação sintética (2026-11-15)
 - **Branch `feat/f1204-sync-tarefas` (sem merge nem push):**
