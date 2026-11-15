@@ -2061,5 +2061,21 @@
   "lumenPairingUnlinkedLocalOnlyWarning": "Unlinked on this device. Could not reach the relay right now; use 'Pair again' on your PC if needed.",
   "lumenPairingInvalidQrError": "Invalid pairing code or link.",
   "lumenPairingScannerTitle": "Point the camera at the Lumen QR Code",
-  "lumenPairingLoading": "Loading pairing status..."
+  "lumenPairingLoading": "Loading pairing status...",
+  "todoSyncSavedOnDevice": "Saved on device",
+  "todoSyncSynced": "Synced",
+  "todoSyncSyncing": "Syncing…",
+  "todoSyncError": "Saved on device · sync failed",
+  "todoSyncRevoked": "Saved on device · pairing revoked",
+  "todoSyncPendingChanges": "Saved on device · {count} pending sync",
+  "@todoSyncPendingChanges": {"placeholders": {"count": {"type": "int"}}},
+  "todoSyncNowButton": "Sync now",
+  "todoSyncLastSuccess": "Last synced at {time}",
+  "@todoSyncLastSuccess": {"placeholders": {"time": {"type": "String"}}},
+  "todoConflictBannerTitle": "Edit conflict detected",
+  "todoConflictBannerSubtitle": "This task was edited here and on Lumen (PC). Choose which text to keep.",
+  "todoConflictLocalLabel": "On this device",
+  "todoConflictRemoteLabel": "On Lumen (PC)",
+  "todoConflictKeepLocal": "Keep from this device",
+  "todoConflictUseRemote": "Use from PC"
 }

@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F5V, F9, F10 | PAUSED | D-050; o estado de cada subfase no momento da pausa está no arquivo da fase |
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
-| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; **F12-02 DONE** (Worker implantado e medido em 2026-11-15); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push); L6.2 (`3ef24d1`) e L6.3 (mesclada na `main` local do Lumen em 2026-11-15); **próxima: F12-04 (Passo 8)** |
+| F12 | IN_PROGRESS (D-066) | Trilha única da ponte em `docs/lumen/PONTE.md`: só tarefas, só caixa de correio. F12-01 IN_PROGRESS; **F12-02 DONE** (Worker implantado e medido em 2026-11-15); F12-03 IN_PROGRESS (integrada na `main` local em `b25d0226` sem push); L6.2 (`3ef24d1`) e L6.3 (mesclada na `main` local do Lumen em 2026-11-15); F12-04 sintética pronta na branch `feat/f1204-sync-tarefas` (sem merge); **próxima: aprovação/merge da `F12-04` e Passo 9 (`F12-05` / `L6.4` + S25)** |
 | F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 a F15-07 pausadas até o checkpoint da ponte (D-066) | D-062 a D-064; widget e atalhos Android, paralela à fase L do fork |
 
@@ -24,7 +24,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
 3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
 4. **Em paralelo, no fork:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/coucou`.
-5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Passos 4 (deploy Worker + `ACCESS_KEY`) e 7 (merge L6.3 no Lumen) concluídos; iniciar **Passo 8 (`F12-04` na Segunda Mente)** na branch `feat/f1204-sync-tarefas`, seguido de Passo 9 (`F12-05` / `L6.4` tarefas) e validação real no S25 + notebook.
+5. **F12 (D-066):** seguir a [PONTE.md](docs/lumen/PONTE.md). Passos 4 (deploy Worker + `ACCESS_KEY`), 7 (merge L6.3 no Lumen) e 8 (`F12-04` sintética na branch `feat/f1204-sync-tarefas`) concluídos; após aprovação e merge da `feat/f1204-sync-tarefas` na `main`, avançar para o **Passo 9 (`F12-05` / `L6.4` tarefas + validação real no S25 e notebook)**.
 
 ## Pendências do dono
 
@@ -43,6 +43,18 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - v1.0.47 (2026-11-11): `flutter test --no-pub --reporter compact` com 1.674 aprovados, 4 ignorados e 0 falhas. A análise completa da época ficou `NOT_RUN`; a execução final da F11-05 encontrou 159 issues, detalhadas abaixo.
 
 ## Evidências recentes
+
+### F12-04 (Passo 8 da PONTE) — sync de tarefas pela caixa de correio HTTP, implementação sintética (2026-11-15)
+- **Branch `feat/f1204-sync-tarefas` (sem merge nem push):**
+  - Spec e plano em `docs/superpowers/specs/2026-11-15-f1204-sync-tarefas-mailbox.md` e `docs/superpowers/plans/2026-11-15-f1204-sync-tarefas-mailbox.md`.
+  - Cifra `coucou-mailbox/v1` em `lib/data/services/lumen_relay_crypto.dart` validada contra todos os vetores (`messages` e `mustRefuse`) copiados em `test/fixtures/lumen_mailbox_test_vectors.json`, mais `LumenMailboxClient` em `lib/data/services/lumen_mailbox_client.dart` e `pointycastle: ^3.9.1` no `pubspec.yaml` (`flutter pub get --enforce-lockfile`).
+  - Motor offline-first em `lib/data/services/todo_sync_service.dart` (`todo-sync-v1.json`, SHA-256 de `room`, outbox com coalescência, pull paginado, idempotência com cap 2000 / 90d, merge 3-vias simétrico, conflitos `pending_review`, quarentena de desconhecidas e venenosas após 3 falhas), hooks nos 9 métodos do `TodoService`, aplicação remota sem gerar nova `nextOccurrence` e ressincronização de alarmes, além de `Workmanager` (`lumenTodoPeriodicSyncTask`, 1h) + ciclo em `lib/main.dart` e `lib/data/services/health_service.dart`.
+  - UI e L10n em `lib/ui/todo/view_models/todo_viewmodel.dart`, `lib/ui/todo/widgets/todo_screen.dart` e `lib/l10n/app_{pt,en}.arb` separando `"Salvo no aparelho"` vs `"Sincronizado"`, botão `"Sincronizar agora"` e cards de conflito `pending_review` (`Manter deste aparelho` / `Usar do PC`).
+- **Comandos e saídas:**
+  - `python3 scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+  - `flutter test --no-pub test/data/services/lumen_relay_crypto_test.dart test/data/services/lumen_mailbox_client_test.dart test/data/services/todo_sync_service_test.dart test/data/services/todo_service_test.dart test/data/services/lumen_pairing_service_test.dart test/data/repositories/todo_repository_test.dart test/domain/models/todo_item_sync_contract_test.dart test/data/services/health_service_test.dart test/ui/todo/view_models/todo_viewmodel_test.dart test/ui/todo/widgets/todo_screen_test.dart test/ui/lumen/ test/integration/todo_undo_flow_test.dart test/l10n/arb_key_parity_test.dart test/l10n/locale_lookup_test.dart test/l10n/hardcoded_ui_strings_test.dart` → `+133: All tests passed!` (exit `0`).
+  - `flutter analyze --no-pub` → `159 issues found.` (mesmo baseline pré-existente da F12-03; zero erros ou alertas novos).
+- **`NOT_RUN`:** sync real S25 Ultra ↔ Lumen no notebook contra o Worker na Cloudflare, execução real de `Workmanager` em segundo plano e suíte completa global (`flutter test` sem filtro); ficam para a validação conjunta no Passo 9 (`F12-05 / L6.4`).
 
 ### F12-02 (Passo 4 da PONTE) — deploy real do Worker na Cloudflare e medição (2026-11-15)
 - **Deploy (`c:\Users\notefael\projetos\coucou\android\relay`):** `npm test` passou antes do deploy (`26` testes Worker + `37` testes Node); `npx wrangler deploy` publicou `coucou-link` em `https://coucou-link.<seu-subdominio>.workers.dev` (versão `f55c97a2-1e61-45e3-a6cc-232f9e274bbd`).

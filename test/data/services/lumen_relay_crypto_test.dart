@@ -20,11 +20,16 @@ String _bytesToHex(List<int> bytes) =>
 
 void main() {
   late Map<String, dynamic> vectors;
+  late Map<String, dynamic> mailboxVectors;
 
   setUpAll(() {
     final raw =
         File('test/fixtures/lumen_relay_test_vectors.json').readAsStringSync();
     vectors = jsonDecode(raw) as Map<String, dynamic>;
+
+    final rawMailbox =
+        File('test/fixtures/lumen_mailbox_test_vectors.json').readAsStringSync();
+    mailboxVectors = jsonDecode(rawMailbox) as Map<String, dynamic>;
   });
 
   group('LumenRelayCrypto', () {
@@ -135,6 +140,241 @@ void main() {
         () => LumenRelayCrypto.joinProofFromBase64Url('not-valid-43-char-key'),
         throwsFormatException,
       );
+    });
+  });
+
+  group('LumenRelayCrypto coucou-mailbox/v1', () {
+    test('derives kMailbox matching mailbox test vectors', () {
+      final inputs = mailboxVectors['inputs'] as Map<String, dynamic>;
+      final masterKey = _hexToBytes(inputs['key'] as String);
+      final derived = LumenRelayCrypto.deriveKeys(masterKey);
+
+      expect(_bytesToHex(derived.kMailbox), equals(mailboxVectors['kMailbox']));
+    });
+
+    test('aad, padding, sealMailboxWithNonce and open match vectors byte-for-byte', () {
+      final inputs = mailboxVectors['inputs'] as Map<String, dynamic>;
+      final room = inputs['room'] as String;
+      final kMailbox = _hexToBytes(mailboxVectors['kMailbox'] as String);
+      final messages =
+          (mailboxVectors['messages'] as List<dynamic>).cast<Map<String, dynamic>>();
+
+      expect(messages, isNotEmpty);
+      for (final msg in messages) {
+        final to = LumenMailboxRole.fromWire(msg['to'] as String);
+        final nonce = _hexToBytes(msg['nonce'] as String);
+        final jsonText = msg['json'] as String;
+
+        final aad = LumenRelayCrypto.mailboxAad(room: room, to: to);
+        expect(_bytesToHex(aad), equals(msg['aad']), reason: 'aad for ${to.wireName}');
+
+        final padded = LumenRelayCrypto.padMailboxJson(jsonText);
+        expect(
+          _bytesToHex(padded),
+          equals(msg['plaintextPadded']),
+          reason: 'padded for ${to.wireName}',
+        );
+
+        final sealed = LumenRelayCrypto.sealMailboxWithNonce(
+          kMailbox: kMailbox,
+          room: room,
+          to: to,
+          json: jsonText,
+          nonce: nonce,
+        );
+        expect(
+          _bytesToHex(sealed),
+          equals(msg['body']),
+          reason: 'body for ${to.wireName}',
+        );
+
+        final openedJson = LumenRelayCrypto.openMailboxJson(
+          kMailbox: kMailbox,
+          room: room,
+          to: to,
+          body: sealed,
+        );
+        expect(openedJson, equals(jsonText));
+
+        final openedMap = LumenRelayCrypto.openMailboxMap(
+          kMailbox: kMailbox,
+          room: room,
+          to: to,
+          body: sealed,
+        );
+        expect(openedMap, equals(jsonDecode(jsonText) as Map<String, dynamic>));
+      }
+    });
+
+    test('mustRefuse vectors fail with exact expected reason codes', () {
+      final kMailbox = _hexToBytes(mailboxVectors['kMailbox'] as String);
+      final mustRefuse =
+          (mailboxVectors['mustRefuse'] as List<dynamic>).cast<Map<String, dynamic>>();
+
+      expect(mustRefuse, isNotEmpty);
+      for (final item in mustRefuse) {
+        final name = item['name'] as String;
+        final expectedReason = item['expect'] as String;
+        final to = LumenMailboxRole.fromWire(item['to'] as String);
+        final room = item['room'] as String;
+        final body = _hexToBytes(item['body'] as String);
+
+        expect(
+          () => LumenRelayCrypto.openMailboxJson(
+            kMailbox: kMailbox,
+            room: room,
+            to: to,
+            body: body,
+          ),
+          throwsA(
+            isA<LumenMailboxCipherException>()
+                .having((e) => e.reason, 'reason', expectedReason),
+          ),
+          reason: name,
+        );
+
+        expect(
+          () => LumenRelayCrypto.openMailboxMap(
+            kMailbox: kMailbox,
+            room: room,
+            to: to,
+            body: body,
+          ),
+          throwsA(
+            isA<LumenMailboxCipherException>()
+                .having((e) => e.reason, 'reason', expectedReason),
+          ),
+          reason: '$name (openMailboxMap)',
+        );
+      }
+    });
+
+    test('sealMailboxEnvelope round-trips with random CSPRNG nonces', () {
+      final inputs = mailboxVectors['inputs'] as Map<String, dynamic>;
+      final room = inputs['room'] as String;
+      final kMailbox = _hexToBytes(mailboxVectors['kMailbox'] as String);
+      final envelope = <String, dynamic>{
+        'contract_version': 1,
+        'mutation_id': 'mut-rnd-001',
+        'origin_role': 'phone',
+        'entity_type': 'task',
+        'payload': <String, dynamic>{
+          'id': 'task-1',
+          'text': 'Ação rápida com UTF-8 çãõ',
+          'done': false,
+        },
+      };
+
+      final bodyA = LumenRelayCrypto.sealMailboxEnvelope(
+        kMailbox: kMailbox,
+        room: room,
+        to: LumenMailboxRole.pc,
+        envelope: envelope,
+      );
+      final bodyB = LumenRelayCrypto.sealMailboxEnvelope(
+        kMailbox: kMailbox,
+        room: room,
+        to: LumenMailboxRole.pc,
+        envelope: envelope,
+      );
+
+      expect(bodyA.length, greaterThanOrEqualTo(LumenRelayCrypto.mailboxMinBodyBytes));
+      expect(bodyA[0], equals(LumenRelayCrypto.mailboxVersion));
+      expect(bodyA.sublist(1, 13), isNot(equals(bodyB.sublist(1, 13))));
+      expect(bodyA, isNot(equals(bodyB)));
+
+      final decoded = LumenRelayCrypto.openMailboxMap(
+        kMailbox: kMailbox,
+        room: room,
+        to: LumenMailboxRole.pc,
+        body: bodyA,
+      );
+      expect(decoded, equals(envelope));
+    });
+
+    test('validates room, max JSON size, non-object JSON, key/nonce sizes, and redacts errors', () {
+      final inputs = mailboxVectors['inputs'] as Map<String, dynamic>;
+      final validRoom = inputs['room'] as String;
+      final kMailbox = _hexToBytes(mailboxVectors['kMailbox'] as String);
+      final nonce = Uint8List.fromList(List<int>.generate(12, (i) => i));
+
+      expect(
+        () => LumenRelayCrypto.mailboxAad(
+          room: 'too-short',
+          to: LumenMailboxRole.pc,
+        ),
+        throwsA(
+          isA<LumenMailboxCipherException>()
+              .having((e) => e.reason, 'reason', 'invalid_room'),
+        ),
+      );
+      expect(
+        () => LumenRelayCrypto.mailboxAad(
+          room: 'oKGio6SlpqeoqaqrrK2ur!',
+          to: LumenMailboxRole.pc,
+        ),
+        throwsA(
+          isA<LumenMailboxCipherException>()
+              .having((e) => e.reason, 'reason', 'invalid_room'),
+        ),
+      );
+
+      final tooBigJson = '{"a":"${'x' * LumenRelayCrypto.mailboxMaxJsonBytes}"}';
+      expect(
+        () => LumenRelayCrypto.padMailboxJson(tooBigJson),
+        throwsA(
+          isA<LumenMailboxCipherException>()
+              .having((e) => e.reason, 'reason', 'bad_length'),
+        ),
+      );
+
+      final arrayBody = LumenRelayCrypto.sealMailboxWithNonce(
+        kMailbox: kMailbox,
+        room: validRoom,
+        to: LumenMailboxRole.phone,
+        json: '[1,2,3]',
+        nonce: nonce,
+      );
+      expect(
+        () => LumenRelayCrypto.openMailboxJson(
+          kMailbox: kMailbox,
+          room: validRoom,
+          to: LumenMailboxRole.phone,
+          body: arrayBody,
+        ),
+        throwsA(
+          isA<LumenMailboxCipherException>()
+              .having((e) => e.reason, 'reason', 'bad_json'),
+        ),
+      );
+
+      expect(
+        () => LumenRelayCrypto.sealMailboxWithNonce(
+          kMailbox: Uint8List(31),
+          room: validRoom,
+          to: LumenMailboxRole.pc,
+          json: '{}',
+          nonce: nonce,
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => LumenRelayCrypto.sealMailboxWithNonce(
+          kMailbox: kMailbox,
+          room: validRoom,
+          to: LumenMailboxRole.pc,
+          json: '{}',
+          nonce: Uint8List(11),
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => LumenMailboxRole.fromWire('tablet'),
+        throwsArgumentError,
+      );
+
+      const err = LumenMailboxCipherException('bad_tag', 'Tag check failed.');
+      expect(err.toString(), equals('LumenMailboxCipherException(bad_tag): Tag check failed.'));
     });
   });
 }
