@@ -1494,5 +1494,81 @@ void main() {
       expect(donePushed.single['entity_id'], task.id);
       expect(donePushed.single['payload']['done'], isTrue);
     });
+
+    test(
+        '16. T05: remote reschedule (dueDate/dueTime/alertMinutes) from PC cancels prior notification and reschedules new alarm',
+        () async {
+      final pairing =
+          _makeTestPairing(roomSeed: 'room-alarm-remote-reschedule');
+      await savePairing(pairing);
+      final relay = _FakeRelayMailbox(pairing);
+      final sync = createSync(
+        mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+      );
+      final todos = TodoService(fileService: files, syncService: sync);
+
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-resched-init',
+          entityId: 'pc-resched-task',
+          baseVersion: 0,
+          newVersion: 1,
+          updatedAt: '2026-11-15T12:00:00Z',
+          payload: _taskPayload(
+            id: 'pc-resched-task',
+            text: 'Revisar contrato',
+            due: '2026-11-16 09:00',
+            dueDate: '2026-11-16',
+            dueTime: '09:00',
+            alertMinutes: 20,
+          ),
+        ),
+      );
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      final alarmId = alarmBackend.scheduledCalls.single.id;
+      alarmBackend.simulateFiredNotification(alarmId, keepInTray: true);
+      alarmBackend.clearRecordedCalls();
+
+      // PC updates dueTime to 15:00 and alertMinutes to 30.
+      relay.enqueueFromPcMap(
+        _pcEnvelope(
+          mutationId: 'pc-resched-update',
+          entityId: 'pc-resched-task',
+          baseVersion: 1,
+          newVersion: 2,
+          updatedAt: '2026-11-15T12:05:00Z',
+          payload: _taskPayload(
+            id: 'pc-resched-task',
+            text: 'Revisar contrato',
+            due: '2026-11-16 15:00',
+            dueDate: '2026-11-16',
+            dueTime: '15:00',
+            alertMinutes: 30,
+            version: 2,
+          ),
+        ),
+      );
+
+      await sync.syncNow(userId: userId);
+      await TodoService.waitForAlarmSync();
+
+      expect(alarmBackend.cancelledIds, [alarmId]);
+      expect(alarmBackend.active, isEmpty);
+      expect(alarmBackend.scheduledCalls, hasLength(1));
+      // 15:00 BRT - 30 min = 14:30 BRT = 17:30 UTC
+      expect(
+        alarmBackend.scheduledCalls.single.scheduledDate.toUtc(),
+        DateTime.utc(2026, 11, 16, 17, 30),
+      );
+      expect(
+        alarmBackend.operations,
+        ['cancel:$alarmId', 'schedule:$alarmId@2026-11-16T17:30:00.000Z'],
+      );
+      final loaded = (await todos.load(userId)).single;
+      expect(loaded.dueTime, '15:00');
+      expect(loaded.alertMinutes, 30);
+    });
   });
 }

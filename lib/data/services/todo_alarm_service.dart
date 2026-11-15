@@ -172,11 +172,28 @@ class TodoAlarmService {
   final Logger _logger = getLogger('TodoAlarmService');
   final TodoAlarmBackend _backend;
   final DateTime Function() _now;
+  final Map<String, tz.TZDateTime> _lastScheduledDates = {};
 
   bool _initialized = false;
   bool _requestedNotificationPermission = false;
   NotificationResponse? _launchResponse;
   TodoAlarmActionHandler? _actionHandler;
+
+  /// Cancels both pending alarms and displayed notifications for the given task IDs.
+  Future<void> cancelNotificationsForTaskIds(Iterable<String> taskIds) async {
+    if (!_backend.isSupported) return;
+    final ids = taskIds.toSet();
+    if (ids.isEmpty) return;
+    await initialize();
+    final allIds = notificationIdsForTaskIds(ids);
+    for (final taskId in ids) {
+      final notifId = allIds[taskId];
+      if (notifId != null) {
+        _lastScheduledDates.remove(taskId);
+        await _backend.cancel(id: notifId);
+      }
+    }
+  }
 
   Future<NotificationResponse?> initialize({
     TodoAlarmActionHandler? onAction,
@@ -272,7 +289,7 @@ class TodoAlarmService {
         );
         if (date != null) scheduledDates[item.id] = date;
       }
-      final allIds = _notificationIds(items);
+      final allIds = notificationIdsForTaskIds(items.map((item) => item.id));
       final itemById = <int, TodoItem>{
         for (final item in items) allIds[item.id]!: item,
       };
@@ -298,6 +315,11 @@ class TodoAlarmService {
       // and left pendingNotificationRequests().
       for (final item in items) {
         final hasFutureSchedule = scheduledDates.containsKey(item.id);
+        final nextSchedule = scheduledDates[item.id];
+        final prevSchedule = _lastScheduledDates[item.id];
+        final isRescheduled = hasFutureSchedule &&
+            prevSchedule != null &&
+            prevSchedule != nextSchedule;
         final isActiveSnoozed = !item.done &&
             !item.isTombstoned &&
             item.snoozedUntil != null &&
@@ -305,8 +327,12 @@ class TodoAlarmService {
         if (item.done ||
             item.isTombstoned ||
             !hasFutureSchedule ||
-            isActiveSnoozed) {
+            isActiveSnoozed ||
+            isRescheduled) {
           await cancelOnce(allIds[item.id]!);
+        }
+        if (item.done || item.isTombstoned || !hasFutureSchedule) {
+          _lastScheduledDates.remove(item.id);
         }
       }
 
@@ -314,11 +340,17 @@ class TodoAlarmService {
         final id = notification.id;
         if (id == null) continue;
         final item = itemById[id];
+        final nextSchedule = item == null ? null : scheduledDates[item.id];
+        final prevSchedule = item == null ? null : _lastScheduledDates[item.id];
+        final isRescheduled = nextSchedule != null &&
+            prevSchedule != null &&
+            prevSchedule != nextSchedule;
         final shouldKeep = item != null &&
             !item.done &&
             !item.isTombstoned &&
             scheduledDates.containsKey(item.id) &&
-            item.snoozedUntil == null;
+            item.snoozedUntil == null &&
+            !isRescheduled;
         if (!shouldKeep) {
           await cancelOnce(id);
         }
@@ -329,6 +361,7 @@ class TodoAlarmService {
       for (final item in active) {
         final scheduledDate = scheduledDates[item.id];
         if (scheduledDate == null) continue;
+        _lastScheduledDates[item.id] = scheduledDate;
         await _backend.zonedSchedule(
           id: allIds[item.id]!,
           title: UserStorage.l10n.todoAlarmNotificationTitle,
@@ -414,12 +447,12 @@ class TodoAlarmService {
       status == TodoAlarmStatus.ready ||
       status == TodoAlarmStatus.notificationsDenied;
 
-  Map<String, int> _notificationIds(Iterable<TodoItem> items) {
-    final ids = items.map((item) => item.id).toSet().toList()..sort();
+  static Map<String, int> notificationIdsForTaskIds(Iterable<String> taskIds) {
+    final ids = taskIds.toSet().toList()..sort();
     final used = <int>{};
     final result = <String, int>{};
     for (final id in ids) {
-      var candidate = _notificationId('todo:$id');
+      var candidate = deterministicNotificationId(id);
       while (!used.add(candidate)) {
         candidate = candidate == _notificationIdBase + _notificationIdRange - 1
             ? _notificationIdBase
@@ -430,9 +463,9 @@ class TodoAlarmService {
     return result;
   }
 
-  int _notificationId(String value) {
+  static int deterministicNotificationId(String taskId) {
     var hash = 0x811c9dc5;
-    for (final unit in value.codeUnits) {
+    for (final unit in 'todo:$taskId'.codeUnits) {
       hash = ((hash ^ unit) * 0x01000193) & 0xffffffff;
     }
     return _notificationIdBase + hash % _notificationIdRange;
