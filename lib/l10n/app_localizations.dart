@@ -4914,7 +4914,7 @@ abstract class AppLocalizations {
   /// No description provided for @maxCommentCharactersDesc.
   ///
   /// In en, this message translates to:
-  /// **'How many characters can comment on each record. By default, up to two voices can respond when they add something useful.'**
+  /// **'How many characters can participate in the live group discussion on each record. Defaults to up to 15 relevant voices.'**
   String get maxCommentCharactersDesc;
 
   /// No description provided for @replyTo.
