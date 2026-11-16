@@ -516,3 +516,14 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Limite: a escolha foi por preferência e pelos trade-offs documentados, **não por medição no S25**. Os cinco critérios da D11 (abre de qualquer app, minimiza mantendo a conversa, sobrevive à economia de bateria, custo de bateria, facilidade de esconder) seguem `NOT_RUN` para a bolha. A F15-07 não vira DONE antes dessa medição.
 - Limites conhecidos da bolha, a medir no S25: abrir a bolha fecha a `MainActivity` aberta (um host por vez); com a bolha viva, abrir o app depois pode fazer os dois hosts compartilharem o motor; precisa do canal de notificação e da opção de bolhas do One UI ligados; a bolha nasce de uma notificação.
 - Consequência: a escolha da forma deixa de ser pendência do dono. Passa a ser medir a bolha no S25 (F15-07). Reversível: trocar para B é uma decisão nova registrada, sem fase nova.
+
+## D-074 — Abrir a F14 (Assistente ativo) antes dos portões da F12 e da F13-04 (2026-11-15)
+- Contexto: a F14 estava `BLOCKED` pela D-050 até o fechamento dos portões da F11 (já `DONE`), da F12 (`IN_PROGRESS`) e da F13-04 (`BLOCKED`, Google Calendar). Em 2026-11-15, o dono aprovou explicitamente começar a F14 antes dessas fases.
+- Decisão:
+  - A **F14** deixa o estado `BLOCKED` e passa a `READY` por exceção aprovada pelo dono:
+    - **F14-02** (cobrança de tarefas paradas há dias): `READY` sobre a F11 já concluída.
+    - **F14-01** (resumo de manhã e de tarde): `READY` inicialmente com dados locais (Todo da F11 e registros existentes); eventos do Google Calendar entram quando a F13-04 for aberta e concluída.
+    - **F14-03** (sugestões das personas ao longo do dia): `READY` no celular com o sistema local de personas e cartões de confirmação; participação/sync no Lumen fica para quando a F12-06 fechar.
+  - Limites mantidos (`D-051` e `F14-assistente-ativo.md`): horários e silêncio configuráveis, nada que o usuário confirmou é escondido, o resumo nunca inventa fatos e nenhuma sugestão vira tarefa ou data sem confirmação explícita.
+- Consequência: os testes unitários e de widget/serviço exigidos por `AGENTS.md` acompanham cada entrega; o fechamento das integrações dependentes de Calendar (`F13-04`) e Lumen (`F12-06`) e a validação no Galaxy S25 Ultra continuam necessários para o portão final.
+

@@ -15,17 +15,19 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 | F8 | BLOCKED | NotebookLM pós-MVP sem previsão; caminho escolhido: via B (D-055) |
 | F11 | DONE (portão fechado em 2026-11-14) | AC-01 e Concluir com o app fechado confirmados por adb no S25 (build atual); uma tentativa da manhã no build anterior não gravou, causa aberta. F11-01 a F11-06 DONE (F11-06 em D-061); auditoria PASS |
 | F12 | IN_PROGRESS (D-066) | **Checkpoint da ponte fechado em 2026-11-15** no S25 + notebook. F12-01 IN_PROGRESS (falta o dono ler o contrato); F12-02 a F12-05 DONE; F12-06 e F12-07 READY. Portão F12 ainda depende do AC-04 (v1.1) |
-| F13, F14 | BLOCKED | Google (D-055), assistente ativo (D-050) |
+| F13 | BLOCKED | Google (D-055) |
+| F14 | READY (D-074) | Aberta pelo dono em 2026-11-15 antes de F12 e F13-04 (escopo inicial no celular: F14-01 sem Calendar, F14-02 e F14-03 READY) |
 | F15 | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS; F15-03 REVIEW (D-068; código pronto, S25 NOT_RUN); F15-04 REVIEW (D-069; código pronto, S25 NOT_RUN); F15-05 REVIEW (D-072; código pronto, S25 NOT_RUN); F15-06 REVIEW (D-070; código pronto, device NOT_RUN); F15-07 IN_PROGRESS (D-071; protótipos no build dev; forma escolhida: bolha, D-073; medição no S25 `NOT_RUN`) | D-062 a D-073; widget e atalhos Android, paralela à fase L do fork |
 
 ## Próxima ação
 
-1. **Validar F15-02 a F15-07 no S25 com um APK da `main`** (a F15 inteira já está na `main` desde `91feef7e`, mais as correções da auditoria; o S25 estava fora do `adb` em 2026-11-15). No S25, conferir também os pontos da auditoria que só o aparelho decide (`docs/reviews/F15.md`): atalhos Conversar e Falar com a folha não exportada (R04), widget atualizado depois de um sync com o app fechado (R02), concluir pelo widget a frio (R01) e o motor compartilhado sem tela (R05). O dono decide o texto do limite de Falar (R03). A forma da minicápsula já é a bolha (D-073); falta medi-la no S25 pela F15-07. Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
-2. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
-3. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
-4. **Em paralelo, no Lumen:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/lumen`.
-5. **F12:** checkpoint da ponte fechado e os 4 achados da Segunda Mente corrigidos (2026-11-15). Próximo: F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06 (entidades v1.1). Abertos no Lumen: QR maior e edição de horário que não salva. O S25 dev está revogado: parear de novo antes da F12-06 e, com ele pareado, conferir o rótulo "sem conexão" com o modo avião.
-6. **Fim da pausa da D-066:** com o checkpoint fechado, a F15-03 em diante volta a andar.
+1. **Iniciar a F14 — Assistente ativo (`READY` por `D-074`):** começar no celular pelo escopo local independente do Google Calendar e da `F12-06` (`F14-02` cobrança de tarefas paradas, `F14-01` resumos de manhã e de tarde com Todo/registros locais e `F14-03` sugestões das personas com cartão de confirmação).
+2. **Validar F15-02 a F15-07 no S25 com um APK da `main`** (a F15 inteira já está na `main` desde `91feef7e`, mais as correções da auditoria; o S25 estava fora do `adb` em 2026-11-15). No S25, conferir também os pontos da auditoria que só o aparelho decide (`docs/reviews/F15.md`): atalhos Conversar e Falar com a folha não exportada (R04), widget atualizado depois de um sync com o app fechado (R02), concluir pelo widget a frio (R01) e o motor compartilhado sem tela (R05). O dono decide o texto do limite de Falar (R03). A forma da minicápsula já é a bolha (D-073); falta medi-la no S25 pela F15-07. Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
+3. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
+4. **F11-06:** DONE (D-061, aberta pelo dono em 2026-11-13). Vista no S25 (pacote dev); o TalkBack segue `NOT_RUN`.
+5. **Em paralelo, no Lumen:** Fase L (L0: fechar o que está quase pronto; L1: renomear para Lumen com assets próprios). Ver `docs/roadmap/fase-l-lumen.md` em `playertwo1/lumen`.
+6. **F12:** checkpoint da ponte fechado e os 4 achados da Segunda Mente corrigidos (2026-11-15). Próximo: F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06 (entidades v1.1). Abertos no Lumen: QR maior e edição de horário que não salva. O S25 dev está revogado: parear de novo antes da F12-06 e, com ele pareado, conferir o rótulo "sem conexão" com o modo avião.
+7. **Fim da pausa da D-066:** com o checkpoint fechado, a F15-03 em diante volta a andar.
 
 ## Pendências do dono
 
