@@ -57,7 +57,7 @@
 | [F11 — Todo robusto](docs/roadmap/F11-todo-robusto-celular.md) | Lista única com Hoje/Próximas/Atrasadas, repetição, subtarefas, prioridade, busca, alarmes próprios e cartão de confirmação da IA | D-050/D-051/D-052; paralela à fase Lumen do fork | DONE (2026-11-14) | Fechado em 2026-11-14: AC-01 e Concluir com o app fechado observados pelo dono no S25; confirmação por adb NOT_RUN; auditoria PASS em `docs/reviews/F11.md` |
 | [F12 — Sync com o Lumen](docs/roadmap/F12-sync-com-o-lumen.md) | Celular e Lumen trocam tarefas, notas, conversas, personas e preferências por relay + caixa de correio | D-054, D-066; F11-01 e o contrato F12-01 | IN_PROGRESS | Cenários de caos sem perda nem duplicação |
 | [F13 — Google](docs/roadmap/F13-google.md) | Login Google próprio, backup semanal no Drive e Google Calendar | D-055; projeto Google Cloud do dono | BLOCKED | Backup restaurado e eventos lidos/criados com confirmação |
-| [F14 — Assistente ativo](docs/roadmap/F14-assistente-ativo.md) | Resumos manhã/tarde, cobrança de tarefas paradas e sugestões das personas | D-050; portões F11 e F12, F13-04 | BLOCKED | Configurável, silenciável e sem tarefa criada sem confirmação |
+| [F14 — Assistente ativo](docs/roadmap/F14-assistente-ativo.md) | Resumos manhã/tarde, cobrança de tarefas paradas e sugestões das personas | D-050, D-074 (aberta pelo dono antes de F12 e F13-04) | READY (D-074; F14-01 a F14-03 READY no celular) | Configurável, silenciável e sem tarefa criada sem confirmação |
 | [F15 — Widget e atalhos Android](docs/roadmap/F15-widget-e-atalhos-android.md) | Widget redimensionável e chat flutuante no Android: conversar, falar, capturar e ver tarefas de hoje da tela inicial; forma da minicápsula decidida por protótipo | D-062 e D-063; portão F11 fechado em 2026-11-14; paralela à fase L do fork | F15-01 DONE (D-064: teclas no pequeno, linhas no grande); F15-02 IN_PROGRESS (só falta validar no S25); F15-03 REVIEW (D-068); F15-04 REVIEW (D-069); F15-05 REVIEW (D-072); F15-06 REVIEW (D-070); F15-07 IN_PROGRESS (D-071; bolha escolhida, D-073) | F15-01 a F15-06 DONE com evidência no S25 e forma da minicápsula decidida (F15-07) |
 
 **Exceções vigentes:** D-010 permitiu avançar F6 antes do fechamento do MVP. D-022 permite executar F5V em paralelo à F5. D-042 abriu F9 após o fechamento do MVP e limita seu escopo atual a Android; não fecha a fase nem reduz seu checklist. D-050 permite F11 em paralelo à fase Lumen do fork, sem fechar portões de fases pausadas.
@@ -71,7 +71,7 @@ Definida por D-050 (2026-11-13). Decisões completas: [questionário](docs/quest
 3. **F15 (celular)**, aberta pela D-062 com o portão da F11 fechado, em paralelo à fase L do fork: widget e atalhos Android. F15-01 DONE (D-064); F15-02 (chat flutuante) IN_PROGRESS, só a validação no S25; F15-03 a F15-06 em REVIEW (D-068 a D-070) e F15-07 IN_PROGRESS (D-071; forma: bolha, D-073), tudo com o S25 NOT_RUN. Não depende de F12 nem de F13.
 4. **F12:** sync, aberta pela D-066. Até o checkpoint da ponte, a ordem de trabalho dos dois repositórios está em `docs/lumen/PONTE.md` (só tarefas, só caixa de correio); depois, os roadmaps voltam a andar separados.
 5. **F13:** Google (login, backup no Drive, Calendar). O backup entra assim que o login existir.
-6. **F14:** assistente ativo, só depois dos portões F11 e F12.
+6. **F14:** assistente ativo, aberta por exceção em D-074 (2026-11-15) antes dos portões F12 e F13-04, começando pelo escopo local no celular (F14-02, F14-01 sem Calendar e F14-03 no celular).
 7. **Pausadas por D-050:** F9, F5V e F10, sem perda; retomar exige nova decisão. F8 (NotebookLM) continua BLOCKED como pós-MVP sem previsão (D-055).
 
 ## Ideias futuras — sem autorização de implementação
@@ -113,3 +113,4 @@ Ideias já avaliadas e distribuídas em tarefas ficam nas decisões D-014, D-016
 - 2026-11-14 — D-063: F15-01 (maquetes) aberta antes do portão da F11, por pedido do dono; a F15-01 fica em REVIEW até a escolha do dono. F15-02 a F15-07 seguem BLOCKED.
 - 2026-11-14 — D-064: F15-01 DONE com a combinação escolhida pelo dono (teclas no pequeno, linhas no grande; médio em teclas por leitura, a confirmar pelo dono). F15-02 a F15-07 seguem BLOCKED até o portão da F11.
 - 2026-11-14 — portão da F11 fechado (AC-01 e Concluir com o app fechado observados pelo dono no S25; auditoria PASS); F15-02 em andamento (IN_PROGRESS), sem nova decisão pela D-062.
+- 2026-11-15 — D-074: dono aprovou iniciar a F14 (assistente ativo) antes do fechamento de F12 e F13-04, começando pelos dados locais do celular.
