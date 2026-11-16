@@ -47,6 +47,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Checkpoints reais do Lumen L3 a L7 (2026-11-15, noite)
+- Suíte sintética do Lumen antes: `npx tsc --noEmit` PASS, `npm test` 721/0, `cargo test --lib` 743/0/9 ignorados, `npm run build` PASS.
+- Relato do dono no notebook: L3 (ditado e comentário de persona sem duplicar), L4 (tarefa por voz, Toast, Adiar, Concluir), L6 (S25 desligado → tarefa do PC chega uma vez e o alarme toca) e L7 (backup, restauração e evento só com confirmação) PASS.
+- L5: FAIL às 21:23 (comando MCP salvo no Lumen sem o caminho da caixa); depois de ligar o MailCraft com `--control 7991` e o Lumen no modo control, resumo e rascunho PASS. Envio `NOT_RUN` (bloqueado em código). Correção do erro na branch `fix/mailcraft-mcp-erro` do Lumen (`5635bac`, 745/0/9).
+- Roteiro e detalhes: [docs/testes/roteiro-lumen-checkpoints-L3-L7.md](docs/testes/roteiro-lumen-checkpoints-L3-L7.md).
+
 ### Acabamento visual do widget Android com Impeccable (2026-11-15)
 - **Visual e ergonomia (`android/app/src/main/res/` + `WidgetLayouts.kt`):**
   - Novos tokens AMOLED e geometria concêntrica (`res/values/colors.xml`, `res/values/dimens.xml`): fundo `#000000` com borda `#33312E` e raio `22dp` (`@android:id/background` + `android:clipToOutline="true"`), preenchimento concêntrico de `8dp` (`14dp` nas teclas), superfície tonal `#121110` (`widget_surface_key`) para botões secundários com `<ripple>` tátil (`widget_key_primary.xml`, `widget_key_outline.xml`, `widget_row_ripple.xml`).
