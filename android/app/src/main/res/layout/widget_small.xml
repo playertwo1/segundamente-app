@@ -1,19 +1,169 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-03+: small widget (chat keys: Conversar, Falar). Concierge AMOLED layout with 22dp/14dp concentric corners. -->
+<!-- Compact dock state ("Estado compacto" >=260dp): logo, Capturar/Falar/Tarefas pill bar, and circular + CTA. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
+    android:baselineAligned="false"
     android:clipToOutline="true"
-    android:orientation="vertical"
-    android:paddingStart="@dimen/widget_padding_horizontal"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
     android:paddingTop="6dp"
-    android:paddingEnd="@dimen/widget_padding_horizontal"
+    android:paddingEnd="10dp"
     android:paddingBottom="6dp">
 
-    <include
-        layout="@layout/widget_chat_row"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <LinearLayout
+        android:id="@+id/widget_open_app"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/widget_logo_badge"
+        android:clickable="true"
+        android:clipToOutline="true"
+        android:contentDescription="@string/widget_open_app"
+        android:focusable="true"
+        android:gravity="center">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/sm_launcher_foreground" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_weight="1"
+        android:background="@drawable/widget_nav_track"
+        android:baselineAligned="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="2dp"
+        android:paddingEnd="2dp">
+
+        <LinearLayout
+            android:id="@+id/widget_chat_type"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/widget_row_ripple"
+            android:clickable="true"
+            android:contentDescription="@string/widget_nav_capture"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_widget_chat_light" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="@string/widget_nav_capture"
+                android:textColor="@color/widget_ivory_soft"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="24dp"
+            android:background="@color/widget_line" />
+
+        <LinearLayout
+            android:id="@+id/widget_chat_talk"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/widget_row_ripple"
+            android:clickable="true"
+            android:contentDescription="@string/shortcut_chat_talk"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_widget_mic" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="@string/shortcut_chat_talk"
+                android:textColor="@color/widget_ivory_soft"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="24dp"
+            android:background="@color/widget_line" />
+
+        <LinearLayout
+            android:id="@+id/widget_small_todo"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/widget_row_ripple"
+            android:clickable="true"
+            android:contentDescription="@string/widget_nav_notes"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_widget_doc" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="@string/widget_nav_notes"
+                android:textColor="@color/widget_ivory_soft"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_task_add"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:background="@drawable/widget_circle_amber"
+        android:clickable="true"
+        android:contentDescription="@string/widget_action_task_add"
+        android:focusable="true"
+        android:gravity="center">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_widget_plus_dark" />
+    </LinearLayout>
 </LinearLayout>

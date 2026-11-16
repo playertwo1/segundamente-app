@@ -20,6 +20,15 @@
     <string name="widget_tasks_more">+%1$d</string>
     <string name="widget_today">Today</string>
     <string name="widget_task_complete">Complete %1$s</string>
+    <string name="widget_nav_capture">Capture</string>
+    <string name="widget_nav_notes">Tasks</string>
+    <string name="widget_nav_timeline">Timeline</string>
+    <string name="widget_input_hint">What do you want to capture?</string>
+    <string name="widget_register_cta">Save</string>
+    <string name="widget_tasks_card_title">Today\'s tasks</string>
+    <string name="widget_see_all">See all</string>
+    <string name="widget_open_app">Open Segunda Mente</string>
+    <string name="widget_more_options">More options</string>
     <!-- F15-06: Quick Settings tile label. -->
     <string name="tile_conversar">Chat</string>
 </resources>
