@@ -8781,6 +8781,126 @@ abstract class AppLocalizations {
   /// **'Choose time'**
   String get todoPickTime;
 
+  /// No description provided for @todoNewTask.
+  ///
+  /// In en, this message translates to:
+  /// **'New task'**
+  String get todoNewTask;
+
+  /// No description provided for @todoEditorDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get todoEditorDate;
+
+  /// No description provided for @todoEditorTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get todoEditorTime;
+
+  /// No description provided for @todoAlertNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No early alert'**
+  String get todoAlertNone;
+
+  /// No description provided for @todoAlertOneHourBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour before'**
+  String get todoAlertOneHourBefore;
+
+  /// No description provided for @todoAlertOneDayBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day before'**
+  String get todoAlertOneDayBefore;
+
+  /// No description provided for @todoAlertHoursBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hours before'**
+  String todoAlertHoursBefore(int hours);
+
+  /// No description provided for @todoAlertCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get todoAlertCustom;
+
+  /// No description provided for @todoAlertPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Early alert'**
+  String get todoAlertPageTitle;
+
+  /// No description provided for @todoAlertUnitMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get todoAlertUnitMinutes;
+
+  /// No description provided for @todoAlertUnitHours.
+  ///
+  /// In en, this message translates to:
+  /// **'hours'**
+  String get todoAlertUnitHours;
+
+  /// No description provided for @todoAlertDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get todoAlertDone;
+
+  /// No description provided for @todoInOneHour.
+  ///
+  /// In en, this message translates to:
+  /// **'In 1 hour'**
+  String get todoInOneHour;
+
+  /// No description provided for @todoInTwoHours.
+  ///
+  /// In en, this message translates to:
+  /// **'In 2 hours'**
+  String get todoInTwoHours;
+
+  /// No description provided for @todoClearDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove date'**
+  String get todoClearDate;
+
+  /// No description provided for @todoClearTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove time'**
+  String get todoClearTime;
+
+  /// No description provided for @todoClearText.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear text'**
+  String get todoClearText;
+
+  /// No description provided for @todoRepeatSummaryDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get todoRepeatSummaryDaily;
+
+  /// No description provided for @todoRepeatSummaryWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every week on {days}'**
+  String todoRepeatSummaryWeekly(String days);
+
+  /// No description provided for @todoRepeatSummaryMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every month'**
+  String get todoRepeatSummaryMonthly;
+
   /// No description provided for @activeAssistantTitle.
   ///
   /// In en, this message translates to:

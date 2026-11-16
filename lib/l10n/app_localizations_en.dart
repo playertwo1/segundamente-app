@@ -4959,6 +4959,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoPickTime => 'Choose time';
 
   @override
+  String get todoNewTask => 'New task';
+
+  @override
+  String get todoEditorDate => 'Date';
+
+  @override
+  String get todoEditorTime => 'Time';
+
+  @override
+  String get todoAlertNone => 'No early alert';
+
+  @override
+  String get todoAlertOneHourBefore => '1 hour before';
+
+  @override
+  String get todoAlertOneDayBefore => '1 day before';
+
+  @override
+  String todoAlertHoursBefore(int hours) {
+    return '$hours hours before';
+  }
+
+  @override
+  String get todoAlertCustom => 'Custom';
+
+  @override
+  String get todoAlertPageTitle => 'Early alert';
+
+  @override
+  String get todoAlertUnitMinutes => 'minutes';
+
+  @override
+  String get todoAlertUnitHours => 'hours';
+
+  @override
+  String get todoAlertDone => 'Done';
+
+  @override
+  String get todoInOneHour => 'In 1 hour';
+
+  @override
+  String get todoInTwoHours => 'In 2 hours';
+
+  @override
+  String get todoClearDate => 'Remove date';
+
+  @override
+  String get todoClearTime => 'Remove time';
+
+  @override
+  String get todoClearText => 'Clear text';
+
+  @override
+  String get todoRepeatSummaryDaily => 'Every day';
+
+  @override
+  String todoRepeatSummaryWeekly(String days) {
+    return 'Every week on $days';
+  }
+
+  @override
+  String get todoRepeatSummaryMonthly => 'Every month';
+
+  @override
   String get activeAssistantTitle => 'Active Assistant';
 
   @override

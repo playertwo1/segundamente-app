@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:memex/config/app_flavor.dart';
@@ -13,6 +14,7 @@ import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
+import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_screen.dart';
@@ -346,7 +348,10 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         supportedLocales: AppLocalizations.supportedLocales,
         home: TodoScreen(viewModel: viewModel),
       ),
@@ -420,21 +425,21 @@ void main() {
   });
 
   testWidgets('creates and edits priority and subtasks', (tester) async {
-    final router = await pump(tester, []);
+    final router = await pump(
+      tester,
+      [],
+      shortcutSettings: TodoShortcutSettings(defaultAlertMinutes: 12),
+    );
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Preparar');
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_alert_minutes')),
-      '12',
-    );
     await tester.tap(find.byKey(const ValueKey('todo_priority_editor')));
     await tester.pumpAndSettle();
     await tester.tap(find.text(UserStorage.l10n.todoPriorityUrgent).last);
     await tester.pumpAndSettle();
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
@@ -484,7 +489,7 @@ void main() {
     final additionalWeekday = today.weekday == DateTime.monday ? 2 : 1;
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
@@ -495,6 +500,8 @@ void main() {
       find.byKey(const ValueKey('todo_text')),
       'Revisar relatório',
     );
+    await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+    await tester.pumpAndSettle();
     final dateShortcut = find.byKey(
       const ValueKey('todo_date_shortcut_today'),
     );
@@ -503,6 +510,8 @@ void main() {
     await tester.tap(dateShortcut);
     expect(find.byKey(const ValueKey('todo_no_time')), findsOneWidget);
 
+    await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+    await tester.pumpAndSettle();
     final timeShortcut = find.byKey(const ValueKey('todo_time_shortcut_0'));
     await tester.scrollUntilVisible(timeShortcut, 100,
         scrollable: dialogScroll);
@@ -510,6 +519,8 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('todo_no_time')), findsNothing);
 
+    await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+    await tester.pumpAndSettle();
     final weekly = find.byKey(const ValueKey('todo_repeat_weekly'));
     await tester.scrollUntilVisible(weekly, 100, scrollable: dialogScroll);
     await tester.tap(weekly);
@@ -540,6 +551,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('todo_date_shortcut_inThreeDays')),
       findsOneWidget,
@@ -549,11 +562,18 @@ void main() {
   });
 
   testWidgets('a time without a valid date stays in the draft', (tester) async {
-    final router = await pump(tester, []);
-    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    final router = await pump(tester, [
+      const TodoItem(
+        id: 'timeonly',
+        text: 'Ligar',
+        due: reportDueUnknown,
+        dueTime: '09:00',
+        done: false,
+        createdAt: '2026-11-01T00:00:00Z',
+      ),
+    ]);
+    await tester.tap(find.byKey(const ValueKey('todo_timeonly')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar');
-    await tester.enterText(find.byKey(const ValueKey('todo_time')), '09:00');
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
 
@@ -561,7 +581,7 @@ void main() {
       find.text(UserStorage.l10n.todoTimeRequiresDate),
       findsOneWidget,
     );
-    expect(router.items, isEmpty);
+    expect(router.items.single.dueTime, '09:00');
   });
 
   testWidgets('the task editor fits a narrow screen with larger text', (
@@ -573,7 +593,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('todo_time')), findsOneWidget);
+    expect(find.byKey(const ValueKey('todo_time_row')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('todo_repeat_monthly')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -604,21 +626,21 @@ void main() {
   testWidgets('monthly recurrence uses the explicit day of the month', (
     tester,
   ) async {
-    final router = await pump(tester, []);
+    final router = await pump(tester, [
+      _item('monthly', 'Fechar mês', due: '2027-01-31'),
+    ]);
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
-    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    await tester.tap(find.text(UserStorage.l10n.todoTabUpcoming));
     await tester.pumpAndSettle();
-    await tester.enterText(
-        find.byKey(const ValueKey('todo_text')), 'Fechar mês');
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_due')),
-      '2027-01-31',
-    );
+    await tester.tap(find.byKey(const ValueKey('todo_monthly')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+    await tester.pumpAndSettle();
     final monthly = find.byKey(const ValueKey('todo_repeat_monthly'));
     await tester.scrollUntilVisible(monthly, 100, scrollable: dialogScroll);
     await tester.tap(monthly);
@@ -646,7 +668,7 @@ void main() {
     final friday = find.byKey(const ValueKey('todo_repeat_weekday_5'));
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
@@ -666,16 +688,27 @@ void main() {
   });
 
   testWidgets('editing changes the text and the date', (tester) async {
-    final router = await pump(tester, [_item('t1', 'Ligar para Rui')]);
+    final router = await pump(tester, [
+      const TodoItem(
+        id: 't1',
+        text: 'Ligar para Rui',
+        due: '2026-11-13',
+        dueDate: '2026-11-13',
+        alertMinutes: 5,
+        done: false,
+        createdAt: '2026-11-01T00:00:00Z',
+      ),
+    ]);
     await tester.tap(find.byKey(const ValueKey('todo_t1')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar já');
-    await tester.enterText(
-        find.byKey(const ValueKey('todo_due')), '2026-11-30');
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_alert_minutes')),
-      '5',
-    );
+    await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(
+      of: find.byType(CalendarDatePicker),
+      matching: find.text('30'),
+    ));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
     expect(router.items.single.text, 'Ligar já');
@@ -915,7 +948,8 @@ void main() {
   });
 
   group('sync status and conflicts', () {
-    testWidgets('offline says saved on device with no connection, not sync failed',
+    testWidgets(
+        'offline says saved on device with no connection, not sync failed',
         (tester) async {
       for (final language in ['pt', 'en']) {
         SharedPreferences.setMockInitialValues({'language': language});
@@ -946,11 +980,13 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(
-          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncOffline)),
+          find.descendant(
+              of: statusBar, matching: find.text(l10n.todoSyncOffline)),
           findsOneWidget,
         );
         expect(
-          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncError)),
+          find.descendant(
+              of: statusBar, matching: find.text(l10n.todoSyncError)),
           findsNothing,
         );
         expect(
@@ -1470,32 +1506,32 @@ void main() {
       expect(find.text(UserStorage.l10n.todoTextRequired), findsNothing);
     });
 
-    testWidgets('native date and time pickers populate the editor fields', (
+    testWidgets('calendar day and time shortcut populate the editor fields', (
       tester,
     ) async {
-      await pump(tester, []);
-      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      final router = await pump(tester, [
+        _item('t1', 'Ligar para Rui', due: '2026-11-13'),
+      ]);
+      await tester.tap(find.byKey(const ValueKey('todo_t1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.descendant(
+        of: find.byType(CalendarDatePicker),
+        matching: find.text('20'),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_shortcut_0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey('todo_pick_date')));
-      await tester.pumpAndSettle();
-      expect(find.byType(DatePickerDialog), findsOneWidget);
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
-      final dueField = tester.widget<TextField>(
-        find.byKey(const ValueKey('todo_due')),
-      );
-      expect(dueField.controller!.text, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
-
-      await tester.tap(find.byKey(const ValueKey('todo_pick_time')));
-      await tester.pumpAndSettle();
-      expect(find.byType(TimePickerDialog), findsOneWidget);
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
-      final timeField = tester.widget<TextField>(
-        find.byKey(const ValueKey('todo_time')),
-      );
-      expect(timeField.controller!.text, '09:00');
+      final minutes = TodoShortcutSettings.defaults.timeShortcutsMinutes.first;
+      final clock = '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
+          '${(minutes % 60).toString().padLeft(2, '0')}';
+      expect(router.items.single.due, '2026-11-20 $clock');
     });
 
     testWidgets(
@@ -1544,6 +1580,170 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('todo_search_clear')));
       await tester.pumpAndSettle();
       expect(find.text(UserStorage.l10n.todoSearchStart), findsOneWidget);
+    });
+  });
+
+  group('full-screen editor and task cards', () {
+    testWidgets('tapping Data expands the calendar and a picked day sets it',
+        (tester) async {
+      final router = await pump(tester, [
+        _item('t1', 'Ligar para Rui', due: '2026-11-13'),
+      ]);
+      await tester.tap(find.byKey(const ValueKey('todo_t1')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CalendarDatePicker), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CalendarDatePicker), findsOneWidget);
+      await tester.tap(find.descendant(
+        of: find.byType(CalendarDatePicker),
+        matching: find.text('20'),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(router.items.single.due, '2026-11-20');
+    });
+
+    testWidgets('Daqui a 1 hora sets the time from now, on a 5 minute step',
+        (tester) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('todo_text')),
+        'Revisar relatório',
+      );
+      await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_in_1h')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      final saved = router.items.single;
+      expect(
+        saved.due,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$')),
+      );
+      expect(int.parse(saved.due.substring(14, 16)) % 5, 0);
+      expect(saved.dueTime, isNotNull);
+    });
+
+    testWidgets('removing the date also removes the time and the repeat',
+        (tester) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('todo_text')),
+        'Pagar conta',
+      );
+      await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_date_shortcut_today')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_shortcut_0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_repeat_daily')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_no_time')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('todo_clear_date')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_clear_date')), findsNothing);
+      expect(find.byKey(const ValueKey('todo_clear_time')), findsNothing);
+      expect(find.byKey(const ValueKey('todo_no_time')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(router.items.single.due, reportDueUnknown);
+      expect(router.items.single.dueTime, isNull);
+      expect(router.items.single.recurrence, isNull);
+    });
+
+    testWidgets('early alert page saves 1 hora antes and a custom value',
+        (tester) async {
+      final router = await pump(tester, [
+        const TodoItem(
+          id: 'alarm',
+          text: 'Ligar para a escola',
+          due: '2026-11-13 23:30',
+          dueDate: '2026-11-13',
+          dueTime: '23:30',
+          alertMinutes: 20,
+          done: false,
+          createdAt: '2026-11-01T00:00:00Z',
+        ),
+      ]);
+      await tester.tap(find.byKey(const ValueKey('todo_alarm')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_option_60')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+      expect(router.items.single.alertMinutes, 60);
+
+      await tester.tap(find.byKey(const ValueKey('todo_alarm')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_option_custom')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_done')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+      expect(router.items.single.alertMinutes, 30);
+    });
+
+    testWidgets('the bottom pill cancels without saving', (tester) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('todo_text')),
+        'Não salvar',
+      );
+      expect(
+        tester.getCenter(find.byKey(const ValueKey('todo_dialog_save'))).dy,
+        greaterThan(
+          tester.getCenter(find.byKey(const ValueKey('todo_text'))).dy,
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_cancel')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_text')), findsNothing);
+      expect(router.items, isEmpty);
+    });
+
+    testWidgets(
+        'the list shows task cards and the bottom pill opens the editor',
+        (tester) async {
+      await pump(
+        tester,
+        [_item('t1', 'Revisar orçamento', due: '2026-11-13')],
+      );
+
+      final card = tester.widget<Material>(
+        find.byKey(const ValueKey('todo_card_t1')),
+      );
+      expect(card.color, AppColors.surface);
+      expect(find.byKey(const ValueKey('todo_status_date_t1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      expect(find.text(UserStorage.l10n.todoNewTask), findsOneWidget);
+      expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
     });
   });
 }
