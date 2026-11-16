@@ -16,8 +16,8 @@ class WidgetLayoutsTest {
         assertEquals(1, WidgetLayouts.visibleRowLimit(250))
         assertEquals(1, WidgetLayouts.visibleRowLimit(297))
         assertEquals(2, WidgetLayouts.visibleRowLimit(298))
-        assertEquals(2, WidgetLayouts.visibleRowLimit(343))
-        assertEquals(3, WidgetLayouts.visibleRowLimit(344))
+        assertEquals(2, WidgetLayouts.visibleRowLimit(353))
+        assertEquals(3, WidgetLayouts.visibleRowLimit(354))
         assertEquals(3, WidgetLayouts.visibleRowLimit(420))
     }
 

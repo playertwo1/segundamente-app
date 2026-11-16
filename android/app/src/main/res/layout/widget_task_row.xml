@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-05+: one task row of the large widget: 48x48dp circle (complete), title (open Todo), due time/date, inset hairline. -->
+<!-- F15-05+: polished task row with soft 20dp circle inside 48dp target, airy 2-line title pad, inset divider. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,9 +7,10 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/widget_key_height"
+        android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:gravity="center_vertical"
+        android:minHeight="@dimen/widget_key_height"
         android:orientation="horizontal">
 
         <ImageView
@@ -19,21 +20,26 @@
             android:background="@drawable/widget_row_ripple"
             android:clickable="true"
             android:focusable="true"
+            android:minHeight="@dimen/widget_key_height"
             android:scaleType="center"
             android:src="@drawable/widget_task_circle" />
 
         <TextView
             android:id="@+id/widget_task_title"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/widget_row_ripple"
             android:clickable="true"
             android:ellipsize="end"
             android:focusable="true"
             android:gravity="center_vertical"
+            android:lineSpacingMultiplier="1.12"
             android:maxLines="2"
-            android:paddingEnd="8dp"
+            android:minHeight="@dimen/widget_key_height"
+            android:paddingTop="6dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="6dp"
             android:textColor="@color/widget_ivory"
             android:textSize="14sp" />
 
@@ -44,7 +50,7 @@
             android:fontFamily="sans-serif-medium"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:paddingEnd="6dp"
+            android:paddingEnd="8dp"
             android:textColor="@color/widget_secondary"
             android:textSize="12sp" />
     </LinearLayout>
@@ -54,5 +60,6 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginStart="48dp"
+        android:layout_marginEnd="6dp"
         android:background="@color/widget_line" />
 </LinearLayout>

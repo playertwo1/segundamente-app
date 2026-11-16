@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-04+: medium widget (chat keys + capture keys: Anotar, Foto, Colar). Concentric AMOLED layout. -->
+<!-- F15-04+: wide medium widget (>=250dp wide) with horizontal capture row and 24dp/14dp concentric geometry. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
@@ -8,9 +8,9 @@
     android:clipToOutline="true"
     android:orientation="vertical"
     android:paddingStart="@dimen/widget_padding_horizontal"
-    android:paddingTop="@dimen/widget_padding_vertical"
+    android:paddingTop="8dp"
     android:paddingEnd="@dimen/widget_padding_horizontal"
-    android:paddingBottom="@dimen/widget_padding_vertical">
+    android:paddingBottom="8dp">
 
     <include
         layout="@layout/widget_chat_row"

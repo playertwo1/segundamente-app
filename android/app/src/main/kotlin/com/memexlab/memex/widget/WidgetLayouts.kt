@@ -38,16 +38,17 @@ internal object WidgetLayouts {
     private const val REQUEST_TASK_CHECK = 0x10000000
     private const val REQUEST_TASK_TITLE = 0x20000000
 
-    // Same base breakpoints as res/xml/segundamente_widget_info.xml, plus tall breakpoints for 2 and 3 48dp rows.
+    // Same base breakpoints as res/xml/segundamente_widget_info.xml, plus wide medium and 1..3-row large buckets.
     private val SMALL_MIN = SizeF(200f, 60f)
-    private val MEDIUM_MIN = SizeF(200f, 120f)
+    private val MEDIUM_COMPACT_MIN = SizeF(200f, 120f)
+    private val MEDIUM_WIDE_MIN = SizeF(250f, 120f)
     private val LARGE_1_MIN = SizeF(250f, 250f)
     private val LARGE_2_MIN = SizeF(250f, 298f)
-    private val LARGE_3_MIN = SizeF(250f, 344f)
+    private val LARGE_3_MIN = SizeF(250f, 354f)
     private const val MEDIUM_MIN_HEIGHT_DP = 120
     private const val LARGE_1_MIN_HEIGHT_DP = 250
     private const val LARGE_2_MIN_HEIGHT_DP = 298
-    private const val LARGE_3_MIN_HEIGHT_DP = 344
+    private const val LARGE_3_MIN_HEIGHT_DP = 354
 
     /** [minHeightDp] is the widget's OPTION_APPWIDGET_MIN_HEIGHT; only API 26-30 reads it. */
     fun views(context: Context, minHeightDp: Int): RemoteViews {
@@ -56,7 +57,8 @@ internal object WidgetLayouts {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> RemoteViews(
                 mapOf(
                     SMALL_MIN to small(context),
-                    MEDIUM_MIN to medium(context),
+                    MEDIUM_COMPACT_MIN to medium(context, compact = true),
+                    MEDIUM_WIDE_MIN to medium(context, compact = false),
                     LARGE_1_MIN to large(context, rows, maxRows = 1),
                     LARGE_2_MIN to large(context, rows, maxRows = 2),
                     LARGE_3_MIN to large(context, rows, maxRows = 3),
@@ -65,7 +67,7 @@ internal object WidgetLayouts {
             minHeightDp >= LARGE_3_MIN_HEIGHT_DP -> large(context, rows, maxRows = 3)
             minHeightDp >= LARGE_2_MIN_HEIGHT_DP -> large(context, rows, maxRows = 2)
             minHeightDp >= LARGE_1_MIN_HEIGHT_DP -> large(context, rows, maxRows = 1)
-            minHeightDp >= MEDIUM_MIN_HEIGHT_DP -> medium(context)
+            minHeightDp >= MEDIUM_MIN_HEIGHT_DP -> medium(context, compact = false)
             else -> small(context)
         }
     }
@@ -90,8 +92,11 @@ internal object WidgetLayouts {
     private fun small(context: Context): RemoteViews =
         RemoteViews(context.packageName, R.layout.widget_small).apply { setChatKeys(context) }
 
-    private fun medium(context: Context): RemoteViews =
-        RemoteViews(context.packageName, R.layout.widget_medium).apply {
+    private fun medium(context: Context, compact: Boolean): RemoteViews =
+        RemoteViews(
+            context.packageName,
+            if (compact) R.layout.widget_medium_compact else R.layout.widget_medium,
+        ).apply {
             setChatKeys(context)
             setCaptureKeys(context)
         }
