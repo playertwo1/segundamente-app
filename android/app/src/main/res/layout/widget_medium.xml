@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-04: medium widget: the chat strip over the capture strip (Anotar, Foto, Colar), D-064. -->
+<!-- F15-04+: medium widget (chat keys + capture keys: Anotar, Foto, Colar). Concentric AMOLED layout. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
+    android:clipToOutline="true"
     android:orientation="vertical"
-    android:padding="6dp">
+    android:paddingStart="@dimen/widget_padding_horizontal"
+    android:paddingTop="@dimen/widget_padding_vertical"
+    android:paddingEnd="@dimen/widget_padding_horizontal"
+    android:paddingBottom="@dimen/widget_padding_vertical">
 
     <include
         layout="@layout/widget_chat_row"
@@ -17,6 +22,6 @@
         layout="@layout/widget_capture_row"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="@dimen/widget_key_gap"
         android:layout_weight="1" />
 </LinearLayout>

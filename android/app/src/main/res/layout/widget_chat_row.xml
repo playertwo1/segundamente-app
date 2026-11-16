@@ -1,39 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-04: the chat keys (Conversar, Falar), shared by the small and medium widget (D-064). -->
+<!-- F15-03+: primary chat keys (Conversar, Falar), shared by small, medium and large widgets (D-064). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:baselineAligned="false"
     android:orientation="horizontal">
 
-    <TextView
+    <LinearLayout
         android:id="@+id/widget_chat_type"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="@drawable/widget_key_primary"
-        android:ellipsize="end"
+        android:clickable="true"
+        android:contentDescription="@string/shortcut_chat_type"
+        android:focusable="true"
         android:gravity="center"
-        android:maxLines="1"
-        android:minHeight="48dp"
-        android:text="@string/shortcut_chat_type"
-        android:textColor="@color/widget_black"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:minHeight="@dimen/widget_key_height"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
 
-    <TextView
+        <ImageView
+            android:layout_width="17dp"
+            android:layout_height="17dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_widget_chat" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/shortcut_chat_type"
+            android:textColor="@color/widget_black"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/widget_chat_talk"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_marginStart="6dp"
+        android:layout_marginStart="@dimen/widget_key_gap"
         android:layout_weight="1"
         android:background="@drawable/widget_key_outline"
-        android:ellipsize="end"
+        android:clickable="true"
+        android:contentDescription="@string/shortcut_chat_talk"
+        android:focusable="true"
         android:gravity="center"
-        android:maxLines="1"
-        android:minHeight="48dp"
-        android:text="@string/shortcut_chat_talk"
-        android:textColor="@color/widget_ivory"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:minHeight="@dimen/widget_key_height"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <ImageView
+            android:layout_width="17dp"
+            android:layout_height="17dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_widget_mic" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/shortcut_chat_talk"
+            android:textColor="@color/widget_ivory"
+            android:textSize="14sp" />
+    </LinearLayout>
 </LinearLayout>

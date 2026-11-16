@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Concentric widget geometry: outer (22dp) - padding (8dp) = inner (14dp). -->
+    <dimen name="widget_outer_radius">22dp</dimen>
+    <dimen name="widget_inner_radius">14dp</dimen>
+    <dimen name="widget_padding_horizontal">8dp</dimen>
+    <dimen name="widget_padding_vertical">8dp</dimen>
+    <dimen name="widget_key_gap">6dp</dimen>
+    <dimen name="widget_key_height">48dp</dimen>
+</resources>

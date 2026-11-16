@@ -15,8 +15,8 @@ import java.time.Instant
 
 /**
  * Chooses the widget's RemoteViews by size: small (chat keys, F15-03), medium (chat keys plus
- * the capture keys, F15-04) or large (both rows, the "+ tarefa" key and up to three of today's
- * tasks, F15-05). Key = the smallest size, in dp, that the layout fits. On API 26-30 there is one
+ * the capture keys, F15-04) or large (both rows, the "+ Nova tarefa" row and up to three of today's
+ * tasks with 48dp rows sized so rows never clip half-way, F15-05). On API 26-30 there is one
  * layout per RemoteViews, so the provider picks it from the widget's min height instead.
  */
 internal object WidgetLayouts {
@@ -33,16 +33,21 @@ internal object WidgetLayouts {
     private const val REQUEST_PHOTO = 4
     private const val REQUEST_PASTE = 5
     private const val REQUEST_TODO_ADD = 6
+    private const val REQUEST_TODAY_OPEN = 7
     // Bases far above the small codes; + task id hash (24 bits), so a stale RemoteViews keeps its own task.
     private const val REQUEST_TASK_CHECK = 0x10000000
     private const val REQUEST_TASK_TITLE = 0x20000000
 
-    // Same as minWidth x minHeight in res/xml/segundamente_widget_info.xml.
+    // Same base breakpoints as res/xml/segundamente_widget_info.xml, plus tall breakpoints for 2 and 3 48dp rows.
     private val SMALL_MIN = SizeF(200f, 60f)
     private val MEDIUM_MIN = SizeF(200f, 120f)
-    private val LARGE_MIN = SizeF(250f, 270f)
+    private val LARGE_1_MIN = SizeF(250f, 250f)
+    private val LARGE_2_MIN = SizeF(250f, 298f)
+    private val LARGE_3_MIN = SizeF(250f, 344f)
     private const val MEDIUM_MIN_HEIGHT_DP = 120
-    private const val LARGE_MIN_HEIGHT_DP = 270
+    private const val LARGE_1_MIN_HEIGHT_DP = 250
+    private const val LARGE_2_MIN_HEIGHT_DP = 298
+    private const val LARGE_3_MIN_HEIGHT_DP = 344
 
     /** [minHeightDp] is the widget's OPTION_APPWIDGET_MIN_HEIGHT; only API 26-30 reads it. */
     fun views(context: Context, minHeightDp: Int): RemoteViews {
@@ -52,12 +57,33 @@ internal object WidgetLayouts {
                 mapOf(
                     SMALL_MIN to small(context),
                     MEDIUM_MIN to medium(context),
-                    LARGE_MIN to large(context, rows),
+                    LARGE_1_MIN to large(context, rows, maxRows = 1),
+                    LARGE_2_MIN to large(context, rows, maxRows = 2),
+                    LARGE_3_MIN to large(context, rows, maxRows = 3),
                 ),
             )
-            minHeightDp >= LARGE_MIN_HEIGHT_DP -> large(context, rows)
+            minHeightDp >= LARGE_3_MIN_HEIGHT_DP -> large(context, rows, maxRows = 3)
+            minHeightDp >= LARGE_2_MIN_HEIGHT_DP -> large(context, rows, maxRows = 2)
+            minHeightDp >= LARGE_1_MIN_HEIGHT_DP -> large(context, rows, maxRows = 1)
             minHeightDp >= MEDIUM_MIN_HEIGHT_DP -> medium(context)
             else -> small(context)
+        }
+    }
+
+    internal fun visibleRowLimit(minHeightDp: Int): Int = when {
+        minHeightDp >= LARGE_3_MIN_HEIGHT_DP -> 3
+        minHeightDp >= LARGE_2_MIN_HEIGHT_DP -> 2
+        minHeightDp >= LARGE_1_MIN_HEIGHT_DP -> 1
+        else -> 0
+    }
+
+    internal fun formatTaskTimeLabel(todayLabel: String, row: WidgetRow): String {
+        val due = row.task.dueDate
+        val date = "%02d/%02d".format(due.dayOfMonth, due.monthValue)
+        val time = row.task.dueTime?.let { "%02d:%02d".format(it.hour, it.minute) }
+        return when {
+            row.overdue -> listOfNotNull(date, time).joinToString(" ")
+            else -> time ?: todayLabel
         }
     }
 
@@ -70,24 +96,46 @@ internal object WidgetLayouts {
             setCaptureKeys(context)
         }
 
-    private fun large(context: Context, rows: List<WidgetRow>): RemoteViews =
-        RemoteViews(context.packageName, R.layout.widget_large).apply {
+    private fun large(context: Context, rows: List<WidgetRow>, maxRows: Int): RemoteViews {
+        val visibleRows = rows.take(maxRows)
+        val hiddenCount = (rows.size - visibleRows.size).coerceAtLeast(0)
+        return RemoteViews(context.packageName, R.layout.widget_large).apply {
             setChatKeys(context)
             setCaptureKeys(context)
             setOnClickPendingIntent(R.id.widget_task_add, floatingChat(context, MODE_TODO_ADD, REQUEST_TODO_ADD))
+            setOnClickPendingIntent(R.id.widget_today_header, openTodo(context, REQUEST_TODAY_OPEN))
+            setOnClickPendingIntent(R.id.widget_tasks_empty, openTodo(context, REQUEST_TODAY_OPEN))
+            if (hiddenCount > 0) {
+                setTextViewText(R.id.widget_tasks_overflow, context.getString(R.string.widget_tasks_more, hiddenCount))
+                setViewVisibility(R.id.widget_tasks_overflow, View.VISIBLE)
+            } else {
+                setViewVisibility(R.id.widget_tasks_overflow, View.GONE)
+            }
             removeAllViews(R.id.widget_tasks_list)
-            rows.forEach { row -> addView(R.id.widget_tasks_list, taskRow(context, row)) }
-            val empty = rows.isEmpty()
+            visibleRows.forEachIndexed { index, row ->
+                addView(
+                    R.id.widget_tasks_list,
+                    taskRow(context, row, showDivider = index < visibleRows.lastIndex),
+                )
+            }
+            val empty = visibleRows.isEmpty()
             setViewVisibility(R.id.widget_tasks_list, if (empty) View.GONE else View.VISIBLE)
             setViewVisibility(R.id.widget_tasks_empty, if (empty) View.VISIBLE else View.GONE)
         }
+    }
 
     /** The circle completes the task; the title opens the Todo list (memex://open_todo). */
-    private fun taskRow(context: Context, row: WidgetRow): RemoteViews {
+    private fun taskRow(context: Context, row: WidgetRow, showDivider: Boolean): RemoteViews {
         val task = row.task
+        val todayLabel = context.getString(R.string.widget_today)
         return RemoteViews(context.packageName, R.layout.widget_task_row).apply {
             setTextViewText(R.id.widget_task_title, task.title)
-            setTextViewText(R.id.widget_task_time, timeLabel(context, row))
+            setTextViewText(R.id.widget_task_time, formatTaskTimeLabel(todayLabel, row))
+            setTextColor(
+                R.id.widget_task_time,
+                context.getColor(if (row.overdue) R.color.widget_amber else R.color.widget_secondary),
+            )
+            setViewVisibility(R.id.widget_task_divider, if (showDivider) View.VISIBLE else View.GONE)
             setContentDescription(R.id.widget_task_check, context.getString(R.string.widget_task_complete, task.title))
             setOnClickPendingIntent(
                 R.id.widget_task_check,
@@ -98,17 +146,6 @@ internal object WidgetLayouts {
     }
 
     private fun taskRequestSuffix(taskId: String): Int = taskId.hashCode() and 0x00FFFFFF
-
-    /** Overdue rows show their date; a task due today with no time shows "Hoje". */
-    private fun timeLabel(context: Context, row: WidgetRow): String {
-        val due = row.task.dueDate
-        val date = "%02d/%02d".format(due.dayOfMonth, due.monthValue)
-        val time = row.task.dueTime?.let { "%02d:%02d".format(it.hour, it.minute) }
-        return when {
-            row.overdue -> listOfNotNull(date, time).joinToString(" ")
-            else -> time ?: context.getString(R.string.widget_today)
-        }
-    }
 
     private fun RemoteViews.setChatKeys(context: Context) {
         setOnClickPendingIntent(R.id.widget_chat_type, floatingChat(context, MODE_TYPE, REQUEST_TYPE))

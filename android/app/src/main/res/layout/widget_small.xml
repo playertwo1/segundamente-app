@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-03: small widget, two keys in one strip (D-064). Only RemoteViews-safe views here. -->
+<!-- F15-03+: small widget (chat keys: Conversar, Falar). Concierge AMOLED layout with 22dp/14dp concentric corners. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
+    android:clipToOutline="true"
     android:orientation="vertical"
-    android:padding="6dp">
+    android:paddingStart="@dimen/widget_padding_horizontal"
+    android:paddingTop="6dp"
+    android:paddingEnd="@dimen/widget_padding_horizontal"
+    android:paddingBottom="6dp">
 
     <include
         layout="@layout/widget_chat_row"
