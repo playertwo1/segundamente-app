@@ -212,7 +212,7 @@
         android:paddingStart="12dp"
         android:paddingEnd="12dp">
 
-        <View
+        <FrameLayout
             android:layout_width="2dp"
             android:layout_height="16dp"
             android:background="@drawable/widget_cursor_amber" />
@@ -268,7 +268,7 @@
                 android:textSize="12.5sp" />
         </LinearLayout>
 
-        <View
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />

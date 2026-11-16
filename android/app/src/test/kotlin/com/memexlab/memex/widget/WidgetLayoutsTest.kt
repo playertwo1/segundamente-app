@@ -86,4 +86,22 @@ class WidgetLayoutsTest {
         assertEquals("Hoje", WidgetLayouts.formatTaskTimeLabel("Hoje", untimedToday))
         assertEquals("Today", WidgetLayouts.formatTaskTimeLabel("Today", untimedToday))
     }
+
+    // RemoteViews only inflates whitelisted classes; anything else makes the launcher refuse the widget.
+    @Test
+    fun `widget layouts use only RemoteViews-allowed tags`() {
+        val allowed = setOf(
+            "FrameLayout", "LinearLayout", "RelativeLayout", "GridLayout", "TextView", "ImageView",
+            "ImageButton", "Button", "ProgressBar", "ListView", "include",
+        )
+        val layouts = java.io.File("src/main/res/layout").listFiles { f -> f.name.startsWith("widget_") }!!
+        assertTrue(layouts.isNotEmpty())
+        val tag = Regex("<([A-Za-z.]+)")
+        for (file in layouts) {
+            for (match in tag.findAll(file.readText())) {
+                val name = match.groupValues[1]
+                assertTrue("${file.name} uses <$name>", name in allowed)
+            }
+        }
+    }
 }
