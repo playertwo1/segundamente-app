@@ -1,4 +1,5 @@
 import 'package:memex/agent/character_agent/character_agent.dart';
+import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/character_conversation_service.dart';
 import 'package:memex/data/services/character_service.dart';
 import 'package:memex/data/services/character_execution_coordinator.dart';
@@ -12,7 +13,9 @@ import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
 import 'package:memex/domain/models/character_initiative.dart';
 import 'package:memex/domain/models/character_message.dart';
 import 'package:memex/domain/models/character_model.dart';
+import 'package:memex/domain/models/persona_task_suggestion.dart';
 import 'package:memex/utils/logger.dart';
+import 'package:uuid/uuid.dart';
 
 typedef CharacterInitiativeContextLoader = Future<CharacterInitiativeContext>
     Function({
@@ -82,6 +85,7 @@ class CharacterInitiativeTaskHandler {
     CharacterConversationReplyScheduler? conversationReplyScheduler,
     CharacterInitiativeRetryScheduler? initiativeRetryScheduler,
     CharacterExecutionCoordinator? executionCoordinator,
+    ActiveAssistantService? activeAssistantService,
     DateTime Function()? clock,
   })  : _workspaceService =
             workspaceService ?? CharacterWorkspaceService.instance,
@@ -120,6 +124,8 @@ class CharacterInitiativeTaskHandler {
                 .instance.scheduleConversationDeferredRetry,
         _executionCoordinator =
             executionCoordinator ?? CharacterExecutionCoordinator.instance,
+        _activeAssistantService =
+            activeAssistantService ?? ActiveAssistantService.instance,
         _clock = clock ?? DateTime.now;
 
   final CharacterWorkspaceService _workspaceService;
@@ -133,6 +139,7 @@ class CharacterInitiativeTaskHandler {
   final CharacterConversationReplyScheduler _conversationReplyScheduler;
   final CharacterInitiativeRetryScheduler _initiativeRetryScheduler;
   final CharacterExecutionCoordinator _executionCoordinator;
+  final ActiveAssistantService _activeAssistantService;
   final DateTime Function() _clock;
   final _logger = getLogger('CharacterInitiativeTaskHandler');
 
@@ -310,6 +317,31 @@ class CharacterInitiativeTaskHandler {
                 'Discarded initiative for ${character.id}: '
                 'a direct message arrived while contact was being committed',
               );
+            }
+
+            if (decision.suggestedTask != null) {
+              try {
+                final textMessage = messages.firstWhere(
+                  (m) => m.type == CharacterOutgoingMessageType.text,
+                  orElse: () => messages.first,
+                );
+                await _activeAssistantService.tryAddPersonaSuggestion(
+                  PersonaTaskSuggestion(
+                    id: const Uuid().v4(),
+                    characterId: character.id,
+                    characterName: character.name,
+                    message: textMessage.content,
+                    proposal: decision.suggestedTask!,
+                    createdAt: _clock().toUtc().toIso8601String(),
+                  ),
+                );
+              } catch (e, st) {
+                _logger.warning(
+                  'Failed to add persona task suggestion: $e',
+                  e,
+                  st,
+                );
+              }
             }
           }
         case CharacterInitiativeAction.sleepUntil:

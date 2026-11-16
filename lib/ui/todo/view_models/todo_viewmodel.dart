@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:memex/data/repositories/memex_router.dart';
+import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/native_action_service.dart';
 import 'package:memex/data/services/todo_sync_service.dart';
+import 'package:memex/domain/models/active_assistant_settings.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
+import 'package:memex/domain/use_cases/daily_briefing_builder.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/result.dart';
@@ -33,12 +36,15 @@ class TodoViewModel extends ChangeNotifier {
     TodoSyncService? syncService,
     Future<String?> Function()? userIdResolver,
     bool autoSyncOnLoad = true,
+    ActiveAssistantService? activeAssistantService,
   })  : _router = router,
         _now = now ?? DateTime.now,
         _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert,
         _syncService = syncService ?? TodoSyncService.instance,
         _userIdResolver = userIdResolver ?? UserStorage.getUserId,
-        _autoSyncOnLoad = autoSyncOnLoad {
+        _autoSyncOnLoad = autoSyncOnLoad,
+        _activeAssistantService =
+            activeAssistantService ?? ActiveAssistantService.instance {
     _syncService.statusNotifier.addListener(_onSyncStatusChanged);
   }
 
@@ -55,9 +61,13 @@ class TodoViewModel extends ChangeNotifier {
   final TodoSyncService _syncService;
   final Future<String?> Function() _userIdResolver;
   final bool _autoSyncOnLoad;
+  final ActiveAssistantService _activeAssistantService;
+  ActiveAssistantService get activeAssistantService => _activeAssistantService;
 
   List<TodoItem> _all = const [];
   TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
+  ActiveAssistantState activeAssistantState =
+      ActiveAssistantState(settings: ActiveAssistantSettings.defaults);
   TodoListSection section = TodoListSection.today;
   TodoPriority? priorityFilter;
   bool loading = false;
@@ -224,6 +234,8 @@ class TodoViewModel extends ChangeNotifier {
     await refreshAlarmStatus();
     if (_disposed) return;
     await refreshShortcutSettings();
+    if (_disposed) return;
+    await refreshActiveAssistantState();
   }
 
   Future<void> _reloadItems() async {
@@ -384,6 +396,109 @@ class TodoViewModel extends ChangeNotifier {
     );
     if (_disposed) return;
     notifyListeners();
+  }
+
+  Future<void> refreshActiveAssistantState() async {
+    if (_disposed) return;
+    try {
+      final state = await _activeAssistantService.buildState(_all, now: _now());
+      if (_disposed) return;
+      activeAssistantState = state;
+      notifyListeners();
+    } catch (e, st) {
+      _logger.warning('Failed to refresh active assistant state', e, st);
+    }
+  }
+
+  int get activeAssistantItemCount =>
+      (activeAssistantState.briefing != null ? 1 : 0) +
+      activeAssistantState.stalledNudges.length +
+      activeAssistantState.personaSuggestions.length;
+
+  Future<void> dismissDailyBriefing(DailyBriefing briefing) async {
+    if (_disposed) return;
+    try {
+      await _activeAssistantService.dismissBriefing(briefing);
+      await refreshActiveAssistantState();
+    } catch (e, st) {
+      _logger.warning('Failed to dismiss daily briefing in view model', e, st);
+    }
+  }
+
+  Future<void> dismissPersonaSuggestion(String suggestionId) async {
+    if (_disposed) return;
+    try {
+      await _activeAssistantService.dismissPersonaSuggestion(suggestionId);
+      await refreshActiveAssistantState();
+    } catch (e, st) {
+      _logger.warning(
+        'Failed to dismiss persona suggestion in view model',
+        e,
+        st,
+      );
+    }
+  }
+
+  Future<void> silenceActiveAssistantFor(Duration duration) async {
+    if (_disposed) return;
+    try {
+      await _activeAssistantService.silenceFor(duration, now: _now());
+      await refreshActiveAssistantState();
+    } catch (e, st) {
+      _logger.warning('Failed to silence active assistant in view model', e, st);
+    }
+  }
+
+  Future<void> snoozeStalledTaskNudge(
+    String taskId, {
+    Duration duration = const Duration(days: 3),
+  }) async {
+    if (_disposed) return;
+    try {
+      await _activeAssistantService.snoozeStalledTask(
+        taskId,
+        duration: duration,
+        now: _now(),
+      );
+      await refreshActiveAssistantState();
+    } catch (e, st) {
+      _logger.warning(
+        'Failed to snooze stalled task nudge in view model',
+        e,
+        st,
+      );
+    }
+  }
+
+  Future<void> scheduleStalledTaskForToday(TodoItem item) async {
+    final today = TodoScheduleCalculator.dateForShortcut(
+      TodoDateShortcut.today,
+      now: _now(),
+      timeZone: item.timeZone,
+    );
+    final dateStr = '${today.year.toString().padLeft(4, '0')}-'
+        '${today.month.toString().padLeft(2, '0')}-'
+        '${today.day.toString().padLeft(2, '0')}';
+    final due = item.dueTime != null ? '$dateStr ${item.dueTime}' : dateStr;
+
+    try {
+      await _activeAssistantService.clearStalledSnooze(item.id);
+    } catch (e, st) {
+      _logger.warning('Failed to clear stalled snooze in view model', e, st);
+    }
+    await _change(_router.editTodo(
+      id: item.id,
+      text: item.text,
+      due: due,
+      dueDate: dateStr,
+      dueTime: item.dueTime,
+      recurrence: item.recurrence,
+      priority: item.priority,
+      subtasks: item.subtasks,
+      alertMinutes: item.alertMinutes,
+      timeZone: item.timeZone,
+    ));
+    await refreshActiveAssistantState();
   }
 
   Future<void> add({

@@ -6,6 +6,7 @@ import 'package:memex/agent/character_agent/character_workspace_tools.dart';
 import 'package:memex/data/services/character_workspace_service.dart';
 import 'package:memex/domain/models/character_initiative.dart';
 import 'package:memex/domain/models/character_model.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
 import 'package:memex/utils/tavern_macro.dart';
 
 typedef CharacterInitiativeDecisionCallback = void Function(
@@ -13,50 +14,74 @@ typedef CharacterInitiativeDecisionCallback = void Function(
 );
 
 class CharacterInitiativeSkill extends Skill {
-  CharacterInitiativeSkill({
+  factory CharacterInitiativeSkill({
     required CharacterModel character,
     required String userId,
     required String userName,
     required CharacterInitiativeContext context,
     required CharacterInitiativeDecisionCallback onDecision,
     CharacterWorkspaceService? workspaceService,
+    bool enableSuggestTask = true,
+    bool forceActivate = true,
+  }) {
+    TodoProposal? pendingSuggestedTask;
+    return CharacterInitiativeSkill._(
+      character: character,
+      context: context,
+      userName: userName,
+      forceActivate: forceActivate,
+      tools: [
+        ...CharacterWorkspaceMemoryTools(
+          userId: userId,
+          characterId: character.id,
+          workspaceService: workspaceService,
+        ).build(),
+        if (context.pendingThoughts.isNotEmpty)
+          _buildResolvePendingThoughtTool(
+            userId: userId,
+            characterId: character.id,
+            pendingThoughts: context.pendingThoughts,
+            workspaceService:
+                workspaceService ?? CharacterWorkspaceService.instance,
+          ),
+        ...CharacterInitiativeActionTools.build(
+          now: context.now,
+          onSpeak: (messages, wakeAt, reason) => onDecision(
+            CharacterInitiativeDecision.speak(
+              messages,
+              wakeAt: wakeAt,
+              reason: reason,
+              suggestedTask: pendingSuggestedTask,
+            ),
+          ),
+          onSleepUntil: (wakeAt, reason) => onDecision(
+            CharacterInitiativeDecision.sleepUntil(
+              wakeAt: wakeAt,
+              reason: reason,
+            ),
+          ),
+          onSuggestTask: enableSuggestTask
+              ? (proposal) {
+                  pendingSuggestedTask = proposal;
+                }
+              : null,
+        ),
+      ],
+    );
+  }
+
+  CharacterInitiativeSkill._({
+    required CharacterModel character,
+    required CharacterInitiativeContext context,
+    required String userName,
+    required List<Tool> tools,
     super.forceActivate = true,
   }) : super(
           name: 'character_initiative',
           description: 'Privately decide whether and when this character '
               'wants to contact the user.',
           systemPrompt: buildSystemPrompt(character, context, userName),
-          tools: [
-            ...CharacterWorkspaceMemoryTools(
-              userId: userId,
-              characterId: character.id,
-              workspaceService: workspaceService,
-            ).build(),
-            if (context.pendingThoughts.isNotEmpty)
-              _buildResolvePendingThoughtTool(
-                userId: userId,
-                characterId: character.id,
-                pendingThoughts: context.pendingThoughts,
-                workspaceService:
-                    workspaceService ?? CharacterWorkspaceService.instance,
-              ),
-            ...CharacterInitiativeActionTools.build(
-              now: context.now,
-              onSpeak: (messages, wakeAt, reason) => onDecision(
-                CharacterInitiativeDecision.speak(
-                  messages,
-                  wakeAt: wakeAt,
-                  reason: reason,
-                ),
-              ),
-              onSleepUntil: (wakeAt, reason) => onDecision(
-                CharacterInitiativeDecision.sleepUntil(
-                  wakeAt: wakeAt,
-                  reason: reason,
-                ),
-              ),
-            ),
-          ],
+          tools: tools,
         );
 
   static String buildSystemPrompt(

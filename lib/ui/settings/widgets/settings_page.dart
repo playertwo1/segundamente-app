@@ -12,6 +12,7 @@ import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
 import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
 import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
 import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/active_assistant_settings_page.dart';
 import 'package:memex/ui/todo/widgets/todo_shortcut_settings_page.dart';
 import 'package:memex/ui/settings/widgets/early_update_settings_card.dart';
 import 'package:memex/ui/settings/view_models/data_import_viewmodel.dart';
@@ -428,6 +429,61 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(height: 2),
                           Text(
                             UserStorage.l10n.todoShortcutsDescription,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textTertiary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.divider),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const ValueKey('active-assistant-settings'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ActiveAssistantSettingsPage(),
+                ),
+              ),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.divider)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.assistant_outlined,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            UserStorage.l10n.activeAssistantSettingsTitle,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            UserStorage.l10n.activeAssistantSettingsDescription,
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textTertiary,

@@ -53,6 +53,7 @@ import 'package:memex/data/repositories/todo_repository.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
+import 'package:memex/domain/models/active_assistant_settings.dart';
 import 'package:memex/data/services/glossary_service.dart';
 import 'package:memex/data/services/related_sessions_service.dart';
 import 'package:memex/data/services/saved_view_service.dart';
@@ -1680,6 +1681,14 @@ class MemexRouter {
     TodoShortcutSettings settings,
   ) =>
       _todoRepository.saveShortcutSettings(settings);
+
+  Future<Result<ActiveAssistantSettings>> loadActiveAssistantSettings() =>
+      _todoRepository.loadActiveAssistantSettings();
+
+  Future<Result<void>> saveActiveAssistantSettings(
+    ActiveAssistantSettings settings,
+  ) =>
+      _todoRepository.saveActiveAssistantSettings(settings);
 
   Future<Result<TodoItem>> addTodo({
     required String text,

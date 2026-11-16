@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/repositories/memex_router.dart';
+import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/todo_sync_service.dart';
-import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/models/active_assistant_settings.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
+import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/utils/result.dart';
@@ -34,6 +36,38 @@ class _FakeRouter implements MemexRouter {
   @override
   Future<Result<TodoAlarmStatus>> synchronizeTodoAlarms() async =>
       const Ok(TodoAlarmStatus.unsupported);
+
+  @override
+  Future<Result<void>> editTodo({
+    required String id,
+    required String text,
+    required String due,
+    String? dueDate,
+    String? dueTime,
+    String? timeZone,
+    int? alertMinutes,
+    TodoPriority? priority,
+    List<TodoSubtask>? subtasks,
+    TodoRecurrence? recurrence,
+    bool clearRecurrence = false,
+  }) async {
+    final index = items.indexWhere((i) => i.id == id);
+    if (index >= 0) {
+      items[index] = items[index].copyWith(
+        text: text,
+        due: due,
+        dueDate: dueDate,
+        dueTime: dueTime,
+        timeZone: timeZone,
+        alertMinutes: alertMinutes,
+        priority: priority,
+        subtasks: subtasks,
+        recurrence: recurrence,
+        clearRecurrence: clearRecurrence,
+      );
+    }
+    return const Ok(null);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -463,5 +497,211 @@ void main() {
     addTearDown(vmNoUser.dispose);
     await vmNoUser.resolveConflict('t1:text', keepLocal: true);
     expect(fakeSync.resolvedConflicts, hasLength(2));
+  });
+
+  group('TodoViewModel - Active Assistant integration', () {
+    // 2026-11-16 12:30 UTC = 2026-11-16 09:30 local
+    final fixedClock = DateTime.utc(2026, 11, 16, 12, 30);
+
+    test('loads and refreshes active assistant state on load', () async {
+      final items = [
+        const TodoItem(
+          id: 'stalled_1',
+          text: 'Stalled task',
+          due: '2026-11-12',
+          dueDate: '2026-11-12',
+          done: false,
+          createdAt: '2026-11-01T10:00:00.000Z',
+        ),
+      ];
+      final router = _FakeRouter(items);
+      final assistantService = ActiveAssistantService.forTesting(
+        clock: () => fixedClock,
+        loadSettings: () async => ActiveAssistantSettings.defaults,
+        loadStalledSnoozeMap: () async => const {},
+        loadDismissedBriefingKey: () async => null,
+      );
+
+      final viewModel = TodoViewModel(
+        router: router,
+        now: () => fixedClock,
+        activeAssistantService: assistantService,
+        autoSyncOnLoad: false,
+      );
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+
+      expect(viewModel.activeAssistantState.briefing, isNotNull);
+      expect(viewModel.activeAssistantState.stalledNudges.length, 1);
+      expect(viewModel.activeAssistantState.stalledNudges.first.item.id,
+          'stalled_1');
+    });
+
+    test('dismissDailyBriefing updates active assistant state', () async {
+      final items = [
+        const TodoItem(
+          id: 't1',
+          text: 'Task today',
+          due: '2026-11-16',
+          dueDate: '2026-11-16',
+          done: false,
+          createdAt: '2026-11-01T10:00:00.000Z',
+        ),
+      ];
+      final router = _FakeRouter(items);
+      String? dismissedKey;
+      final assistantService = ActiveAssistantService.forTesting(
+        clock: () => fixedClock,
+        loadSettings: () async => ActiveAssistantSettings.defaults,
+        loadStalledSnoozeMap: () async => const {},
+        loadDismissedBriefingKey: () async => dismissedKey,
+        saveDismissedBriefingKey: (k) async => dismissedKey = k,
+      );
+
+      final viewModel = TodoViewModel(
+        router: router,
+        now: () => fixedClock,
+        activeAssistantService: assistantService,
+        autoSyncOnLoad: false,
+      );
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+      expect(viewModel.activeAssistantState.briefing, isNotNull);
+
+      await viewModel
+          .dismissDailyBriefing(viewModel.activeAssistantState.briefing!);
+      expect(dismissedKey, '2026-11-16:morning');
+      expect(viewModel.activeAssistantState.briefing, isNull);
+    });
+
+    test('silenceActiveAssistantFor silences briefings and nudges', () async {
+      final items = [
+        const TodoItem(
+          id: 'stalled_1',
+          text: 'Stalled task',
+          due: '2026-11-12',
+          dueDate: '2026-11-12',
+          done: false,
+          createdAt: '2026-11-01T10:00:00.000Z',
+        ),
+      ];
+      final router = _FakeRouter(items);
+      var settings = ActiveAssistantSettings.defaults;
+      final assistantService = ActiveAssistantService.forTesting(
+        clock: () => fixedClock,
+        loadSettings: () async => settings,
+        saveSettings: (s) async => settings = s,
+        loadStalledSnoozeMap: () async => const {},
+        loadDismissedBriefingKey: () async => null,
+      );
+
+      final viewModel = TodoViewModel(
+        router: router,
+        now: () => fixedClock,
+        activeAssistantService: assistantService,
+        autoSyncOnLoad: false,
+      );
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+      expect(viewModel.activeAssistantState.stalledNudges, isNotEmpty);
+
+      await viewModel.silenceActiveAssistantFor(const Duration(hours: 3));
+      expect(settings.silencedUntilIso, isNotNull);
+      expect(viewModel.activeAssistantState.stalledNudges, isEmpty);
+      expect(viewModel.activeAssistantState.briefing, isNull);
+    });
+
+    test(
+        'snoozeStalledTaskNudge snoozes nudge without altering underlying TodoItem',
+        () async {
+      const item = TodoItem(
+        id: 'stalled_1',
+        text: 'Stalled task',
+        due: '2026-11-12',
+        dueDate: '2026-11-12',
+        done: false,
+        createdAt: '2026-11-01T10:00:00.000Z',
+      );
+      final router = _FakeRouter([item]);
+      Map<String, String> snoozeMap = {};
+      final assistantService = ActiveAssistantService.forTesting(
+        clock: () => fixedClock,
+        loadSettings: () async => ActiveAssistantSettings.defaults,
+        loadStalledSnoozeMap: () async => snoozeMap,
+        saveStalledSnoozeMap: (m) async => snoozeMap = m,
+        loadDismissedBriefingKey: () async => null,
+      );
+
+      final viewModel = TodoViewModel(
+        router: router,
+        now: () => fixedClock,
+        activeAssistantService: assistantService,
+        autoSyncOnLoad: false,
+      );
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+      expect(viewModel.activeAssistantState.stalledNudges.length, 1);
+
+      await viewModel.snoozeStalledTaskNudge('stalled_1',
+          duration: const Duration(days: 3));
+
+      // Nudge is now hidden
+      expect(viewModel.activeAssistantState.stalledNudges, isEmpty);
+      // Underlying TodoItem is untouched!
+      expect(viewModel.allItems.length, 1);
+      expect(viewModel.allItems.first.id, 'stalled_1');
+      expect(viewModel.allItems.first.dueDate, '2026-11-12');
+      expect(viewModel.allItems.first.done, isFalse);
+      expect(snoozeMap.containsKey('stalled_1'), isTrue);
+    });
+
+    test(
+        'scheduleStalledTaskForToday updates due date to today local and clears snooze',
+        () async {
+      const item = TodoItem(
+        id: 'stalled_1',
+        text: 'Stalled task',
+        due: '2026-11-12 14:00',
+        dueDate: '2026-11-12',
+        dueTime: '14:00',
+        done: false,
+        createdAt: '2026-11-01T10:00:00.000Z',
+      );
+      final router = _FakeRouter([item]);
+      Map<String, String> snoozeMap = {
+        'stalled_1': '2026-11-20T10:00:00.000Z'
+      };
+      final assistantService = ActiveAssistantService.forTesting(
+        clock: () => fixedClock,
+        loadSettings: () async => ActiveAssistantSettings.defaults,
+        loadStalledSnoozeMap: () async => snoozeMap,
+        saveStalledSnoozeMap: (m) async => snoozeMap = m,
+        loadDismissedBriefingKey: () async => null,
+      );
+
+      final viewModel = TodoViewModel(
+        router: router,
+        now: () => fixedClock,
+        activeAssistantService: assistantService,
+        autoSyncOnLoad: false,
+      );
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+
+      await viewModel.scheduleStalledTaskForToday(item);
+
+      // Verify router updated the item with today's local date (2026-11-16) and preserved dueTime
+      expect(router.items.first.dueDate, '2026-11-16');
+      expect(router.items.first.dueTime, '14:00');
+      expect(router.items.first.due, '2026-11-16 14:00');
+
+      // Verify snooze was cleared
+      expect(snoozeMap.containsKey('stalled_1'), isFalse);
+    });
   });
 }

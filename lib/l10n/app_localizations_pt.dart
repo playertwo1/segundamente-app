@@ -5000,4 +5000,96 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get todoPickTime => 'Escolher horário';
+
+  @override
+  String get activeAssistantTitle => 'Assistente Ativo';
+
+  @override
+  String get activeAssistantMorningBriefing => 'Resumo da Manhã';
+
+  @override
+  String get activeAssistantAfternoonBriefing => 'Resumo da Tarde';
+
+  @override
+  String get activeAssistantSilenceToday => 'Silenciar hoje';
+
+  @override
+  String get activeAssistantClearSilence => 'Desativar silêncio';
+
+  @override
+  String get activeAssistantSilencedNotice =>
+      'O assistente está silenciado no momento.';
+
+  @override
+  String get activeAssistantDismiss => 'Dispensar';
+
+  @override
+  String get activeAssistantSettingsTitle =>
+      'Configurações do Assistente Ativo';
+
+  @override
+  String get activeAssistantSettingsDescription =>
+      'Configure resumos, avisos de tarefas paradas e sugestões das personas.';
+
+  @override
+  String get activeAssistantMorningLabel => 'Resumo da manhã';
+
+  @override
+  String get activeAssistantAfternoonLabel => 'Resumo da tarde';
+
+  @override
+  String get activeAssistantStalledSection => 'Tarefas paradas';
+
+  @override
+  String activeAssistantStalledDays(int days) {
+    return '${days}d parada';
+  }
+
+  @override
+  String get activeAssistantStalledThresholdLabel =>
+      'Dias até considerar uma tarefa parada';
+
+  @override
+  String get activeAssistantStalledDoToday => 'Fazer hoje';
+
+  @override
+  String get activeAssistantStalledSnooze => 'Adiar cobrança';
+
+  @override
+  String get activeAssistantPersonaSection => 'Sugestões das personas';
+
+  @override
+  String get activeAssistantPersonaSuggestionsLabel =>
+      'Sugestões de tarefas pelas personas';
+
+  @override
+  String get activeAssistantPersonaDailyLimitLabel =>
+      'Limite diário de sugestões';
+
+  @override
+  String get activeAssistantQuietHoursLabel => 'Horário de silêncio';
+
+  @override
+  String get activeAssistantQuietHoursStart => 'Início do silêncio';
+
+  @override
+  String get activeAssistantQuietHoursEnd => 'Fim do silêncio';
+
+  @override
+  String get activeAssistantOverdueGroup => 'Atrasadas';
+
+  @override
+  String get activeAssistantCommitmentsGroup => 'Compromissos de hoje';
+
+  @override
+  String get activeAssistantPrioritiesGroup => 'Prioridades';
+
+  @override
+  String get activeAssistantEmptyState =>
+      'Tudo em dia! Sem resumos, tarefas paradas ou sugestões no momento.';
+
+  @override
+  String activeAssistantSummaryBanner(int count) {
+    return '$count aviso(s) do assistente';
+  }
 }

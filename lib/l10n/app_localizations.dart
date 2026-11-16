@@ -8780,6 +8780,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose time'**
   String get todoPickTime;
+
+  /// No description provided for @activeAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Assistant'**
+  String get activeAssistantTitle;
+
+  /// No description provided for @activeAssistantMorningBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning Briefing'**
+  String get activeAssistantMorningBriefing;
+
+  /// No description provided for @activeAssistantAfternoonBriefing.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon Briefing'**
+  String get activeAssistantAfternoonBriefing;
+
+  /// No description provided for @activeAssistantSilenceToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Silence today'**
+  String get activeAssistantSilenceToday;
+
+  /// No description provided for @activeAssistantClearSilence.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear silence'**
+  String get activeAssistantClearSilence;
+
+  /// No description provided for @activeAssistantSilencedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant is silenced right now.'**
+  String get activeAssistantSilencedNotice;
+
+  /// No description provided for @activeAssistantDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get activeAssistantDismiss;
+
+  /// No description provided for @activeAssistantSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Assistant settings'**
+  String get activeAssistantSettingsTitle;
+
+  /// No description provided for @activeAssistantSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure briefings, stalled task nudges, and persona suggestions.'**
+  String get activeAssistantSettingsDescription;
+
+  /// No description provided for @activeAssistantMorningLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning briefing'**
+  String get activeAssistantMorningLabel;
+
+  /// No description provided for @activeAssistantAfternoonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon briefing'**
+  String get activeAssistantAfternoonLabel;
+
+  /// No description provided for @activeAssistantStalledSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Stalled tasks'**
+  String get activeAssistantStalledSection;
+
+  /// No description provided for @activeAssistantStalledDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d stalled'**
+  String activeAssistantStalledDays(int days);
+
+  /// No description provided for @activeAssistantStalledThresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days before a task is considered stalled'**
+  String get activeAssistantStalledThresholdLabel;
+
+  /// No description provided for @activeAssistantStalledDoToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Do today'**
+  String get activeAssistantStalledDoToday;
+
+  /// No description provided for @activeAssistantStalledSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze reminder'**
+  String get activeAssistantStalledSnooze;
+
+  /// No description provided for @activeAssistantPersonaSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Persona suggestions'**
+  String get activeAssistantPersonaSection;
+
+  /// No description provided for @activeAssistantPersonaSuggestionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Persona task suggestions'**
+  String get activeAssistantPersonaSuggestionsLabel;
+
+  /// No description provided for @activeAssistantPersonaDailyLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily suggestion limit'**
+  String get activeAssistantPersonaDailyLimitLabel;
+
+  /// No description provided for @activeAssistantQuietHoursLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet hours'**
+  String get activeAssistantQuietHoursLabel;
+
+  /// No description provided for @activeAssistantQuietHoursStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet hours start'**
+  String get activeAssistantQuietHoursStart;
+
+  /// No description provided for @activeAssistantQuietHoursEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet hours end'**
+  String get activeAssistantQuietHoursEnd;
+
+  /// No description provided for @activeAssistantOverdueGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get activeAssistantOverdueGroup;
+
+  /// No description provided for @activeAssistantCommitmentsGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s commitments'**
+  String get activeAssistantCommitmentsGroup;
+
+  /// No description provided for @activeAssistantPrioritiesGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Priorities'**
+  String get activeAssistantPrioritiesGroup;
+
+  /// No description provided for @activeAssistantEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'All caught up! No active briefings, stalled tasks, or suggestions.'**
+  String get activeAssistantEmptyState;
+
+  /// No description provided for @activeAssistantSummaryBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} assistant update(s)'**
+  String activeAssistantSummaryBanner(int count);
 }
 
 class _AppLocalizationsDelegate

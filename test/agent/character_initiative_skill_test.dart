@@ -275,4 +275,48 @@ void main() {
     );
     expect(skill.systemPrompt, contains('newer moment'));
   });
+
+  test('SuggestTask tool attaches a TodoProposal onto speak decision', () {
+    final now = DateTime.parse('2026-07-13T21:00:00+08:00');
+    CharacterInitiativeDecision? decision;
+    final skill = CharacterInitiativeSkill(
+      character: character,
+      userId: 'user-1',
+      userName: 'Rafael',
+      context: CharacterInitiativeContext(
+        sourceEventId: 'event-task',
+        now: now,
+      ),
+      workspaceService: CharacterWorkspaceService(),
+      onDecision: (val) => decision = val,
+    );
+
+    final suggestTool =
+        skill.tools!.singleWhere((t) => t.name == 'SuggestTask');
+    final speakTool = skill.tools!.singleWhere((t) => t.name == 'Speak');
+
+    // Call SuggestTask
+    Function.apply(suggestTool.executable!, [
+      'Beber mais água',
+      'unspecified',
+      'unspecified',
+      null,
+      null,
+      null,
+      null,
+    ]);
+
+    // Call Speak
+    Function.apply(speakTool.executable!, [
+      ['Não se esqueça de se hidratar hoje.'],
+      null,
+      now.add(const Duration(hours: 4)).toIso8601String(),
+      'Depois vejo se ela bebeu água.',
+    ]);
+
+    expect(decision, isNotNull);
+    expect(decision!.action, CharacterInitiativeAction.speak);
+    expect(decision!.suggestedTask, isNotNull);
+    expect(decision!.suggestedTask!.title, 'Beber mais água');
+  });
 }
