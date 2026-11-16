@@ -86,6 +86,7 @@ Questionário recomeçado a pedido do dono em 2026-11-14 (a primeira rodada teve
   - Sobreposição: cápsula própria, formato livre; exige "Aparecer sobre outros apps", serviço com notificação fixa e convive com a economia de bateria da Samsung.
 - Critérios para comparar: abre de qualquer app; minimiza e mantém a conversa; sobrevive à economia de bateria; custo de bateria; facilidade de esconder.
 - Por quê: decisão que depende de ver no aparelho.
+- Escolha: bolha oficial (D-073), 2026-11-15; sobreposição como plano B.
 - Difícil de reverter: não
 
 ### D12 - Lugar no ROADMAP

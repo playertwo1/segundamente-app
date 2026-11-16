@@ -506,3 +506,13 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - **"+ tarefa":** abre o editor do Todo por cima da tela inicial; Salvar grava pelo router; Cancelar e toque fora não gravam.
   - **Dados ao widget:** só id, título, data, hora, status informativo e fuso das dez primeiras tarefas abertas com data, em `SharedPreferences` privado do app (D8).
 - Limite: a validação é no S25 (F15-05 fica REVIEW). A altura mínima do grande (270 dp) é estimativa. Se o dono quiser tarefas sem data no widget, é uma nova decisão.
+
+## D-073 — Forma da minicápsula: bolha oficial do Android (2026-11-15)
+- Contexto: a D11 de `docs/questionario/2026-11-14-widget-e-capsula.md` pede comparar a bolha oficial do Android e a sobreposição própria. Os dois protótipos estão no build `globalDev` (D-071; `docs/fases/F15-07-prototipos-capsula.md`). Ainda não há medição no aparelho.
+- Decisão:
+  - A forma da minicápsula é a **bolha oficial do Android** (protótipo A). O dono escolheu o padrão oficial: usa a API de bolhas, sem permissão especial nem serviço próprio. Ele disse que, se sentir falta de algo, muda.
+  - A sobreposição própria (protótipo B) fica como **plano B**. Volta a ser avaliada se a bolha não atender; a troca não exige fase nova.
+  - Nada vai para `src/main`. A cápsula de produção ainda não existe: uma subfase futura levaria a bolha do protótipo dev para `src/main`, com decisão própria. Não foi aberta agora.
+- Limite: a escolha foi por preferência e pelos trade-offs documentados, **não por medição no S25**. Os cinco critérios da D11 (abre de qualquer app, minimiza mantendo a conversa, sobrevive à economia de bateria, custo de bateria, facilidade de esconder) seguem `NOT_RUN` para a bolha. A F15-07 não vira DONE antes dessa medição.
+- Limites conhecidos da bolha, a medir no S25: abrir a bolha fecha a `MainActivity` aberta (um host por vez); com a bolha viva, abrir o app depois pode fazer os dois hosts compartilharem o motor; precisa do canal de notificação e da opção de bolhas do One UI ligados; a bolha nasce de uma notificação.
+- Consequência: a escolha da forma deixa de ser pendência do dono. Passa a ser medir a bolha no S25 (F15-07). Reversível: trocar para B é uma decisão nova registrada, sem fase nova.

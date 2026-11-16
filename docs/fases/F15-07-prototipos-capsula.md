@@ -2,7 +2,13 @@
 
 > Subfase da [F15](../roadmap/F15-widget-e-atalhos-android.md). Decisão de forma em D11 do [questionário](../questionario/2026-11-14-widget-e-capsula.md). Abertura em código antes da validação da F15-02 no S25: [D-071](../DECISIONS.md).
 
-**Estado:** IN_PROGRESS. Os dois protótipos existem no build dev e compilam. A comparação no S25 e a escolha do dono estão pendentes. Nada foi medido no aparelho ainda (`NOT_RUN`).
+**Estado:** IN_PROGRESS. Forma escolhida pelo dono: bolha oficial do Android (D-073, 2026-11-15). A medição da bolha no S25 está pendente; a sobreposição (B) fica como plano B. Os dois protótipos existem no build dev e compilam. Nada foi medido no aparelho ainda (`NOT_RUN`).
+
+## Escolha do dono (2026-11-15)
+
+- Forma escolhida: **bolha oficial do Android** (protótipo A), D-073. Motivo: o padrão oficial, sem permissão especial nem serviço próprio. A sobreposição (B) é o plano B; volta se o dono sentir falta de algo na bolha.
+- Caveat: a escolha foi por preferência e pelos trade-offs documentados, **não pelas medições no S25**. Os cinco critérios (abre de qualquer app, minimiza mantendo a conversa, sobrevive à economia de bateria, custo de bateria, facilidade de esconder) seguem `NOT_RUN` para a bolha. A F15-07 só vira DONE com essa medição.
+- Limites da bolha a medir: abrir a bolha fecha a `MainActivity` aberta; com a bolha viva, abrir o app depois pode compartilhar o motor entre os hosts; exige canal de notificação e bolhas do One UI ligados; a bolha nasce de uma notificação.
 
 ## O que existe
 
