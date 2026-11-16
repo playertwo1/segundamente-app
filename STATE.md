@@ -52,7 +52,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 ### Release v1.0.55+140 — Correção do widget v3 recusado pelo launcher (2026-11-16)
 - Notas completas em [docs/releases/v1.0.55.md](docs/releases/v1.0.55.md).
 - Causa: `<View>` em cinco layouts do widget v3; `RemoteViews` não aceita essa classe e o launcher mostrava "não foi possível adicionar widget". Troca por `<FrameLayout>` e teste JVM (`WidgetLayoutsTest`: 5 testes, 0 falhas).
-- S25 (`RQCY10934YV`): no pacote dev, o widget falhava antes e foi adicionado depois da correção (relato do dono). A 1.0.55 global foi instalada (`adb install -r` → `Success`); adicionar o widget nela segue `NOT_RUN`.
+- S25 (`RQCY10934YV`): no pacote dev, o widget falhava antes e foi adicionado depois da correção (relato do dono). A 1.0.55 global foi instalada (`adb install -r` → `Success`) e o dono adicionou o widget nela com sucesso (PASS).
 - Build: `segundamente_global_1.0.55_140.apk`, `127993351` bytes, SHA-256 `20853ebcc2fdef4a7a062285e6377d15a56ea2b373f07764e589e4f609fbe6f8`; certificado `216c29ff…ee05f`, igual ao das anteriores.
 
 ### Release v1.0.54+139 — Widget Android v3 (2026-11-16)
