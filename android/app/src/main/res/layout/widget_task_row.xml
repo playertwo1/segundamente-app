@@ -55,7 +55,7 @@
             android:textSize="11.5sp" />
     </LinearLayout>
 
-    <View
+    <FrameLayout
         android:id="@+id/widget_task_divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
