@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.51+136 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066); checkpoint da ponte fechado em 2026-11-15, então a pausa da D-066 acabou; F11 — Todo robusto concluída em 2026-11-14
+**Atualizado:** 2026-11-15 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.52+137 (2026-11-15, GitHub Release) · **Fase ativa:** F12 — Sync com o Lumen (IN_PROGRESS, D-066); checkpoint da ponte fechado em 2026-11-15, então a pausa da D-066 acabou; F11 — Todo robusto concluída em 2026-11-14
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -46,6 +46,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release v1.0.52+137 — Widgets Android (F15) + Impeccable Polish (2026-11-15)
+- Notas completas em [docs/releases/v1.0.52.md](docs/releases/v1.0.52.md).
+- Gates antes do build: `python scripts/check_arb_key_parity.py` (`ARB key parity OK across 1 locales.`), `.\gradlew.bat testGlobalDevDebugUnitTest` (`3` aprovados, `0` falhas, `0` ignorados) e `flutter.bat test --no-pub --reporter compact test/data/services/todo_widget_snapshot_service_test.dart test/ui/floating_chat/ test/ui/todo/` (`+97: All tests passed!`).
+- Build e assinatura: `flutter.bat build apk --flavor global --release` gerou `segundamente_global_1.0.52_137.apk` (`127843903` bytes, SHA-256 `ad7a85bb21d7cbf9d230906267f90a573fa3bc52c062c75978676fed724356d5`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='137'`, `versionName='1.0.52'`, `sdkVersion='26'`, `targetSdkVersion='36'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao das releases anteriores).
+- Galaxy S25 Ultra e suítes integrais (`flutter test` / `flutter analyze` completos): `NOT_RUN`.
 
 ### Checkpoints reais do Lumen L3 a L7 (2026-11-15, noite)
 - Suíte sintética do Lumen antes: `npx tsc --noEmit` PASS, `npm test` 721/0, `cargo test --lib` 743/0/9 ignorados, `npm run build` PASS.
