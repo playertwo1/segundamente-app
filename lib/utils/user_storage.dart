@@ -13,6 +13,7 @@ import 'package:memex/domain/models/model_catalog.dart';
 import 'package:memex/domain/models/agent_config.dart';
 import 'package:memex/domain/models/location_context_config.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
+import 'package:memex/domain/models/active_assistant_settings.dart';
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:memex/domain/models/agent_definitions.dart';
 import 'package:memex/l10n/supported_languages.dart';
@@ -924,6 +925,97 @@ class UserStorage {
   static const String _keyLinkPreview = 'link_preview_enabled';
   static const String _keySemanticSearchEnabled = 'semantic_search_enabled';
   static const String _keyTodoShortcutSettings = 'todo_shortcut_settings';
+  static const String _keyActiveAssistantSettings = 'active_assistant_settings';
+  static const String _keyActiveAssistantDismissedBriefing =
+      'active_assistant_dismissed_briefing';
+  static const String _keyActiveAssistantStalledSnooze =
+      'active_assistant_stalled_snooze';
+  static const String _keyActiveAssistantPersonaSuggestions =
+      'active_assistant_persona_suggestions';
+
+  static Future<ActiveAssistantSettings> getActiveAssistantSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_keyActiveAssistantSettings);
+      if (raw == null) return ActiveAssistantSettings.defaults;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return ActiveAssistantSettings.defaults;
+      return ActiveAssistantSettings.fromJson(decoded.cast<String, dynamic>());
+    } catch (_) {
+      return ActiveAssistantSettings.defaults;
+    }
+  }
+
+  static Future<void> setActiveAssistantSettings(
+    ActiveAssistantSettings settings,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _keyActiveAssistantSettings,
+      jsonEncode(settings.toJson()),
+    );
+  }
+
+  static Future<String?> getActiveAssistantDismissedBriefingKey() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_keyActiveAssistantDismissedBriefing);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> setActiveAssistantDismissedBriefingKey(String? key) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (key == null) {
+      await prefs.remove(_keyActiveAssistantDismissedBriefing);
+    } else {
+      await prefs.setString(_keyActiveAssistantDismissedBriefing, key);
+    }
+  }
+
+  static Future<Map<String, String>> getActiveAssistantStalledSnoozeMap() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_keyActiveAssistantStalledSnooze);
+      if (raw == null) return const {};
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const {};
+      return decoded.map((k, v) => MapEntry(k.toString(), v.toString()));
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  static Future<void> setActiveAssistantStalledSnoozeMap(
+    Map<String, String> map,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (map.isEmpty) {
+      await prefs.remove(_keyActiveAssistantStalledSnooze);
+    } else {
+      await prefs.setString(
+        _keyActiveAssistantStalledSnooze,
+        jsonEncode(map),
+      );
+    }
+  }
+
+  static Future<String?> getActiveAssistantPersonaSuggestionsRaw() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_keyActiveAssistantPersonaSuggestions);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> setActiveAssistantPersonaSuggestionsRaw(
+    String json,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyActiveAssistantPersonaSuggestions, json);
+  }
 
   static Future<TodoShortcutSettings> getTodoShortcutSettings() async {
     try {

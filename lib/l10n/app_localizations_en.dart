@@ -4957,4 +4957,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get todoPickTime => 'Choose time';
+
+  @override
+  String get activeAssistantTitle => 'Active Assistant';
+
+  @override
+  String get activeAssistantMorningBriefing => 'Morning Briefing';
+
+  @override
+  String get activeAssistantAfternoonBriefing => 'Afternoon Briefing';
+
+  @override
+  String get activeAssistantSilenceToday => 'Silence today';
+
+  @override
+  String get activeAssistantClearSilence => 'Clear silence';
+
+  @override
+  String get activeAssistantSilencedNotice =>
+      'Assistant is silenced right now.';
+
+  @override
+  String get activeAssistantDismiss => 'Dismiss';
+
+  @override
+  String get activeAssistantSettingsTitle => 'Active Assistant settings';
+
+  @override
+  String get activeAssistantSettingsDescription =>
+      'Configure briefings, stalled task nudges, and persona suggestions.';
+
+  @override
+  String get activeAssistantMorningLabel => 'Morning briefing';
+
+  @override
+  String get activeAssistantAfternoonLabel => 'Afternoon briefing';
+
+  @override
+  String get activeAssistantStalledSection => 'Stalled tasks';
+
+  @override
+  String activeAssistantStalledDays(int days) {
+    return '${days}d stalled';
+  }
+
+  @override
+  String get activeAssistantStalledThresholdLabel =>
+      'Days before a task is considered stalled';
+
+  @override
+  String get activeAssistantStalledDoToday => 'Do today';
+
+  @override
+  String get activeAssistantStalledSnooze => 'Snooze reminder';
+
+  @override
+  String get activeAssistantPersonaSection => 'Persona suggestions';
+
+  @override
+  String get activeAssistantPersonaSuggestionsLabel =>
+      'Persona task suggestions';
+
+  @override
+  String get activeAssistantPersonaDailyLimitLabel => 'Daily suggestion limit';
+
+  @override
+  String get activeAssistantQuietHoursLabel => 'Quiet hours';
+
+  @override
+  String get activeAssistantQuietHoursStart => 'Quiet hours start';
+
+  @override
+  String get activeAssistantQuietHoursEnd => 'Quiet hours end';
+
+  @override
+  String get activeAssistantOverdueGroup => 'Overdue';
+
+  @override
+  String get activeAssistantCommitmentsGroup => 'Today\'s commitments';
+
+  @override
+  String get activeAssistantPrioritiesGroup => 'Priorities';
+
+  @override
+  String get activeAssistantEmptyState =>
+      'All caught up! No active briefings, stalled tasks, or suggestions.';
+
+  @override
+  String activeAssistantSummaryBanner(int count) {
+    return '$count assistant update(s)';
+  }
 }

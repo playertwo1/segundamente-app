@@ -19,6 +19,7 @@ import 'package:memex/ui/settings/widgets/experimental_lab_page.dart';
 import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
 import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
 import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/active_assistant_settings_page.dart';
 import 'package:memex/ui/todo/widgets/todo_shortcut_settings_page.dart';
 import 'package:memex/ui/settings/view_models/data_import_viewmodel.dart';
 import 'package:memex/ui/memory/view_models/memory_viewmodel.dart';
@@ -341,6 +342,33 @@ class SettingsRegistry {
             pageBuilder: (_) => TodoShortcutSettingsPage(
               viewModel: TodoShortcutSettingsViewModel(router: MemexRouter()),
             ),
+          ),
+          parentPathGetter: () => [
+            UserStorage.l10n.personalCenter,
+            UserStorage.l10n.settings,
+          ],
+        ),
+        SettingsItem(
+          id: 'settings.active_assistant',
+          titleGetter: () => UserStorage.l10n.activeAssistantSettingsTitle,
+          descriptionGetter: () =>
+              UserStorage.l10n.activeAssistantSettingsDescription,
+          keywords: const [
+            'assistant',
+            'assistente',
+            'ativo',
+            'active',
+            'briefing',
+            'resumo',
+            'stalled',
+            'paradas',
+            'persona',
+            'sugestoes',
+            'lembrete',
+          ],
+          icon: Icons.assistant_outlined,
+          navigationTarget: NavigationTarget(
+            pageBuilder: (_) => const ActiveAssistantSettingsPage(),
           ),
           parentPathGetter: () => [
             UserStorage.l10n.personalCenter,

@@ -15,6 +15,7 @@ import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/widgets/session_report_screen.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
+import 'package:memex/ui/todo/widgets/active_assistant_sheet.dart';
 import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:uuid/uuid.dart';
@@ -231,6 +232,15 @@ class _TodoScreenState extends State<TodoScreen>
         ),
         actions: [
           IconButton(
+            key: const ValueKey('todo_open_active_assistant'),
+            tooltip: l10n.activeAssistantTitle,
+            icon: const Icon(Icons.assistant_outlined),
+            onPressed: () => showActiveAssistantSheet(
+              context: context,
+              viewModel: widget.viewModel,
+            ),
+          ),
+          IconButton(
             key: const ValueKey('todo_open_search'),
             tooltip: l10n.todoSearchHint,
             icon: const Icon(Icons.search),
@@ -282,6 +292,8 @@ class _TodoScreenState extends State<TodoScreen>
                 _activeFilterBar(l10n, viewModel, priority, context),
               if (viewModel.conflicts.isNotEmpty)
                 _conflictsBanner(l10n, viewModel, context),
+              if (viewModel.activeAssistantItemCount > 0)
+                _activeAssistantSummaryBar(l10n, viewModel, context),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -297,6 +309,59 @@ class _TodoScreenState extends State<TodoScreen>
       ),
     );
   }
+
+  Widget _activeAssistantSummaryBar(
+    AppLocalizations l10n,
+    TodoViewModel viewModel,
+    BuildContext context,
+  ) =>
+      Material(
+        color: AppColors.surface,
+        child: InkWell(
+          key: const ValueKey('todo_active_assistant_bar'),
+          onTap: () => showActiveAssistantSheet(
+            context: context,
+            viewModel: widget.viewModel,
+          ),
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: AppColors.divider),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.assistant_outlined,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.activeAssistantSummaryBanner(
+                      viewModel.activeAssistantItemCount,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 
   Widget _activeFilterBar(
     AppLocalizations l10n,
@@ -813,7 +878,6 @@ class _TodoPriorityFilterButton extends StatelessWidget {
 
 class _TodoSearchScreen extends StatefulWidget {
   const _TodoSearchScreen({
-    super.key,
     required this.viewModel,
     required this.onEdit,
     required this.onDelete,
@@ -1283,7 +1347,7 @@ class _TodoDialogState extends State<_TodoDialog> {
               const SizedBox(height: 12),
               DropdownButtonFormField<TodoPriority>(
                 key: const ValueKey('todo_priority_editor'),
-                value: _priority,
+                initialValue: _priority,
                 decoration: InputDecoration(labelText: l10n.todoPriorityLabel),
                 items: [
                   for (final priority in TodoPriority.values)

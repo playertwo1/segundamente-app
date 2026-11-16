@@ -1,4 +1,5 @@
 import 'package:memex/domain/models/character_message.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
 
 enum CharacterInitiativeAction {
   speak,
@@ -16,12 +17,14 @@ class CharacterInitiativeDecision {
     required this.wakeAt,
     required this.reason,
     this.messages = const [],
+    this.suggestedTask,
   });
 
   CharacterInitiativeDecision.speak(
     List<Object> messages, {
     required DateTime wakeAt,
     required String reason,
+    TodoProposal? suggestedTask,
   }) : this._(
           action: CharacterInitiativeAction.speak,
           messages: List.unmodifiable(
@@ -29,6 +32,7 @@ class CharacterInitiativeDecision {
           ),
           wakeAt: wakeAt,
           reason: reason,
+          suggestedTask: suggestedTask,
         );
 
   const CharacterInitiativeDecision.sleepUntil({
@@ -38,12 +42,14 @@ class CharacterInitiativeDecision {
           action: CharacterInitiativeAction.sleepUntil,
           wakeAt: wakeAt,
           reason: reason,
+          suggestedTask: null,
         );
 
   final CharacterInitiativeAction action;
   final List<CharacterOutgoingMessage> messages;
   final DateTime wakeAt;
   final String reason;
+  final TodoProposal? suggestedTask;
 }
 
 /// A private intention the character explicitly chose to revisit later.

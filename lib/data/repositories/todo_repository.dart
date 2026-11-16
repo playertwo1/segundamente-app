@@ -1,5 +1,7 @@
+import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/todo_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
+import 'package:memex/domain/models/active_assistant_settings.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
@@ -8,9 +10,23 @@ import 'package:memex/utils/result.dart';
 import 'package:memex/utils/user_storage.dart';
 
 class TodoRepository {
-  TodoRepository({TodoService? service}) : _service = service ?? TodoService();
+  TodoRepository({
+    TodoService? service,
+    ActiveAssistantService? activeAssistantService,
+  })  : _service = service ?? TodoService(),
+        _activeAssistantService =
+            activeAssistantService ?? ActiveAssistantService.instance;
 
   final TodoService _service;
+  final ActiveAssistantService _activeAssistantService;
+
+  Future<Result<ActiveAssistantSettings>> loadActiveAssistantSettings() =>
+      runResult(_activeAssistantService.loadSettings);
+
+  Future<Result<void>> saveActiveAssistantSettings(
+    ActiveAssistantSettings settings,
+  ) =>
+      runResultVoid(() => _activeAssistantService.saveSettings(settings));
 
   Future<Result<TodoShortcutSettings>> loadShortcutSettings() =>
       runResult(UserStorage.getTodoShortcutSettings);

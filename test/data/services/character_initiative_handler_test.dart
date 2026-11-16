@@ -1,13 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/character_workspace_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_task_executor.dart';
 import 'package:memex/data/services/task_handlers/character_initiative_handler.dart';
+import 'package:memex/domain/models/active_assistant_settings.dart';
 import 'package:memex/domain/models/character_initiative.dart';
 import 'package:memex/domain/models/character_message.dart';
 import 'package:memex/domain/models/character_model.dart';
+import 'package:memex/domain/models/persona_task_suggestion.dart';
+import 'package:memex/domain/models/todo_proposal.dart';
 
 void main() {
   final now = DateTime.parse('2026-07-13T21:00:00+08:00');
@@ -626,5 +630,89 @@ void main() {
       ),
       isNotNull,
     );
+  });
+
+  test(
+      'adds a persona task suggestion to ActiveAssistantService when character speaks with a suggested task',
+      () async {
+    final proposal = TodoProposal(
+      id: 'prop-suggest',
+      title: 'Comprar chá verde',
+      dateState: TodoProposalDateState.unspecified,
+      timeState: TodoProposalTimeState.unspecified,
+    );
+    String? storedRaw;
+    final capturingService = ActiveAssistantService.forTesting(
+      clock: () => now,
+      loadSettings: () async => ActiveAssistantSettings(
+        personaSuggestionsEnabled: true,
+        quietHoursEnabled: false,
+      ),
+      saveSettings: (_) async {},
+      loadPersonaSuggestionsRaw: () async => storedRaw,
+      savePersonaSuggestionsRaw: (raw) async {
+        storedRaw = raw;
+      },
+    );
+
+    final handler = CharacterInitiativeTaskHandler(
+      workspaceService: workspaceService,
+      primaryCompanionLoader: (_) async => character,
+      activeAssistantService: capturingService,
+      clock: () => now,
+      contextLoader: ({
+        required userId,
+        required character,
+        required sourceEventId,
+        required now,
+        factId,
+      }) async =>
+          CharacterInitiativeContext(
+        sourceEventId: sourceEventId,
+        now: now,
+      ),
+      decider: ({
+        required userId,
+        required character,
+        required context,
+        workspaceService,
+      }) async =>
+          CharacterInitiativeDecision.speak(
+        ['Você me lembrou de tomar chá.'],
+        wakeAt: now.add(const Duration(hours: 4)),
+        reason: '再自然地看看要不要说话。',
+        suggestedTask: proposal,
+      ),
+      messageSender: ({
+        required characterId,
+        required messages,
+        required timestamp,
+        required contactEpisodeId,
+        required expectedGeneration,
+        factId,
+      }) async =>
+          true,
+      wakeScheduler: ({
+        required userId,
+        required wakeAt,
+        required reason,
+      }) async {},
+    );
+
+    await handler.call(
+      'user-1',
+      {'source_event_id': 'event-with-task'},
+      TaskContext(
+        taskId: 'task-task',
+        taskType: 'character_initiative_task',
+      ),
+    );
+
+    final suggestions = await capturingService.loadPersonaSuggestions();
+    expect(suggestions.length, 1);
+    expect(suggestions.first.characterId, character.id);
+    expect(suggestions.first.characterName, character.name);
+    expect(suggestions.first.message, 'Você me lembrou de tomar chá.');
+    expect(suggestions.first.proposal.title, 'Comprar chá verde');
   });
 }
