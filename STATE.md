@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-16 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.53+138 (2026-11-16, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-16 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.54+139 (2026-11-16, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -48,6 +48,11 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release v1.0.54+139 — Widget Android v3 (2026-11-16)
+- Notas completas em [docs/releases/v1.0.54.md](docs/releases/v1.0.54.md).
+- Widget reconstruído em `RemoteViews` nativo (`widget_small`, `widget_medium`, `widget_large` + variantes compactas) seguindo o mockup aprovado pelo dono, com roteamento em [WidgetLayouts.kt](android/app/src/main/kotlin/com/memexlab/memex/widget/WidgetLayouts.kt) e `com.memexlab.memex.widget.WidgetLayoutsTest` (`4` testes, `0` falhas, `0` erros, `0` ignorados em `testGlobalDevDebugUnitTest`).
+- Build e assinatura: `flutter.bat build apk --flavor global --release --no-pub` gerou `segundamente_global_1.0.54_139.apk` (`127993347` bytes, SHA-256 `ef9d48df52ead4bace44c2fc4bfa4b8ad4d9e28e4a4275ede79965c5f1fc1e7b`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='139'`, `versionName='1.0.54'`, `sdkVersion='26'`, `targetSdkVersion='36'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao das releases anteriores). Galaxy S25 Ultra: `NOT_RUN`.
 
 ### Release v1.0.53+138 — Assistente ativo F14-01 a F14-03 no celular (2026-11-16)
 - Notas completas em [docs/releases/v1.0.53.md](docs/releases/v1.0.53.md).
