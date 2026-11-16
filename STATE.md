@@ -47,6 +47,18 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Acabamento visual do widget Android com Impeccable (2026-11-15)
+- **Visual e ergonomia (`android/app/src/main/res/` + `WidgetLayouts.kt`):**
+  - Novos tokens AMOLED e geometria concêntrica (`res/values/colors.xml`, `res/values/dimens.xml`): fundo `#000000` com borda `#33312E` e raio `22dp` (`@android:id/background` + `android:clipToOutline="true"`), preenchimento concêntrico de `8dp` (`14dp` nas teclas), superfície tonal `#121110` (`widget_surface_key`) para botões secundários com `<ripple>` tátil (`widget_key_primary.xml`, `widget_key_outline.xml`, `widget_row_ripple.xml`).
+  - Seis ícones vetoriais em linha (`ic_widget_chat.xml`, `ic_widget_mic.xml`, `ic_widget_note.xml`, `ic_widget_photo.xml`, `ic_widget_paste.xml`, `ic_widget_plus.xml`, 24dp viewport) alinhados à maquete aprovada (`D-064`): teclas principais horizontais (`Conversar` em `#E99A3D` e `Falar`) e teclas secundárias compactas (`Anotar`, `Foto`, `Colar`), todas mantendo alvos mínimos de `48dp`.
+  - Widget grande (`widget_large.xml` + `widget_task_row.xml` + `WidgetLayouts.kt`): cabeçalho clicável `Hoje` (com contador `+N` quando há tarefas ocultas por altura), linhas de tarefa com alvo de toque `48x48dp` ao redor do círculo `22dp`, divisórias internas `#33312E` recuadas em `48dp`, destaque âmbar (`#E99A3D`) em horários/datas de tarefas atrasadas, ação aberta `Nova tarefa` alinhada no rodapé e breakpoints responsivos (`250dp`/`298dp`/`344dp`) para exibir 1, 2 ou 3 tarefas sem cortar linhas ao meio.
+- **Testes e verificações executadas:**
+  - `android/app/src/test/kotlin/com/memexlab/memex/widget/WidgetLayoutsTest.kt` (`.\gradlew.bat testGlobalDevDebugUnitTest` com JUnit `4.13.2`): `3` testes aprovados, `0` falhas, `0` ignorados.
+  - `flutter.bat build apk --flavor globalDev --debug --no-pub`: `Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (saída `0`).
+  - `flutter.bat test --no-pub --reporter compact test/data/services/todo_widget_snapshot_service_test.dart test/ui/floating_chat/`: `+46: All tests passed!` (rodado antes do ajuste final de `4dp` em `widget_large.xml`/`WidgetLayouts.kt`; código Dart inalterado).
+  - `python scripts/check_arb_key_parity.py`: `ARB key parity OK across 1 locales.` (saída `0`).
+- **Não executado nesta rodada:** validação visual e de toque no Galaxy S25 Ultra (`adb devices -l` vazio) e TalkBack seguem `NOT_RUN`.
+
 ### F15 integrada na `main` e auditoria (2026-11-15)
 - A `main` avançou por fast-forward para `feat/f15-integracao` (`91feef7e`). Worktrees `sm-f1503`, `sm-f1505`, `sm-f1506`, `sm-f1507` e `sm-f15int` e as seis branches da F15 removidas (`git branch -d`: todas já integradas).
 - Verificação numa worktree limpa em `91feef7e`: `flutter pub get --enforce-lockfile` → `Got dependencies!`; `flutter test --no-pub --reporter compact` → `+1972 ~4: All other tests passed!`; `flutter analyze --no-pub` → `170 issues found` (11 errors só em `tools/f610_probe`); `python3 scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`; `flutter build apk --flavor globalDev --debug --no-pub` → `Built build\app\outputs\flutter-apk\app-globaldev-debug.apk` (220.332.444 bytes).

@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="sm_launcher_background">#172B55</color>
-    <!-- F15-03: widget palette from DESIGN.md (AMOLED black, amber, ivory, divider). -->
+    <!-- F15-03+: widget palette from DESIGN.md (AMOLED black, warm charcoal surface, amber, ivory, hairline). -->
     <color name="widget_black">#000000</color>
+    <color name="widget_surface_key">#121110</color>
     <color name="widget_amber">#E99A3D</color>
     <color name="widget_ivory">#F3EEE6</color>
+    <color name="widget_secondary">#AAA6A0</color>
     <color name="widget_line">#33312E</color>
-    <!-- F15-05: task times on the widget. -->
-    <color name="widget_muted">#9C978F</color>
+    <color name="widget_muted">#AAA6A0</color>
+    <color name="widget_ripple_light">#22F3EEE6</color>
+    <color name="widget_ripple_dark">#24000000</color>
 </resources>

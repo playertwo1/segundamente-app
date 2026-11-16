@@ -1,30 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-05: large widget, D-064 "linhas": the chat and capture rows, up to three of today's tasks, "+ tarefa". -->
+<!-- F15-05+: large widget (chat keys, capture keys, Hoje section with up to 3 dated tasks, and open "+ Nova tarefa" row). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
+    android:clipToOutline="true"
     android:orientation="vertical"
-    android:padding="6dp">
+    android:paddingStart="@dimen/widget_padding_horizontal"
+    android:paddingTop="@dimen/widget_padding_vertical"
+    android:paddingEnd="@dimen/widget_padding_horizontal"
+    android:paddingBottom="2dp">
 
     <include
         layout="@layout/widget_chat_row"
         android:layout_width="match_parent"
-        android:layout_height="44dp" />
+        android:layout_height="@dimen/widget_key_height" />
 
     <include
         layout="@layout/widget_capture_row"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="6dp" />
+        android:layout_height="@dimen/widget_key_height"
+        android:layout_marginTop="@dimen/widget_key_gap" />
+
+    <LinearLayout
+        android:id="@+id/widget_today_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/widget_row_ripple"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="3dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/widget_today"
+            android:textColor="@color/widget_secondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/widget_tasks_overflow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:textColor="@color/widget_amber"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="6dp"
         android:layout_weight="1">
 
-        <!-- Rows are added at runtime (RemoteViews.addView), overdue first. -->
         <LinearLayout
             android:id="@+id/widget_tasks_list"
             android:layout_width="match_parent"
@@ -35,24 +74,52 @@
             android:id="@+id/widget_tasks_empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@drawable/widget_row_ripple"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:text="@string/widget_tasks_empty"
-            android:textColor="@color/widget_ivory"
-            android:textSize="14sp"
+            android:textColor="@color/widget_secondary"
+            android:textSize="13.5sp"
             android:visibility="gone" />
     </FrameLayout>
 
-    <TextView
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/widget_line" />
+
+    <LinearLayout
         android:id="@+id/widget_task_add"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/widget_key_outline"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:text="@string/widget_key_task_add"
-        android:textColor="@color/widget_ivory"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:layout_height="@dimen/widget_key_height"
+        android:background="@drawable/widget_row_ripple"
+        android:clickable="true"
+        android:contentDescription="@string/widget_action_task_add"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:padding="14dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_widget_plus" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:paddingEnd="6dp"
+            android:text="@string/widget_action_task_add"
+            android:textColor="@color/widget_amber"
+            android:textSize="14sp" />
+    </LinearLayout>
 </LinearLayout>

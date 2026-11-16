@@ -16,6 +16,8 @@
     <!-- F15-05: large widget: tasks, "+ tarefa" key, task circle description. -->
     <string name="widget_tasks_empty">Nothing for today</string>
     <string name="widget_key_task_add">+ Task</string>
+    <string name="widget_action_task_add">New task</string>
+    <string name="widget_tasks_more">+%1$d</string>
     <string name="widget_today">Today</string>
     <string name="widget_task_complete">Complete %1$s</string>
     <!-- F15-06: Quick Settings tile label. -->
