@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-16 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.52+137 (2026-11-15, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-16 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.53+138 (2026-11-16, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -48,6 +48,11 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release v1.0.53+138 — Assistente ativo F14-01 a F14-03 no celular (2026-11-16)
+- Notas completas em [docs/releases/v1.0.53.md](docs/releases/v1.0.53.md).
+- Build e assinatura: `flutter.bat build apk --flavor global --release` gerou `segundamente_global_1.0.53_138.apk` (`127974975` bytes, SHA-256 `6140fb71a34479d480ca6c6cd3f793e520c5faf1c9fc47e8c4cf77b9b6d9cbbe`). `aapt.exe dump badging` confirmou `app.segundamente`, `versionCode='138'`, `versionName='1.0.53'`, `sdkVersion='26'`, `targetSdkVersion='36'`. `apksigner.bat verify --print-certs` confirmou `V2 Signer: certificate DN: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (igual ao das releases anteriores).
+- Gates da F14 (`+142: All tests passed!`, ARB parity OK e `flutter analyze` zerado nos módulos da F14) executados antes do bump de versão; Galaxy S25 Ultra e suítes integrais seguem `NOT_RUN`.
 
 ### F14-01 a F14-03 — Assistente ativo no celular (`D-074`, 2026-11-16)
 - **F14-01 (Configurações e Resumo Manhã/Tarde):** criados [active_assistant_settings.dart](lib/domain/models/active_assistant_settings.dart) (horários configuráveis, limites e faixa de silêncio cruzando meia-noite/temporária), [daily_briefing_builder.dart](lib/domain/use_cases/daily_briefing_builder.dart) (atrasadas, compromissos com hora e prioridades ordenadas exclusivamente a partir dos registros confirmados, sem LLM nem ocultação), persistência em [user_storage.dart](lib/utils/user_storage.dart) e [active_assistant_service.dart](lib/data/services/active_assistant_service.dart), e exposição em [todo_repository.dart](lib/data/repositories/todo_repository.dart) / [memex_router.dart](lib/data/repositories/memex_router.dart).
