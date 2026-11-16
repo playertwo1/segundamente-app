@@ -1,6 +1,8 @@
 package com.memexlab.memex.widget
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalTime
@@ -14,11 +16,20 @@ class WidgetLayoutsTest {
         assertEquals(0, WidgetLayouts.visibleRowLimit(120))
         assertEquals(0, WidgetLayouts.visibleRowLimit(249))
         assertEquals(1, WidgetLayouts.visibleRowLimit(250))
-        assertEquals(1, WidgetLayouts.visibleRowLimit(297))
-        assertEquals(2, WidgetLayouts.visibleRowLimit(298))
-        assertEquals(2, WidgetLayouts.visibleRowLimit(353))
-        assertEquals(3, WidgetLayouts.visibleRowLimit(354))
-        assertEquals(3, WidgetLayouts.visibleRowLimit(420))
+        assertEquals(1, WidgetLayouts.visibleRowLimit(339))
+        assertEquals(1, WidgetLayouts.visibleRowLimit(387))
+        assertEquals(2, WidgetLayouts.visibleRowLimit(388))
+        assertEquals(2, WidgetLayouts.visibleRowLimit(435))
+        assertEquals(3, WidgetLayouts.visibleRowLimit(436))
+        assertEquals(3, WidgetLayouts.visibleRowLimit(480))
+    }
+
+    @Test
+    fun `usesFullLargeChrome unlocks full reference chrome from 340dp upwards`() {
+        assertFalse(WidgetLayouts.usesFullLargeChrome(250))
+        assertFalse(WidgetLayouts.usesFullLargeChrome(339))
+        assertTrue(WidgetLayouts.usesFullLargeChrome(340))
+        assertTrue(WidgetLayouts.usesFullLargeChrome(436))
     }
 
     @Test

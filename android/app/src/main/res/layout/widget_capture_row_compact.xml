@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-04+: compact stacked capture row for narrow (<250dp) medium widgets. -->
+<!-- Narrow 200dp fallback capture row: Anotar, Foto, Colar. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -36,7 +36,7 @@
             android:maxLines="1"
             android:text="@string/widget_key_note"
             android:textColor="@color/widget_ivory_soft"
-            android:textSize="12sp" />
+            android:textSize="11.5sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -70,7 +70,7 @@
             android:maxLines="1"
             android:text="@string/widget_key_photo"
             android:textColor="@color/widget_ivory_soft"
-            android:textSize="12sp" />
+            android:textSize="11.5sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -104,6 +104,6 @@
             android:maxLines="1"
             android:text="@string/widget_key_paste"
             android:textColor="@color/widget_ivory_soft"
-            android:textSize="12sp" />
+            android:textSize="11.5sp" />
     </LinearLayout>
 </LinearLayout>

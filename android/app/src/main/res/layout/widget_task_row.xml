@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-05+: polished task row with soft 20dp circle inside 48dp target, airy 2-line title pad, inset divider. -->
+<!-- v3 task row inside the nested section card: 18dp green/amber circle inside 48dp touch target, crisp ivory title, inset hairline. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -15,7 +15,7 @@
 
         <ImageView
             android:id="@+id/widget_task_check"
-            android:layout_width="48dp"
+            android:layout_width="44dp"
             android:layout_height="match_parent"
             android:background="@drawable/widget_row_ripple"
             android:clickable="true"
@@ -37,11 +37,11 @@
             android:lineSpacingMultiplier="1.12"
             android:maxLines="2"
             android:minHeight="@dimen/widget_key_height"
-            android:paddingTop="6dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="6dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="5dp"
             android:textColor="@color/widget_ivory"
-            android:textSize="14sp" />
+            android:textSize="13.5sp" />
 
         <TextView
             android:id="@+id/widget_task_time"
@@ -50,16 +50,16 @@
             android:fontFamily="sans-serif-medium"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:paddingEnd="8dp"
+            android:paddingEnd="6dp"
             android:textColor="@color/widget_secondary"
-            android:textSize="12sp" />
+            android:textSize="11.5sp" />
     </LinearLayout>
 
     <View
         android:id="@+id/widget_task_divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginStart="48dp"
+        android:layout_marginStart="44dp"
         android:layout_marginEnd="6dp"
         android:background="@color/widget_line" />
 </LinearLayout>

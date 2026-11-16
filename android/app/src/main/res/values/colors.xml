@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="sm_launcher_background">#172B55</color>
-    <!-- F15-03+: AMOLED palette refined for quiet tonal hierarchy (DESIGN.md + Impeccable Polish). -->
-    <color name="widget_black">#000000</color>
-    <color name="widget_border_outer">#242220</color>
-    <color name="widget_surface_talk">#1C1A17</color>
-    <color name="widget_surface_key">#131210</color>
+    <!-- Widget v3 palette matching the graphite/amber reference aesthetic. -->
+    <color name="widget_black">#131519</color>
+    <color name="widget_border_outer">#2A2E35</color>
+    <color name="widget_track_bg">#0D0F12</color>
+    <color name="widget_track_border">#24282F</color>
+    <color name="widget_surface_talk">#1B1E24</color>
+    <color name="widget_surface_key">#1B1E24</color>
+    <color name="widget_key_border">#2C3038</color>
+    <color name="widget_section_bg">#171A20</color>
+    <color name="widget_section_border">#272B33</color>
     <color name="widget_amber">#E99A3D</color>
+    <color name="widget_green">#2FB97C</color>
+    <color name="widget_dark_ink">#11100E</color>
     <color name="widget_ivory">#F3EEE6</color>
-    <color name="widget_ivory_soft">#DCD6CC</color>
-    <color name="widget_secondary">#9A958E</color>
-    <color name="widget_ring">#ACA69D</color>
-    <color name="widget_line">#201E1C</color>
-    <color name="widget_muted">#9A958E</color>
+    <color name="widget_ivory_soft">#D5D8DE</color>
+    <color name="widget_secondary">#9096A2</color>
+    <color name="widget_ring">#9096A2</color>
+    <color name="widget_line">#252931</color>
+    <color name="widget_muted">#9096A2</color>
+    <color name="widget_logo_rim">#2E416B</color>
     <color name="widget_ripple_light">#22F3EEE6</color>
     <color name="widget_ripple_dark">#24000000</color>
 </resources>
