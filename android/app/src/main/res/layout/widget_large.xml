@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- F15-05+: large widget (chat keys, capture keys, Hoje section with up to 3 dated tasks, and open "+ Nova tarefa" row). -->
+<!-- F15-05+: large widget refined with Impeccable Polish (quiet tonal keys, aligned Hoje rail, 48dp targets). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
@@ -10,7 +10,7 @@
     android:paddingStart="@dimen/widget_padding_horizontal"
     android:paddingTop="@dimen/widget_padding_vertical"
     android:paddingEnd="@dimen/widget_padding_horizontal"
-    android:paddingBottom="2dp">
+    android:paddingBottom="4dp">
 
     <include
         layout="@layout/widget_chat_row"
@@ -27,15 +27,16 @@
         android:id="@+id/widget_today_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="2dp"
         android:background="@drawable/widget_row_ripple"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="6dp"
+        android:paddingStart="14dp"
         android:paddingTop="3dp"
-        android:paddingEnd="6dp"
+        android:paddingEnd="8dp"
         android:paddingBottom="3dp">
 
         <TextView
@@ -43,10 +44,11 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.04"
             android:maxLines="1"
             android:text="@string/widget_today"
             android:textColor="@color/widget_secondary"
-            android:textSize="12sp" />
+            android:textSize="11.5sp" />
 
         <TextView
             android:id="@+id/widget_tasks_overflow"
@@ -55,7 +57,7 @@
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
             android:textColor="@color/widget_amber"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:visibility="gone" />
     </LinearLayout>
 
@@ -78,8 +80,9 @@
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
             android:text="@string/widget_tasks_empty"
             android:textColor="@color/widget_secondary"
             android:textSize="13.5sp"
@@ -89,6 +92,8 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
         android:background="@color/widget_line" />
 
     <LinearLayout
@@ -106,7 +111,7 @@
             android:layout_width="48dp"
             android:layout_height="match_parent"
             android:contentDescription="@null"
-            android:padding="14dp"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_widget_plus" />
 
@@ -117,9 +122,9 @@
             android:ellipsize="end"
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:paddingEnd="6dp"
+            android:paddingEnd="8dp"
             android:text="@string/widget_action_task_add"
             android:textColor="@color/widget_amber"
-            android:textSize="14sp" />
+            android:textSize="13.5sp" />
     </LinearLayout>
 </LinearLayout>

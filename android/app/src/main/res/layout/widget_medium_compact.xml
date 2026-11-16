@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- F15-04+: medium widget (200x120dp compact bucket) keeping >=48dp touch targets and 24dp/14dp concentric geometry. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:clipToOutline="true"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/widget_padding_horizontal"
+    android:paddingTop="8dp"
+    android:paddingEnd="@dimen/widget_padding_horizontal"
+    android:paddingBottom="8dp">
+
+    <include
+        layout="@layout/widget_chat_row"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <include
+        layout="@layout/widget_capture_row_compact"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/widget_key_gap"
+        android:layout_weight="1" />
+</LinearLayout>
