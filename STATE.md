@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-16 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.55+140 (2026-11-16, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-17 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.56+141 (2026-11-17, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -48,6 +48,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release v1.0.56+141 — Todo redesenhado (D-075) (2026-11-17)
+- Notas completas em [docs/releases/v1.0.56.md](docs/releases/v1.0.56.md). Commits `a5bc309a`, `fcdcbef4`, `59c9ae30`, `c87561e8` e D-075 (`04dc360f`), integrados na `main` em `1acd0c76`.
+- Testes do Todo, l10n, integração, chat flutuante, modelos e sync: `+472 -1`; a falha (`ActiveAssistantSettingsPage persists toggles…`) já existia na `main`, assim como as duas de `settings_page_test.dart`. Analyze nos arquivos alterados: `No issues found!`. Paridade das ARB: OK.
+- APK `segundamente_global_1.0.56_141.apk`, `128058887` bytes, SHA-256 `160ad10565c39d7ae2cc5bec57755e11f1d4bc38f913dfb990b8d1bac3319757`; certificado `216c29ff…ee05f`, igual ao das anteriores.
+- `NOT_RUN`: esta versão no S25 (fora do `adb`), câmera/galeria, "remover animações" e TalkBack. Pendência nova: as 3 falhas antigas de teste (Configurações e Assistente ativo) precisam de correção própria.
 
 ### Release v1.0.55+140 — Correção do widget v3 recusado pelo launcher (2026-11-16)
 - Notas completas em [docs/releases/v1.0.55.md](docs/releases/v1.0.55.md).
