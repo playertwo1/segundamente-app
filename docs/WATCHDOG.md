@@ -64,3 +64,31 @@ Segredos, chaves de API e tokens OAuth nunca entram no repositório nem em logs.
 
 ---
 Autônomo na execução. Conservador nas mudanças. Cético com suposições. Rigoroso na validação. Transparente na incerteza.
+
+## Estados e prioridades do roadmap
+
+Movido do `ROADMAP.md` em 2026-11-17.
+
+- Faça só subfases `READY` da ordem de trabalho. `BLOCKED` e `PAUSED` só abrem com nova decisão registrada em `docs/DECISIONS.md`.
+- Subfase só vira `DONE` com a evidência registrada em `STATE.md`. Verificação não executada é `NOT_RUN`, nunca `PASS`. Uma linha planejada não é funcionalidade pronta.
+- O estado da fase descreve o trabalho; o estado do portão diz se os critérios foram provados. Exceções de execução em paralelo têm de ser explícitas e não fecham portões anteriores.
+- Fase com portão fechado e sem subfase aberta vai para `docs/arquivadas/roadmap/`, e o `ROADMAP.md` passa a apontar para lá.
+
+| Estado | Significado |
+|---|---|
+| BACKLOG | Ideia aprovada para planejamento futuro, sem início previsto |
+| BLOCKED | Não pode começar até cumprir a dependência ou obter a decisão indicada |
+| READY | Pré-requisitos disponíveis; pode começar |
+| IN_PROGRESS | Implementação ou validação começou |
+| REVIEW | Aguarda revisão ou validação de aceite |
+| DONE | Entrega e evidência de aceite registradas em `STATE.md` |
+| PAUSED | Interrompida pelo dono; nada é apagado, retomar exige nova decisão |
+| CANCELLED | Retirada do escopo por decisão registrada |
+| NOT_RUN | Checagem ainda não executada; não é aprovação |
+
+| Prioridade | Significado |
+|---|---|
+| P0 | Bloqueia o fluxo principal ou o portão de aceite |
+| P1 | Necessária para completar a fase |
+| P2 | Melhoria útil, sem bloquear o portão |
+| P3 | Ideia futura sem compromisso |

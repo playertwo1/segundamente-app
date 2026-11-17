@@ -1,7 +1,7 @@
 # F12-05 — Cancelamento e reagendamento de avisos ativos no Android via sync (Passo 9 / Ponte)
 
 **Data:** 2026-11-15
-**Passo do plano da ponte:** Passo 9 (`F12-05` — [`docs/lumen/PONTE.md`](../../lumen/PONTE.md))
+**Passo do plano da ponte:** Passo 9 (`F12-05` — [`docs/lumen/PONTE.md`](../../../lumen/PONTE.md))
 **Critérios de aceite:** `AC-08` (alarme local independente no Android) e `T05` (lembrete reagendado cancela aviso anterior antes de programar novo)
 **Branch:** `feat/f1205-cancelamento-avisos`
 

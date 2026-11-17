@@ -2,30 +2,25 @@
 
 Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decisão = próximo número. Decisão substituída não é apagada: marcar `SUPERSEDED` e apontar a nova. Registro completo das perguntas: [questionario/2026-11-02-segunda-memoria.md](questionario/2026-11-02-segunda-memoria.md).
 
+Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenavam ou fechavam fases e subfases encerradas, ficam em [arquivadas/decisoes/DECISIONS-arquivadas.md](arquivadas/decisoes/DECISIONS-arquivadas.md). Os números não são reutilizados.
+
 | ID | Data | Assunto | Estado |
 |---|---|---|---|
 | D-001 | 2026-11-02 | Base: fork do Memex (Flutter) com F0 como portão | ACCEPTED |
 | D-002 | 2026-11-02 | MVP = escopo "Prioridade atual"; full duplex, NotebookLM, grafo, ponte CLI fora | ACCEPTED |
-| D-003 | 2026-11-02 | Fases F0–F5 (MVP) e F6–F8 (futuro bloqueado) | ACCEPTED |
 | D-004 | 2026-11-02 | Provedores: OpenAI e Gemini via OAuth existente; Claude por chave de API opcional | ACCEPTED |
 | D-005 | 2026-11-02 | Sem login Claude.ai por assinatura (termos da Anthropic); só via Claude Code oficial no PC (F7) | ACCEPTED |
 | D-006 | 2026-11-02 | Nome do app e applicationId: "Segunda Mente" | ACCEPTED |
 | D-007 | 2026-11-02 | Voz do MVP: STT na nuvem pelo modelo configurado; TTS do Android na F2; SenseVoice não cobre pt-BR | ACCEPTED |
 | D-008 | 2026-11-02 | Docs de planejamento vivem na `main` do fork; só os arquivos úteis do kit ideias_standard | ACCEPTED |
-| D-009 | 2026-11-02 | Até o S25 Ultra estar conectado, o emulador é o aparelho de prova da F0 | ACCEPTED |
-| D-010 | 2026-11-02 | A F6 pode começar com os portões da F0 à F5 ainda abertos | ACCEPTED |
 | D-011 | 2026-11-03 | Áudio: transcrição pelo endpoint do ChatGPT; o canal de chat nunca recebe áudio | ACCEPTED |
 | D-012 | 2026-11-03 | O app tem só inglês e português | ACCEPTED |
-| D-013 | 2026-11-03 | Gemini por OAuth desbloqueado via daily-cloudcode-pa SSE stream | SUPERSEDED |
 | D-014 | 2026-11-03 | Ideias do Memos: quatro entram na F6 (F6-05 a F6-08); o resto fica fora | ACCEPTED |
 | D-015 | 2026-11-03 | Login OAuth Claude (PKCE local) e Claude Sonnet/Opus 5.5 High via Google OAuth | ACCEPTED |
 | D-016 | 2026-11-03 | Ideias do Daedalus Echo: Whisper local multilíngue, extrator de tarefas robusto, recuperação por tópicos, agenda; o resto fica fora | ACCEPTED |
 | D-017 | 2026-11-03 | Direção visual móvel AMOLED, editorial e sem barra inferior persistente | ACCEPTED |
 | D-018 | 2026-11-03 | Ideias do anarlog: prompts de resumo, correção conservadora, dicionário, legenda SRT/VTT e transparência dos provedores; o resto fica fora | ACCEPTED |
-| D-019 | 2026-11-03 | Priorizar a implementação visual F5-04 antes das demais pendências, sem fechar o portão F4 | SUPERSEDED |
 | D-020 | 2026-11-03 | Mecanismo de fallback resiliente entre modelos e provedores (FallbackLLMClient) | ACCEPTED |
-| D-021 | 2026-11-03 | Fazer o redesign visual em fase própria após o fechamento da fase F5 atual | SUPERSEDED |
-| D-022 | 2026-11-03 | Iniciar a fase F5V agora, em paralelo ao fechamento da F5 | ACCEPTED |
 | D-023 | 2026-11-04 | Sem espelho chinês no download do modelo de voz | ACCEPTED |
 | D-024 | 2026-11-04 | Remover tudo que é da China: provedores, sabores `cn*`, geocoding Amap e transcrição local SenseVoice | ACCEPTED |
 | D-025 | 2026-11-04 | Revisar as pranchas 17, 19, 20 e 22 sem inventar capacidades | ACCEPTED |
@@ -34,19 +29,15 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-028 | 2026-11-04 | Microfone explícito na conversa, transcrevendo para revisão | ACCEPTED |
 | D-029 | 2026-11-04 | Planejar F9 — Meeting Decoder, sem abrir o MVP nem autorizar código | ACCEPTED |
 | D-030 | 2026-11-04 | Ampliar F9 com PDFs, Todo, destinos de tarefas e relatórios PDF/DOCX | ACCEPTED |
-| D-031 | 2026-11-05 | Abrir só a pesquisa F7-01 (sem código) antes do portão F5 | ACCEPTED |
 | D-032 | 2026-11-05 | F7 sem ponte para CLIs: o login ChatGPT/Codex já existente basta | ACCEPTED |
 | D-033 | 2026-11-05 | `daedalus-echo` só como referência; F7-02 passa a medir IA no aparelho, não Ollama | ACCEPTED |
 | D-037 | 2026-11-05 | F10 detalhada por questionário; exportador com biblioteca de PDF entra já na F4 | ACCEPTED |
 | D-038 | 2026-11-05 | Critério 7 sem segunda confirmação para anexos do chat; critério 6 sem prova de troca de modelo | ACCEPTED |
 | D-039 | 2026-11-06 | Busca semântica local com MiniLM-L12 int8, opcional e baixada sob demanda | ACCEPTED |
-| D-040 | 2026-11-06 | Fechar a F6 sem auditoria própria; abrir a F7-02 (medição do modelo local no S25) | ACCEPTED |
 | D-041 | 2026-11-06 | Adiar a F7-02 (modelo local) e guardar como reserva; nada implementado | ACCEPTED |
 | D-042 | 2026-11-06 | F9 aberta: PDF lido pelo modelo (ChatGPT), Todo própria, só imagens do dono, JSON sim e ICS só sob pedido, só Android | ACCEPTED; lembretes e "só Android" substituídos por D-052/D-053 |
 | D-043 | 2026-11-07 | Follow-up e tarefa viram uma coisa só | ACCEPTED |
 | D-044 | 2026-11-07 | Retirar a exportação em JSON do relatório | ACCEPTED |
-| D-047 | 2026-11-11 | F7-03 (voz duplex) aberta sem o modelo local; entrada desligada até a medição no S25 | ACCEPTED |
-| D-048 | 2026-11-11 | Voz duplex ligada no chat com o eco medido no S25, aceito pelo dono | SUPERSEDED por D-049 |
 | D-049 | 2026-11-11 | Voz duplex: interrupção por toque, microfone fechado enquanto o app fala | ACCEPTED |
 | D-050 | 2026-11-13 | Expansão: Todo robusto no celular + Lumen no notebook; ordem, pausas e assistente ativo | ACCEPTED |
 | D-051 | 2026-11-13 | Todo robusto: lista única, recursos, atalhos de dia/hora e IA que propõe com confirmação | ACCEPTED |
@@ -54,7 +45,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 | D-053 | 2026-11-13 | Desktop: fork do Coucou renomeado Lumen, no repositório do fork, com IA própria e e-mail pessoal | ACCEPTED |
 | D-054 | 2026-11-13 | Sync: relay do Coucou + caixa de correio no Cloudflare; escopo, avisos e backup semanal | ACCEPTED |
 | D-055 | 2026-11-13 | Google: login próprio, Drive (backup) e Calendar; NotebookLM pós-MVP sem previsão | ACCEPTED |
-| D-056 | 2026-11-13 | Manter F11-04 pendente do S25 e avançar F11-05 | ACCEPTED |
 | D-067 | 2026-11-15 | Repositório `playertwo1/segundamente-app` público; atualizador Android sem token GitHub (substitui D-046) | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
@@ -80,17 +70,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - O namespace Kotlin e os method channels continuam `com.memexlab.memex`. Eles identificam código nativo, não o pacote instalado. Renomeá-los fica fora da F0-03.
 - Assinatura de debug usa o keystore de debug do Android SDK, fora do repositório. `android/key-*.properties`, `*.jks` e `*.keystore` já estão no `.gitignore` e não há nenhum desses arquivos versionado. Keystore de release não foi criado.
 
-## D-009 — Emulador até o S25
-- Contexto: a F0-02 pedia execução no Galaxy S25 Ultra. Em 2026-11-02 o dono pediu para usar só o emulador por enquanto.
-- Decisão e motivo: enquanto o S25 não estiver conectado, `emulator-5554` é o aparelho de prova das subfases da F0. A execução no S25 fica `NOT_RUN`. Os critérios de aceite do MVP continuam no S25. A fase F0 não se declara concluída sem essa execução, ou sem uma decisão nova.
-- Descartado: parar a F0 até o telefone aparecer.
-
-## D-010 — Abrir a F6 antes do MVP
-- Contexto: D-003 deixa a F6 bloqueada até o MVP. Em 2026-11-02 o dono pediu para avançar depois dos commits da F4 e da F5.
-- Decisão e motivo: a F6 pode começar. O MVP não fecha. D-003 continua valendo para o que é o MVP e para manter a F7 e a F8 bloqueadas. Busca semântica, tópicos e o "por quê" não entram sem um modelo. A busca deste passo é texto local nos relatórios.
-- Descartado: marcar o MVP como pronto para desbloquear a fase.
-
-
 ## D-011 — Áudio pelo ChatGPT
 - Contexto: em 2026-11-03, no S25, o canal `chatgpt.com/backend-api/codex` respondeu `400 Audio input is not available` com `gpt-5.6-sol` e com `gpt-6-luna`. Um áudio gravado no histórico da conversa repetia o erro em todas as chamadas seguintes.
 - Decisão e motivo: o canal de chat nunca recebe áudio (`CodexResponsesClient` troca por uma nota de texto). A transcrição usa `POST chatgpt.com/backend-api/transcribe` com o mesmo token do OAuth, e só o texto vai ao modelo. Testado em 2026-11-03 com um áudio pt-BR sintético: devolveu a frase correta. Isso cumpre D-007 (STT na nuvem pelo modelo configurado) sem depender do SenseVoice.
@@ -101,10 +80,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão e motivo: o app tem só inglês (`en`) e português (`pt`). As outras 16 línguas, incluindo o chinês, saíram do código, das galerias de cartão e dos testes (commit `73feb20`). Texto em outro idioma cai no inglês. Pedido do dono, que usa só pt-BR.
 - As buscas de local pedem nomes no idioma do app, e não mais em chinês.
 - Descartado: manter as demais línguas como reserva.
-
-## D-013 — Gemini por OAuth (SUPERSEDED por D-020 e commit aa91a48)
-- Contexto: Inicialmente `loadCodeAssist` devolvia `UNSUPPORTED_CLIENT` para o client_id do Gemini CLI e exigia projeto GCP standard-tier.
-- Decisão e atualização (2026-11-03): Desbloqueado com sucesso usando o endpoint de streaming SSE `https://daily-cloudcode-pa.googleapis.com` com `:streamGenerateContent?alt=sse`. As credenciais de OAuth foram ofuscadas no código fonte (`String.fromCharCodes`) para permitir commit/push sem acionar regras de segredos em texto plano do GitHub Push Protection. Validado no Galaxy S25 Ultra em texto (872ms) e stream (910ms).
 
 ## D-014 — Ideias do Memos
 - Contexto: `usememos/memos` (MIT, Go e React, self-hosted, 64 mil estrelas) foi comparado com o app em 2026-11-03. Só o README, o CONTEXT.md e os arquivos `.proto` foram lidos.
@@ -137,25 +112,10 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Fora: captura do áudio do sistema e do PC (o Android não permite), calendário e contatos do Google e do Outlook, sincronização, compartilhamento e cobrança (Supabase e Stripe), importação do histórico de outros apps, ditado global e a licença enterprise. O app de celular deles não foi lido.
 - Ficam em ideias futuras: separar falantes (diarização e voiceprint, modelos pesados), CLI e servidor MCP (F7) e detecção do idioma do resumo (hoje o app tem só en e pt).
 
-## D-019 — Próxima prioridade: redesign móvel
-- Estado: `SUPERSEDED` por D-021 após o dono esclarecer que o redesign deve ocorrer numa fase própria, depois da fase atual.
-- Decisão anterior: iniciar a implementação em F5-04 foi registrado, mas não executado.
-
 ## D-020 — Fallback resiliente entre modelos e provedores
 - Contexto: se o provedor ativo falhar (HTTP 429 rate limit, 500/503/529 sobrecarga, timeout de rede ou falta de cota), os agentes ou chats do usuário falhavam diretamente. O usuário pediu um fallback automático (ex.: se o ChatGPT parar de responder, vai para o Claude; se o Claude parar de responder, vai para o Gemini).
 - Decisão: criar `FallbackLLMClient` implementando `LLMClient`, operando em cascata ordenada. Se o provedor primário falhar, tenta sequencialmente os próximos candidatos autorizados com seus respectivos `ModelConfig`. Em streams, realiza failover transparente antes da emissão de dados. Adicionada chave de ativação e tela de reordenação de prioridade por drag-and-drop nas configurações de IA.
 - Limite: se um modelo já começou a emitir texto em streaming antes de falhar, a transmissão parcial é encerrada com erro para não duplicar texto já exibido na UI.
-
-## D-021 — Redesign visual após a fase atual
-- Estado: `SUPERSEDED` por D-022.
-- Contexto: o dono esclareceu em 2026-11-03 que o redesign da versão nova deve ocorrer depois de concluir a fase atual, não como a próxima tarefa dentro dela.
-- Decisão: manter o fechamento de F5 como foco atual e inserir F5V — Redesign visual da versão nova imediatamente depois de F5 e antes de F6. F5-04 cobre a direção aprovada e documentada; a implementação das telas fica em F5V.
-- Limite: F5V só começa depois de F5. Esta ordem não fecha nem remove critérios dos portões F0–F5 e não desbloqueia F7/F8 por si só.
-
-## D-022 — F5V começa agora
-- Contexto: em 2026-11-03, depois do commit `b513d72` (cofre do Android para tokens e chaves), o dono pediu para iniciar a fase visual imediatamente.
-- Decisão: a F5V passa a `IN_PROGRESS` e é a fase de trabalho atual. A F5 continua aberta em paralelo: o que falta nela depende do S25 (7 critérios, migração do cofre no aparelho, medições).
-- Limite: a ordem muda, os portões não. F5V não fecha a F4 nem a F5, e o MVP só fica pronto com o portão da F5. F7/F8 continuam bloqueadas.
 
 ## D-023 — Sem espelho chinês
 - Contexto: em 2026-11-04 o dono viu o botão "China Mirror (Faster in CN)" no download do modelo de voz e pediu: "retire esse china, não vamos usar nada da China".
@@ -200,11 +160,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: atualizar o plano F9 com PDF como entrada inicial, evidências por página, uma página Todo pessoal no menu existente, encaminhamento confirmado para Todo/calendário/lembretes e exportação PDF/DOCX reutilizando F4. Definir formatos adicionais, PDF escaneado/OCR, regras de destino e sistema desktop em F9-01.
 - Limites: F9 continua `BLOCKED` e fora do MVP; esta decisão autoriza o planejamento, não código. A lista Todo do usuário fica separada da fila interna dos agentes. Criar tarefa/evento exige confirmação individual e as permissões necessárias.
 
-## D-031 — Abrir a pesquisa F7-01 (2026-11-05)
-- Contexto: o dono pediu avançar para a F7, que está `BLOCKED` até o fechamento da F5 (D-003). Mesmo precedente da D-010 para a F6.
-- Decisão: abrir somente F7-01 (pesquisa e decisão de escopo). F7-02 a F7-06 seguem `BLOCKED`; nenhum código, provedor, serviço de PC ou permissão de microfone é autorizado. A F5 continua aberta e o MVP não muda.
-- Evidência: `docs/fases/F7-01-viabilidade.md` (termos da Anthropic e da OpenAI, licenças, autenticação, sistemas e limites de dados, com nível de evidência por linha).
-
 ## D-032 — F7 sem ponte para CLIs (2026-11-05)
 - Contexto: `docs/fases/F7-01-viabilidade.md` propunha uma ponte opcional para Claude Code e Codex CLI. O dono respondeu que o acesso ao ChatGPT por OAuth via Codex, que o app já tem, "já está bom".
 - Decisão: não haverá ponte desktop (F7-04) nem interface MCP (F7-05). O app segue com o login ChatGPT já existente; nenhum fluxo novo de credenciais. O limite dos termos permanece: sem login Claude.ai por assinatura (D-005).
@@ -215,12 +170,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Contexto: o dono propôs https://github.com/DaedalusApps/daedalus-echo (MIT, Kotlin) como exemplo de conversa duplex. Pelo README e pela árvore de arquivos, ele é gravador + transcrição Whisper + resumo Gemma 3 1B + busca por embeddings; não tem voz sintetizada, VAD contínuo, cancelamento de eco nem interrupção (busca por `TextToSpeech`, `AcousticEchoCanceler`, `VOICE_COMMUNICATION` sem resultado).
 - Decisão (escolha do dono): usar só como referência de IA no aparelho e embeddings. F7-02 passa de "Ollama no PC" para "medir modelo local no S25" (ex.: Gemma 3 1B, qualidade em pt-BR, RAM, latência, tamanho). Para F6-10, o Universal Sentence Encoder do projeto não está comprovado para português; candidatos a medir: USE multilingual (16 idiomas, inclui português) e EmbeddingGemma (100+ idiomas; tamanhos a confirmar). O Whisper `base.en` dele é só inglês e não serve.
 - Limites: nenhum código, dependência ou download de modelo é autorizado; nada foi medido. O duplex (F7-03) continua sem exemplo e sem teste.
-
-## D-034 — F8 e F9 só em pesquisa e documento; F7-02 em plano (2026-11-05)
-- Contexto: o dono pediu "veja do F7, F8 e F9 o que possa fazer sem o celular e faça". O roadmap exige decisão registrada para abrir fase `BLOCKED` (mesmo precedente de D-010 e D-031).
-- Decisão: abrir somente trabalho de pesquisa e de documento, sem código, dependência, permissão ou download de modelo: F8-01 (viabilidade do NotebookLM), F9-01 (mapeamento e perguntas), F9-02 (corpus de 40 casos em dados) e um plano de medição para F7-02. As demais subfases seguem `BLOCKED`.
-- Limites: nenhuma recomendação dos documentos está aceita; as decisões do dono estão listadas em `docs/fases/F8-01-viabilidade.md` (seção 5) e `docs/fases/F9-01-mapeamento.md` (seção 3). O que depende do S25 continua `NOT_RUN`. A F5 segue aberta e o MVP não muda.
-- Evidência: `docs/fases/F8-01-viabilidade.md`, `docs/fases/F9-01-mapeamento.md`, `docs/fases/F9-02-corpus.md` e `docs/medicoes/f9-02/`, `docs/fases/F7-02-plano-de-medicao.md`.
 
 ## D-035 — Serviço pago do Memex fora da interface; GPS de foto sob o interruptor de localização (2026-11-05)
 - Contexto: o dono pediu "retire conectar pelo Memex e serviço oficial Memex, troque tudo por Segunda Mente" e deixou o GPS a meu critério. A auditoria da F5 achou que o GPS do EXIF de foto ia ao Nominatim e ao prompt do modelo sem passar pelo interruptor de localização.
@@ -249,17 +198,11 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Efeito: critérios 6 e 7 passam com a evidência já registrada no S25; F2-07 deixa de exigir prévia para anexos do chat.
 
 ## D-039 — Busca semântica local com MiniLM-L12 int8 (2026-11-06)
-- Contexto: a medição da F6-10 (`docs/fases/F6-10-medicao.md`) mostrou ganho dos embeddings sobre a busca textual nas consultas reformuladas. Com as 24 notas reais do dono: acerto@3 de 0,83 (texto) para 0,92 (e5-small) e 1,00 (MiniLM); o MiniLM também recusou melhor o que está fora do tema (94% contra 67% de acertos acima do corte).
+- Contexto: a medição da F6-10 (`docs/arquivadas/fases/F6-10-medicao.md`) mostrou ganho dos embeddings sobre a busca textual nas consultas reformuladas. Com as 24 notas reais do dono: acerto@3 de 0,83 (texto) para 0,92 (e5-small) e 1,00 (MiniLM); o MiniLM também recusou melhor o que está fora do tema (94% contra 67% de acertos acima do corte).
 - Decisão do dono: usar o `paraphrase-multilingual-MiniLM-L12-v2` quantizado (int8, Apache-2.0, 118 MB).
 - Desenho aceito para a F6-01: busca textual primeiro; a semântica só complementa quando o texto acha pouco, com corte de nota; recurso opcional e desligado por padrão. O modelo não vai no repositório nem no APK: é baixado sob demanda do repositório público `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, em revisão fixa, com conferência de SHA-256; depois disso roda só no aparelho, sem enviar texto a ninguém. Dependência nova: `flutter_onnxruntime` (MIT, compatível com GPL-3.0).
 - Limites: o corte de nota depende do corpus (no corpus sintético da F6-10 o resultado dos dois modelos foi o inverso), então o valor inicial é só um ponto de partida e precisa ser conferido no S25 com as notas do dono. O índice fica em memória no início (sem persistência). Bateria, tokenizador sobre texto fora do ASCII/NFKC e notas muito longas (truncadas em 128 tokens) seguem como limites conhecidos.
 - Evidência: implementação e testes locais em STATE.md; convivência dos runtimes, busca no app e calibração do corte no S25 permanecem `NOT_RUN`.
-
-## D-040 — Fechar a F6 e abrir a F7-02 (2026-11-06)
-- Contexto: os 12 itens da F6 estão `DONE` com prova no S25 (F6-01 fechada hoje). O texto do portão F6 não exige auditoria própria, ao contrário da F5. O dono pediu: "feche o f06 e avance para o f07". A F7 estava `BLOCKED`; só a F7-01 (pesquisa) tinha sido aberta (D-031) e a F7-02 tinha plano (D-034).
-- Decisão: F6 `DONE` sem auditoria dedicada; limites declarados continuam valendo (corte 0,42 provisório, índice só em memória, tempos e bateria não medidos). F7: abrir somente a F7-02 (sonda de modelo local no S25, método da F6-10, app separado em `tools/`). F7-03 e F7-06 seguem `BLOCKED`; F7-04 e F7-05 seguem `CANCELLED`.
-- Limites: nenhum modelo é baixado antes de o dono confirmar o download do Gemma 3 1B (~529 MB) e liberar o S25 por cerca de uma hora. O Gemma nunca vai empacotado no APK nem no repositório (Termos de Uso exigem repassar as restrições a quem recebe os pesos; risco de conflito com a GPL-3.0). Resumo dos Termos lido em 2026-11-06, não é parecer jurídico.
-- Evidência: `ROADMAP.md`, `docs/fases/F7-02-plano-de-medicao.md`.
 
 ## D-041 — Adiar o modelo local (2026-11-06)
 - Contexto: a medição no PC mostrou o Gemma 3 1B fraco (8/40) e o Gemma 4 E2B melhor (até 23/40 no corpus da F9-02), ainda abaixo do que serve para classificar sozinho. O dono: "vamos deixar esse negocio para depois, coloque no rollback, nao vamos implementar isso agora".
@@ -288,26 +231,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
 - Decisão: no chat principal normal, a persona habilitada com maior afinidade clara com a mensagem pode acrescentar um parágrafo próprio, identificado pelo nome, depois da resposta central da Segunda Mente. A persona só entra se tiver algo distinto a acrescentar; saudações ficam curtas e assuntos substantivos recebem cerca de 3–6 frases. Sem afinidade clara não há fallback para a persona principal. Quick Query e outras cenas ficam fora.
 - Implementação: o mesmo SuperAgent e modelo configurado produzem a resposta central e a fala identificada, mantendo-a no histórico da conversa e sem chamada adicional ao modelo.
 - Limite de validação: testes focados locais; resposta de modelo real e visualização no S25: `NOT_RUN`.
-
-## D-046 — Atualizador Android para releases do repositório privado (2026-11-10) — SUPERSEDED por D-067
-- Contexto: o dono pediu uma opção nas Configurações para procurar e baixar atualizações do repositório GitHub do fork.
-- Decisão: reutilizar o atualizador existente e apontá-lo ao `origin` privado (`playertwo1/segundamente-app`). Stable e Early no Android podem buscar o APK do mesmo flavor; Dev fica indisponível. Para acessar releases privadas, a pessoa configura um token fine-grained limitado ao repositório, com `Contents: read`, salvo pelo `SecretStorage` no cofre do aparelho; o token não é incluído no código, nas preferências ou no backup. A checagem automática só roda se o token estiver salvo e a preferência estiver ativa; download e instalador continuam sujeitos às opções existentes.
-- Limite: é necessário configurar o token em cada instalação e publicar uma release com APK do flavor compatível. Testes Flutter, análise, geração de localizações e validação no S25: `NOT_RUN` neste ambiente, que não tem Flutter/Dart disponível.
-
-## D-047 — Abrir a F7-03 (voz duplex) sem o modelo local (2026-11-11)
-- Contexto: o dono pediu "trabalhe no F7-03", autorizando a investigação e o protótipo de áudio do F7-01, sem reabrir a F7-02 nem ignorar a dependência. O ROADMAP marcava F7-03 `BLOCKED` até a F7-02, adiada por D-041. D-032 tinha deixado a voz duplex "em aberto, sem decisão".
-- Constatação: a dependência da F7-02 não é técnica. A conversa por voz usa a transcrição já existente (Parakeet local ou nuvem), o modelo de chat já configurado e a voz do sistema Android; nenhuma parte exige um LLM no aparelho. A F7-02 só acrescentaria a opção de resposta sem nuvem.
-- Decisão: F7-03 passa a `IN_PROGRESS` pelo caminho independente. F7-02 continua `BLOCKED` (D-041 intacta) e F7-06 continua `BLOCKED`. Nenhuma dependência nova: a voz usa um canal nativo sobre o `TextToSpeech` do Android; `flutter_tts` e TTS por modelo foram descartados.
-- Limites: o S25 não estava conectado em 2026-11-11, então eco, interrupção, latência, bateria e aquecimento estão `NOT_RUN`. Por isso a entrada da tela no chat fica desligada (`AppConfig.enableDuplexVoice = false`) e a F7-03 não pode ser `DONE`. O turno falado vai ao chat em modo somente leitura. O texto da conversa entra no histórico; o áudio nunca é gravado.
-- Falta ao dono: rodar `tools/f703_probe` no S25 e, com os números, decidir ligar a entrada (ou exigir fone / trocar a interrupção por toque se o eco não for controlável).
-- Evidência: `docs/fases/F7-03-voz-duplex.md`, STATE.md.
-
-## D-048 — Ligar a voz duplex com o eco como está (2026-11-11)
-- Contexto: a sonda no S25 mostrou que, com a voz no alto-falante, o detector dispara com a própria resposta (2 disparos por fala de ~13 s na configuração do app; `docs/fases/F7-03-voz-duplex.md` seção 5). Foram oferecidas três saídas: interrupção por toque, falar por cima só com fone, modo "telefone".
-- Decisão do dono: "deixe com eco mesmo, está aceitável para mim". Nenhuma das três saídas é adotada; a configuração de microfone e os limiares ficam como estão e `AppConfig.enableDuplexVoice` passa a `true`.
-- Consequência conhecida e aceita: no alto-falante a resposta pode ser cortada pela própria voz do app, e o trecho de eco pode ser transcrito e enviado ao modelo como se fosse um turno do usuário (em modo somente leitura; entra no histórico do chat e gasta chamadas do modelo) até o usuário pausar ou encerrar. Com fone o efeito deve sumir, mas isso não foi medido.
-- Limites: a tela e o canal `TtsChannelHandler` ainda não foram executados no aparelho (`NOT_RUN`); a F7-03 segue `IN_PROGRESS`. Reavaliar se o corte da resposta incomodar no uso: a alternativa mais barata continua sendo fechar o microfone enquanto o app fala.
-- Evidência: `docs/medicoes/f7-03/s25.jsonl`, STATE.md.
 
 ## D-049 — Interrupção por toque na voz duplex (2026-11-11)
 - Contexto: horas depois de aceitar o eco (D-048), o dono escolheu a opção A oferecida na medição: "então vamos por esse caminho".
@@ -381,23 +304,11 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - **NotebookLM:** o caminho escolhido é a via B da F8-01, criar ou atualizar um Google Doc do conteúdo escolhido, com prévia. Fica **pós-MVP, sem previsão**, e a F8 continua `BLOCKED`. Plano do dono: NotebookLM Pro.
 - Descartado agora: Gmail (o e-mail é o MailCraft, D-053), Google Tasks, Drive como fonte de leitura das personas.
 
-## D-056 — Ordem de execução da F11 enquanto alarmes aguardam o S25 (2026-11-13)
-- Contexto: o dono pediu para deixar a F11-04 pendente até haver acesso ao Galaxy S25 Ultra e avançar para a próxima subfase. A F11-04 exige evidência física de alarmes exatos em Doze, offline, após reinício e com economia de bateria.
-- Decisão: manter a F11-04 `BLOCKED` e abrir a F11-05 agora. A F11-05 depende da F11-03, já concluída, e segue as regras de confirmação de IA aceitas em D-051. Esta decisão não dispensa nem simula qualquer teste físico da F11-04 e não desbloqueia outras subfases.
-
 ## D-057 — Adiar notificação do Todo (2026-11-13)
 - Decisão do dono: a ação **Adiar** reagenda o aviso para 10 minutos depois.
 
-## D-058 — Retomar F11-04 com o S25 conectado (2026-11-13)
-- Contexto: D-056 manteve a F11-04 bloqueada até haver acesso ao Galaxy S25 Ultra. O dono confirmou que o aparelho está conectado e pediu para continuar.
-- Decisão: abrir a F11-04 para implementação e validação física no S25. A F11-06 continua `BLOCKED`; esta decisão não a desbloqueia.
-
 ## D-059 — Aviso do Todo quando o alerta já passou (2026-11-13)
 - Decisão do dono, vinda da auditoria da F11 (`docs/reviews/F11.md`): se o horário do alerta já passou e o prazo da tarefa ainda não chegou, o lembrete dispara na hora do prazo. Tarefa com prazo já vencido continua sem lembrete.
-
-## D-060 — Fechamento da F7-03 sem o teste de revogação durante a conversa (2026-11-13)
-- Decisão do dono: não testar a revogação da permissão de microfone no meio da conversa, por não ter utilidade real. Esse caso fica `NOT_RUN` e não bloqueia o fechamento.
-- A F7-03 fecha com Interromper e falar, Encerrar e permissão negada observados no S25 em 2026-11-13 (`docs/fases/F7-03-voz-duplex.md`, seção 5c). Bateria fora do carregador, eco com fone e latência ponta a ponta seguem fora desta decisão, como pela ordem de trabalho da D-050.
 
 ## D-061 — Abrir a F11-06: aviso de conteúdo (2026-11-13)
 - Contexto: o dono aprovou seguir com a F11-06, que estava `BLOCKED` na ordem de trabalho da F11. Ela depende da F11-03, já `DONE`.
@@ -412,15 +323,6 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Vão para "Ideias futuras": resumo e próximo evento no widget (depende de F13 e F14); captura sem sair do app pela minicápsula; assistente que vê a tela (risco alto de privacidade; exige decisão própria antes de qualquer trabalho).
   - Widget, microfone, painel rápido e minicápsula só se validam no S25.
   - Não desbloqueia F12, F13 nem F14.
-
-## D-063 — Abrir a F15-01 (maquetes) antes do portão da F11 (2026-11-14)
-- Contexto: o dono pediu para trabalhar a F15 hoje, antes de fechar o portão da F11. O AC-01 no S25 (alarme às 08h10, tarefa sintética às 08h30) segue pendente em STATE.md. D-062 exige o portão da F11 para começar a fase.
-- Decisão:
-  - Abrir só a **F15-01** (maquetes do widget e do chat flutuante), documentada em `docs/fases/F15-01-maquetes.md`, com o HTML em `docs/fases/f15-01/maquetes.html`. Estado: REVIEW.
-  - Nenhum código de produto da F15 começa antes da escolha do dono entre as opções A (linhas), B (teclas) ou a combinação (teclas no pequeno e linhas no grande).
-  - A escolha do dono é a evidência de aceite da F15-01. Sem ela, a F15-01 não vira DONE.
-  - O portão da F11 não é dispensado. F15-02 a F15-07 seguem BLOCKED até o portão da F11, como D-062 prevê.
-- Limite: o estado da fase não muda para além da F15-01; a estimativa de células é só estimativa, até medir a grade One UI no S25.
 
 ## D-064 — Composição do widget da F15: teclas no pequeno, linhas no grande (2026-11-14)
 - Contexto: D-063 pediu a escolha do dono entre as opções A (linhas), B (teclas) ou a combinação, em [F15-01-maquetes.md](fases/F15-01-maquetes.md). Em 2026-11-14 o dono respondeu "Combinação" no chat.

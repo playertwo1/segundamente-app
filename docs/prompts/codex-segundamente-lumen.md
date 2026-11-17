@@ -17,7 +17,7 @@ ANTES DE QUALQUER CÓDIGO, leia nesta ordem:
 3. ROADMAP.md e, depois, só o arquivo da fase em docs/roadmap/
 4. docs/DECISIONS.md: as decisões D-050 a D-055 definem a expansão. O questionário completo está em docs/questionario/2026-11-13-lumen-desktop-e-todo.md.
 
-SUA MISSÃO NESTA SESSÃO: fase F11 — Todo robusto (docs/roadmap/F11-todo-robusto-celular.md).
+SUA MISSÃO NESTA SESSÃO: fase F11 — Todo robusto (docs/arquivadas/roadmap/F11-todo-robusto-celular.md).
 Ordem: F11-01 → F11-02 → F11-03. Pare depois da F11-03 e reporte.
 - F11-01: modelo de tarefa com ID estável, prioridade, dia/hora com fuso (America/Sao_Paulo), "sem hora = tarefa do dia, sem alarme", regra de repetição, subtarefas, vínculo de origem, versão e tombstone. Migração ADITIVA do todo.json atual (lib/data/services/todo_service.dart) para o novo armazenamento, com backup antes e migração idempotente. A F9 (pausada) grava no Todo via SessionReportService/MemexRouter: preserve os itens dela e o vínculo com o relatório. Antes de escrever código, proponha em 10 linhas o desenho (tabelas Drift ou arquivo, interfaces) e siga o padrão do repositório (Repository → MemexRouter → ViewModel; Result<T>).
 - F11-02: repetição diária, semanal (dias escolhidos) e mensal, e atalhos de dia (Hoje, Amanhã, Daqui a 3 dias, Semana que vem = próxima segunda) e de hora (9h, 14h, 20h; alerta padrão de 20 min), editáveis nas configurações. Testes com relógio fixo: troca de mês, fuso e concluir uma ocorrência sem apagar a série.
