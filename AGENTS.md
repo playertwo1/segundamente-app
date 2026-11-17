@@ -9,7 +9,7 @@ A Segunda Mente é um fork público do [Memex](https://github.com/memex-lab/meme
 
 ### Antes de agir, leia nesta ordem
 1. [STATE.md](STATE.md): estado atual, próxima ação, pendências e evidências recentes.
-2. [ROADMAP.md](ROADMAP.md): regras, estados, mapa e ordem de trabalho. Depois abra **só** o arquivo da fase em `docs/roadmap/`.
+2. [ROADMAP.md](ROADMAP.md): índice das fases e ordem de trabalho. Depois abra **só** o arquivo da fase em `docs/roadmap/`. Estados, prioridades e regras do roadmap ficam em [docs/WATCHDOG.md](docs/WATCHDOG.md).
 3. [docs/DECISIONS.md](docs/DECISIONS.md): decisões aceitas (D-xxx). Não contrarie uma decisão aceita sem uma nova registrada.
 4. Quando precisar: [PROJECT.md](PROJECT.md) (escopo), [DESIGN.md](DESIGN.md) (visual), [docs/WATCHDOG.md](docs/WATCHDOG.md) (regras de execução), [docs/AUDIT.md](docs/AUDIT.md) (auditoria antes de fechar fase) e [docs/INDEX.md](docs/INDEX.md) (índice de tudo).
 
@@ -19,14 +19,14 @@ A Segunda Mente é um fork público do [Memex](https://github.com/memex-lab/meme
 | `lib/`, `test/` | App Flutter e testes (estrutura na parte 2) |
 | `android/`, `ios/`, `plugins/` | Código nativo e plugins locais |
 | `tools/` | Sondas e utilitários de medição (fora do app) |
-| `docs/roadmap/` | Um arquivo por fase (F0–F14) |
+| `docs/roadmap/` | Um arquivo por fase aberta, mais as ideias futuras |
 | `docs/fases/` | Documentos de trabalho das fases: estudos, viabilidade, medições |
 | `docs/questionario/` | Decisões tomadas por questionário com o dono |
 | `docs/medicoes/` | Dados brutos e scripts de medição |
 | `docs/reviews/`, `docs/releases/` | Auditorias e notas de release |
 | `docs/testes/` | Roteiros de teste no aparelho |
 | `docs/lumen/` | Pacote de planejamento do Lumen (base; as decisões mandam) |
-| `docs/historico/` | STATE arquivado; não editar |
+| `docs/arquivadas/` | Fases concluídas (`roadmap/`), documentos de trabalho delas (`fases/`), STATE e decisões arquivados; não editar |
 | `docs/imagens/`, `docs/prompts/` | Imagens dos documentos e prompts de geração |
 | `docs/upstream/` | Documentos herdados do Memex, mantidos como referência; podem citar código que não existe mais |
 

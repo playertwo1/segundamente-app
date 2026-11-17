@@ -1,6 +1,6 @@
 # Plano de Implementação — F12-03: Pareamento por QR, guarda segura e revogação com o Lumen
 
-- **Spec de referência:** `docs/superpowers/specs/2026-11-14-f1203-pareamento-qr-revogacao.md`
+- **Spec de referência:** `docs/arquivadas/superpowers/specs/2026-11-14-f1203-pareamento-qr-revogacao.md`
 - **Passo na `PONTE.md`:** Passo 6 (`F12-03`)
 - **Branch prevista:** `feat/f1203-pareamento-lumen`
 

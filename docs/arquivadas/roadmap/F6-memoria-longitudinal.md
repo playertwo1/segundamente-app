@@ -1,4 +1,4 @@
-> Parte do [ROADMAP](../../ROADMAP.md): regras, estados, ordem de trabalho e mapa das fases. Estado atual e próxima ação: [STATE.md](../../STATE.md).
+> Fase concluída e arquivada. Índice das fases: [ROADMAP](../../../ROADMAP.md). Estado atual: [STATE.md](../../../STATE.md).
 
 ## F6 — Memória longitudinal
 

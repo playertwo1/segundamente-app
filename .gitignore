@@ -110,3 +110,9 @@ deploy_android.sh
 !.impeccable-mobile/references/amoled-v3-ios/*.png
 !.impeccable-mobile/references/amoled-v3-ios/README.md
 !.impeccable-mobile/QA-REPORT.md
+
+# Configurações locais de agentes (instaladas por ferramenta, não versionar)
+.agent/
+.agents/
+.codex/
+.gemini/

@@ -1,12 +1,12 @@
-> Parte do [ROADMAP](../../ROADMAP.md): regras, estados, ordem de trabalho e mapa das fases. Estado atual e próxima ação: [STATE.md](../../STATE.md).
+> Fase concluída e arquivada. Índice das fases: [ROADMAP](../../../ROADMAP.md). Estado atual: [STATE.md](../../../STATE.md).
 
 ## F5 — Fechamento do MVP
 
 | ID | Entrega verificável | Prio | Depende de | Estado | Evidência de aceite |
 |---|---|---:|---|---|---|
-| F5-01 | Executar e registrar os sete critérios de aceite em fluxo ponta a ponta no S25 Ultra | P0 | F1–F4 | DONE | Checklist completo em docs/fases/F5-01-checklist.md, com resultado e evidência de cada critério |
-| F5-02 | Revisar consentimento, dados enviados, armazenamento de chaves/tokens e logs | P0 | F1–F4 | DONE | Migração do cofre no S25 ainda NOT_RUN; revisar também exceções OAuth ainda registradas; relatório em docs/fases/F5-02-privacidade.md |
-| F5-03 | Medir sessão longa, geração/exportação e lista de histórico; corrigir regressões relevantes | P1 | F2–F4 | DONE | Medições reproduzíveis no dispositivo com entrada, tempo e memória; números de fixture não substituem medida real; registrar em docs/fases/F5-03-medicoes.md |
+| F5-01 | Executar e registrar os sete critérios de aceite em fluxo ponta a ponta no S25 Ultra | P0 | F1–F4 | DONE | Checklist completo em docs/arquivadas/fases/F5-01-checklist.md, com resultado e evidência de cada critério |
+| F5-02 | Revisar consentimento, dados enviados, armazenamento de chaves/tokens e logs | P0 | F1–F4 | DONE | Migração do cofre no S25 ainda NOT_RUN; revisar também exceções OAuth ainda registradas; relatório em docs/arquivadas/fases/F5-02-privacidade.md |
+| F5-03 | Medir sessão longa, geração/exportação e lista de histórico; corrigir regressões relevantes | P1 | F2–F4 | DONE | Medições reproduzíveis no dispositivo com entrada, tempo e memória; números de fixture não substituem medida real; registrar em docs/arquivadas/fases/F5-03-medicoes.md |
 | F5-04 | Definir e documentar direção visual móvel AMOLED | P2 | D-017 | DONE | DESIGN.md, D-017 e dez pranchas aprovadas em docs/INDEX.md |
 | F5-05 | Fazer auditoria final e conferir atribuições GPL | P0 | F5-01, F5-02, F5-03 | DONE | docs/reviews/F5.md sem CRITICAL/HIGH aberto e resultado da auditoria registrado |
 

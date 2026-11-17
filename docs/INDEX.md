@@ -7,18 +7,18 @@ Mapa de toda a documentação. Agentes: comecem pelo [AGENTS.md](../AGENTS.md).
 | Documento | Para quê |
 |---|---|
 | [STATE.md](../STATE.md) | Estado atual, próxima ação, pendências e evidências recentes |
-| [ROADMAP.md](../ROADMAP.md) | Regras, estados, mapa das fases e ordem de trabalho |
-| [roadmap/](roadmap/) | Um arquivo por fase (F0–F14), com subfases, critérios e portão |
+| [ROADMAP.md](../ROADMAP.md) | Índice das fases e ordem de trabalho |
+| [roadmap/](roadmap/) | Um arquivo por fase aberta, com subfases, critérios e portão, e as [ideias futuras](roadmap/IDEIAS-FUTURAS.md) |
 | [DECISIONS.md](DECISIONS.md) | Decisões aceitas (D-001 em diante) |
 | [PROJECT.md](../PROJECT.md) | Visão, escopo e restrições do produto |
 | [WATCHDOG.md](WATCHDOG.md) · [AUDIT.md](AUDIT.md) | Regras de execução e auditoria antes de fechar fase |
-| [historico/](historico/) | STATE arquivado (2026-11-02 a 2026-11-13) |
+| [arquivadas/](arquivadas/) | Fases concluídas e seus documentos de trabalho, STATE e decisões antigos, planos da F12 |
 
 ## Expansão Lumen + Todo robusto (2026-11-13)
 
 - [Questionário com as decisões](questionario/2026-11-13-lumen-desktop-e-todo.md) (D-050 a D-055)
 - [Pacote de planejamento original](lumen/README.md): proposta de 2026-11-12; onde divergir, valem as decisões
-- Fases: [F11 Todo](roadmap/F11-todo-robusto-celular.md) · [F12 Sync](roadmap/F12-sync-com-o-lumen.md) · [F13 Google](roadmap/F13-google.md) · [F14 Assistente ativo](roadmap/F14-assistente-ativo.md)
+- Fases: [F11 Todo](arquivadas/roadmap/F11-todo-robusto-celular.md) · [F12 Sync](roadmap/F12-sync-com-o-lumen.md) · [F13 Google](roadmap/F13-google.md) · [F14 Assistente ativo](roadmap/F14-assistente-ativo.md) · [F15 Widget](roadmap/F15-widget-e-atalhos-android.md)
 - Lado desktop: `docs/roadmap/fase-l-lumen.md` no repositório `playertwo1/coucou`
 - [Prompts para o Codex](prompts/codex-segundamente-lumen.md): um para cada repositório
 
@@ -87,15 +87,15 @@ Mapa de toda a documentação. Agentes: comecem pelo [AGENTS.md](../AGENTS.md).
 
 ## Documentos de trabalho das fases ([fases/](fases/))
 
-- [Checklist dos sete critérios F5-01](fases/F5-01-checklist.md)
-- [Privacidade F5-02](fases/F5-02-privacidade.md)
+- [Checklist dos sete critérios F5-01](arquivadas/fases/F5-01-checklist.md)
+- [Privacidade F5-02](arquivadas/fases/F5-02-privacidade.md)
 - [Viabilidade F8-01 (NotebookLM)](fases/F8-01-viabilidade.md)
 - [Mapeamento F9-01](fases/F9-01-mapeamento.md)
 - [Corpus F9-02](fases/F9-02-corpus.md)
 - [Plano de medição F7-02](fases/F7-02-plano-de-medicao.md)
 - [F7-03 — voz duplex: implementação, limites e medição pendente](fases/F7-03-voz-duplex.md)
 - [Plano de medição F2-11](fases/F2-11-plano-de-medicao.md)
-- [Medições F5-03](fases/F5-03-medicoes.md)
+- [Medições F5-03](arquivadas/fases/F5-03-medicoes.md)
 - [Revisão F5](reviews/F5.md)
 - [Revisão F9](reviews/F9-2026-11-06.md)
 - [Captura do S25 Ultra](imagens/s25_screenshot.png)
