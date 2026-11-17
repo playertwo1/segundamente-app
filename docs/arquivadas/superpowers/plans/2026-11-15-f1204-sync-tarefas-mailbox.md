@@ -4,7 +4,7 @@
 > **SDK Flutter:** usar o binário `flutter` configurado no ambiente (ex.: `<flutter-sdk>\bin\flutter`).
 
 **Spec:** [`2026-11-15-f1204-sync-tarefas-mailbox.md`](../specs/2026-11-15-f1204-sync-tarefas-mailbox.md)
-**Contrato:** [`docs/lumen/CONTRATO-SYNC.md`](../../lumen/CONTRATO-SYNC.md)
+**Contrato:** [`docs/lumen/CONTRATO-SYNC.md`](../../../lumen/CONTRATO-SYNC.md)
 
 ---
 

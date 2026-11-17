@@ -1,8 +1,8 @@
 # F12-04 — Sync de tarefas via caixa de correio HTTP do relay (Lumen ↔ Segunda Mente)
 
 **Data:** 2026-11-15
-**Passo do plano da ponte:** Passo 8 ([`docs/lumen/PONTE.md`](../../lumen/PONTE.md))
-**Contrato normativo:** [`docs/lumen/CONTRATO-SYNC.md`](../../lumen/CONTRATO-SYNC.md) (v1)
+**Passo do plano da ponte:** Passo 8 ([`docs/lumen/PONTE.md`](../../../lumen/PONTE.md))
+**Contrato normativo:** [`docs/lumen/CONTRATO-SYNC.md`](../../../lumen/CONTRATO-SYNC.md) (v1)
 **Referência de paridade no Lumen:** `coucou/docs/superpowers/specs/2026-11-14-l63-mailbox-tarefas.md`
 
 ---

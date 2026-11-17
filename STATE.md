@@ -37,6 +37,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Reorganização dos documentos (2026-11-17)
+- `ROADMAP.md` virou índice com um resumo por fase. F0, F4, F5, F6 e F11 e os documentos de trabalho delas foram para `docs/arquivadas/`. Estados e prioridades foram para `docs/WATCHDOG.md` e as ideias futuras para `docs/roadmap/IDEIAS-FUTURAS.md`.
+- Evidências até 2026-11-15 foram para `docs/arquivadas/state/`. Decisões superadas ou já cumpridas (D-003, D-009, D-010, D-013, D-019, D-021, D-022, D-031, D-034, D-040, D-046, D-047, D-048, D-056, D-058, D-060 e D-063) foram para `docs/arquivadas/decisoes/`. Notas de release até a v1.0.52 foram para `docs/arquivadas/releases/`.
+- Removidas as regras herdadas do Memex para Cursor e Windsurf. As pastas locais de agentes (`.agent/`, `.agents/`, `.codex/`, `.gemini/`) agora são ignoradas pelo git.
+- Conferência: script de links relativos em todos os `.md` (exceto `docs/upstream/`) com 0 quebrados. Nenhum código mudou, então os testes do app ficaram `NOT_RUN`.
+
 ### v1.0.57: comentários em chat e tarefas do registro (2026-11-17, D-076)
 - Tela do registro: comentários em balões (personas à esquerda, usuário em marfim à direita), citação da resposta com ida à original, deslizar para responder e prévia no compositor; bloco "Tarefas deste registro" cria tarefas sem data só após o toque em "Adicionar N ao Todo", com Desfazer e "Agora não" por registro. Maquetes aprovadas pelo dono no chat.
 - `flutter.bat test --no-pub --reporter compact test/ui/timeline/ test/l10n/ test/domain/use_cases/card_task_extractor_test.dart test/domain/models/card_task_state_test.dart test/utils/user_storage_card_task_state_test.dart test/ui/todo/`: `+227: All tests passed!`; analyze dos arquivos novos: `No issues found!` (7 `info` antigos em `timeline_card_detail_screen.dart`).
