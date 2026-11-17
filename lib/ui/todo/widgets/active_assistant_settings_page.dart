@@ -74,6 +74,24 @@ class _ActiveAssistantSettingsPageState
     }
   }
 
+  // Refreshes in place: a full _load() swaps the list for a spinner and
+  // drops the scroll position, hiding the button the user just tapped.
+  Future<void> _silenceToday() async {
+    setState(() {
+      _saving = true;
+      _errorMessage = null;
+    });
+    try {
+      await _service.silenceFor(const Duration(hours: 12));
+      final loaded = await _service.loadSettings();
+      if (mounted) setState(() => _settings = loaded);
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = '$e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   String _formatMinutes(int minutes) {
     final hour = (minutes ~/ 60).toString().padLeft(2, '0');
     final minute = (minutes % 60).toString().padLeft(2, '0');
@@ -100,7 +118,7 @@ class _ActiveAssistantSettingsPageState
   bool _isExplicitlySilenced(ActiveAssistantSettings settings) {
     if (settings.silencedUntilIso == null) return false;
     final parsed = DateTime.tryParse(settings.silencedUntilIso!);
-    return parsed != null && parsed.isAfter(DateTime.now());
+    return parsed != null && parsed.isAfter(_service.now());
   }
 
   Widget _sectionTitle(String title) => Padding(
@@ -373,8 +391,7 @@ class _ActiveAssistantSettingsPageState
                         settings.copyWith(clearSilencedUntil: true),
                       );
                     } else {
-                      await _service.silenceFor(const Duration(hours: 12));
-                      await _load();
+                      await _silenceToday();
                     }
                   },
           ),

@@ -76,6 +76,10 @@ class ActiveAssistantService {
   static final ActiveAssistantService instance = ActiveAssistantService._();
 
   final DateTime Function() _clock;
+
+  /// Current time on this service's clock, so callers judge silence against
+  /// the same time the service used to set it.
+  DateTime now() => _clock();
   final Future<ActiveAssistantSettings> Function() _loadSettings;
   final Future<void> Function(ActiveAssistantSettings) _saveSettings;
   final Future<String?> Function() _loadDismissedBriefingKey;
