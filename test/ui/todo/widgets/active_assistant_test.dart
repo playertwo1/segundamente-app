@@ -58,7 +58,8 @@ class _FakeTodoRouter implements MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
-  }) async {
+    List<String> attachments = const [],
+    }) async {
     addedTexts.add(text);
     final item = TodoItem(
       id: id ?? 'id-${items.length}',
@@ -91,7 +92,8 @@ class _FakeTodoRouter implements MemexRouter {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
-  }) async {
+    List<String>? attachments,
+    }) async {
     final index = items.indexWhere((i) => i.id == id);
     if (index == -1) return Error(StateError('not found'));
     final updated = items[index].copyWith(

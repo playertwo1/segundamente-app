@@ -69,6 +69,7 @@ class TodoRepository {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
+    List<String> attachments = const [],
   }) =>
       runResult(() => _service.add(
             userId: userId,
@@ -82,6 +83,7 @@ class TodoRepository {
             priority: priority,
             subtasks: subtasks,
             recurrence: recurrence,
+            attachments: attachments,
           ));
 
   Future<Result<TodoItem>> addFromReport({
@@ -108,6 +110,7 @@ class TodoRepository {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
+    List<String>? attachments,
   }) =>
       runResultVoid(() => _service.edit(
             userId: userId,
@@ -122,6 +125,25 @@ class TodoRepository {
             subtasks: subtasks,
             recurrence: recurrence,
             clearRecurrence: clearRecurrence,
+            attachments: attachments,
+          ));
+
+  Future<Result<List<String>>> storePhotos({
+    required String userId,
+    required List<String> sourcePaths,
+  }) =>
+      runResult(() => _service.storePhotos(
+            userId: userId,
+            sourcePaths: sourcePaths,
+          ));
+
+  Future<Result<String?>> attachmentPath({
+    required String userId,
+    required String reference,
+  }) =>
+      runResult(() => _service.attachmentPath(
+            userId: userId,
+            reference: reference,
           ));
 
   Future<Result<void>> setDone({

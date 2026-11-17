@@ -50,6 +50,7 @@ class _FakeRouter implements MemexRouter {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
+    List<String>? attachments,
   }) async {
     final index = items.indexWhere((i) => i.id == id);
     if (index >= 0) {

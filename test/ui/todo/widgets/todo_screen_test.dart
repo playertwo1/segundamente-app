@@ -80,6 +80,7 @@ class _FakeRouter implements MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
+    List<String> attachments = const [],
   }) async {
     final explicit = parseExplicitDue(due ?? '');
     final item = TodoItem(
@@ -114,6 +115,7 @@ class _FakeRouter implements MemexRouter {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
+    List<String>? attachments,
   }) async {
     final explicit = parseExplicitDue(due);
     final date = explicit == null ? null : _dateOnly(explicit.date);

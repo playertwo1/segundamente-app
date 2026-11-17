@@ -41,7 +41,8 @@ class _FakeRouter implements MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
-  }) async {
+    List<String> attachments = const [],
+    }) async {
     savedId = id;
     savedDue = due;
     savedAlertMinutes = alertMinutes;

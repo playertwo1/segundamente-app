@@ -49,7 +49,8 @@ class _ProposalRouter implements MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
-  }) async {
+    List<String> attachments = const [],
+    }) async {
     addCalls++;
     savedId = id;
     savedDue = due;
