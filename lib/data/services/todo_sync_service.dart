@@ -53,6 +53,8 @@ const Set<String> _knownTaskFieldKeys = {
   'source_stale',
   'version',
   'deleted_at',
+  // Local-only (todoLocalOnlyFields): never extra, never sent.
+  'attachments',
 };
 
 /// Current badge/sync state exposed to the UI and sync consumers.
@@ -108,6 +110,9 @@ class SyncEnvelope {
       }
     }
     map.addAll(item.toJson());
+    for (final field in todoLocalOnlyFields) {
+      map.remove(field);
+    }
     map['due'] = item.due.trim() == reportDueUnknown ? '' : item.due;
     map['source'] = item.source?.toJson();
     map['source_stale'] = item.sourceStale;
@@ -874,6 +879,7 @@ class TodoSyncService {
       ),
       version: nextVersion,
       deletedAt: deletedAt,
+      attachments: local.attachments,
     );
 
     final mergedExtras = _mergeExtraFields(
@@ -1465,7 +1471,9 @@ class TodoSyncService {
         return _DecodedMailboxRecord.poison(seq: record.seq);
       }
 
-      final remoteItem = TodoItem.fromJson(payload);
+      // Photos are local-only: a remote payload never sets them.
+      final remoteItem =
+          TodoItem.fromJson(payload).copyWith(attachments: const []);
       final remoteExtras = _extractExtraFields(payload);
       return _DecodedMailboxRecord.validTask(
         seq: record.seq,
@@ -1533,7 +1541,7 @@ class TodoSyncService {
     if (envelope.baseVersion == local.version &&
         !inOutbox &&
         (!isUnsynced || baseMatchesLocal)) {
-      items[localIndex] = remoteItem;
+      items[localIndex] = remoteItem.copyWith(attachments: local.attachments);
       state.baseCopies[entityId] = remoteItem;
       _setExtraFields(state, entityId, remoteExtras);
       state.itemMeta[entityId] = _ItemSyncMeta(

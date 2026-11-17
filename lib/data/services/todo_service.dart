@@ -117,6 +117,7 @@ class TodoService {
     TodoRecurrence? recurrence,
     TodoSource? source,
     DateTime? now,
+    List<String> attachments = const [],
   }) =>
       _storageLock.synchronized(() async {
         final items = await _readAll(userId);
@@ -139,6 +140,7 @@ class TodoService {
           recurrence: recurrence,
           source: source,
           now: now,
+          attachments: attachments,
         );
       });
 
@@ -202,6 +204,7 @@ class TodoService {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
+    List<String>? attachments,
   }) async {
     if (text.trim().isEmpty) throw ArgumentError('todo text is empty');
     final schedule = _schedule(due, dueDate: dueDate, dueTime: dueTime);
@@ -230,6 +233,7 @@ class TodoService {
         clearSnoozedUntil: true,
         seriesId: item.seriesId ?? (nextRecurrence == null ? null : item.id),
         version: item.version + 1,
+        attachments: attachments,
       );
     });
   }
@@ -460,6 +464,7 @@ class TodoService {
     TodoRecurrence? recurrence,
     TodoSource? source,
     DateTime? now,
+    List<String> attachments = const [],
   }) async {
     final clean = text.trim();
     if (clean.isEmpty) throw ArgumentError('todo text is empty');
@@ -486,6 +491,7 @@ class TodoService {
       done: false,
       createdAt: (now ?? DateTime.now()).toIso8601String(),
       source: source,
+      attachments: attachments,
     );
     final updated = [...items, item];
     await _write(userId, updated);
@@ -495,6 +501,35 @@ class TodoService {
       updated,
     );
     return item;
+  }
+
+  /// Copies picked photos into the user's Facts/assets and returns their
+  /// `fs://` references. Photos never leave this phone (see todoLocalOnlyFields).
+  Future<List<String>> storePhotos({
+    required String userId,
+    required List<String> sourcePaths,
+  }) async {
+    final references = <String>[];
+    for (final sourcePath in sourcePaths) {
+      final (fileName, _) = await _files.saveAssetFromFile(
+        userId: userId,
+        sourcePath: sourcePath,
+        assetType: 'img',
+      );
+      references.add('fs://$fileName');
+    }
+    return references;
+  }
+
+  /// Absolute file of a stored photo reference, or null when it is not one.
+  Future<String?> attachmentPath({
+    required String userId,
+    required String reference,
+  }) async {
+    if (!reference.startsWith('fs://')) return null;
+    final fileName = reference.substring('fs://'.length);
+    if (fileName.isEmpty || p.basename(fileName) != fileName) return null;
+    return p.join(_files.getAssetsPath(userId), fileName);
   }
 
   Future<List<TodoItem>> _readAll(String userId) async {

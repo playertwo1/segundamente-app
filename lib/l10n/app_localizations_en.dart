@@ -3509,6 +3509,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoTabOverdue => 'Overdue';
 
   @override
+  String todoOverdueTabSemantics(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Overdue, $count tasks',
+      one: 'Overdue, $count task',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todoTabAll => 'All';
+
+  @override
+  String get todoEmptyAll => 'No tasks yet.';
+
+  @override
+  String get todoPhotoFromGallery => 'Choose photo from gallery';
+
+  @override
+  String get todoPhotoFromCamera => 'Take photo';
+
+  @override
+  String get todoPhotoOpen => 'Open photo';
+
+  @override
+  String get todoPhotoRemove => 'Remove photo';
+
+  @override
+  String todoPhotoCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '$count photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todoPhotoSaveFailed => 'Could not save the photo.';
+
+  @override
   String get todoTabCompleted => 'Completed';
 
   @override
@@ -4957,6 +5000,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get todoPickTime => 'Choose time';
+
+  @override
+  String get todoNewTask => 'New task';
+
+  @override
+  String get todoEditorDate => 'Date';
+
+  @override
+  String get todoEditorTime => 'Time';
+
+  @override
+  String get todoAlertNone => 'No early alert';
+
+  @override
+  String get todoAlertOneHourBefore => '1 hour before';
+
+  @override
+  String get todoAlertOneDayBefore => '1 day before';
+
+  @override
+  String todoAlertHoursBefore(int hours) {
+    return '$hours hours before';
+  }
+
+  @override
+  String get todoAlertCustom => 'Custom';
+
+  @override
+  String get todoAlertPageTitle => 'Early alert';
+
+  @override
+  String get todoAlertUnitMinutes => 'minutes';
+
+  @override
+  String get todoAlertUnitHours => 'hours';
+
+  @override
+  String get todoAlertDone => 'Done';
+
+  @override
+  String get todoInOneHour => 'In 1 hour';
+
+  @override
+  String get todoInTwoHours => 'In 2 hours';
+
+  @override
+  String get todoClearDate => 'Remove date';
+
+  @override
+  String get todoClearTime => 'Remove time';
+
+  @override
+  String get todoClearText => 'Clear text';
+
+  @override
+  String get todoRepeatSummaryDaily => 'Every day';
+
+  @override
+  String todoRepeatSummaryWeekly(String days) {
+    return 'Every $days';
+  }
+
+  @override
+  String todoRepeatSummaryWeeklyOne(String day) {
+    return 'Every $day';
+  }
+
+  @override
+  String get todoRepeatSummaryMonthly => 'Every month';
 
   @override
   String get activeAssistantTitle => 'Active Assistant';

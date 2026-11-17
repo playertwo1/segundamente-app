@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:memex/config/app_flavor.dart';
 import 'package:memex/data/repositories/memex_router.dart';
@@ -13,6 +16,7 @@ import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
+import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_screen.dart';
@@ -32,6 +36,8 @@ class _FakeRouter implements MemexRouter {
           if (!item.isTombstoned) item,
       ];
   TodoShortcutSettings shortcutSettings;
+  /// Counts completions written, to prove a double tap writes once.
+  int doneWrites = 0;
   TodoAlarmStatus alarmStatus = TodoAlarmStatus.ready;
   TodoAlarmStatus? requestedAlarmStatus;
   String? damagedLegacyFileName;
@@ -78,7 +84,8 @@ class _FakeRouter implements MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
-  }) async {
+    List<String> attachments = const [],
+    }) async {
     final explicit = parseExplicitDue(due ?? '');
     final item = TodoItem(
       id: id ?? 'todo_${_next++}',
@@ -94,6 +101,7 @@ class _FakeRouter implements MemexRouter {
       subtasks: subtasks,
       recurrence: recurrence,
       seriesId: recurrence == null ? null : 'series_${_next - 1}',
+      attachments: attachments,
     );
     _stored.add(item);
     return Ok(item);
@@ -112,7 +120,8 @@ class _FakeRouter implements MemexRouter {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
-  }) async {
+    List<String>? attachments,
+    }) async {
     final explicit = parseExplicitDue(due);
     final date = explicit == null ? null : _dateOnly(explicit.date);
     final time = explicit?.hasTime == true ? _timeOnly(explicit!.date) : null;
@@ -132,6 +141,7 @@ class _FakeRouter implements MemexRouter {
           alertMinutes: alertMinutes,
           priority: priority,
           subtasks: subtasks,
+          attachments: attachments,
         );
       }
     }
@@ -139,10 +149,24 @@ class _FakeRouter implements MemexRouter {
   }
 
   @override
+  Future<Result<List<String>>> storeTodoPhotos(
+    List<String> sourcePaths,
+  ) async =>
+      Ok([
+        for (final path in sourcePaths)
+          'fs://${path.split(RegExp(r'[/\\]')).last}',
+      ]);
+
+  @override
+  Future<Result<String?>> todoAttachmentPath(String reference) async =>
+      const Ok(null);
+
+  @override
   Future<Result<void>> setTodoDone({
     required String id,
     required bool done,
   }) async {
+    if (done) doneWrites++;
     for (var index = 0; index < _stored.length; index++) {
       final item = _stored[index];
       if (item.id == id) {
@@ -266,6 +290,12 @@ class _FakeTodoSyncService extends TodoSyncService {
   }
 }
 
+/// The node of the widget whose semantics label is [label], for label checks.
+SemanticsNode _semanticsLabelled(WidgetTester tester, String label) =>
+    tester.getSemantics(find.byWidgetPredicate(
+      (widget) => widget is Semantics && widget.properties.label == label,
+    ));
+
 TodoItem _item(
   String id,
   String text, {
@@ -319,6 +349,9 @@ void main() {
     TodoSyncService? syncService,
     Future<String?> Function()? userIdResolver,
     bool autoSyncOnLoad = true,
+    Future<String?> Function(ImageSource source)? pickPhoto,
+    bool disableAnimations = false,
+    bool settle = true,
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
@@ -333,6 +366,7 @@ void main() {
       syncService: syncService,
       userIdResolver: userIdResolver,
       autoSyncOnLoad: autoSyncOnLoad,
+      pickPhoto: pickPhoto,
       openCalendar: ({
         required title,
         required start,
@@ -346,19 +380,34 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(disableAnimations: disableAnimations),
+          child: child!,
+        ),
         home: TodoScreen(viewModel: viewModel),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
     return router;
   }
 
   testWidgets('shows an empty message and no items', (tester) async {
     await pump(tester, []);
-    expect(find.text(UserStorage.l10n.todoEmptyToday), findsOneWidget);
+    expect(find.text(UserStorage.l10n.todoEmptyAll), findsOneWidget);
     expect(find.byType(ListTile), findsNothing);
+    await tester.tap(find.text(UserStorage.l10n.todoTabToday));
+    await tester.pumpAndSettle();
+    expect(find.text(UserStorage.l10n.todoEmptyToday), findsOneWidget);
   });
 
   testWidgets('shows a load error separately from an empty list', (
@@ -371,7 +420,7 @@ void main() {
     router.failLoad = false;
     await tester.tap(find.byKey(const ValueKey('todo_retry')));
     await tester.pumpAndSettle();
-    expect(find.text(UserStorage.l10n.todoEmptyToday), findsOneWidget);
+    expect(find.text(UserStorage.l10n.todoEmptyAll), findsOneWidget);
   });
 
   testWidgets('shows undated tasks under the No date section without a due', (
@@ -384,6 +433,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text(UserStorage.l10n.todoTabToday));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('todo_undated_header')), findsOneWidget);
     expect(router.items.single.dueDate, isNull);
     expect(router.items.single.due, reportDueUnknown);
@@ -399,9 +450,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
     expect(find.text('Pagar o seguro'), findsOneWidget);
+    await tester.tap(find.text(UserStorage.l10n.todoTabToday));
+    await tester.pumpAndSettle();
 
+    final l10n = UserStorage.l10n;
     final box = find.byKey(ValueKey('todo_done_${router.items.single.id}'));
-    expect(tester.widget<Checkbox>(box).value, isFalse);
+    expect(find.bySemanticsLabel(l10n.todoMarkDone), findsOneWidget);
     await tester.tap(box);
     await tester.pumpAndSettle();
     expect(find.text('Pagar o seguro'), findsNothing);
@@ -410,31 +464,31 @@ void main() {
     final completedBox = find.byKey(
       ValueKey('todo_done_${router.items.single.id}'),
     );
-    expect(tester.widget<Checkbox>(completedBox).value, isTrue);
+    expect(find.bySemanticsLabel(l10n.todoReopenTask), findsOneWidget);
     await tester.tap(completedBox);
     await tester.pumpAndSettle();
     expect(find.text('Pagar o seguro'), findsNothing);
     await tester.tap(find.text(UserStorage.l10n.todoTabToday));
     await tester.pumpAndSettle();
-    expect(tester.widget<Checkbox>(box).value, isFalse);
+    expect(find.bySemanticsLabel(l10n.todoMarkDone), findsOneWidget);
   });
 
   testWidgets('creates and edits priority and subtasks', (tester) async {
-    final router = await pump(tester, []);
+    final router = await pump(
+      tester,
+      [],
+      shortcutSettings: TodoShortcutSettings(defaultAlertMinutes: 12),
+    );
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Preparar');
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_alert_minutes')),
-      '12',
-    );
     await tester.tap(find.byKey(const ValueKey('todo_priority_editor')));
     await tester.pumpAndSettle();
     await tester.tap(find.text(UserStorage.l10n.todoPriorityUrgent).last);
     await tester.pumpAndSettle();
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
@@ -484,7 +538,7 @@ void main() {
     final additionalWeekday = today.weekday == DateTime.monday ? 2 : 1;
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
@@ -495,6 +549,8 @@ void main() {
       find.byKey(const ValueKey('todo_text')),
       'Revisar relatório',
     );
+    await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+    await tester.pumpAndSettle();
     final dateShortcut = find.byKey(
       const ValueKey('todo_date_shortcut_today'),
     );
@@ -503,6 +559,8 @@ void main() {
     await tester.tap(dateShortcut);
     expect(find.byKey(const ValueKey('todo_no_time')), findsOneWidget);
 
+    await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+    await tester.pumpAndSettle();
     final timeShortcut = find.byKey(const ValueKey('todo_time_shortcut_0'));
     await tester.scrollUntilVisible(timeShortcut, 100,
         scrollable: dialogScroll);
@@ -510,6 +568,8 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('todo_no_time')), findsNothing);
 
+    await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+    await tester.pumpAndSettle();
     final weekly = find.byKey(const ValueKey('todo_repeat_weekly'));
     await tester.scrollUntilVisible(weekly, 100, scrollable: dialogScroll);
     await tester.tap(weekly);
@@ -540,6 +600,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('todo_date_shortcut_inThreeDays')),
       findsOneWidget,
@@ -549,11 +611,18 @@ void main() {
   });
 
   testWidgets('a time without a valid date stays in the draft', (tester) async {
-    final router = await pump(tester, []);
-    await tester.tap(find.byKey(const ValueKey('todo_add')));
+    final router = await pump(tester, [
+      const TodoItem(
+        id: 'timeonly',
+        text: 'Ligar',
+        due: reportDueUnknown,
+        dueTime: '09:00',
+        done: false,
+        createdAt: '2026-11-01T00:00:00Z',
+      ),
+    ]);
+    await tester.tap(find.byKey(const ValueKey('todo_timeonly')));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar');
-    await tester.enterText(find.byKey(const ValueKey('todo_time')), '09:00');
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
 
@@ -561,7 +630,7 @@ void main() {
       find.text(UserStorage.l10n.todoTimeRequiresDate),
       findsOneWidget,
     );
-    expect(router.items, isEmpty);
+    expect(router.items.single.dueTime, '09:00');
   });
 
   testWidgets('the task editor fits a narrow screen with larger text', (
@@ -573,7 +642,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('todo_add')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('todo_time')), findsOneWidget);
+    expect(find.byKey(const ValueKey('todo_time_row')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('todo_repeat_monthly')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -604,21 +675,23 @@ void main() {
   testWidgets('monthly recurrence uses the explicit day of the month', (
     tester,
   ) async {
-    final router = await pump(tester, []);
+    final router = await pump(tester, [
+      _item('monthly', 'Fechar mês', due: '2027-01-31'),
+    ]);
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
-    await tester.tap(find.byKey(const ValueKey('todo_add')));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-        find.byKey(const ValueKey('todo_text')), 'Fechar mês');
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_due')),
-      '2027-01-31',
+    expect(
+      find.byKey(const ValueKey('todo_section_toggle_upcoming')),
+      findsOneWidget,
     );
+    await tester.tap(find.byKey(const ValueKey('todo_monthly')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+    await tester.pumpAndSettle();
     final monthly = find.byKey(const ValueKey('todo_repeat_monthly'));
     await tester.scrollUntilVisible(monthly, 100, scrollable: dialogScroll);
     await tester.tap(monthly);
@@ -646,7 +719,7 @@ void main() {
     final friday = find.byKey(const ValueKey('todo_repeat_weekday_5'));
     final dialogScroll = find
         .descendant(
-          of: find.byType(AlertDialog),
+          of: find.byKey(const ValueKey('todo_editor_scroll')),
           matching: find.byType(Scrollable),
         )
         .first;
@@ -666,16 +739,27 @@ void main() {
   });
 
   testWidgets('editing changes the text and the date', (tester) async {
-    final router = await pump(tester, [_item('t1', 'Ligar para Rui')]);
+    final router = await pump(tester, [
+      const TodoItem(
+        id: 't1',
+        text: 'Ligar para Rui',
+        due: '2026-11-13',
+        dueDate: '2026-11-13',
+        alertMinutes: 5,
+        done: false,
+        createdAt: '2026-11-01T00:00:00Z',
+      ),
+    ]);
     await tester.tap(find.byKey(const ValueKey('todo_t1')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Ligar já');
-    await tester.enterText(
-        find.byKey(const ValueKey('todo_due')), '2026-11-30');
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_alert_minutes')),
-      '5',
-    );
+    await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(
+      of: find.byType(CalendarDatePicker),
+      matching: find.text('30'),
+    ));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();
     expect(router.items.single.text, 'Ligar já');
@@ -698,8 +782,10 @@ void main() {
         ),
       ),
     ]);
-    await tester.tap(find.text(UserStorage.l10n.todoTabUpcoming));
-    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('todo_section_toggle_upcoming')),
+      findsOneWidget,
+    );
     expect(find.textContaining('p.2'), findsOneWidget);
     expect(find.textContaining('Carlos envia a proposta'), findsOneWidget);
 
@@ -740,7 +826,10 @@ void main() {
     expect(find.text(UserStorage.l10n.addToCalendar), findsNothing);
     await tester.tapAt(const Offset(12, 12));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(UserStorage.l10n.todoTabCompleted));
+    // The section header repeats the name, so tap the tab itself.
+    await tester.tap(
+      find.widgetWithText(Tab, UserStorage.l10n.todoTabCompleted),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('todo_actions_t2')));
     await tester.pumpAndSettle();
@@ -822,6 +911,8 @@ void main() {
       _item('t1', 'Primeiro', done: true),
       _item('t2', 'Segundo', minute: 1),
     ]);
+    await tester.tap(find.text(UserStorage.l10n.todoTabToday));
+    await tester.pumpAndSettle();
     expect(find.text('Primeiro'), findsNothing);
     expect(find.text('Segundo'), findsOneWidget);
     await tester.tap(find.text(UserStorage.l10n.todoTabCompleted));
@@ -872,8 +963,10 @@ void main() {
   testWidgets('Todo tasks are not exported to native reminders',
       (tester) async {
     await pump(tester, [_item('t1', 'Ligar', due: '2026-11-21 14:30')]);
-    await tester.tap(find.text(UserStorage.l10n.todoTabUpcoming));
-    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('todo_section_toggle_upcoming')),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const ValueKey('todo_actions_t1')));
     await tester.pumpAndSettle();
     expect(find.text(UserStorage.l10n.addToReminders), findsNothing);
@@ -915,7 +1008,8 @@ void main() {
   });
 
   group('sync status and conflicts', () {
-    testWidgets('offline says saved on device with no connection, not sync failed',
+    testWidgets(
+        'offline says saved on device with no connection, not sync failed',
         (tester) async {
       for (final language in ['pt', 'en']) {
         SharedPreferences.setMockInitialValues({'language': language});
@@ -946,11 +1040,13 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(
-          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncOffline)),
+          find.descendant(
+              of: statusBar, matching: find.text(l10n.todoSyncOffline)),
           findsOneWidget,
         );
         expect(
-          find.descendant(of: statusBar, matching: find.text(l10n.todoSyncError)),
+          find.descendant(
+              of: statusBar, matching: find.text(l10n.todoSyncError)),
           findsNothing,
         );
         expect(
@@ -1266,7 +1362,7 @@ void main() {
           autoSyncOnLoad: false,
         );
 
-        expect(find.text(l10n.todoEmptyToday), findsOneWidget);
+        expect(find.text(l10n.todoEmptyAll), findsOneWidget);
         expect(find.byType(ListTile), findsNothing);
         expect(
           find.byKey(const ValueKey('todo_conflict_card_t1:text')),
@@ -1435,6 +1531,215 @@ void main() {
     );
   });
 
+  group('round 2: tabs, sections, add button, priority, photos', () {
+    testWidgets('tabs are Todas, Hoje, Atrasadas, Concluídas with Todas first',
+        (tester) async {
+      await pump(tester, [_item('t1', 'Ligar')]);
+      final l10n = UserStorage.l10n;
+      final labels = [
+        for (final tab in find.byType(Tab).evaluate()) (tab.widget as Tab).text,
+      ];
+
+      expect(labels, [
+        l10n.todoTabAll,
+        l10n.todoTabToday,
+        l10n.todoTabOverdue,
+        l10n.todoTabCompleted,
+      ]);
+      expect(find.byKey(const ValueKey('todo_section_all')), findsOneWidget);
+    });
+
+    testWidgets('the all tab lists sections in order and hides empty ones',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      await pump(tester, [
+        _item('done', 'Feita', done: true),
+        _item('undated', 'Sem data', minute: 1),
+        _item('upcoming', 'Próxima', due: '2026-11-21', minute: 2),
+        _item('today', 'Hoje', due: '2026-11-13', minute: 3),
+        _item('late', 'Atrasada', due: '2026-11-10', minute: 4),
+      ]);
+
+      final headers = [
+        'todo_section_toggle_overdue',
+        'todo_section_toggle_today',
+        'todo_section_toggle_upcoming',
+        'todo_section_toggle_undated',
+        'todo_section_toggle_completed',
+      ].map((key) => find.byKey(ValueKey(key))).toList();
+      final tops = [
+        for (final header in headers) tester.getTopLeft(header).dy,
+      ];
+      expect(tops, [...tops]..sort());
+      expect(_semanticsLabelled(tester, '${l10n.todoTabOverdue} · 1').label,
+          '${l10n.todoTabOverdue} · 1');
+      expect(_semanticsLabelled(tester, '${l10n.todoTabCompleted} · 1').label,
+          '${l10n.todoTabCompleted} · 1');
+    });
+
+    testWidgets('a section with no items does not show its header',
+        (tester) async {
+      await pump(tester, [_item('only', 'Só hoje', due: '2026-11-13')]);
+
+      expect(find.byKey(const ValueKey('todo_section_toggle_today')),
+          findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('todo_section_toggle_overdue')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('todo_section_toggle_upcoming')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('a section header collapses and reopens its items',
+        (tester) async {
+      await pump(tester, [
+        _item('today', 'Hoje tarefa', due: '2026-11-13'),
+        _item('late', 'Atrasada tarefa', due: '2026-11-10', minute: 1),
+      ]);
+      final toggle = find.byKey(const ValueKey('todo_section_toggle_today'));
+      expect(find.text('Hoje tarefa'), findsOneWidget);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(find.text('Hoje tarefa'), findsNothing);
+      expect(find.text('Atrasada tarefa'), findsOneWidget);
+      final semantics = tester.getSemantics(toggle).getSemanticsData();
+      expect(semantics.label, '${UserStorage.l10n.todoTabToday} · 1');
+      expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
+      expect(semantics.hasFlag(SemanticsFlag.hasExpandedState), isTrue);
+      expect(semantics.hasFlag(SemanticsFlag.isExpanded), isFalse);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(find.text('Hoje tarefa'), findsOneWidget);
+    });
+
+    testWidgets('the + button opens the editor and has a labelled semantics',
+        (tester) async {
+      await pump(tester, []);
+      expect(find.bySemanticsLabel(UserStorage.l10n.todoAdd), findsWidgets);
+
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
+    });
+
+    testWidgets('the task text is a larger multi-line field', (tester) async {
+      await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+
+      final field = tester.widget<TextField>(
+        find.byKey(const ValueKey('todo_text')),
+      );
+      expect(field.minLines, 2);
+      expect(field.maxLines, 5);
+      expect(field.style?.fontSize, 20);
+    });
+
+    testWidgets('priority colours: low blue, high yellow, urgent red',
+        (tester) async {
+      await pump(tester, [
+        _item('low', 'Baixa').copyWith(priority: TodoPriority.low),
+        _item('high', 'Alta', minute: 1).copyWith(priority: TodoPriority.high),
+        _item('urgent', 'Urgente', minute: 2)
+            .copyWith(priority: TodoPriority.urgent),
+      ]);
+      final l10n = UserStorage.l10n;
+
+      Color? colourOf(String id) => tester
+          .widget<Text>(find.byKey(ValueKey('todo_priority_$id')))
+          .style
+          ?.color;
+      // Pill text is the light tone of each priority colour, not the colour itself.
+      expect(colourOf('low'), const Color(0xFF93C5FD));
+      expect(colourOf('high'), const Color(0xFFFCD34D));
+      expect(colourOf('urgent'), const Color(0xFFFDA4AF));
+      // The label stays next to the colour.
+      expect(find.text(l10n.todoPriorityLow), findsOneWidget);
+      expect(find.text(l10n.todoPriorityHigh), findsOneWidget);
+      expect(find.text(l10n.todoPriorityUrgent), findsOneWidget);
+    });
+
+    testWidgets('a photo is picked, shown, saved and counted on the card',
+        (tester) async {
+      final picks = <ImageSource>[];
+      final router = await pump(
+        tester,
+        [],
+        pickPhoto: (source) async {
+          picks.add(source);
+          return '/fotos/recibo.jpg';
+        },
+      );
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Recibo');
+
+      await tester.tap(find.byKey(const ValueKey('todo_photo_gallery')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(picks, [ImageSource.gallery]);
+      expect(find.byKey(const ValueKey('todo_photo_0')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_photo_camera')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(picks, [ImageSource.gallery, ImageSource.camera]);
+      expect(find.byKey(const ValueKey('todo_photo_1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      final item = router.items.single;
+      expect(item.attachments, ['fs://recibo.jpg', 'fs://recibo.jpg']);
+      expect(
+        find.byKey(ValueKey('todo_photos_${item.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(UserStorage.l10n.todoPhotoCount(2)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('removing a thumbnail takes it out of the draft',
+        (tester) async {
+      final router = await pump(
+        tester,
+        [],
+        pickPhoto: (_) async => '/fotos/nota.jpg',
+      );
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('todo_text')), 'Nota');
+      await tester.tap(find.byKey(const ValueKey('todo_photo_gallery')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const ValueKey('todo_photo_0')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_photo_remove_0')));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const ValueKey('todo_photo_0')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+      expect(router.items.single.attachments, isEmpty);
+    });
+
+    testWidgets('a cancelled pick adds no photo', (tester) async {
+      await pump(tester, [], pickPhoto: (_) async => null);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('todo_photo_camera')));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byKey(const ValueKey('todo_photo_0')), findsNothing);
+    });
+  });
+
   group('impeccable polish', () {
     testWidgets('horizontal swipe switches between tabs', (tester) async {
       await pump(tester, [
@@ -1442,15 +1747,16 @@ void main() {
         _item('upcoming', 'Futura tarefa', due: '2026-11-21'),
       ]);
       expect(find.text('Hoje tarefa'), findsOneWidget);
-      expect(find.text('Futura tarefa'), findsNothing);
+      expect(find.text('Futura tarefa'), findsOneWidget);
 
       await tester.drag(
-        find.byKey(const ValueKey('todo_section_today')),
+        find.byKey(const ValueKey('todo_section_all')),
         const Offset(-600, 0),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Futura tarefa'), findsOneWidget);
+      expect(find.text('Futura tarefa'), findsNothing);
+      expect(find.text('Hoje tarefa'), findsOneWidget);
     });
 
     testWidgets('empty title shows inline error instead of failing silently', (
@@ -1470,32 +1776,32 @@ void main() {
       expect(find.text(UserStorage.l10n.todoTextRequired), findsNothing);
     });
 
-    testWidgets('native date and time pickers populate the editor fields', (
+    testWidgets('calendar day and time shortcut populate the editor fields', (
       tester,
     ) async {
-      await pump(tester, []);
-      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      final router = await pump(tester, [
+        _item('t1', 'Ligar para Rui', due: '2026-11-13'),
+      ]);
+      await tester.tap(find.byKey(const ValueKey('todo_t1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.descendant(
+        of: find.byType(CalendarDatePicker),
+        matching: find.text('20'),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_shortcut_0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const ValueKey('todo_pick_date')));
-      await tester.pumpAndSettle();
-      expect(find.byType(DatePickerDialog), findsOneWidget);
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
-      final dueField = tester.widget<TextField>(
-        find.byKey(const ValueKey('todo_due')),
-      );
-      expect(dueField.controller!.text, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
-
-      await tester.tap(find.byKey(const ValueKey('todo_pick_time')));
-      await tester.pumpAndSettle();
-      expect(find.byType(TimePickerDialog), findsOneWidget);
-      await tester.tap(find.text('OK'));
-      await tester.pumpAndSettle();
-      final timeField = tester.widget<TextField>(
-        find.byKey(const ValueKey('todo_time')),
-      );
-      expect(timeField.controller!.text, '09:00');
+      final minutes = TodoShortcutSettings.defaults.timeShortcutsMinutes.first;
+      final clock = '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
+          '${(minutes % 60).toString().padLeft(2, '0')}';
+      expect(router.items.single.due, '2026-11-20 $clock');
     });
 
     testWidgets(
@@ -1544,6 +1850,410 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('todo_search_clear')));
       await tester.pumpAndSettle();
       expect(find.text(UserStorage.l10n.todoSearchStart), findsOneWidget);
+    });
+  });
+
+  group('full-screen editor and task cards', () {
+    testWidgets('tapping Data expands the calendar and a picked day sets it',
+        (tester) async {
+      final router = await pump(tester, [
+        _item('t1', 'Ligar para Rui', due: '2026-11-13'),
+      ]);
+      await tester.tap(find.byKey(const ValueKey('todo_t1')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CalendarDatePicker), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CalendarDatePicker), findsOneWidget);
+      await tester.tap(find.descendant(
+        of: find.byType(CalendarDatePicker),
+        matching: find.text('20'),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(router.items.single.due, '2026-11-20');
+    });
+
+    testWidgets('Daqui a 1 hora sets the time from now, on a 5 minute step',
+        (tester) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('todo_text')),
+        'Revisar relatório',
+      );
+      await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_in_1h')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      final saved = router.items.single;
+      expect(
+        saved.due,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$')),
+      );
+      expect(int.parse(saved.due.substring(14, 16)) % 5, 0);
+      expect(saved.dueTime, isNotNull);
+    });
+
+    testWidgets('removing the date also removes the time and the repeat',
+        (tester) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('todo_text')),
+        'Pagar conta',
+      );
+      await tester.tap(find.byKey(const ValueKey('todo_date_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_date_shortcut_today')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_time_shortcut_0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_repeat_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_repeat_daily')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_no_time')), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('todo_clear_date')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_clear_date')), findsNothing);
+      expect(find.byKey(const ValueKey('todo_clear_time')), findsNothing);
+      expect(find.byKey(const ValueKey('todo_no_time')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+
+      expect(router.items.single.due, reportDueUnknown);
+      expect(router.items.single.dueTime, isNull);
+      expect(router.items.single.recurrence, isNull);
+    });
+
+    testWidgets('early alert page saves 1 hora antes and a custom value',
+        (tester) async {
+      final router = await pump(tester, [
+        const TodoItem(
+          id: 'alarm',
+          text: 'Ligar para a escola',
+          due: '2026-11-13 23:30',
+          dueDate: '2026-11-13',
+          dueTime: '23:30',
+          alertMinutes: 20,
+          done: false,
+          createdAt: '2026-11-01T00:00:00Z',
+        ),
+      ]);
+      await tester.tap(find.byKey(const ValueKey('todo_alarm')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_option_60')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+      expect(router.items.single.alertMinutes, 60);
+
+      await tester.tap(find.byKey(const ValueKey('todo_alarm')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_row')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_option_custom')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_alert_done')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      await tester.pumpAndSettle();
+      expect(router.items.single.alertMinutes, 30);
+    });
+
+    testWidgets('the bottom pill cancels without saving', (tester) async {
+      final router = await pump(tester, []);
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('todo_text')),
+        'Não salvar',
+      );
+      expect(
+        tester.getCenter(find.byKey(const ValueKey('todo_dialog_save'))).dy,
+        greaterThan(
+          tester.getCenter(find.byKey(const ValueKey('todo_text'))).dy,
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_cancel')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_text')), findsNothing);
+      expect(router.items, isEmpty);
+    });
+
+    testWidgets(
+        'the list shows task cards and the bottom pill opens the editor',
+        (tester) async {
+      await pump(
+        tester,
+        [_item('t1', 'Revisar orçamento', due: '2026-11-13')],
+      );
+
+      // A normal card is plain: surface colour, no gradient, no border.
+      final card = tester.widget<Container>(
+        find.byKey(const ValueKey('todo_card_t1')),
+      );
+      final decoration = card.decoration! as BoxDecoration;
+      expect(decoration.color, AppColors.surface);
+      expect(decoration.gradient, isNull);
+      expect(decoration.border, isNull);
+      expect(find.byKey(const ValueKey('todo_status_date_t1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      expect(find.text(UserStorage.l10n.todoNewTask), findsOneWidget);
+      expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
+    });
+  });
+
+  group('card, motion and add button', () {
+    Finder inSection(String key, String text) => find.descendant(
+          of: find.byKey(ValueKey('todo_all_section_$key')),
+          matching: find.text(text),
+        );
+
+    BoxDecoration cardDecoration(WidgetTester tester, String id) =>
+        tester
+            .widget<Container>(find.byKey(ValueKey('todo_card_$id')))
+            .decoration! as BoxDecoration;
+
+    testWidgets('priority cards tint a gradient; normal stays plain; no border',
+        (tester) async {
+      await pump(tester, [
+        _item('urgent', 'Urgente', due: '2026-11-13')
+            .copyWith(priority: TodoPriority.urgent),
+        _item('high', 'Alta', minute: 1).copyWith(priority: TodoPriority.high),
+        _item('low', 'Baixa', minute: 2).copyWith(priority: TodoPriority.low),
+        _item('normal', 'Normal', minute: 3),
+      ]);
+
+      for (final id in ['urgent', 'high', 'low', 'normal']) {
+        expect(cardDecoration(tester, id).border, isNull, reason: id);
+      }
+      for (final id in ['urgent', 'high', 'low']) {
+        expect(cardDecoration(tester, id).gradient, isA<LinearGradient>(),
+            reason: id);
+      }
+      expect(cardDecoration(tester, 'normal').gradient, isNull);
+      expect(cardDecoration(tester, 'normal').color, AppColors.surface);
+
+      final urgent =
+          cardDecoration(tester, 'urgent').gradient! as LinearGradient;
+      expect(urgent.begin, Alignment.topLeft);
+      expect(urgent.end, Alignment.bottomRight);
+      expect(urgent.stops, [0, 0.45, 0.9]);
+      expect(urgent.colors.first.a, closeTo(0.40, 0.01));
+      expect(urgent.colors[1].a, closeTo(0.14, 0.01));
+      expect(urgent.colors.last, AppColors.surface);
+    });
+
+    testWidgets('the priority pill shows for low, high and urgent, not normal',
+        (tester) async {
+      await pump(tester, [
+        _item('urgent', 'Urgente', due: '2026-11-13')
+            .copyWith(priority: TodoPriority.urgent),
+        _item('high', 'Alta', minute: 1).copyWith(priority: TodoPriority.high),
+        _item('low', 'Baixa', minute: 2).copyWith(priority: TodoPriority.low),
+        _item('normal', 'Normal', minute: 3),
+      ]);
+
+      for (final id in ['urgent', 'high', 'low']) {
+        expect(find.byKey(ValueKey('todo_priority_$id')), findsOneWidget);
+      }
+      expect(find.byKey(const ValueKey('todo_priority_normal')), findsNothing);
+    });
+
+    testWidgets('an overdue time is amber with an alarm icon', (tester) async {
+      await pump(tester, [
+        _item('late', 'Atrasada', due: '2026-11-10 09:00'),
+        _item('today', 'Hoje', due: '2026-11-13 23:30', minute: 1),
+      ]);
+
+      // Each task also appears on its own tab, so the first match is the all tab.
+      expect(find.byIcon(Icons.alarm), findsWidgets);
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const ValueKey('todo_status_date_late')).first,
+            )
+            .style
+            ?.color,
+        AppColors.primary,
+      );
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const ValueKey('todo_status_date_today')).first,
+            )
+            .style
+            ?.color,
+        isNot(AppColors.primary),
+      );
+    });
+
+    testWidgets('the overdue tab shows its count in amber with a readable label',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      await pump(tester, [_item('late', 'Atrasada', due: '2026-11-10')]);
+
+      // The tab node reads "Atrasadas, 1 tarefa" for screen readers.
+      expect(
+        find.bySemanticsLabel(l10n.todoOverdueTabSemantics(1)),
+        findsOneWidget,
+      );
+      final count = find.descendant(
+        of: find.byType(TabBar),
+        matching: find.text('1'),
+      );
+      expect(count, findsOneWidget);
+      expect(tester.widget<Text>(count).style?.color, AppColors.primary);
+    });
+
+    testWidgets('the overdue tab has no count when nothing is overdue',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      await pump(tester, [_item('t1', 'Ligar')]);
+
+      expect(find.bySemanticsLabel(l10n.todoOverdueTabSemantics(1)),
+          findsNothing);
+      expect(
+        find.descendant(of: find.byType(TabBar), matching: find.text('0')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the add button is bottom right, 72 dp, and opens the editor',
+        (tester) async {
+      await pump(tester, []);
+      final button = find.byKey(const ValueKey('todo_add'));
+      final centre = tester.getCenter(button);
+
+      expect(centre.dx, greaterThan(800 / 2));
+      expect(centre.dy, greaterThan(2000 / 2));
+      expect(tester.getSize(button), const Size(72, 72));
+
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
+    });
+
+    testWidgets(
+        'completing saves at once and the card leaves after its animation',
+        (tester) async {
+      final router = await pump(tester, [
+        _item('t1', 'Ligar', due: '2026-11-13'),
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      expect(router.items.single.done, isTrue);
+      expect(router.doneWrites, 1);
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(inSection('today', 'Ligar'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(inSection('today', 'Ligar'), findsNothing);
+      expect(inSection('completed', 'Ligar'), findsOneWidget);
+      expect(router.doneWrites, 1);
+    });
+
+    testWidgets('a second tap while completing neither writes nor reopens',
+        (tester) async {
+      final router = await pump(tester, [
+        _item('t1', 'Ligar', due: '2026-11-13'),
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(router.doneWrites, 1);
+      expect(router.items.single.done, isTrue);
+      expect(inSection('completed', 'Ligar'), findsOneWidget);
+      expect(inSection('today', 'Ligar'), findsNothing);
+    });
+
+    testWidgets('reduced motion: the completed card only fades out in 150 ms',
+        (tester) async {
+      final router = await pump(
+        tester,
+        [_item('t1', 'Ligar', due: '2026-11-13')],
+        disableAnimations: true,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      expect(router.doneWrites, 1);
+      await tester.pump(const Duration(milliseconds: 75));
+      expect(find.byKey(const ValueKey('todo_card_t1')), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(inSection('today', 'Ligar'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the first load does not animate cards in', (tester) async {
+      await pump(
+        tester,
+        [_item('old', 'Antiga', due: '2026-11-13')],
+        settle: false,
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final opacity = tester.widget<Opacity>(
+        find
+            .descendant(
+              of: find.byKey(const ValueKey('todo_row_old')),
+              matching: find.byType(Opacity),
+            )
+            .first,
+      );
+      expect(opacity.opacity, 1);
+    });
+
+    testWidgets('a new task grows and fades in once', (tester) async {
+      final router = await pump(tester, [
+        _item('old', 'Antiga', due: '2026-11-13'),
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find.byKey(const ValueKey('todo_text')), 'Nova tarefa');
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      // The editor closes first (about 200 ms); the card then starts growing.
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final id = router.items.firstWhere((i) => i.text == 'Nova tarefa').id;
+      Opacity rowOpacity() => tester.widget<Opacity>(
+            find
+                .descendant(
+                  of: find.byKey(ValueKey('todo_row_$id')),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          );
+      expect(rowOpacity().opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(rowOpacity().opacity, 1);
+      expect(tester.takeException(), isNull);
     });
   });
 }

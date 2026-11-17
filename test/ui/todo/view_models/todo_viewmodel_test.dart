@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
@@ -50,7 +51,8 @@ class _FakeRouter implements MemexRouter {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
-  }) async {
+    List<String>? attachments,
+    }) async {
     final index = items.indexWhere((i) => i.id == id);
     if (index >= 0) {
       items[index] = items[index].copyWith(
@@ -497,6 +499,77 @@ void main() {
     addTearDown(vmNoUser.dispose);
     await vmNoUser.resolveConflict('t1:text', keepLocal: true);
     expect(fakeSync.resolvedConflicts, hasLength(2));
+  });
+
+  test('all tab sections come in order and collapse one at a time', () async {
+    final router = _FakeRouter([
+      _item('today', 'Revisar', date: '2026-11-13'),
+      _item('late', 'Pagar', date: '2026-11-12'),
+      _item('upcoming', 'Enviar', date: '2026-11-14'),
+      _item('undated', 'Anotar'),
+      _item('completed', 'Feito', done: true),
+    ]);
+    final viewModel = TodoViewModel(
+      router: router,
+      now: () => DateTime.utc(2026, 11, 13, 15),
+    );
+    await viewModel.load();
+
+    expect(viewModel.section, TodoListSection.all);
+    expect(viewModel.allSections.map((group) => group.key), [
+      TodoSectionKey.overdue,
+      TodoSectionKey.today,
+      TodoSectionKey.upcoming,
+      TodoSectionKey.undated,
+      TodoSectionKey.completed,
+    ]);
+    expect(viewModel.allSections.first.items.single.id, 'late');
+    expect(
+      viewModel.itemsFor(TodoListSection.all).map((item) => item.id).toSet(),
+      {'today', 'late', 'upcoming', 'undated', 'completed'},
+    );
+    expect(viewModel.isSectionCollapsed(TodoSectionKey.today), isFalse);
+
+    var notified = 0;
+    viewModel.addListener(() => notified++);
+    viewModel.toggleSection(TodoSectionKey.today);
+    expect(viewModel.isSectionCollapsed(TodoSectionKey.today), isTrue);
+    expect(viewModel.isSectionCollapsed(TodoSectionKey.overdue), isFalse);
+    expect(notified, 1);
+    viewModel.toggleSection(TodoSectionKey.today);
+    expect(viewModel.isSectionCollapsed(TodoSectionKey.today), isFalse);
+    viewModel.dispose();
+  });
+
+  test('the priority filter applies to every section of the all tab',
+      () async {
+    final router = _FakeRouter([
+      _item('late', 'Pagar', date: '2026-11-12', priority: TodoPriority.urgent),
+      _item('today', 'Revisar', date: '2026-11-13'),
+    ]);
+    final viewModel = TodoViewModel(
+      router: router,
+      now: () => DateTime.utc(2026, 11, 13, 15),
+    );
+    await viewModel.load();
+
+    viewModel.setPriorityFilter(TodoPriority.urgent);
+
+    expect(viewModel.allSections.map((group) => group.key), [
+      TodoSectionKey.overdue,
+    ]);
+    viewModel.dispose();
+  });
+
+  test('photo picks come from the injected picker', () async {
+    final viewModel = TodoViewModel(
+      router: _FakeRouter([]),
+      pickPhoto: (source) async => '/fotos/${source.name}.jpg',
+    );
+
+    expect(await viewModel.pickPhoto(ImageSource.camera), '/fotos/camera.jpg');
+    expect(await viewModel.pickPhoto(ImageSource.gallery), '/fotos/gallery.jpg');
+    viewModel.dispose();
   });
 
   group('TodoViewModel - Active Assistant integration', () {

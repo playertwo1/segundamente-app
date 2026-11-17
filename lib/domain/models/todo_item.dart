@@ -7,6 +7,10 @@ const todoSchemaVersion = 2;
 const todoTimeZone = 'America/Sao_Paulo';
 const todoAlarmSnoozeMinutes = 10;
 
+/// Fields that stay on this phone and never go into the sync envelope (photos
+/// are local-only, see docs/lumen/CONTRATO-SYNC.md section 7).
+const todoLocalOnlyFields = {'attachments'};
+
 enum TodoPriority { low, normal, high, urgent }
 
 enum TodoRepeatFrequency { daily, weekly, monthly }
@@ -145,6 +149,7 @@ class TodoItem {
     this.sourceStale = false,
     this.version = 1,
     this.deletedAt,
+    this.attachments = const [],
   });
 
   final String id;
@@ -168,6 +173,9 @@ class TodoItem {
   final bool sourceStale;
   final int version;
   final String? deletedAt;
+
+  /// Local `fs://` photo references; never synced (see [todoLocalOnlyFields]).
+  final List<String> attachments;
 
   bool get isTombstoned => deletedAt != null;
   bool get hasAlarmTime => dueDate != null && dueTime != null;
@@ -196,6 +204,7 @@ class TodoItem {
     bool clearDeletedAt = false,
     bool clearDueDate = false,
     bool clearDueTime = false,
+    List<String>? attachments,
   }) {
     final nextDone = done ?? this.done;
     final nextSource = clearSource ? null : source;
@@ -220,6 +229,7 @@ class TodoItem {
       sourceStale: nextSource == null ? false : sourceStale ?? this.sourceStale,
       version: version ?? this.version,
       deletedAt: clearDeletedAt ? null : deletedAt ?? this.deletedAt,
+      attachments: attachments ?? this.attachments,
     );
   }
 
@@ -243,6 +253,7 @@ class TodoItem {
         if (sourceStale) 'source_stale': true,
         'version': version,
         'deleted_at': deletedAt,
+        if (attachments.isNotEmpty) 'attachments': attachments,
       };
 
   static TodoItem fromJson(Map<String, dynamic> json) {
@@ -285,6 +296,7 @@ class TodoItem {
       sourceStale: source is Map && json['source_stale'] == true,
       version: (json['version'] as num?)?.toInt() ?? 1,
       deletedAt: _optionalText(json['deleted_at']),
+      attachments: _fsReferences(json['attachments']),
     );
   }
 }
@@ -307,6 +319,14 @@ String _knownTimeZone(Object? value) {
     return todoTimeZone;
   }
 }
+
+/// Missing or malformed attachments read as none, so an old file still loads.
+List<String> _fsReferences(Object? value) => value is! List
+    ? const []
+    : [
+        for (final item in value)
+          if (item is String && item.startsWith('fs://')) item,
+      ];
 
 String _text(Object? value) {
   final text = value?.toString().trim() ?? '';

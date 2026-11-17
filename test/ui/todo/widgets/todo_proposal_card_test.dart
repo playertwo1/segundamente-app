@@ -13,6 +13,8 @@ import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _ProposalRouter implements MemexRouter {
+  TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
+
   @override
   Future<Result<String?>> todoDamagedLegacyFileName() async => const Ok(null);
 
@@ -33,7 +35,7 @@ class _ProposalRouter implements MemexRouter {
 
   @override
   Future<Result<TodoShortcutSettings>> loadTodoShortcutSettings() async =>
-      Ok(TodoShortcutSettings.defaults);
+      Ok(shortcutSettings);
 
   @override
   Future<Result<TodoItem>> addTodo({
@@ -47,7 +49,8 @@ class _ProposalRouter implements MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
-  }) async {
+    List<String> attachments = const [],
+    }) async {
     addCalls++;
     savedId = id;
     savedDue = due;
@@ -84,9 +87,11 @@ void main() {
 
   Future<_ProposalRouter> pumpProposal(
     WidgetTester tester,
-    TodoProposal proposal,
-  ) async {
-    final router = _ProposalRouter();
+    TodoProposal proposal, {
+    TodoShortcutSettings? shortcutSettings,
+  }) async {
+    final router = _ProposalRouter()
+      ..shortcutSettings = shortcutSettings ?? TodoShortcutSettings.defaults;
     final viewModel = TodoProposalViewModel(router: router);
     await tester.pumpWidget(
       MaterialApp(
@@ -118,6 +123,7 @@ void main() {
         dueDate: '2026-11-20',
         timeState: TodoProposalTimeState.unspecified,
       ),
+      shortcutSettings: TodoShortcutSettings(defaultAlertMinutes: 10),
     );
 
     expect(router.addCalls, 0);
@@ -138,10 +144,6 @@ void main() {
     await tester.enterText(
       find.byKey(const ValueKey('todo_text')),
       'Enviar relatório revisado',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('todo_alert_minutes')),
-      '10',
     );
     await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
     await tester.pumpAndSettle();

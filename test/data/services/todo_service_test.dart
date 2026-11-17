@@ -54,6 +54,65 @@ void main() {
     return content;
   }
 
+  test('a photo is copied into the workspace and kept as an fs:// reference',
+      () async {
+    final source = File(p.join(tempDir.path, 'recibo.png'))
+      ..writeAsBytesSync([0x89, 0x50, 0x4e, 0x47]);
+
+    final refs = await todos.storePhotos(
+      userId: userId,
+      sourcePaths: [source.path],
+    );
+    expect(refs.single, startsWith('fs://'));
+    final copied = await todos.attachmentPath(
+      userId: userId,
+      reference: refs.single,
+    );
+    expect(await File(copied!).readAsBytes(), [0x89, 0x50, 0x4e, 0x47]);
+
+    await todos.add(userId: userId, text: 'Guardar recibo', attachments: refs);
+    expect((await todos.load(userId)).single.attachments, refs);
+  });
+
+  test('edit keeps photos unless it is given a new set', () async {
+    final item = await todos.add(
+      userId: userId,
+      text: 'Revisar planta',
+      attachments: const ['fs://planta_1.jpg'],
+    );
+    await todos.edit(
+      userId: userId,
+      id: item.id,
+      text: 'Revisar planta baixa',
+      due: reportDueUnknown,
+    );
+    expect(
+      (await todos.load(userId)).single.attachments,
+      ['fs://planta_1.jpg'],
+    );
+
+    await todos.edit(
+      userId: userId,
+      id: item.id,
+      text: 'Revisar planta baixa',
+      due: reportDueUnknown,
+      attachments: const [],
+    );
+    expect((await todos.load(userId)).single.attachments, isEmpty);
+  });
+
+  test('attachmentPath only resolves plain fs:// names inside the assets',
+      () async {
+    expect(
+      await todos.attachmentPath(userId: userId, reference: '/etc/x.png'),
+      isNull,
+    );
+    expect(
+      await todos.attachmentPath(userId: userId, reference: 'fs://../x.png'),
+      isNull,
+    );
+  });
+
   test('starts empty and keeps a hand-typed item across reloads', () async {
     expect(await todos.load(userId), isEmpty);
     await todos.add(userId: userId, text: '  Pagar o seguro  ');

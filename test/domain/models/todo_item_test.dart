@@ -56,6 +56,46 @@ void main() {
     expect(restored.isTombstoned, isTrue);
   });
 
+  test('attachments are optional and survive a round trip', () {
+    final withPhotos = TodoItem.fromJson({
+      'id': 'photo-1',
+      'text': 'Conferir',
+      'due': '',
+      'done': false,
+      'created_at': '2026-11-15T09:00:00.000',
+      'attachments': ['fs://a_1.jpg', 42, '', 'http://x/y.png', 'fs://b_2.jpg'],
+    });
+    expect(withPhotos.attachments, ['fs://a_1.jpg', 'fs://b_2.jpg']);
+    expect(
+      TodoItem.fromJson(withPhotos.toJson()).attachments,
+      ['fs://a_1.jpg', 'fs://b_2.jpg'],
+    );
+
+    final legacy = TodoItem.fromJson({
+      'id': 'old-1',
+      'text': 'Sem foto',
+      'due': '',
+      'done': false,
+      'created_at': '2026-11-15T09:00:00.000',
+      'attachments': 'not a list',
+    });
+    expect(legacy.attachments, isEmpty);
+    expect(legacy.toJson().containsKey('attachments'), isFalse);
+  });
+
+  test('copyWith keeps photos unless they are replaced', () {
+    final item = TodoItem.fromJson({
+      'id': 'photo-2',
+      'text': 'Foto',
+      'due': '',
+      'done': false,
+      'created_at': '2026-11-15T09:00:00.000',
+      'attachments': ['fs://c_3.jpg'],
+    });
+    expect(item.copyWith(text: 'Outra').attachments, ['fs://c_3.jpg']);
+    expect(item.copyWith(attachments: const []).attachments, isEmpty);
+  });
+
   test('legacy task without a date gets safe Todo defaults', () {
     final item = TodoItem.fromJson({
       'id': 'legacy-id',

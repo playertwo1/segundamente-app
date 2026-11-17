@@ -1120,6 +1120,119 @@ void main() {
     expect(recordedAlarmSyncs.single.single.isTombstoned, isTrue);
   });
 
+  test('photos stay on this phone: the wire payload has no attachments', () {
+    final item = const TodoItem(
+      id: 'photo-task-0',
+      text: 'Conferir o recibo',
+      due: reportDueUnknown,
+      done: false,
+      createdAt: '2026-11-15T09:00:00.000',
+      attachments: const ['fs://recibo_20261115.jpg'],
+    );
+
+    final payload = SyncEnvelope.itemToWirePayload(item);
+
+    expect(payload.containsKey('attachments'), isFalse);
+    expect(payload['text'], 'Conferir o recibo');
+    expect(item.toJson()['attachments'], ['fs://recibo_20261115.jpg']);
+  });
+
+  test('a remote update keeps the photos this phone already has', () async {
+    final pairing = _makeTestPairing();
+    await savePairing(pairing);
+    final relay = _FakeRelayMailbox(pairing);
+    final sync = createSync(
+      mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+    );
+    final todos = TodoService(fileService: files, syncService: sync);
+    final task = await todos.add(
+      userId: userId,
+      id: 'photo-task-1',
+      text: 'Recibo do almoço',
+      due: '2026-11-16 09:00',
+      attachments: const ['fs://almoco_20261116.jpg'],
+    );
+    await sync.syncNow(userId: userId);
+    relay.consumePcQueue();
+
+    relay.enqueueFromPcMap(
+      _pcEnvelope(
+        mutationId: 'pc-snooze-photo-1',
+        entityId: task.id,
+        baseVersion: 1,
+        newVersion: 2,
+        updatedAt: '2026-11-15T12:10:00Z',
+        payload: _taskPayload(
+          id: task.id,
+          text: task.text,
+          due: task.due,
+          dueDate: task.dueDate,
+          dueTime: task.dueTime,
+          version: 2,
+          snoozedUntil: '2026-11-16T09:10:00Z',
+        ),
+      ),
+    );
+    await sync.syncNow(userId: userId);
+
+    final stored = (await todos.load(userId)).single;
+    expect(stored.snoozedUntil, '2026-11-16T09:10:00Z');
+    expect(stored.attachments, ['fs://almoco_20261116.jpg']);
+  });
+
+  test('a remote update racing a local photo change keeps both photo sets',
+      () async {
+    final pairing = _makeTestPairing();
+    await savePairing(pairing);
+    final relay = _FakeRelayMailbox(pairing);
+    final sync = createSync(
+      mailboxClient: LumenMailboxClient(httpClient: relay.createHttpClient()),
+    );
+    final todos = TodoService(fileService: files, syncService: sync);
+    final task = await todos.add(
+      userId: userId,
+      id: 'photo-task-2',
+      text: 'Fotos da obra',
+      due: '2026-11-16 09:00',
+      attachments: const ['fs://obra_1.jpg'],
+    );
+    await sync.syncNow(userId: userId);
+    relay.consumePcQueue();
+
+    // Local photo added and not synced yet: version 2 waits in the outbox.
+    await todos.edit(
+      userId: userId,
+      id: task.id,
+      text: task.text,
+      due: task.due,
+      dueDate: task.dueDate,
+      dueTime: task.dueTime,
+      attachments: const ['fs://obra_1.jpg', 'fs://obra_2.jpg'],
+    );
+    relay.enqueueFromPcMap(
+      _pcEnvelope(
+        mutationId: 'pc-snooze-photo-2',
+        entityId: task.id,
+        baseVersion: 1,
+        newVersion: 2,
+        updatedAt: '2026-11-15T12:10:00Z',
+        payload: _taskPayload(
+          id: task.id,
+          text: task.text,
+          due: task.due,
+          dueDate: task.dueDate,
+          dueTime: task.dueTime,
+          version: 2,
+          snoozedUntil: '2026-11-16T09:10:00Z',
+        ),
+      ),
+    );
+    await sync.syncNow(userId: userId);
+
+    final stored = (await todos.load(userId)).single;
+    expect(stored.attachments, ['fs://obra_1.jpg', 'fs://obra_2.jpg']);
+  });
+
   test('10. reconcileThreeWay symmetric rules & pagination over 100 messages',
       () async {
     // Direct reconcileThreeWay checks: tie-break by deviceId, done earlier, snooze later.

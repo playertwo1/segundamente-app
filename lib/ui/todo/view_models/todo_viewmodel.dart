@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/active_assistant_service.dart';
 import 'package:memex/data/services/native_action_service.dart';
@@ -16,7 +17,27 @@ import 'package:memex/utils/logger.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/utils/user_storage.dart';
 
-enum TodoListSection { today, upcoming, overdue, completed }
+/// Screens the Todo list can show. [upcoming] has no tab of its own: it is a
+/// section of [all].
+enum TodoListSection { all, today, upcoming, overdue, completed }
+
+/// The tabs of the Todo screen, in display order.
+const todoTabSections = [
+  TodoListSection.all,
+  TodoListSection.today,
+  TodoListSection.overdue,
+  TodoListSection.completed,
+];
+
+/// Sections of the [TodoListSection.all] tab, in display order.
+enum TodoSectionKey { overdue, today, upcoming, undated, completed }
+
+class TodoSectionGroup {
+  const TodoSectionGroup({required this.key, required this.items});
+
+  final TodoSectionKey key;
+  final List<TodoItem> items;
+}
 
 enum TodoTaskState { noDate, today, upcoming, overdue, completed }
 
@@ -37,6 +58,7 @@ class TodoViewModel extends ChangeNotifier {
     Future<String?> Function()? userIdResolver,
     bool autoSyncOnLoad = true,
     ActiveAssistantService? activeAssistantService,
+    Future<String?> Function(ImageSource source)? pickPhoto,
   })  : _router = router,
         _now = now ?? DateTime.now,
         _openCalendar = openCalendar ?? NativeActionService.openCalendarInsert,
@@ -44,7 +66,8 @@ class TodoViewModel extends ChangeNotifier {
         _userIdResolver = userIdResolver ?? UserStorage.getUserId,
         _autoSyncOnLoad = autoSyncOnLoad,
         _activeAssistantService =
-            activeAssistantService ?? ActiveAssistantService.instance {
+            activeAssistantService ?? ActiveAssistantService.instance,
+        _pickPhoto = pickPhoto ?? _systemPickPhoto {
     _syncService.statusNotifier.addListener(_onSyncStatusChanged);
   }
 
@@ -63,12 +86,27 @@ class TodoViewModel extends ChangeNotifier {
   final bool _autoSyncOnLoad;
   final ActiveAssistantService _activeAssistantService;
   ActiveAssistantService get activeAssistantService => _activeAssistantService;
+  final Future<String?> Function(ImageSource source) _pickPhoto;
+  final Set<TodoSectionKey> _collapsedSections = {};
+
+  /// Tasks completed from a card whose exit animation is still running. Each
+  /// keeps the state it had before completion, so it stays in that section
+  /// until its timer ends. The value is that state.
+  final Map<String, TodoTaskState> _completing = {};
+  final Map<String, Timer> _exitTimers = {};
+
+  /// Ids of tasks that appeared in the last reload after the first load. Cards
+  /// of these ids animate in when built. Several rows can show one task (the
+  /// all tab and its own tab), so this is read, not consumed.
+  Set<String> _entering = {};
+  Set<String> _knownIds = {};
+  bool _baselineLoaded = false;
 
   List<TodoItem> _all = const [];
   TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
   ActiveAssistantState activeAssistantState =
       ActiveAssistantState(settings: ActiveAssistantSettings.defaults);
-  TodoListSection section = TodoListSection.today;
+  TodoListSection section = TodoListSection.all;
   TodoPriority? priorityFilter;
   bool loading = false;
   String? errorMessage;
@@ -90,6 +128,10 @@ class TodoViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    for (final timer in _exitTimers.values) {
+      timer.cancel();
+    }
+    _exitTimers.clear();
     _syncService.statusNotifier.removeListener(_onSyncStatusChanged);
     super.dispose();
   }
@@ -98,16 +140,87 @@ class TodoViewModel extends ChangeNotifier {
 
   List<TodoItem> get items => itemsFor(section);
 
+  /// Open count of the overdue tab, shown next to its name.
+  int get overdueCount => itemsFor(TodoListSection.overdue).length;
+
+  /// True while a card completed from the list is still on screen.
+  bool isCompleting(TodoItem item) => _completing.containsKey(item.id);
+
+  /// A task shows as done in the completed tab and the done look, except one
+  /// still playing its completion animation, which stays where it was.
+  bool _showsAsDone(TodoItem item) => item.done && !isCompleting(item);
+
+  /// The state that decides the section of a task. A completing task keeps
+  /// the state it had before it was completed.
+  TodoTaskState placementStateFor(TodoItem item) =>
+      _completing[item.id] ?? stateFor(item);
+
+  /// True for a task that appeared in the last reload, after the first load.
+  bool isEntering(String id) => _entering.contains(id);
+
   List<TodoItem> itemsFor(TodoListSection section) {
     final items = [
       for (final item in _all)
-        if ((section == TodoListSection.completed
-                ? item.done
-                : !item.done && _belongsToSection(item, section)) &&
+        if ((section == TodoListSection.all ||
+                (section == TodoListSection.completed
+                    ? _showsAsDone(item)
+                    : !_showsAsDone(item) &&
+                        _belongsToSection(item, section))) &&
             (priorityFilter == null || item.priority == priorityFilter))
           item,
     ];
-    return _sortForSection(items, section);
+    return _sortForSection(
+      items,
+      section == TodoListSection.all ? null : section,
+    );
+  }
+
+  /// The sections of the [TodoListSection.all] tab, in order. Empty sections
+  /// are left out.
+  List<TodoSectionGroup> get allSections {
+    final groups = [
+      for (final key in TodoSectionKey.values)
+        TodoSectionGroup(key: key, items: _sectionItems(key)),
+    ];
+    return [
+      for (final group in groups)
+        if (group.items.isNotEmpty) group,
+    ];
+  }
+
+  bool isSectionCollapsed(TodoSectionKey key) =>
+      _collapsedSections.contains(key);
+
+  /// Open or close a section of the all tab. Kept in memory only.
+  void toggleSection(TodoSectionKey key) {
+    if (!_collapsedSections.remove(key)) _collapsedSections.add(key);
+    notifyListeners();
+  }
+
+  List<TodoItem> _sectionItems(TodoSectionKey key) {
+    final items = [
+      for (final item in _all)
+        if (_inSection(item, key) &&
+            (priorityFilter == null || item.priority == priorityFilter))
+          item,
+    ];
+    return _sortForSection(
+      items,
+      key == TodoSectionKey.completed ? TodoListSection.completed : null,
+    );
+  }
+
+  bool _inSection(TodoItem item, TodoSectionKey key) {
+    if (key == TodoSectionKey.completed) return _showsAsDone(item);
+    if (_showsAsDone(item)) return false;
+    final state = placementStateFor(item);
+    return switch (key) {
+      TodoSectionKey.overdue => state == TodoTaskState.overdue,
+      TodoSectionKey.today => state == TodoTaskState.today,
+      TodoSectionKey.upcoming => state == TodoTaskState.upcoming,
+      TodoSectionKey.undated => state == TodoTaskState.noDate,
+      TodoSectionKey.completed => false,
+    };
   }
 
   List<TodoItem> searchResults(String query) => _sortForSection([
@@ -152,6 +265,8 @@ class TodoViewModel extends ChangeNotifier {
 
   void selectSection(TodoListSection value) {
     section = value;
+    // A card not built yet must not animate later, when its tab opens.
+    _entering = {};
     notifyListeners();
   }
 
@@ -220,9 +335,19 @@ class TodoViewModel extends ChangeNotifier {
     }
   }
 
+  /// Replaces the list and records which tasks are new since the last load.
+  /// The first load is the baseline, so opening the screen does not animate.
+  void _setItems(List<TodoItem> value) {
+    final ids = {for (final item in value) item.id};
+    if (_baselineLoaded) _entering = ids.difference(_knownIds);
+    _knownIds = ids;
+    _baselineLoaded = true;
+    _all = value;
+  }
+
   Future<void> _reloadLocalData() async {
     (await _router.loadTodos()).when(
-      onOk: (value) => _all = value,
+      onOk: _setItems,
       onError: (error, _) => errorMessage = '$error',
     );
     if (_disposed) return;
@@ -244,7 +369,7 @@ class TodoViewModel extends ChangeNotifier {
     (await _router.loadTodos()).when(
       onOk: (value) {
         if (!_disposed && reqId == _reloadSeq) {
-          _all = value;
+          _setItems(value);
         }
       },
       onError: (error, _) {
@@ -508,6 +633,7 @@ class TodoViewModel extends ChangeNotifier {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     int? alertMinutes,
+    List<String> attachments = const [],
   }) async {
     await _change(_router.addTodo(
       text: text,
@@ -516,6 +642,7 @@ class TodoViewModel extends ChangeNotifier {
       priority: priority,
       subtasks: subtasks,
       alertMinutes: alertMinutes ?? shortcutSettings.defaultAlertMinutes,
+      attachments: attachments,
     ));
   }
 
@@ -526,7 +653,8 @@ class TodoViewModel extends ChangeNotifier {
       bool clearRecurrence = false,
       TodoPriority? priority,
       List<TodoSubtask>? subtasks,
-      int? alertMinutes}) async {
+      int? alertMinutes,
+      List<String>? attachments}) async {
     await _change(_router.editTodo(
       id: item.id,
       text: text,
@@ -536,11 +664,46 @@ class TodoViewModel extends ChangeNotifier {
       priority: priority,
       subtasks: subtasks,
       alertMinutes: alertMinutes,
+      attachments: attachments,
     ));
+  }
+
+  /// Lets the user pick one photo; returns its local path, or null on cancel.
+  /// Nothing is copied into the workspace until the task is saved.
+  Future<String?> pickPhoto(ImageSource source) => _pickPhoto(source);
+
+  /// Copies picked photos into the workspace; returns their `fs://` references
+  /// in the same order. Throws when a photo cannot be copied.
+  Future<List<String>> storePhotos(List<String> sourcePaths) async {
+    if (sourcePaths.isEmpty) return const [];
+    return (await _router.storeTodoPhotos(sourcePaths)).valueOrThrow;
+  }
+
+  /// Local file of a saved photo, or null when it cannot be resolved.
+  Future<String?> photoPath(String reference) async {
+    final result = await _router.todoAttachmentPath(reference);
+    return result.isOk ? result.valueOrThrow : null;
   }
 
   Future<void> toggleDone(TodoItem item) async {
     await _change(_router.setTodoDone(id: item.id, done: !item.done));
+  }
+
+  /// Completes [item] from its card. The write happens at once; the card keeps
+  /// its section for [exitDuration] so its animation can finish. A second call
+  /// for the same task while it is completing does nothing.
+  Future<void> completeTask(
+    TodoItem item, {
+    required Duration exitDuration,
+  }) async {
+    if (_disposed || item.done || isCompleting(item)) return;
+    _completing[item.id] = stateFor(item);
+    _exitTimers[item.id] = Timer(exitDuration, () {
+      _exitTimers.remove(item.id);
+      _completing.remove(item.id);
+      if (!_disposed) notifyListeners();
+    });
+    await _change(_router.setTodoDone(id: item.id, done: true));
   }
 
   Future<void> toggleSubtask(TodoItem item, TodoSubtask subtask) async {
@@ -597,8 +760,9 @@ class TodoViewModel extends ChangeNotifier {
   }
 
   bool _belongsToSection(TodoItem item, TodoListSection section) {
-    final state = stateFor(item);
+    final state = placementStateFor(item);
     return switch (section) {
+      TodoListSection.all => true,
       TodoListSection.today =>
         state == TodoTaskState.today || state == TodoTaskState.noDate,
       TodoListSection.upcoming => state == TodoTaskState.upcoming,
@@ -613,7 +777,9 @@ class TodoViewModel extends ChangeNotifier {
   ) {
     final sorted = [...items];
     sorted.sort((a, b) {
-      if (a.done != b.done) return a.done ? 1 : -1;
+      final aDone = _showsAsDone(a);
+      final bDone = _showsAsDone(b);
+      if (aDone != bDone) return aDone ? 1 : -1;
       if (section == TodoListSection.completed) {
         final aDate = DateTime.tryParse(a.doneAt ?? '');
         final bDate = DateTime.tryParse(b.doneAt ?? '');
@@ -629,3 +795,7 @@ class TodoViewModel extends ChangeNotifier {
     return sorted;
   }
 }
+
+/// Camera or gallery through the system picker, downscaled like the capture flow.
+Future<String?> _systemPickPhoto(ImageSource source) async =>
+    (await ImagePicker().pickImage(source: source, imageQuality: 85))?.path;

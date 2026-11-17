@@ -1701,6 +1701,7 @@ class MemexRouter {
     TodoPriority priority = TodoPriority.normal,
     List<TodoSubtask> subtasks = const [],
     TodoRecurrence? recurrence,
+    List<String> attachments = const [],
   }) {
     return runResult(() async {
       return (await _todoRepository.add(
@@ -1715,6 +1716,7 @@ class MemexRouter {
         priority: priority,
         subtasks: subtasks,
         recurrence: recurrence,
+        attachments: attachments,
       ))
           .valueOrThrow;
     });
@@ -1746,6 +1748,7 @@ class MemexRouter {
     List<TodoSubtask>? subtasks,
     TodoRecurrence? recurrence,
     bool clearRecurrence = false,
+    List<String>? attachments,
   }) {
     return runResult(() async {
       (await _todoRepository.edit(
@@ -1761,10 +1764,26 @@ class MemexRouter {
         subtasks: subtasks,
         recurrence: recurrence,
         clearRecurrence: clearRecurrence,
+        attachments: attachments,
       ))
           .valueOrThrow;
     });
   }
+
+  /// Copies picked photos into the workspace; returns their `fs://` references.
+  Future<Result<List<String>>> storeTodoPhotos(List<String> sourcePaths) =>
+      runResult(() async => (await _todoRepository.storePhotos(
+            userId: await _reportUserId(),
+            sourcePaths: sourcePaths,
+          ))
+              .valueOrThrow);
+
+  Future<Result<String?>> todoAttachmentPath(String reference) =>
+      runResult(() async => (await _todoRepository.attachmentPath(
+            userId: await _reportUserId(),
+            reference: reference,
+          ))
+              .valueOrThrow);
 
   Future<Result<void>> setTodoDone({required String id, required bool done}) {
     return runResult(() async {

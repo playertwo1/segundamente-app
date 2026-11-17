@@ -37,6 +37,7 @@ class _FloatingTodoAddScreenState extends State<FloatingTodoAddScreen> {
       context: context,
       settings: viewModel.shortcutSettings,
       notice: const ContentNoticeCaption(),
+      photos: viewModel,
     );
     if (draft != null) {
       await viewModel.add(
@@ -46,6 +47,7 @@ class _FloatingTodoAddScreenState extends State<FloatingTodoAddScreen> {
         priority: draft.priority,
         subtasks: draft.subtasks,
         alertMinutes: draft.alertMinutes,
+        attachments: draft.attachments,
       );
     }
     if (!mounted) return;

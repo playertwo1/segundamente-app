@@ -39,6 +39,9 @@ class AppColors {
   static const Color warning = Color(0xFFFBBF24);
   static const Color danger = Color(0xFFFB7185);
 
+  /// Low task priority: a blue that reads on black. Always shown with its label.
+  static const Color priorityLow = Color(0xFF60A5FA);
+
   // No shadows on AMOLED; kept so existing BoxShadows render nothing.
   static const Color shadowLight = Color(0x00000000);
   static const Color shadowCard = Color(0x00000000);

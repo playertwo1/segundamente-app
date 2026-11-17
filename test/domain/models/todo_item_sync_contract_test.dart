@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/session_report.dart';
 import 'package:memex/domain/models/todo_item.dart';
 
@@ -87,6 +88,7 @@ void main() {
     });
 
     test('toJson and the contract have the same task fields', () {
+      expect(todoLocalOnlyFields, _localOnlyFields);
       for (final example in examples) {
         final payload = _payloadOf(example);
         expect(
@@ -96,17 +98,34 @@ void main() {
         );
 
         final json = TodoItem.fromJson(payload).toJson();
+        final wire = json.keys.toSet().difference(_localOnlyFields);
         expect(
-          json.keys.toSet().difference(_taskFields),
+          wire.difference(_taskFields),
           isEmpty,
           reason: 'toJson emits fields the contract does not define',
         );
         expect(
-          _taskFields.difference(json.keys.toSet()).difference(_optionalFields),
+          _taskFields.difference(wire).difference(_optionalFields),
           isEmpty,
           reason: 'toJson lacks a required contract field',
         );
       }
+    });
+
+    test('the sync envelope sends only contract fields, never local-only ones',
+        () {
+      final photos = TodoItem.fromJson(_payloadOf(examples[0])).copyWith(
+        attachments: const ['fs://synthetic_1.jpg'],
+      );
+
+      final wire = SyncEnvelope.itemToWirePayload(photos);
+
+      expect(
+        wire.keys.toSet().difference(_taskFields),
+        isEmpty,
+        reason: 'the wire payload carries a field the contract does not define',
+      );
+      expect(wire.keys.toSet().intersection(_localOnlyFields), isEmpty);
     });
 
     test('example 3 without source and source_stale reads as no source', () {
@@ -180,6 +199,10 @@ const _taskFields = {
 };
 
 const _optionalFields = {'source', 'source_stale'};
+
+/// Named exclusions: fields the phone keeps locally and the contract never
+/// carries. Must match [todoLocalOnlyFields]; the first test checks that.
+const _localOnlyFields = {'attachments'};
 
 final _mutationIdPattern = RegExp(r'^[A-Za-z0-9_-]{8,48}$');
 
