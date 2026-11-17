@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memex/domain/models/card_model.dart';
@@ -12,6 +12,8 @@ import 'package:memex/utils/result.dart';
 import 'package:memex/ui/thread_document/widgets/thread_document_prompts.dart';
 import 'package:memex/ui/thread_document/widgets/thread_documents_section.dart';
 import 'package:memex/ui/timeline/widgets/location_picker_page.dart';
+import 'package:memex/ui/timeline/widgets/comment_chat_bubble.dart';
+import 'package:memex/ui/timeline/widgets/comment_thread_entries.dart';
 import 'package:memex/ui/calendar/view_models/calendar_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
@@ -27,6 +29,9 @@ import 'package:memex/ui/timeline/widgets/timeline/asset_header_gallery.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
 import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/todo_proposal_card.dart';
+import 'package:memex/domain/use_cases/card_task_extractor.dart';
+import 'package:memex/ui/timeline/view_models/card_tasks_viewmodel.dart';
+import 'package:memex/ui/timeline/widgets/card_tasks_section.dart';
 
 import 'package:memex/ui/chat/widgets/open_super_agent_dialog.dart';
 import 'package:memex/ui/chat/widgets/reference_asset_formatter.dart';
@@ -75,7 +80,17 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
   bool _showInsightText = true;
   String? _replyToCommentId;
   String? _replyToCommentName;
+  String? _replyToCommentText;
+  Color? _replyToCommentColor;
+  // Chat thread: one key per message (to scroll to a quote), a flash counter
+  // per message, and the ids already on screen (later ones animate in).
+  static const String _insightCommentId = 'insight';
+  final Map<String, GlobalKey> _commentKeys = {};
+  final Map<String, int> _flashSignals = {};
+  Set<String>? _seenCommentIds;
+  Set<String> _newCommentIds = {};
   late final TodoProposalViewModel _todoProposalViewModel;
+  CardTasksViewModel? _cardTasksViewModel;
   late bool _showDemoHint;
 
   @override
@@ -148,6 +163,7 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
   @override
   void dispose() {
     _todoProposalViewModel.dispose();
+    _cardTasksViewModel?.dispose();
     _docsRefresh.dispose();
     _memexRouter.unregisterCardDetailForeground(widget.cardId);
     EventBusService.instance.removeHandler(
@@ -161,6 +177,22 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
     super.dispose();
   }
 
+  /// Rebuilds the record's task block only when its ideas changed, so a
+  /// detail refresh (a new comment, say) keeps the user's selection.
+  void _syncCardTasks(CardDetailModel detail) {
+    final candidates = extractCardTaskCandidates(detail);
+    final current = _cardTasksViewModel;
+    if (current != null && listEquals(current.candidates, candidates)) return;
+    current?.dispose();
+    final viewModel = CardTasksViewModel(
+      router: _memexRouter,
+      cardId: detail.id,
+      candidates: candidates,
+    );
+    setState(() => _cardTasksViewModel = viewModel);
+    viewModel.load();
+  }
+
   Future<void> _fetchDetail() async {
     if (_detail == null) {
       setState(() {
@@ -172,10 +204,16 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
     try {
       final detail = await _memexRouter.fetchCardDetail(widget.cardId);
       if (!mounted) return;
+      final ids = detail.insight.comments.map((c) => c.id).toSet();
+      final seen = _seenCommentIds;
       setState(() {
         _detail = detail;
+        // Nothing animates on the first load; later arrivals do.
+        _newCommentIds = seen == null ? {} : ids.difference(seen);
+        _seenCommentIds = {...?seen, ...ids};
       });
       _resolveFirstImageAspectRatio(detail);
+      _syncCardTasks(detail);
 
       // Dismiss any pending card-detail notification for this card.
       _memexRouter.dismissCardDetailOnViewed(widget.cardId);
@@ -963,6 +1001,8 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
   void _showInputModal(String cardId) {
     final replyId = _replyToCommentId;
     final replyName = _replyToCommentName;
+    final replyText = _replyToCommentText;
+    final replyColor = _replyToCommentColor;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -978,6 +1018,8 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
             cardId: cardId,
             replyToId: replyId,
             replyToName: replyName,
+            replyToText: replyText,
+            replyToColor: replyColor,
             onCommentPosted: () {
               Navigator.pop(context);
               _fetchDetail();
@@ -992,6 +1034,8 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
         setState(() {
           _replyToCommentId = null;
           _replyToCommentName = null;
+          _replyToCommentText = null;
+          _replyToCommentColor = null;
         });
       }
     });
@@ -1214,6 +1258,26 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
                                     ],
                                   ),
 
+                                  if (_cardTasksViewModel case final tasks?)
+                                    ListenableBuilder(
+                                      listenable: tasks,
+                                      builder: (context, _) => tasks.phase ==
+                                                  CardTasksPhase.selecting ||
+                                              tasks.phase ==
+                                                  CardTasksPhase.added
+                                          ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 22,
+                                              ),
+                                              child: CardTasksSection(
+                                                viewModel: tasks,
+                                                onOpenTodo: () =>
+                                                    context.push(AppRoutes.todo),
+                                              ),
+                                            )
+                                          : const SizedBox.shrink(),
+                                    ),
+
                                   const SizedBox(height: 24),
                                   const Divider(
                                     height: 1,
@@ -1426,259 +1490,207 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
     }
   }
 
+  /// Comment thread as a chat: the pinned insight first, then the replies in
+  /// order, with day separators and grouped messages.
   Widget _buildCommentsList(CardDetailModel detail) {
-    final List<Widget> commentWidgets = [];
+    final insight = detail.insight;
+    final persona = insight.character;
+    final pinned = _showInsightText && persona != null
+        ? Comment(
+            id: _insightCommentId,
+            content: insight.text,
+            isAi: true,
+            timestamp: detail.timestamp.millisecondsSinceEpoch ~/ 1000,
+            character: persona,
+          )
+        : null;
+    final entries = buildCommentThreadEntries(
+      insight.comments,
+      pinned: pinned,
+      aiFallbackName: UserStorage.l10n.commentAuthorAi,
+      youLabel: UserStorage.l10n.commentReplyToYou,
+    );
 
-    // Add Insight as the first "Pinned" comment/description (if enabled)
-    if (_showInsightText && detail.insight.character != null) {
-      commentWidgets.add(
-        _buildSingleComment(
-          characterId: detail.insight.characterId,
-          avatar: detail.insight.character!.avatar,
-          name: detail.insight.character!.name,
-          content: detail.insight.text,
-          isAuthor: true,
-          time: DateFormat('MM-dd').format(detail.timestamp),
-        ),
-      );
-    }
-
-    // Build a lookup map for comment names (for reply chain display)
-    final commentNameMap = <String, String>{};
-    // Add insight character as a possible reply target
-    if (detail.insight.character != null) {
-      commentNameMap['insight'] = detail.insight.character!.name;
-    }
-    final displayUserName =
-        _userName.isNotEmpty ? _userName : UserStorage.l10n.commentAuthorUser;
-    for (var comment in detail.insight.comments) {
-      final isUser = !comment.isAi;
-      final name = isUser
-          ? displayUserName
-          : (comment.character?.name ?? UserStorage.l10n.commentAuthorAi);
-      commentNameMap[comment.id] = name;
-    }
-
-    // Add other comments
-    for (var comment in detail.insight.comments) {
-      final isUser = !comment.isAi;
-      final displayUserName =
-          _userName.isNotEmpty ? _userName : UserStorage.l10n.commentAuthorUser;
-      final commentName = isUser
-          ? displayUserName
-          : (comment.character?.name ?? UserStorage.l10n.commentAuthorAi);
-      commentWidgets.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _replyToCommentId = comment.id;
-                      _replyToCommentName = commentName;
-                    });
-                    _showInputModal(detail.id);
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  splashColor: AppColors.primary.withValues(alpha: 0.06),
-                  highlightColor: AppColors.primary.withValues(alpha: 0.03),
-                  child: _buildSingleComment(
-                    characterId: isUser ? 'user' : comment.character?.id,
-                    avatar: isUser ? _userAvatar : comment.character?.avatar,
-                    name: commentName,
-                    content: comment.content,
-                    time: DateFormat('MM-dd').format(
-                      DateTime.fromMillisecondsSinceEpoch(
-                        comment.timestamp * 1000,
-                      ),
-                    ),
-                    isAi: comment.isAi,
-                    replyToName: comment.replyToName,
-                  ),
-                ),
-              ),
-              if (comment.todoProposal != null)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(start: 42, top: 8),
-                  child: TodoProposalCard(
-                    key: ValueKey('comment_todo_${comment.todoProposal!.id}'),
-                    proposal: comment.todoProposal!,
-                    viewModel: _todoProposalViewModel,
-                  ),
-                ),
-            ],
+    final rows = <Widget>[];
+    if (pinned != null && persona != null) {
+      rows.add(_buildCommentDateChip(detail.timestamp));
+      rows.add(
+        KeyedSubtree(
+          key: _commentKey(pinned.id),
+          child: CommentChatBubble(
+            isUser: false,
+            content: insight.text,
+            time: detail.timestamp,
+            authorName: persona.name,
+            characterId: insight.characterId,
+            avatar: _buildPersonaAvatar(
+              characterId: insight.characterId,
+              avatar: persona.avatar,
+              name: persona.name,
+            ),
+            flashSignal: _flashSignals[pinned.id] ?? 0,
           ),
         ),
       );
     }
-
+    for (final entry in entries) {
+      rows.add(switch (entry) {
+        CommentDateEntry(:final day) => _buildCommentDateChip(day),
+        CommentMessageEntry message => _buildCommentMessage(detail, message),
+      });
+    }
     return Column(
-      children: commentWidgets
-          .map(
-            (w) =>
-                Padding(padding: const EdgeInsets.only(bottom: 24), child: w),
-          )
-          .toList(),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
     );
   }
 
-  Widget _buildSingleComment({
+  Widget _buildCommentDateChip(DateTime day) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: CommentDateChip(
+        label: DateFormat.MMMMd(UserStorage.l10n.localeName).format(day),
+      ),
+    );
+  }
+
+  Widget _buildCommentMessage(
+    CardDetailModel detail,
+    CommentMessageEntry entry,
+  ) {
+    final comment = entry.comment;
+    final persona = comment.character;
+    final isUser = entry.isUser;
+    final authorName = isUser
+        ? (_userName.isNotEmpty ? _userName : UserStorage.l10n.commentAuthorUser)
+        : (persona?.name ?? UserStorage.l10n.commentAuthorAi);
+    final todoProposal = comment.todoProposal;
+    return Padding(
+      key: _commentKey(comment.id),
+      padding: EdgeInsets.only(top: entry.showHeader ? 10 : 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CommentChatBubble(
+            isUser: isUser,
+            content: comment.content,
+            time: DateTime.fromMillisecondsSinceEpoch(comment.timestamp * 1000),
+            authorName: isUser ? null : authorName,
+            characterId: persona?.id,
+            avatar: isUser || !entry.showHeader
+                ? null
+                : _buildPersonaAvatar(
+                    characterId: persona?.id,
+                    avatar: persona?.avatar,
+                    name: authorName,
+                  ),
+            showHeader: entry.showHeader,
+            quote: entry.quote,
+            onQuoteTap: _jumpToComment,
+            onReply: () => _startReply(
+              cardId: detail.id,
+              commentId: comment.id,
+              name: authorName,
+              text: comment.content,
+              color: commentAuthorColor(
+                isUser: isUser,
+                characterId: persona?.id,
+              ),
+            ),
+            replyLabel: UserStorage.l10n.reply,
+            animateIn: _newCommentIds.contains(comment.id),
+            flashSignal: _flashSignals[comment.id] ?? 0,
+          ),
+          if (todoProposal != null)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 38, top: 8),
+              child: TodoProposalCard(
+                key: ValueKey('comment_todo_${todoProposal.id}'),
+                proposal: todoProposal,
+                viewModel: _todoProposalViewModel,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  GlobalKey _commentKey(String id) =>
+      _commentKeys.putIfAbsent(id, () => GlobalKey(debugLabel: 'comment_$id'));
+
+  void _startReply({
+    required String cardId,
+    required String commentId,
+    required String name,
+    required String text,
+    required Color color,
+  }) {
+    setState(() {
+      _replyToCommentId = commentId;
+      _replyToCommentName = name;
+      _replyToCommentText = text;
+      _replyToCommentColor = color;
+    });
+    _showInputModal(cardId);
+  }
+
+  /// Scrolls to a quoted message and flashes it. A missing target does nothing.
+  Future<void> _jumpToComment(String id) async {
+    final target = _commentKeys[id]?.currentContext;
+    if (target == null) return;
+    final reduce = MediaQuery.disableAnimationsOf(target);
+    await Scrollable.ensureVisible(
+      target,
+      alignment: 0.3,
+      duration: reduce ? Duration.zero : const Duration(milliseconds: 350),
+      curve: const Cubic(0.16, 1, 0.3, 1),
+    );
+    if (!mounted) return;
+    setState(() {
+      _flashSignals[id] = (_flashSignals[id] ?? 0) + 1;
+    });
+  }
+
+  /// Persona avatar, 30dp. A system comment (no character id) shows the Memex
+  /// logo; tapping a persona avatar opens its chat.
+  Widget _buildPersonaAvatar({
     String? characterId,
     String? avatar,
     required String name,
-    required String content,
-    required String time,
-    bool isAuthor = false,
-    bool isAi = false,
-    String? replyToName,
   }) {
-    // Determine avatar widget:
-    // - characterId "0" or null = Memex system → use logo
-    // - characterId "user" = user comment → use DiceBear with user avatar
-    // - Other characters → use CharacterAvatar (supports image files)
-    Widget avatarWidget;
-    final isMemexSystem = (characterId == null || characterId == '0') && !isAi;
-    final isUserComment = characterId == 'user';
-
-    if (isUserComment) {
-      avatarWidget = CharacterAvatar(
-        avatar: avatar,
-        name: name,
-        size: 36,
-        backgroundColor: AppColors.iconBgLight,
-      );
-    } else if (isMemexSystem || (characterId == null || characterId == '0')) {
-      // Memex logo
-      avatarWidget = CircleAvatar(
-        radius: 18,
+    if (characterId == null || characterId == '0') {
+      return CircleAvatar(
+        radius: 15,
         backgroundColor: AppColors.cardBackground,
         child: ClipOval(
           child: Image.asset(
             'assets/icon.png',
-            width: 36,
-            height: 36,
+            width: 30,
+            height: 30,
             fit: BoxFit.cover,
           ),
         ),
       );
-    } else {
-      // Character avatar — supports both image files and DiceBear seeds
-      avatarWidget = CharacterAvatar(
+    }
+    return GestureDetector(
+      onTap: () {
+        final viewModel = PersonaChatViewModel(
+          router: _memexRouter,
+          initialCharacterId: characterId,
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PersonaChatScreen(viewModel: viewModel),
+          ),
+        );
+      },
+      child: CharacterAvatar(
         avatar: avatar,
         name: name,
-        size: 36,
+        size: 30,
         backgroundColor: AppColors.iconBgLight,
-      );
-    }
-
-    // Wrap avatar with tap-to-chat for AI characters
-    final bool isCharacterAvatar = !isUserComment &&
-        !isMemexSystem &&
-        characterId != null &&
-        characterId != '0';
-    final tappableAvatar = isCharacterAvatar
-        ? GestureDetector(
-            onTap: () {
-              final viewModel = PersonaChatViewModel(
-                router: _memexRouter,
-                initialCharacterId: characterId,
-              );
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PersonaChatScreen(viewModel: viewModel),
-                ),
-              );
-            },
-            child: avatarWidget,
-          )
-        : avatarWidget;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        tappableAvatar,
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Name row with optional reply chain indicator
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 0,
-                children: [
-                  Text(name, style: AppTextStyles.commentName),
-                  if (replyToName != null) ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6),
-                      child: const Icon(
-                        Icons.subdirectory_arrow_right_rounded,
-                        size: 14,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                    Text(
-                      replyToName,
-                      style: AppTextStyles.commentName.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              if (isAuthor || isAi)
-                MarkdownBody(
-                  data: content,
-                  softLineBreak: true,
-                  styleSheet: MarkdownStyleSheet(
-                    p: AppTextStyles.commentContent,
-                    strong: AppTextStyles.commentContent.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                    em: const TextStyle(fontStyle: FontStyle.italic),
-                    listBullet: const TextStyle(color: AppColors.primary),
-                    code: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      backgroundColor: AppColors.background,
-                      fontFamily: 'monospace',
-                    ),
-                    codeblockDecoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                )
-              else
-                Text(content, style: AppTextStyles.commentContent),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Text(time, style: AppTextStyles.commentDate),
-                  if (!isAuthor) ...[
-                    const SizedBox(width: 12),
-                    Text(
-                      UserStorage.l10n.reply,
-                      style: AppTextStyles.commentDate.copyWith(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -2339,6 +2351,8 @@ class _CommentInputWidget extends StatefulWidget {
   final bool autofocus;
   final String? replyToId;
   final String? replyToName;
+  final String? replyToText;
+  final Color? replyToColor;
 
   const _CommentInputWidget({
     required this.cardId,
@@ -2346,6 +2360,8 @@ class _CommentInputWidget extends StatefulWidget {
     this.autofocus = false,
     this.replyToId,
     this.replyToName,
+    this.replyToText,
+    this.replyToColor,
   });
 
   @override
@@ -2355,11 +2371,25 @@ class _CommentInputWidget extends StatefulWidget {
 class _CommentInputWidgetState extends State<_CommentInputWidget> {
   final TextEditingController _controller = TextEditingController();
   bool _isPosting = false;
+  // Kept here so the preview's X can clear the reply while the sheet is open.
+  late String? _replyToId = widget.replyToId;
+  late String? _replyToName = widget.replyToName;
+  late String? _replyToText = widget.replyToText;
+  late Color? _replyToColor = widget.replyToColor;
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyToId = null;
+      _replyToName = null;
+      _replyToText = null;
+      _replyToColor = null;
+    });
   }
 
   Future<void> _postComment() async {
@@ -2382,7 +2412,7 @@ class _CommentInputWidgetState extends State<_CommentInputWidget> {
       await memexRouter.postComment(
         widget.cardId,
         content,
-        replyToId: widget.replyToId,
+        replyToId: _replyToId,
       );
 
       _controller.clear();
@@ -2415,47 +2445,26 @@ class _CommentInputWidgetState extends State<_CommentInputWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final replyName = _replyToName;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Reply-to banner (WeChat-style)
-        if (widget.replyToName != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.06),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.reply_rounded,
-                    size: 16, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    UserStorage.l10n.replyTo(widget.replyToName!),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
+        if (replyName != null)
+          CommentReplyPreview(
+            title: UserStorage.l10n.commentReplyingTo(replyName),
+            excerpt: _replyToText,
+            color: _replyToColor ?? AppColors.primary,
+            cancelLabel: UserStorage.l10n.commentCancelReply,
+            onCancel: _cancelReply,
           ),
         // Input field
         Container(
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(
-              widget.replyToName != null ? 0 : 20,
+              replyName != null ? 0 : 20,
             ),
-            border: widget.replyToName != null
+            border: replyName != null
                 ? null
                 : Border.all(
                     color: AppColors.primary.withValues(alpha: 0.0),
@@ -2469,8 +2478,8 @@ class _CommentInputWidgetState extends State<_CommentInputWidget> {
                   controller: _controller,
                   autofocus: widget.autofocus,
                   decoration: InputDecoration(
-                    hintText: widget.replyToName != null
-                        ? UserStorage.l10n.replyTo(widget.replyToName!)
+                    hintText: replyName != null
+                        ? UserStorage.l10n.replyTo(replyName)
                         : UserStorage.l10n.saySomething,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -2494,9 +2503,9 @@ class _CommentInputWidgetState extends State<_CommentInputWidget> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: const CircularProgressIndicator(
+                        child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
+                          valueColor: AlwaysStoppedAnimation<Color>(
                             AppColors.primary,
                           ),
                         ),

@@ -42,6 +42,47 @@ class AppColors {
   /// Low task priority: a blue that reads on black. Always shown with its label.
   static const Color priorityLow = Color(0xFF60A5FA);
 
+  // "Tarefas deste registro" block (approved mockup).
+  static const Color taskDivider = Color(0xFF26241F);
+  static const Color taskCheckBorder = Color(0xFF6B6762);
+  static const Color taskMuted = Color(0xFF8E8A84);
+  static const Color taskBody = Color(0xFFC9C4BC);
+  static const Color taskDisabledFill = Color(0xFF2A2826);
+  static const Color taskOnAccent = Color(0xFF1A0F02);
+
+  // Comment thread as chat (comment_chat_bubble.dart).
+  static const Color chatBubblePersona = Color(0xFF1B1A18);
+  static const Color chatBubbleUser = Color(0xFFF3EEE6);
+  static const Color chatUserText = Color(0xFF151412);
+  static const Color chatUserTime = Color(0xFF6B6762);
+  static const Color chatPersonaTime = Color(0xFF8E8A84);
+  static const Color chatDateChipText = Color(0xFFAAA6A0);
+  static const Color chatQuoteTextPersona = Color(0xFFB8B3AC);
+  static const Color chatQuoteTextUser = Color(0xFF4A4640);
+  static const Color chatReplyIconBg = Color(0xFF26241F);
+  static const Color chatFlashPersona = Color(0xFF4A3B22);
+  static const Color chatFlashUser = Color(0xFFFFD79C);
+
+  /// Persona colors, indexed the same way: light on the dark bubble, dark
+  /// variant inside the ivory bubble. Order: sand, sage, lilac, terracotta,
+  /// olive, rose.
+  static const List<Color> chatPersonaLight = [
+    Color(0xFFD9C08F),
+    Color(0xFFA9C7AC),
+    Color(0xFFC7A9C9),
+    Color(0xFFD7A08F),
+    Color(0xFFC2C48F),
+    Color(0xFFD9A9B4),
+  ];
+  static const List<Color> chatPersonaDark = [
+    Color(0xFF6E531F),
+    Color(0xFF3F6444),
+    Color(0xFF6A4A6C),
+    Color(0xFF7A4535),
+    Color(0xFF5C5E25),
+    Color(0xFF74414D),
+  ];
+
   // No shadows on AMOLED; kept so existing BoxShadows render nothing.
   static const Color shadowLight = Color(0x00000000);
   static const Color shadowCard = Color(0x00000000);

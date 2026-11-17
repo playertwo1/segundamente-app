@@ -715,6 +715,15 @@
   "viewMore": "Ver mais",
   "relatedRecords": "Registros relacionados",
   "reply": "Responder",
+  "commentReplyingTo": "Respondendo a {name}",
+  "@commentReplyingTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "commentCancelReply": "Cancelar resposta",
   "replySent": "Resposta enviada",
   "insightTemplateGalleryTitle": "Modelos de cartões de insight",
   "timelineTemplateGalleryTitle": "Modelos de cartões de timeline",
@@ -1656,6 +1665,17 @@
   "todoLoadFailed": "Não foi possível carregar as tarefas.",
   "todoDeleted": "Tarefa excluída",
   "todoUndo": "Desfazer",
+  "cardTasksTitle": "Tarefas deste registro",
+  "cardTasksNoDate": "sem data",
+  "cardTasksAddButton": "Adicionar {count} ao Todo",
+  "@cardTasksAddButton": {"placeholders": {"count": {"type": "int"}}},
+  "cardTasksCheckOne": "Marque uma tarefa",
+  "cardTasksNotNow": "Agora não",
+  "cardTasksInTodo": "{count, plural, one{1 tarefa no Todo} other{{count} tarefas no Todo}}",
+  "@cardTasksInTodo": {"placeholders": {"count": {"type": "int"}}},
+  "cardTasksOpen": "Abrir",
+  "cardTasksAdded": "{count, plural, one{1 tarefa adicionada} other{{count} tarefas adicionadas}}",
+  "@cardTasksAdded": {"placeholders": {"count": {"type": "int"}}},
   "todoSeriesActive": "Série ativa",
   "todoSeriesNext": "Próxima: {date}",
   "@todoSeriesNext": {"placeholders": {"date": {}}},

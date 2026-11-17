@@ -50,6 +50,7 @@ import 'package:memex/domain/models/thread_document.dart';
 import 'package:memex/data/services/pdf_import_service.dart';
 import 'package:memex/data/services/session_report_service.dart';
 import 'package:memex/data/repositories/todo_repository.dart';
+import 'package:memex/domain/models/card_task_state.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_alarm_status.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
@@ -1827,6 +1828,13 @@ class MemexRouter {
           .valueOrThrow;
     });
   }
+
+  /// What the user decided about the task list of record [cardId].
+  Future<Result<CardTaskState?>> loadCardTaskState(String cardId) =>
+      runResult(() => UserStorage.getCardTaskState(cardId));
+
+  Future<Result<void>> saveCardTaskState(String cardId, CardTaskState? state) =>
+      runResultVoid(() => UserStorage.setCardTaskState(cardId, state));
 
   Future<Result<void>> restoreTodo(String id) {
     return runResult(() async {

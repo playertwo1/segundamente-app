@@ -14,6 +14,7 @@ import 'package:memex/domain/models/agent_config.dart';
 import 'package:memex/domain/models/location_context_config.dart';
 import 'package:memex/domain/models/todo_shortcut_settings.dart';
 import 'package:memex/domain/models/active_assistant_settings.dart';
+import 'package:memex/domain/models/card_task_state.dart';
 import 'package:dart_agent_core/dart_agent_core.dart';
 import 'package:memex/domain/models/agent_definitions.dart';
 import 'package:memex/l10n/supported_languages.dart';
@@ -930,6 +931,7 @@ class UserStorage {
       'active_assistant_dismissed_briefing';
   static const String _keyActiveAssistantStalledSnooze =
       'active_assistant_stalled_snooze';
+  static const String _keyCardTaskStates = 'card_task_states';
   static const String _keyActiveAssistantPersonaSuggestions =
       'active_assistant_persona_suggestions';
 
@@ -1008,6 +1010,43 @@ class UserStorage {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Task-block state per record id, kept as one JSON map. A null [state]
+  /// removes the record's entry. Read errors propagate so a write never
+  /// wipes other records' entries.
+  static Future<CardTaskState?> getCardTaskState(String cardId) async {
+    final entry = (await _readCardTaskStates())[cardId];
+    return CardTaskState.fromJson(entry);
+  }
+
+  static Future<void> setCardTaskState(
+    String cardId,
+    CardTaskState? state,
+  ) async {
+    final map = await _readCardTaskStates();
+    if (state == null) {
+      map.remove(cardId);
+    } else {
+      map[cardId] = state.toJson();
+    }
+    final prefs = await SharedPreferences.getInstance();
+    if (map.isEmpty) {
+      await prefs.remove(_keyCardTaskStates);
+    } else {
+      await prefs.setString(_keyCardTaskStates, jsonEncode(map));
+    }
+  }
+
+  static Future<Map<String, dynamic>> _readCardTaskStates() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keyCardTaskStates);
+    if (raw == null) return {};
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      throw const FormatException('card task states is not a JSON map');
+    }
+    return decoded.map((key, value) => MapEntry(key.toString(), value));
   }
 
   static Future<void> setActiveAssistantPersonaSuggestionsRaw(

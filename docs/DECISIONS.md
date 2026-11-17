@@ -539,3 +539,13 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - **Fotos na tarefa** (galeria ou câmera) ficam **só no celular**: não entram no envelope de sync v1 e são preservadas quando a tarefa chega atualizada do Lumen. Sincronizar fotos fica para o contrato v1.1 (L6.5 no roadmap do Lumen).
 - Fora: Local, estilo de notificação, estrela/favorito e microfone na barra; o modelo não guarda esses dados.
 - Consequência: o resto do app segue o DESIGN.md. Reverter é trabalho só de UI; o campo `attachments` do `TodoItem` fica, pois guarda dados do usuário.
+
+## D-076 — Comentários do registro em formato de chat e ideias do registro como tarefas (2026-11-17)
+- Contexto: o dono aprovou por maquete, em 2026-11-17, a conversa das personas em balões (estilo WhatsApp) e um bloco que transforma as ideias em lista de um registro em tarefas. O DESIGN.md pede conversa alinhada por autor, mas não define balões nem cores por persona.
+- Decisão (exceção ao DESIGN.md, só nos comentários da tela do registro):
+  - **Balões**: personas à esquerda em `#1B1A18`, com avatar e nome numa cor fixa por persona (paleta de seis tons quentes, com variante escura para citações dentro do balão do usuário); o usuário à direita em balão **marfim** `#F3EEE6` com texto escuro. Mensagens seguidas do mesmo autor em até 10 min são agrupadas; uma etiqueta de data separa os dias.
+  - **Resposta**: a mensagem respondida aparece citada dentro do balão (barra na cor do autor, nome e trecho); tocar na citação rola até a original e a destaca. Responder por deslize para a direita (com vibração ao passar do ponto) ou por toque, que continua valendo para o TalkBack.
+  - **Tarefas do registro**: itens de lista (marcadores, números ou checklist) do registro aparecem como "Tarefas deste registro", todos marcados e sem data. Nada é gravado sem o toque em "Adicionar N ao Todo", que é a confirmação do usuário (regra "a IA propõe, o usuário confirma"). Depois do toque o bloco vira "N tarefas no Todo · Abrir", com Desfazer por 5 s; "Agora não" esconde o bloco daquele registro. O estado fica por registro em `UserStorage`.
+  - **Animações** com a curva `Cubic(0.16, 1, 0.3, 1)`; com "remover animações" do Android, só fades curtos.
+- Fora: indicador de "persona escrevendo" (o app não expõe um sinal por registro); o pôster de compartilhamento continua no formato antigo.
+- Consequência: reverter é trabalho só de UI; o estado salvo do bloco de tarefas é um mapa local que pode ser ignorado.
