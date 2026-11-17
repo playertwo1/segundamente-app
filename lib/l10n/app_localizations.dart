@@ -2793,6 +2793,18 @@ abstract class AppLocalizations {
   /// **'Reply'**
   String get reply;
 
+  /// No description provided for @commentReplyingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to {name}'**
+  String commentReplyingTo(String name);
+
+  /// No description provided for @commentCancelReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get commentCancelReply;
+
   /// No description provided for @replySent.
   ///
   /// In en, this message translates to:
@@ -6476,6 +6488,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Undo'**
   String get todoUndo;
+
+  /// No description provided for @cardTasksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks in this record'**
+  String get cardTasksTitle;
+
+  /// No description provided for @cardTasksNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'no date'**
+  String get cardTasksNoDate;
+
+  /// No description provided for @cardTasksAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {count} to Todo'**
+  String cardTasksAddButton(int count);
+
+  /// No description provided for @cardTasksCheckOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Check a task'**
+  String get cardTasksCheckOne;
+
+  /// No description provided for @cardTasksNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get cardTasksNotNow;
+
+  /// No description provided for @cardTasksInTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 task in Todo} other{{count} tasks in Todo}}'**
+  String cardTasksInTodo(int count);
+
+  /// No description provided for @cardTasksOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get cardTasksOpen;
+
+  /// No description provided for @cardTasksAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 task added} other{{count} tasks added}}'**
+  String cardTasksAdded(int count);
 
   /// No description provided for @todoSeriesActive.
   ///

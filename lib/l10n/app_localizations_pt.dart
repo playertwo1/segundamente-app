@@ -1563,6 +1563,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get reply => 'Responder';
 
   @override
+  String commentReplyingTo(String name) {
+    return 'Respondendo a $name';
+  }
+
+  @override
+  String get commentCancelReply => 'Cancelar resposta';
+
+  @override
   String get replySent => 'Resposta enviada';
 
   @override
@@ -3677,6 +3685,48 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get todoUndo => 'Desfazer';
+
+  @override
+  String get cardTasksTitle => 'Tarefas deste registro';
+
+  @override
+  String get cardTasksNoDate => 'sem data';
+
+  @override
+  String cardTasksAddButton(int count) {
+    return 'Adicionar $count ao Todo';
+  }
+
+  @override
+  String get cardTasksCheckOne => 'Marque uma tarefa';
+
+  @override
+  String get cardTasksNotNow => 'Agora não';
+
+  @override
+  String cardTasksInTodo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tarefas no Todo',
+      one: '1 tarefa no Todo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cardTasksOpen => 'Abrir';
+
+  @override
+  String cardTasksAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tarefas adicionadas',
+      one: '1 tarefa adicionada',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get todoSeriesActive => 'Série ativa';

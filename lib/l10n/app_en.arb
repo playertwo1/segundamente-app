@@ -715,6 +715,15 @@
   "viewMore": "View more",
   "relatedRecords": "Related records",
   "reply": "Reply",
+  "commentReplyingTo": "Replying to {name}",
+  "@commentReplyingTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "commentCancelReply": "Cancel reply",
   "replySent": "Reply sent",
   "insightTemplateGalleryTitle": "Insight card templates",
   "timelineTemplateGalleryTitle": "Timeline card templates",
@@ -1663,6 +1672,17 @@
   "todoLoadFailed": "Could not load tasks.",
   "todoDeleted": "Task deleted",
   "todoUndo": "Undo",
+  "cardTasksTitle": "Tasks in this record",
+  "cardTasksNoDate": "no date",
+  "cardTasksAddButton": "Add {count} to Todo",
+  "@cardTasksAddButton": {"placeholders": {"count": {"type": "int"}}},
+  "cardTasksCheckOne": "Check a task",
+  "cardTasksNotNow": "Not now",
+  "cardTasksInTodo": "{count, plural, one{1 task in Todo} other{{count} tasks in Todo}}",
+  "@cardTasksInTodo": {"placeholders": {"count": {"type": "int"}}},
+  "cardTasksOpen": "Open",
+  "cardTasksAdded": "{count, plural, one{1 task added} other{{count} tasks added}}",
+  "@cardTasksAdded": {"placeholders": {"count": {"type": "int"}}},
   "todoSeriesActive": "Series active",
   "todoSeriesNext": "Next: {date}",
   "@todoSeriesNext": {"placeholders": {"date": {}}},
