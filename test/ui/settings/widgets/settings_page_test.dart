@@ -118,7 +118,10 @@ void main() {
     await tester.pump();
 
     expect(find.text(UserStorage.l10n.languageSettings), findsOneWidget);
-    expect(find.text(UserStorage.l10n.showInsightTextTitle), findsOneWidget);
+    // The list grew past the 800x600 test viewport; scroll like a user would.
+    final insight = find.text(UserStorage.l10n.showInsightTextTitle);
+    await tester.scrollUntilVisible(insight, 250);
+    expect(insight, findsOneWidget);
 
     final decorations = tester
         .widgetList<Container>(find.byType(Container))
@@ -332,6 +335,10 @@ void main() {
     final delete = find.text(UserStorage.l10n.semanticSearchDeleteModel);
     await tester.scrollUntilVisible(delete, 250);
     expect(delete, findsOneWidget);
+    // scrollUntilVisible stops once the row is built, which can still be
+    // below the viewport; bring it fully on screen before tapping.
+    await tester.ensureVisible(delete);
+    await tester.pumpAndSettle();
 
     await tester.tap(delete);
     await tester.pumpAndSettle();
