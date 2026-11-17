@@ -49,6 +49,10 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Correção das 3 falhas antigas de teste (2026-11-17)
+- Assistente ativo: "Silenciar hoje" trocava a página por um carregamento e voltava ao topo (bug real, agora atualiza no lugar); a página julgava o silêncio pelo relógio real e o serviço pelo dele (`ActiveAssistantService.now()`). Configurações: os testes passam a rolar até itens que saíram da área de 800×600.
+- `flutter test --no-pub test/ui/settings/ test/ui/todo/ test/data/services/active_assistant_service_test.dart` → `+208: All tests passed!`; analyze nos 3 arquivos → `No issues found!`. Integrado na `main` em `2392f562`. Ainda não está em release.
+
 ### Release v1.0.56+141 — Todo redesenhado (D-075) (2026-11-17)
 - Notas completas em [docs/releases/v1.0.56.md](docs/releases/v1.0.56.md). Commits `a5bc309a`, `fcdcbef4`, `59c9ae30`, `c87561e8` e D-075 (`04dc360f`), integrados na `main` em `1acd0c76`.
 - Testes do Todo, l10n, integração, chat flutuante, modelos e sync: `+472 -1`; a falha (`ActiveAssistantSettingsPage persists toggles…`) já existia na `main`, assim como as duas de `settings_page_test.dart`. Analyze nos arquivos alterados: `No issues found!`. Paridade das ARB: OK.
