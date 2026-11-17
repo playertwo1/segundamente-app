@@ -527,3 +527,15 @@ Só escolhas caras de desfazer ou que outro agente poderia contestar. Nova decis
   - Limites mantidos (`D-051` e `F14-assistente-ativo.md`): horários e silêncio configuráveis, nada que o usuário confirmou é escondido, o resumo nunca inventa fatos e nenhuma sugestão vira tarefa ou data sem confirmação explícita.
 - Consequência: os testes unitários e de widget/serviço exigidos por `AGENTS.md` acompanham cada entrega; o fechamento das integrações dependentes de Calendar (`F13-04`) e Lumen (`F12-06`) e a validação no Galaxy S25 Ultra continuam necessários para o portão final.
 
+
+## D-075 — Tarefas em cartões com cor de prioridade, editor em tela cheia e fotos locais (2026-11-17)
+- Contexto: o dono mandou capturas do app Lembretes da Samsung como referência para o Todo e aprovou por maquete, em 2026-11-16/17, o editor, a lista e as animações. O DESIGN.md pede evitar cartões repetidos e gradientes e restringe o azul ao ícone do app.
+- Decisão (exceção ao DESIGN.md, só na aba Todo):
+  - **Lista em cartões** (superfície `#161412`, raio 18, sem borda). Prioridade por gradiente diagonal a partir do canto superior esquerdo: urgente vermelho, alta amarelo, **baixa azul**; normal sem cor. O nome da prioridade aparece numa pílula, então a cor nunca fica sozinha. Atraso usa âmbar e ícone de relógio, separado do vermelho de urgente.
+  - **Abas** Todas, Hoje, Atrasadas e Concluídas; em Todas, seções recolhíveis na ordem Atrasadas, Hoje, Próximas e Concluídas.
+  - **Botão +** da tela inicial no canto inferior direito.
+  - **Editor em tela cheia**: calendário de mês embutido, hora em roda com atalhos, página de alerta antecipado e pílula Cancelar | Salvar.
+  - **Animações**: concluir (círculo enche, ✓ desenhado, risco no título, cartão recolhe) e tarefa nova (cartão entra com uma faixa de luz). Com "remover animações" do Android, só fade curto. A conclusão grava no toque, antes da animação.
+  - **Fotos na tarefa** (galeria ou câmera) ficam **só no celular**: não entram no envelope de sync v1 e são preservadas quando a tarefa chega atualizada do Lumen. Sincronizar fotos fica para o contrato v1.1 (L6.5 no roadmap do Lumen).
+- Fora: Local, estilo de notificação, estrela/favorito e microfone na barra; o modelo não guarda esses dados.
+- Consequência: o resto do app segue o DESIGN.md. Reverter é trabalho só de UI; o campo `attachments` do `TodoItem` fica, pois guarda dados do usuário.
