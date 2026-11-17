@@ -36,6 +36,8 @@ class _FakeRouter implements MemexRouter {
           if (!item.isTombstoned) item,
       ];
   TodoShortcutSettings shortcutSettings;
+  /// Counts completions written, to prove a double tap writes once.
+  int doneWrites = 0;
   TodoAlarmStatus alarmStatus = TodoAlarmStatus.ready;
   TodoAlarmStatus? requestedAlarmStatus;
   String? damagedLegacyFileName;
@@ -164,6 +166,7 @@ class _FakeRouter implements MemexRouter {
     required String id,
     required bool done,
   }) async {
+    if (done) doneWrites++;
     for (var index = 0; index < _stored.length; index++) {
       final item = _stored[index];
       if (item.id == id) {
@@ -287,6 +290,12 @@ class _FakeTodoSyncService extends TodoSyncService {
   }
 }
 
+/// The node of the widget whose semantics label is [label], for label checks.
+SemanticsNode _semanticsLabelled(WidgetTester tester, String label) =>
+    tester.getSemantics(find.byWidgetPredicate(
+      (widget) => widget is Semantics && widget.properties.label == label,
+    ));
+
 TodoItem _item(
   String id,
   String text, {
@@ -341,6 +350,8 @@ void main() {
     Future<String?> Function()? userIdResolver,
     bool autoSyncOnLoad = true,
     Future<String?> Function(ImageSource source)? pickPhoto,
+    bool disableAnimations = false,
+    bool settle = true,
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
@@ -374,10 +385,19 @@ void main() {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(disableAnimations: disableAnimations),
+          child: child!,
+        ),
         home: TodoScreen(viewModel: viewModel),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
     return router;
   }
 
@@ -433,8 +453,9 @@ void main() {
     await tester.tap(find.text(UserStorage.l10n.todoTabToday));
     await tester.pumpAndSettle();
 
+    final l10n = UserStorage.l10n;
     final box = find.byKey(ValueKey('todo_done_${router.items.single.id}'));
-    expect(tester.widget<Checkbox>(box).value, isFalse);
+    expect(find.bySemanticsLabel(l10n.todoMarkDone), findsOneWidget);
     await tester.tap(box);
     await tester.pumpAndSettle();
     expect(find.text('Pagar o seguro'), findsNothing);
@@ -443,13 +464,13 @@ void main() {
     final completedBox = find.byKey(
       ValueKey('todo_done_${router.items.single.id}'),
     );
-    expect(tester.widget<Checkbox>(completedBox).value, isTrue);
+    expect(find.bySemanticsLabel(l10n.todoReopenTask), findsOneWidget);
     await tester.tap(completedBox);
     await tester.pumpAndSettle();
     expect(find.text('Pagar o seguro'), findsNothing);
     await tester.tap(find.text(UserStorage.l10n.todoTabToday));
     await tester.pumpAndSettle();
-    expect(tester.widget<Checkbox>(box).value, isFalse);
+    expect(find.bySemanticsLabel(l10n.todoMarkDone), findsOneWidget);
   });
 
   testWidgets('creates and edits priority and subtasks', (tester) async {
@@ -805,7 +826,10 @@ void main() {
     expect(find.text(UserStorage.l10n.addToCalendar), findsNothing);
     await tester.tapAt(const Offset(12, 12));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(UserStorage.l10n.todoTabCompleted));
+    // The section header repeats the name, so tap the tab itself.
+    await tester.tap(
+      find.widgetWithText(Tab, UserStorage.l10n.todoTabCompleted),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('todo_actions_t2')));
     await tester.pumpAndSettle();
@@ -1547,8 +1571,10 @@ void main() {
         for (final header in headers) tester.getTopLeft(header).dy,
       ];
       expect(tops, [...tops]..sort());
-      expect(find.text('${l10n.todoTabOverdue} · 1'), findsOneWidget);
-      expect(find.text('${l10n.todoTabCompleted} · 1'), findsOneWidget);
+      expect(_semanticsLabelled(tester, '${l10n.todoTabOverdue} · 1').label,
+          '${l10n.todoTabOverdue} · 1');
+      expect(_semanticsLabelled(tester, '${l10n.todoTabCompleted} · 1').label,
+          '${l10n.todoTabCompleted} · 1');
     });
 
     testWidgets('a section with no items does not show its header',
@@ -1629,9 +1655,10 @@ void main() {
           .widget<Text>(find.byKey(ValueKey('todo_priority_$id')))
           .style
           ?.color;
-      expect(colourOf('low'), AppColors.priorityLow);
-      expect(colourOf('high'), AppColors.warning);
-      expect(colourOf('urgent'), AppColors.danger);
+      // Pill text is the light tone of each priority colour, not the colour itself.
+      expect(colourOf('low'), const Color(0xFF93C5FD));
+      expect(colourOf('high'), const Color(0xFFFCD34D));
+      expect(colourOf('urgent'), const Color(0xFFFDA4AF));
       // The label stays next to the colour.
       expect(find.text(l10n.todoPriorityLow), findsOneWidget);
       expect(find.text(l10n.todoPriorityHigh), findsOneWidget);
@@ -1977,16 +2004,256 @@ void main() {
         [_item('t1', 'Revisar orçamento', due: '2026-11-13')],
       );
 
-      final card = tester.widget<Material>(
+      // A normal card is plain: surface colour, no gradient, no border.
+      final card = tester.widget<Container>(
         find.byKey(const ValueKey('todo_card_t1')),
       );
-      expect(card.color, AppColors.surface);
+      final decoration = card.decoration! as BoxDecoration;
+      expect(decoration.color, AppColors.surface);
+      expect(decoration.gradient, isNull);
+      expect(decoration.border, isNull);
       expect(find.byKey(const ValueKey('todo_status_date_t1')), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('todo_add')));
       await tester.pumpAndSettle();
       expect(find.text(UserStorage.l10n.todoNewTask), findsOneWidget);
       expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
+    });
+  });
+
+  group('card, motion and add button', () {
+    Finder inSection(String key, String text) => find.descendant(
+          of: find.byKey(ValueKey('todo_all_section_$key')),
+          matching: find.text(text),
+        );
+
+    BoxDecoration cardDecoration(WidgetTester tester, String id) =>
+        tester
+            .widget<Container>(find.byKey(ValueKey('todo_card_$id')))
+            .decoration! as BoxDecoration;
+
+    testWidgets('priority cards tint a gradient; normal stays plain; no border',
+        (tester) async {
+      await pump(tester, [
+        _item('urgent', 'Urgente', due: '2026-11-13')
+            .copyWith(priority: TodoPriority.urgent),
+        _item('high', 'Alta', minute: 1).copyWith(priority: TodoPriority.high),
+        _item('low', 'Baixa', minute: 2).copyWith(priority: TodoPriority.low),
+        _item('normal', 'Normal', minute: 3),
+      ]);
+
+      for (final id in ['urgent', 'high', 'low', 'normal']) {
+        expect(cardDecoration(tester, id).border, isNull, reason: id);
+      }
+      for (final id in ['urgent', 'high', 'low']) {
+        expect(cardDecoration(tester, id).gradient, isA<LinearGradient>(),
+            reason: id);
+      }
+      expect(cardDecoration(tester, 'normal').gradient, isNull);
+      expect(cardDecoration(tester, 'normal').color, AppColors.surface);
+
+      final urgent =
+          cardDecoration(tester, 'urgent').gradient! as LinearGradient;
+      expect(urgent.begin, Alignment.topLeft);
+      expect(urgent.end, Alignment.bottomRight);
+      expect(urgent.stops, [0, 0.45, 0.9]);
+      expect(urgent.colors.first.a, closeTo(0.40, 0.01));
+      expect(urgent.colors[1].a, closeTo(0.14, 0.01));
+      expect(urgent.colors.last, AppColors.surface);
+    });
+
+    testWidgets('the priority pill shows for low, high and urgent, not normal',
+        (tester) async {
+      await pump(tester, [
+        _item('urgent', 'Urgente', due: '2026-11-13')
+            .copyWith(priority: TodoPriority.urgent),
+        _item('high', 'Alta', minute: 1).copyWith(priority: TodoPriority.high),
+        _item('low', 'Baixa', minute: 2).copyWith(priority: TodoPriority.low),
+        _item('normal', 'Normal', minute: 3),
+      ]);
+
+      for (final id in ['urgent', 'high', 'low']) {
+        expect(find.byKey(ValueKey('todo_priority_$id')), findsOneWidget);
+      }
+      expect(find.byKey(const ValueKey('todo_priority_normal')), findsNothing);
+    });
+
+    testWidgets('an overdue time is amber with an alarm icon', (tester) async {
+      await pump(tester, [
+        _item('late', 'Atrasada', due: '2026-11-10 09:00'),
+        _item('today', 'Hoje', due: '2026-11-13 23:30', minute: 1),
+      ]);
+
+      // Each task also appears on its own tab, so the first match is the all tab.
+      expect(find.byIcon(Icons.alarm), findsWidgets);
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const ValueKey('todo_status_date_late')).first,
+            )
+            .style
+            ?.color,
+        AppColors.primary,
+      );
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const ValueKey('todo_status_date_today')).first,
+            )
+            .style
+            ?.color,
+        isNot(AppColors.primary),
+      );
+    });
+
+    testWidgets('the overdue tab shows its count in amber with a readable label',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      await pump(tester, [_item('late', 'Atrasada', due: '2026-11-10')]);
+
+      // The tab node reads "Atrasadas, 1 tarefa" for screen readers.
+      expect(
+        find.bySemanticsLabel(l10n.todoOverdueTabSemantics(1)),
+        findsOneWidget,
+      );
+      final count = find.descendant(
+        of: find.byType(TabBar),
+        matching: find.text('1'),
+      );
+      expect(count, findsOneWidget);
+      expect(tester.widget<Text>(count).style?.color, AppColors.primary);
+    });
+
+    testWidgets('the overdue tab has no count when nothing is overdue',
+        (tester) async {
+      final l10n = UserStorage.l10n;
+      await pump(tester, [_item('t1', 'Ligar')]);
+
+      expect(find.bySemanticsLabel(l10n.todoOverdueTabSemantics(1)),
+          findsNothing);
+      expect(
+        find.descendant(of: find.byType(TabBar), matching: find.text('0')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the add button is bottom right, 72 dp, and opens the editor',
+        (tester) async {
+      await pump(tester, []);
+      final button = find.byKey(const ValueKey('todo_add'));
+      final centre = tester.getCenter(button);
+
+      expect(centre.dx, greaterThan(800 / 2));
+      expect(centre.dy, greaterThan(2000 / 2));
+      expect(tester.getSize(button), const Size(72, 72));
+
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('todo_text')), findsOneWidget);
+    });
+
+    testWidgets(
+        'completing saves at once and the card leaves after its animation',
+        (tester) async {
+      final router = await pump(tester, [
+        _item('t1', 'Ligar', due: '2026-11-13'),
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      expect(router.items.single.done, isTrue);
+      expect(router.doneWrites, 1);
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(inSection('today', 'Ligar'), findsOneWidget);
+
+      await tester.pumpAndSettle();
+      expect(inSection('today', 'Ligar'), findsNothing);
+      expect(inSection('completed', 'Ligar'), findsOneWidget);
+      expect(router.doneWrites, 1);
+    });
+
+    testWidgets('a second tap while completing neither writes nor reopens',
+        (tester) async {
+      final router = await pump(tester, [
+        _item('t1', 'Ligar', due: '2026-11-13'),
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(router.doneWrites, 1);
+      expect(router.items.single.done, isTrue);
+      expect(inSection('completed', 'Ligar'), findsOneWidget);
+      expect(inSection('today', 'Ligar'), findsNothing);
+    });
+
+    testWidgets('reduced motion: the completed card only fades out in 150 ms',
+        (tester) async {
+      final router = await pump(
+        tester,
+        [_item('t1', 'Ligar', due: '2026-11-13')],
+        disableAnimations: true,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('todo_done_t1')));
+      expect(router.doneWrites, 1);
+      await tester.pump(const Duration(milliseconds: 75));
+      expect(find.byKey(const ValueKey('todo_card_t1')), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(inSection('today', 'Ligar'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the first load does not animate cards in', (tester) async {
+      await pump(
+        tester,
+        [_item('old', 'Antiga', due: '2026-11-13')],
+        settle: false,
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final opacity = tester.widget<Opacity>(
+        find
+            .descendant(
+              of: find.byKey(const ValueKey('todo_row_old')),
+              matching: find.byType(Opacity),
+            )
+            .first,
+      );
+      expect(opacity.opacity, 1);
+    });
+
+    testWidgets('a new task grows and fades in once', (tester) async {
+      final router = await pump(tester, [
+        _item('old', 'Antiga', due: '2026-11-13'),
+      ]);
+
+      await tester.tap(find.byKey(const ValueKey('todo_add')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find.byKey(const ValueKey('todo_text')), 'Nova tarefa');
+      await tester.tap(find.byKey(const ValueKey('todo_dialog_save')));
+      // The editor closes first (about 200 ms); the card then starts growing.
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final id = router.items.firstWhere((i) => i.text == 'Nova tarefa').id;
+      Opacity rowOpacity() => tester.widget<Opacity>(
+            find
+                .descendant(
+                  of: find.byKey(ValueKey('todo_row_$id')),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          );
+      expect(rowOpacity().opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(rowOpacity().opacity, 1);
+      expect(tester.takeException(), isNull);
     });
   });
 }

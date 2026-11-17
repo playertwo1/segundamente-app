@@ -17,9 +17,11 @@ import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/widgets/session_report_screen.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
-import 'package:memex/ui/main_screen/widgets/ai_core_button.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/active_assistant_sheet.dart';
+import 'package:memex/ui/todo/widgets/todo_add_button.dart';
+import 'package:memex/ui/todo/widgets/todo_done_circle.dart';
+import 'package:memex/ui/todo/widgets/todo_priority_style.dart';
 import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:photo_view/photo_view.dart';
@@ -239,14 +241,21 @@ class _TodoScreenState extends State<TodoScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.todoTitle),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: [
-            for (final section in todoTabSections)
-              Tab(text: _tabLabel(l10n, section)),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(kTextTabBarHeight),
+          // Rebuilt with the view model so the overdue count stays current.
+          child: ListenableBuilder(
+            listenable: widget.viewModel,
+            builder: (context, _) => TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                for (final section in todoTabSections)
+                  _tab(l10n, section, widget.viewModel),
+              ],
+            ),
+          ),
         ),
         actions: [
           IconButton(
@@ -324,9 +333,8 @@ class _TodoScreenState extends State<TodoScreen>
             },
           ),
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: MediaQuery.paddingOf(context).bottom + 8,
+            right: 16,
+            bottom: MediaQuery.paddingOf(context).bottom + 20,
             child: _addButton(l10n),
           ),
         ],
@@ -334,18 +342,49 @@ class _TodoScreenState extends State<TodoScreen>
     );
   }
 
-  /// The round + button of the home screen, floating centred over the list.
-  Widget _addButton(AppLocalizations l10n) => Center(
-        child: Semantics(
-          button: true,
-          label: l10n.todoAdd,
-          child: AICoreButton(
-            key: const ValueKey('todo_add'),
-            onTap: () => _addOrEdit(),
-            onLongPress: () {},
-          ),
+  /// The round + button, floating over the list's bottom right corner.
+  Widget _addButton(AppLocalizations l10n) => Semantics(
+        button: true,
+        label: l10n.todoAdd,
+        child: TodoAddButton(
+          key: const ValueKey('todo_add'),
+          onTap: () => _addOrEdit(),
         ),
       );
+
+  /// A tab label. The overdue tab shows its open count in amber when above zero.
+  Widget _tab(
+    AppLocalizations l10n,
+    TodoListSection section,
+    TodoViewModel viewModel,
+  ) {
+    final label = _tabLabel(l10n, section);
+    if (section != TodoListSection.overdue || viewModel.overdueCount == 0) {
+      return Tab(text: label);
+    }
+    final count = viewModel.overdueCount;
+    return Tab(
+      child: Semantics(
+        container: true,
+        label: l10n.todoOverdueTabSemantics(count),
+        excludeSemantics: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label),
+            const SizedBox(width: 6),
+            Text(
+              '$count',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   String _tabLabel(AppLocalizations l10n, TodoListSection section) =>
       switch (section) {
@@ -914,12 +953,16 @@ class _TodoScreenState extends State<TodoScreen>
       // Keeps the last card clear of the floating add button.
       padding: const EdgeInsets.only(bottom: 96),
       children: [
-        for (final group in groups)
+        for (final (index, group) in groups.indexed)
           Column(
             key: ValueKey('todo_all_section_${group.key.name}'),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _sectionHeader(viewModel, l10n, group),
+              Padding(
+                // 12 above every section but the first.
+                padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
+                child: _sectionHeader(viewModel, l10n, group),
+              ),
               if (!viewModel.isSectionCollapsed(group.key))
                 for (final item in group.items)
                   _taskRow(item, l10n, viewModel),
@@ -929,48 +972,94 @@ class _TodoScreenState extends State<TodoScreen>
     );
   }
 
+  /// A 40 dp section header inside a 48 dp touch target. The count animates
+  /// when it changes: the new number comes in from 4 dp above.
   Widget _sectionHeader(
     TodoViewModel viewModel,
     AppLocalizations l10n,
     TodoSectionGroup group,
   ) {
     final collapsed = viewModel.isSectionCollapsed(group.key);
+    final title = _sectionTitle(l10n, group.key);
+    final count = group.items.length;
     final textTheme = Theme.of(context).textTheme;
     return Semantics(
+      // Own node, so the cards after it are not read as part of the header.
+      container: true,
       button: true,
       expanded: !collapsed,
+      label: '$title · $count',
+      excludeSemantics: true,
       child: InkWell(
         key: ValueKey('todo_section_toggle_${group.key.name}'),
         onTap: () => viewModel.toggleSection(group.key),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Row(
-              children: [
-                AnimatedRotation(
-                  turns: collapsed ? -0.25 : 0,
-                  duration: const Duration(milliseconds: 180),
-                  child: const ExcludeSemantics(
-                    child: Icon(
-                      Icons.expand_more,
-                      size: 20,
-                      color: AppColors.textSecondary,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.labelLarge?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 260),
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
+                            opacity: animation,
+                            child: AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) => Transform.translate(
+                                offset: Offset(0, -4 * (1 - animation.value)),
+                                child: child,
+                              ),
+                              child: child,
+                            ),
+                          ),
+                          child: ExcludeSemantics(
+                            key: ValueKey(count),
+                            child: Text(
+                              ' · $count',
+                              style: textTheme.labelLarge?.copyWith(
+                                color: AppColors.textTertiary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '${_sectionTitle(l10n, group.key)} · ${group.items.length}',
-                    style: textTheme.labelLarge?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                  AnimatedRotation(
+                    turns: collapsed ? -0.25 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const ExcludeSemantics(
+                      child: Icon(
+                        Icons.expand_more,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -984,14 +1073,28 @@ class _TodoScreenState extends State<TodoScreen>
     TodoViewModel viewModel,
   ) =>
       _TodoTaskRow(
+        key: ValueKey('todo_row_${item.id}'),
         item: item,
         viewModel: viewModel,
         onEdit: () => _addOrEdit(item),
-        onDone: (_) => viewModel.toggleDone(item),
+        onDone: (done) => _setDone(item, done),
         onSubtask: (subtask) => viewModel.toggleSubtask(item, subtask),
         onAction: (action) => _taskAction(item, action),
         onOpenSource: () => _openSource(item),
       );
+
+  /// Completing animates the card and keeps it in place for its exit length;
+  /// the write itself is immediate. Reopening only writes.
+  Future<void> _setDone(TodoItem item, bool done) {
+    if (done && !item.done) {
+      final reduced = MediaQuery.disableAnimationsOf(context);
+      return widget.viewModel.completeTask(
+        item,
+        exitDuration: reduced ? todoReducedExit : todoCompleteExit,
+      );
+    }
+    return widget.viewModel.toggleDone(item);
+  }
 }
 
 enum _TodoTaskAction { edit, delete, calendar }
@@ -1138,6 +1241,8 @@ class _TodoSearchScreenState extends State<_TodoSearchScreen> {
                             children: [
                               for (final item in results)
                                 _TodoTaskRow(
+                                  key: ValueKey('todo_row_${item.id}'),
+                                  animated: false,
                                   item: item,
                                   viewModel: widget.viewModel,
                                   onEdit: () => widget.onEdit(item),
@@ -1168,8 +1273,27 @@ bool _shouldShowSyncStatus(TodoSyncStatus status) =>
     status.state == TodoSyncBadgeState.revoked ||
     status.conflicts.isNotEmpty;
 
-class _TodoTaskRow extends StatelessWidget {
+const _enterCurve = Cubic(0.16, 1, 0.3, 1);
+const _completeExitMs = 1080;
+const _reducedExitMs = 150;
+const _enterMs = 820;
+const _cardEnterMs = 380;
+const _sweepStartMs = 120;
+const _sweepMs = 700;
+
+/// Completion animation length, and the fade that replaces it when the system
+/// asks for reduced motion. The screen passes the same length to the view model.
+const todoCompleteExit = Duration(milliseconds: _completeExitMs);
+const todoReducedExit = Duration(milliseconds: _reducedExitMs);
+
+/// Pulse of the completion circle: 0 to 1 and back, over one unit of time.
+double _pulse(double s) => s < 0.5
+    ? _enterCurve.transform(s * 2)
+    : 1 - _enterCurve.transform((s - 0.5) * 2);
+
+class _TodoTaskRow extends StatefulWidget {
   const _TodoTaskRow({
+    super.key,
     required this.item,
     required this.viewModel,
     required this.onEdit,
@@ -1177,6 +1301,7 @@ class _TodoTaskRow extends StatelessWidget {
     required this.onSubtask,
     required this.onAction,
     required this.onOpenSource,
+    this.animated = true,
   });
 
   final TodoItem item;
@@ -1187,262 +1312,487 @@ class _TodoTaskRow extends StatelessWidget {
   final ValueChanged<_TodoTaskAction> onAction;
   final VoidCallback onOpenSource;
 
+  /// False in search results: completion and entry then only change the state.
+  final bool animated;
+
   @override
-  Widget build(BuildContext context) {
+  State<_TodoTaskRow> createState() => _TodoTaskRowState();
+}
+
+class _TodoTaskRowState extends State<_TodoTaskRow>
+    with TickerProviderStateMixin {
+  // Entry runs over _enterMs; idle at 1. Exit runs over _completeExitMs, or
+  // _reducedExitMs when motion is reduced; idle at 0.
+  late final AnimationController _enter = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: _enterMs),
+    value: 1,
+  );
+  late final AnimationController _exit = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: _completeExitMs),
+  );
+  bool _entryChecked = false;
+  bool _completing = false;
+  bool _reduced = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_entryChecked) return;
+    if (!widget.animated || !widget.viewModel.isEntering(widget.item.id)) {
+      _entryChecked = true;
+      return;
+    }
+    // A task saved in the editor is listed while that route still covers this
+    // screen; tickers are muted then, so the entry waits until the screen shows.
+    if (!TickerMode.valuesOf(context).enabled) return;
+    _entryChecked = true;
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    _enter.forward(from: 0);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TodoTaskRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The write failed or the task was reopened: show the stored state again.
+    if (_completing && _exit.isCompleted && !widget.item.done) {
+      setState(() {
+        _completing = false;
+        _exit.reset();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _enter.dispose();
+    _exit.dispose();
+    super.dispose();
+  }
+
+  void _onCheck(bool value) {
+    if (_completing) return;
+    if (!widget.animated || !value || widget.item.done) {
+      widget.onDone(value);
+      return;
+    }
+    _completing = true;
+    _reduced = MediaQuery.disableAnimationsOf(context);
+    _exit
+      ..duration = Duration(
+        milliseconds: _reduced ? _reducedExitMs : _completeExitMs,
+      )
+      ..forward(from: 0);
+    widget.onDone(true);
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        // Both controllers drive this card, so it rebuilds on every tick.
+        animation: Listenable.merge([_enter, _exit]),
+        builder: (context, _) => _buildCard(context),
+      );
+
+  Widget _buildCard(BuildContext context) {
     final l10n = UserStorage.l10n;
-    final source = item.source;
+    final item = widget.item;
+    final viewModel = widget.viewModel;
+    final style = TodoPriorityStyle.of(item.priority);
     final textTheme = Theme.of(context).textTheme;
-    final showSync = _shouldShowSyncStatus(viewModel.syncStatus);
+    final source = item.source;
     final nextOccurrence = item.done ? viewModel.nextOccurrenceFor(item) : null;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 5, 12, 5),
-      child: Material(
-        key: ValueKey('todo_card_${item.id}'),
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: ValueKey('todo_${item.id}'),
-          onTap: onEdit,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MergeSemantics(
-                      child: Semantics(
-                        label:
-                            item.done ? l10n.todoReopenTask : l10n.todoMarkDone,
-                        child: Checkbox(
-                          key: ValueKey('todo_done_${item.id}'),
-                          value: item.done,
-                          shape: const CircleBorder(),
-                          activeColor: AppColors.primary,
-                          checkColor: AppColors.onPrimary,
-                          side: const BorderSide(
-                            color: AppColors.textSecondary,
-                            width: 1.5,
+    final showSync = _shouldShowSyncStatus(viewModel.syncStatus);
+
+    // Completion values. While completing they come from the exit controller
+    // only, so a reload that marks the task done does not skip the animation.
+    final completing = _completing;
+    final reduced = completing && _reduced;
+    final exitMs = _exit.duration!.inMilliseconds.toDouble();
+    double seg(double start, double end) => reduced
+        ? 1
+        : ((_exit.value * exitMs - start) / (end - start)).clamp(0.0, 1.0);
+    final staticDone = item.done ? 1.0 : 0.0;
+    final fillT = completing ? _enterCurve.transform(seg(0, 180)) : staticDone;
+    final tickT = completing ? _enterCurve.transform(seg(120, 340)) : staticDone;
+    final strikeT =
+        completing ? _enterCurve.transform(seg(200, 500)) : staticDone;
+    final gradFade =
+        completing ? _enterCurve.transform(seg(260, 780)) : staticDone;
+    final pulse = completing && !reduced ? _pulse(seg(0, 320)) : 0.0;
+    final collapse = completing && !reduced && widget.animated
+        ? 1 - _enterCurve.transform(seg(760, 1080))
+        : 1.0;
+    final exitOpacity = reduced
+        ? 1 - _exit.value
+        : completing && widget.animated
+            ? 1 - seg(760, 980)
+            : 1.0;
+
+    // Entry values: card growth, slide, scale and fade, then the light sweep.
+    final enterMs = _enter.value * _enterMs;
+    final enterT =
+        _enterCurve.transform((enterMs / _cardEnterMs).clamp(0.0, 1.0));
+    final enterFade = Curves.easeOut.transform((enterMs / _cardEnterMs).clamp(0.0, 1.0));
+    final sweepT = ((enterMs - _sweepStartMs) / _sweepMs).clamp(0.0, 1.0);
+    final sweeping = _enter.isAnimating && sweepT > 0 && sweepT < 1;
+
+    // A task that was just completed shows its live state, not the stored one.
+    final showDoneMeta = item.done && !completing;
+    final dueState = viewModel.placementStateFor(item);
+    final overdue = !showDoneMeta && dueState == TodoTaskState.overdue;
+    final metaStyle = textTheme.bodySmall?.copyWith(
+      fontSize: 12,
+      color: AppColors.textSecondary,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    final dueText = showDoneMeta
+        ? _statusAndDate(item, viewModel, l10n, context)
+        : _dueLabel(l10n, item, dueState, context);
+
+    final meta = <Widget>[
+      if (dueText != null)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (overdue) ...[
+              Icon(
+                Icons.alarm,
+                size: 14,
+                color: AppColors.primary,
+                semanticLabel: l10n.todoStatusOverdue,
+              ),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              dueText,
+              key: ValueKey('todo_status_date_${item.id}'),
+              style: metaStyle?.copyWith(
+                color: overdue ? AppColors.primary : null,
+              ),
+            ),
+          ],
+        ),
+      if (style.pillText case final pillText?)
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 8),
+          decoration: BoxDecoration(
+            color: style.pillBackground,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            _priorityLabel(l10n, item.priority),
+            key: ValueKey('todo_priority_${item.id}'),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: pillText,
+            ),
+          ),
+        ),
+      if (item.attachments.isNotEmpty)
+        Row(
+          key: ValueKey('todo_photos_${item.id}'),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ExcludeSemantics(
+              child: Icon(
+                Icons.photo_outlined,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              l10n.todoPhotoCount(item.attachments.length),
+              style: metaStyle,
+            ),
+          ],
+        ),
+      if (item.recurrence != null)
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ExcludeSemantics(
+              child: Icon(
+                Icons.repeat,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _repeatSummary(l10n, context, item.recurrence),
+              key: ValueKey('todo_repeat_summary_${item.id}'),
+              style: metaStyle,
+            ),
+          ],
+        ),
+    ];
+
+    final card = Stack(
+      children: [
+        Container(
+          key: ValueKey('todo_card_${item.id}'),
+          decoration: style.cardDecoration(fade: gradFade),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              key: ValueKey('todo_${item.id}'),
+              borderRadius: const BorderRadius.all(Radius.circular(18)),
+              onTap: widget.onEdit,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    checked: item.done,
+                    button: true,
+                    label: item.done ? l10n.todoReopenTask : l10n.todoMarkDone,
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: InkWell(
+                        key: ValueKey('todo_done_${item.id}'),
+                        customBorder: const CircleBorder(),
+                        onTap: () => _onCheck(!item.done),
+                        child: Center(
+                          child: TodoDoneCircle(
+                            ring: style.ring,
+                            fill: style.fill,
+                            fillProgress: fillT,
+                            tickProgress: tickT,
+                            scale: 1 + 0.22 * pulse,
                           ),
-                          onChanged: (value) => onDone(value ?? !item.done),
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 12, right: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.text,
-                              style: textTheme.bodyLarge?.copyWith(
-                                fontSize: 16,
-                                color: item.done
-                                    ? AppColors.textSecondary
-                                    : AppColors.textPrimary,
-                                decoration: item.done
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 2,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Text(
-                                  _statusAndDate(
-                                      item, viewModel, l10n, context),
-                                  key: ValueKey('todo_status_date_${item.id}'),
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 13,
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 14, 4, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              Text(
+                                item.text,
+                                style: textTheme.bodyLarge?.copyWith(
+                                  fontSize: 15,
+                                  height: 1.3,
+                                  color: Color.lerp(
+                                    AppColors.textPrimary,
+                                    AppColors.textTertiary,
+                                    strikeT,
                                   ),
                                 ),
-                                if (item.priority != TodoPriority.normal)
-                                  Text(
-                                    _priorityLabel(l10n, item.priority),
-                                    key: ValueKey('todo_priority_${item.id}'),
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: _priorityColor(item.priority),
-                                      fontWeight: FontWeight.w600,
+                              ),
+                              if (strikeT > 0)
+                                Positioned.fill(
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: strikeT,
+                                      child: Container(
+                                        height: 1.5,
+                                        color: AppColors.textSecondary,
+                                      ),
                                     ),
                                   ),
-                                if (item.attachments.isNotEmpty)
-                                  Row(
-                                    key: ValueKey('todo_photos_${item.id}'),
-                                    mainAxisSize: MainAxisSize.min,
+                                ),
+                            ],
+                          ),
+                          if (meta.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: meta,
+                            ),
+                          ],
+                          if (showSync)
+                            Text(
+                              viewModel.isItemSynced(item)
+                                  ? l10n.todoSyncSynced
+                                  : l10n.todoSyncSavedOnDevice,
+                              key: ValueKey('todo_item_sync_label_${item.id}'),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: viewModel.isItemSynced(item)
+                                    ? AppColors.success
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          if (item.sourceStale) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.todoSourceChanged,
+                              key: ValueKey('todo_source_stale_${item.id}'),
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.warning,
+                              ),
+                            ),
+                          ],
+                          if (nextOccurrence != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              '${l10n.todoSeriesActive} · '
+                              '${l10n.todoSeriesNext(_formatScheduleDate(nextOccurrence, context))}',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                          for (final subtask in item.subtasks)
+                            CheckboxListTile(
+                              key: ValueKey(
+                                  'todo_subtask_${item.id}_${subtask.id}'),
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              value: subtask.done,
+                              onChanged: (_) => widget.onSubtask(subtask),
+                              title: Text(
+                                subtask.text,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: subtask.done
+                                      ? AppColors.textSecondary
+                                      : AppColors.textPrimary,
+                                  decoration: subtask.done
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          if (source != null)
+                            InkWell(
+                              key: ValueKey('todo_source_${item.id}'),
+                              onTap: widget.onOpenSource,
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(minHeight: 48),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  child: Row(
                                     children: [
-                                      const ExcludeSemantics(
-                                        child: Icon(
-                                          Icons.attach_file,
-                                          size: 14,
-                                          color: AppColors.textSecondary,
-                                        ),
+                                      const Icon(
+                                        Icons.description_outlined,
+                                        size: 16,
+                                        color: AppColors.textSecondary,
                                       ),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        l10n.todoPhotoCount(
-                                          item.attachments.length,
-                                        ),
-                                        style: textTheme.bodySmall?.copyWith(
-                                          color: AppColors.textSecondary,
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          '${l10n.todoOpenSource}: ${source.clock ?? ''} '
+                                          '"${source.excerpt}"',
+                                          style:
+                                              textTheme.bodySmall?.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                if (showSync)
-                                  Text(
-                                    viewModel.isItemSynced(item)
-                                        ? l10n.todoSyncSynced
-                                        : l10n.todoSyncSavedOnDevice,
-                                    key: ValueKey(
-                                        'todo_item_sync_label_${item.id}'),
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: viewModel.isItemSynced(item)
-                                          ? AppColors.success
-                                          : AppColors.textSecondary,
-                                    ),
-                                  ),
-                              ],
+                                ),
+                              ),
                             ),
-                            if (item.recurrence != null) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.repeat,
-                                    size: 14,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      _repeatSummary(
-                                          l10n, context, item.recurrence),
-                                      key: ValueKey(
-                                          'todo_repeat_summary_${item.id}'),
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (item.sourceStale) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                l10n.todoSourceChanged,
-                                key: ValueKey('todo_source_stale_${item.id}'),
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: AppColors.warning,
-                                ),
-                              ),
-                            ],
-                            if (nextOccurrence != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                '${l10n.todoSeriesActive} · '
-                                '${l10n.todoSeriesNext(_formatScheduleDate(nextOccurrence, context))}',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                            for (final subtask in item.subtasks)
-                              CheckboxListTile(
-                                key: ValueKey(
-                                    'todo_subtask_${item.id}_${subtask.id}'),
-                                dense: true,
-                                contentPadding: EdgeInsets.zero,
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                value: subtask.done,
-                                onChanged: (_) => onSubtask(subtask),
-                                title: Text(
-                                  subtask.text,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: subtask.done
-                                        ? AppColors.textSecondary
-                                        : AppColors.textPrimary,
-                                    decoration: subtask.done
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                  ),
-                                ),
-                              ),
-                            if (source != null)
-                              InkWell(
-                                key: ValueKey('todo_source_${item.id}'),
-                                onTap: onOpenSource,
-                                child: ConstrainedBox(
-                                  constraints:
-                                      const BoxConstraints(minHeight: 48),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 8),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.description_outlined,
-                                          size: 16,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            '${l10n.todoOpenSource}: ${source.clock ?? ''} '
-                                            '"${source.excerpt}"',
-                                            style:
-                                                textTheme.bodySmall?.copyWith(
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  PopupMenuButton<_TodoTaskAction>(
+                    key: ValueKey('todo_actions_${item.id}'),
+                    tooltip: l10n.todoTaskActions,
+                    onSelected: widget.onAction,
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: _TodoTaskAction.edit,
+                        child: Text(l10n.todoEdit),
+                      ),
+                      if (!item.done && calendarSlotFor(item.due) != null)
+                        PopupMenuItem(
+                          value: _TodoTaskAction.calendar,
+                          child: Text(l10n.addToCalendar),
+                        ),
+                      PopupMenuItem(
+                        value: _TodoTaskAction.delete,
+                        child: Text(l10n.delete),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (sweeping)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(18)),
+                child: Align(
+                  // Moves the band from fully left of the card to fully right.
+                  alignment: Alignment(-4 + 8 * sweepT, 0),
+                  child: FractionallySizedBox(
+                    widthFactor: 0.6,
+                    heightFactor: 1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            style.fill.withValues(alpha: 0),
+                            style.fill.withValues(alpha: 0.35),
+                            style.fill.withValues(alpha: 0),
                           ],
                         ),
                       ),
                     ),
-                    PopupMenuButton<_TodoTaskAction>(
-                      key: ValueKey('todo_actions_${item.id}'),
-                      tooltip: l10n.todoTaskActions,
-                      onSelected: onAction,
-                      itemBuilder: (_) => [
-                        PopupMenuItem(
-                          value: _TodoTaskAction.edit,
-                          child: Text(l10n.todoEdit),
-                        ),
-                        if (!item.done && calendarSlotFor(item.due) != null)
-                          PopupMenuItem(
-                            value: _TodoTaskAction.calendar,
-                            child: Text(l10n.addToCalendar),
-                          ),
-                        PopupMenuItem(
-                          value: _TodoTaskAction.delete,
-                          child: Text(l10n.delete),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ],
+              ),
+            ),
+          ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: ClipRect(
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: (enterT * collapse).clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, 10 * (1 - enterT)),
+            child: Transform.scale(
+              scale: 0.97 + 0.03 * enterT,
+              child: Opacity(
+                opacity: (enterFade * exitOpacity).clamp(0.0, 1.0),
+                child: card,
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Due date and time of a task that is not done, as shown on its card. Null when
+/// the task has no date. Today shows only the time.
+String? _dueLabel(
+  AppLocalizations l10n,
+  TodoItem item,
+  TodoTaskState state,
+  BuildContext context,
+) {
+  if (state == TodoTaskState.noDate) return null;
+  final time = item.dueTime;
+  if (state == TodoTaskState.today) {
+    return time ?? l10n.todoStatusToday;
+  }
+  final date = _formatScheduleDate(item, context);
+  return time == null ? date : '$date · $time';
 }
 
 /// Short summary of a repeat rule, shared by the list card and the editor.
@@ -1454,17 +1804,28 @@ String _repeatSummary(
     switch (recurrence?.frequency) {
       null => l10n.todoRepeatNone,
       TodoRepeatFrequency.daily => l10n.todoRepeatSummaryDaily,
+      TodoRepeatFrequency.weekly when recurrence!.weekdays.length == 1 =>
+        l10n.todoRepeatSummaryWeeklyOne(
+          _weekdayName(context, recurrence.weekdays.first, short: false),
+        ),
       TodoRepeatFrequency.weekly => l10n.todoRepeatSummaryWeekly([
           for (final day in ([...recurrence!.weekdays]..sort()))
-            _shortWeekday(context, day),
+            _weekdayName(context, day, short: true),
         ].join(', ')),
       TodoRepeatFrequency.monthly => l10n.todoRepeatSummaryMonthly,
     };
 
+/// Weekday name for 1 (Monday) to 7 (Sunday).
+String _weekdayName(BuildContext context, int weekday, {required bool short}) {
+  final locale = Localizations.localeOf(context).toString();
+  final date = DateTime.utc(2026, 1, 5 + weekday - 1);
+  return short
+      ? DateFormat.E(locale).format(date)
+      : DateFormat.EEEE(locale).format(date);
+}
+
 String _shortWeekday(BuildContext context, int weekday) =>
-    DateFormat.E(Localizations.localeOf(context).toString()).format(
-      DateTime.utc(2026, 1, 5 + weekday - 1),
-    );
+    _weekdayName(context, weekday, short: true);
 
 /// Label for an early alert in minutes; shared by the editor row and its page.
 String _alertLabel(AppLocalizations l10n, int minutes) => switch (minutes) {
@@ -1524,12 +1885,8 @@ String _priorityLabel(AppLocalizations l10n, TodoPriority priority) =>
     };
 
 /// Colour never stands alone: every use also shows the priority label.
-Color _priorityColor(TodoPriority priority) => switch (priority) {
-      TodoPriority.low => AppColors.priorityLow,
-      TodoPriority.normal => AppColors.textSecondary,
-      TodoPriority.high => AppColors.warning,
-      TodoPriority.urgent => AppColors.danger,
-    };
+Color _priorityColor(TodoPriority priority) =>
+    TodoPriorityStyle.of(priority).color;
 
 enum _EditorPanel { date, time, repeat }
 

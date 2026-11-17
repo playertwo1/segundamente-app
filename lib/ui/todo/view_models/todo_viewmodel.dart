@@ -89,6 +89,19 @@ class TodoViewModel extends ChangeNotifier {
   final Future<String?> Function(ImageSource source) _pickPhoto;
   final Set<TodoSectionKey> _collapsedSections = {};
 
+  /// Tasks completed from a card whose exit animation is still running. Each
+  /// keeps the state it had before completion, so it stays in that section
+  /// until its timer ends. The value is that state.
+  final Map<String, TodoTaskState> _completing = {};
+  final Map<String, Timer> _exitTimers = {};
+
+  /// Ids of tasks that appeared in the last reload after the first load. Cards
+  /// of these ids animate in when built. Several rows can show one task (the
+  /// all tab and its own tab), so this is read, not consumed.
+  Set<String> _entering = {};
+  Set<String> _knownIds = {};
+  bool _baselineLoaded = false;
+
   List<TodoItem> _all = const [];
   TodoShortcutSettings shortcutSettings = TodoShortcutSettings.defaults;
   ActiveAssistantState activeAssistantState =
@@ -115,6 +128,10 @@ class TodoViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    for (final timer in _exitTimers.values) {
+      timer.cancel();
+    }
+    _exitTimers.clear();
     _syncService.statusNotifier.removeListener(_onSyncStatusChanged);
     super.dispose();
   }
@@ -123,13 +140,32 @@ class TodoViewModel extends ChangeNotifier {
 
   List<TodoItem> get items => itemsFor(section);
 
+  /// Open count of the overdue tab, shown next to its name.
+  int get overdueCount => itemsFor(TodoListSection.overdue).length;
+
+  /// True while a card completed from the list is still on screen.
+  bool isCompleting(TodoItem item) => _completing.containsKey(item.id);
+
+  /// A task shows as done in the completed tab and the done look, except one
+  /// still playing its completion animation, which stays where it was.
+  bool _showsAsDone(TodoItem item) => item.done && !isCompleting(item);
+
+  /// The state that decides the section of a task. A completing task keeps
+  /// the state it had before it was completed.
+  TodoTaskState placementStateFor(TodoItem item) =>
+      _completing[item.id] ?? stateFor(item);
+
+  /// True for a task that appeared in the last reload, after the first load.
+  bool isEntering(String id) => _entering.contains(id);
+
   List<TodoItem> itemsFor(TodoListSection section) {
     final items = [
       for (final item in _all)
         if ((section == TodoListSection.all ||
                 (section == TodoListSection.completed
-                    ? item.done
-                    : !item.done && _belongsToSection(item, section))) &&
+                    ? _showsAsDone(item)
+                    : !_showsAsDone(item) &&
+                        _belongsToSection(item, section))) &&
             (priorityFilter == null || item.priority == priorityFilter))
           item,
     ];
@@ -175,9 +211,9 @@ class TodoViewModel extends ChangeNotifier {
   }
 
   bool _inSection(TodoItem item, TodoSectionKey key) {
-    if (key == TodoSectionKey.completed) return item.done;
-    if (item.done) return false;
-    final state = stateFor(item);
+    if (key == TodoSectionKey.completed) return _showsAsDone(item);
+    if (_showsAsDone(item)) return false;
+    final state = placementStateFor(item);
     return switch (key) {
       TodoSectionKey.overdue => state == TodoTaskState.overdue,
       TodoSectionKey.today => state == TodoTaskState.today,
@@ -229,6 +265,8 @@ class TodoViewModel extends ChangeNotifier {
 
   void selectSection(TodoListSection value) {
     section = value;
+    // A card not built yet must not animate later, when its tab opens.
+    _entering = {};
     notifyListeners();
   }
 
@@ -297,9 +335,19 @@ class TodoViewModel extends ChangeNotifier {
     }
   }
 
+  /// Replaces the list and records which tasks are new since the last load.
+  /// The first load is the baseline, so opening the screen does not animate.
+  void _setItems(List<TodoItem> value) {
+    final ids = {for (final item in value) item.id};
+    if (_baselineLoaded) _entering = ids.difference(_knownIds);
+    _knownIds = ids;
+    _baselineLoaded = true;
+    _all = value;
+  }
+
   Future<void> _reloadLocalData() async {
     (await _router.loadTodos()).when(
-      onOk: (value) => _all = value,
+      onOk: _setItems,
       onError: (error, _) => errorMessage = '$error',
     );
     if (_disposed) return;
@@ -321,7 +369,7 @@ class TodoViewModel extends ChangeNotifier {
     (await _router.loadTodos()).when(
       onOk: (value) {
         if (!_disposed && reqId == _reloadSeq) {
-          _all = value;
+          _setItems(value);
         }
       },
       onError: (error, _) {
@@ -641,6 +689,23 @@ class TodoViewModel extends ChangeNotifier {
     await _change(_router.setTodoDone(id: item.id, done: !item.done));
   }
 
+  /// Completes [item] from its card. The write happens at once; the card keeps
+  /// its section for [exitDuration] so its animation can finish. A second call
+  /// for the same task while it is completing does nothing.
+  Future<void> completeTask(
+    TodoItem item, {
+    required Duration exitDuration,
+  }) async {
+    if (_disposed || item.done || isCompleting(item)) return;
+    _completing[item.id] = stateFor(item);
+    _exitTimers[item.id] = Timer(exitDuration, () {
+      _exitTimers.remove(item.id);
+      _completing.remove(item.id);
+      if (!_disposed) notifyListeners();
+    });
+    await _change(_router.setTodoDone(id: item.id, done: true));
+  }
+
   Future<void> toggleSubtask(TodoItem item, TodoSubtask subtask) async {
     await _change(_router.editTodo(
       id: item.id,
@@ -695,7 +760,7 @@ class TodoViewModel extends ChangeNotifier {
   }
 
   bool _belongsToSection(TodoItem item, TodoListSection section) {
-    final state = stateFor(item);
+    final state = placementStateFor(item);
     return switch (section) {
       TodoListSection.all => true,
       TodoListSection.today =>
@@ -712,7 +777,9 @@ class TodoViewModel extends ChangeNotifier {
   ) {
     final sorted = [...items];
     sorted.sort((a, b) {
-      if (a.done != b.done) return a.done ? 1 : -1;
+      final aDone = _showsAsDone(a);
+      final bDone = _showsAsDone(b);
+      if (aDone != bDone) return aDone ? 1 : -1;
       if (section == TodoListSection.completed) {
         final aDate = DateTime.tryParse(a.doneAt ?? '');
         final bDate = DateTime.tryParse(b.doneAt ?? '');

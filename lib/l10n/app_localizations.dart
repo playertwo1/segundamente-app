@@ -6255,6 +6255,12 @@ abstract class AppLocalizations {
   /// **'Overdue'**
   String get todoTabOverdue;
 
+  /// No description provided for @todoOverdueTabSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Overdue, {count} task} other{Overdue, {count} tasks}}'**
+  String todoOverdueTabSemantics(int count);
+
   /// No description provided for @todoTabAll.
   ///
   /// In en, this message translates to:
@@ -6294,7 +6300,7 @@ abstract class AppLocalizations {
   /// No description provided for @todoPhotoCount.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, one{# photo} other{# photos}}'**
+  /// **'{count, plural, one{{count} photo} other{{count} photos}}'**
   String todoPhotoCount(int count);
 
   /// No description provided for @todoPhotoSaveFailed.
@@ -8940,8 +8946,14 @@ abstract class AppLocalizations {
   /// No description provided for @todoRepeatSummaryWeekly.
   ///
   /// In en, this message translates to:
-  /// **'Every week on {days}'**
+  /// **'Every {days}'**
   String todoRepeatSummaryWeekly(String days);
+
+  /// No description provided for @todoRepeatSummaryWeeklyOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {day}'**
+  String todoRepeatSummaryWeeklyOne(String day);
 
   /// No description provided for @todoRepeatSummaryMonthly.
   ///

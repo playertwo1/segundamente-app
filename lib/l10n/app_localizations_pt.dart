@@ -3544,6 +3544,17 @@ class AppLocalizationsPt extends AppLocalizations {
   String get todoTabOverdue => 'Atrasadas';
 
   @override
+  String todoOverdueTabSemantics(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Atrasadas, $count tarefas',
+      one: 'Atrasadas, $count tarefa',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get todoTabAll => 'Todas';
 
   @override
@@ -3566,8 +3577,8 @@ class AppLocalizationsPt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '# fotos',
-      one: '# foto',
+      other: '$count fotos',
+      one: '$count foto',
     );
     return '$_temp0';
   }
@@ -5091,7 +5102,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String todoRepeatSummaryWeekly(String days) {
-    return 'Toda semana em $days';
+    return 'Toda $days';
+  }
+
+  @override
+  String todoRepeatSummaryWeeklyOne(String day) {
+    return 'Todo $day';
   }
 
   @override
