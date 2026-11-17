@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-17 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.56+141 (2026-11-17, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-17 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.57+142 (2026-11-17, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O histórico completo de 2026-11-02 a 2026-11-13 está em [docs/historico/STATE-2026-11-02-a-2026-11-13.md](docs/historico/STATE-2026-11-02-a-2026-11-13.md). Fases, critérios e portões estão no [ROADMAP](ROADMAP.md).
 
@@ -21,6 +21,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Próxima ação
 
+0. **Instalar a v1.0.57 no S25** e conferir com o dono: Todo novo da v1.0.56 (cartões em gradiente, +, animações, fotos) e a tela do registro da v1.0.57 (balões, deslizar para responder, citação, tarefas do registro, Desfazer).
 1. **Validar a F14 — Assistente ativo (`REVIEW` por `D-074`) e a F15 no Galaxy S25 Ultra:** conferir na aba Todo o botão e painel do Assistente Ativo (`Resumo Manhã/Tarde`, `Tarefas paradas há dias`, `Sugestões das personas` com `TodoProposalCard` e configurações/silêncio), além da pendência da F15 (`F15-02` a `F15-07` e `docs/reviews/F15.md`). Acoplamentos pendentes na F14 para fases futuras: eventos do Google Calendar (`F13-04`) e fala no Lumen (`F12-06`).
 2. **Validar F15-02 a F15-07 no S25 com um APK da `main`** (a F15 inteira já está na `main` desde `91feef7e`, mais as correções da auditoria; o S25 estava fora do `adb` em 2026-11-15). No S25, conferir também os pontos da auditoria que só o aparelho decide (`docs/reviews/F15.md`): atalhos Conversar e Falar com a folha não exportada (R04), widget atualizado depois de um sync com o app fechado (R02), concluir pelo widget a frio (R01) e o motor compartilhado sem tela (R05). O dono decide o texto do limite de Falar (R03). A forma da minicápsula já é a bolha (D-073); falta medi-la no S25 pela F15-07. Checar: chat flutuante pelos atalhos Conversar e Falar (abertura a frio, volta para a tela de origem, Abrir no app), widget pequeno, médio e grande, painel rápido e os dois protótipos da cápsula no build dev.
 3. **F11, a investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`, fallback de cifras). Não é do Todo, mas esse armazenamento guarda tokens de login; checar separadamente.
@@ -48,6 +49,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### v1.0.57: comentários em chat e tarefas do registro (2026-11-17, D-076)
+- Tela do registro: comentários em balões (personas à esquerda, usuário em marfim à direita), citação da resposta com ida à original, deslizar para responder e prévia no compositor; bloco "Tarefas deste registro" cria tarefas sem data só após o toque em "Adicionar N ao Todo", com Desfazer e "Agora não" por registro. Maquetes aprovadas pelo dono no chat.
+- `flutter.bat test --no-pub --reporter compact test/ui/timeline/ test/l10n/ test/domain/use_cases/card_task_extractor_test.dart test/domain/models/card_task_state_test.dart test/utils/user_storage_card_task_state_test.dart test/ui/todo/`: `+227: All tests passed!`; analyze dos arquivos novos: `No issues found!` (7 `info` antigos em `timeline_card_detail_screen.dart`).
+- Merge `7739c290`, release `dddc46ff`; APK `1.0.57+142` assinado com o certificado de sempre; [GitHub Release v1.0.57](https://github.com/playertwo1/segundamente-app/releases/tag/v1.0.57). Detalhes em `docs/releases/v1.0.57.md`.
+- S25: `NOT_RUN` (deslizar, vibração, TalkBack, animações). Sem teste de widget da tela do registro inteira.
 
 ### Correção das 3 falhas antigas de teste (2026-11-17)
 - Assistente ativo: "Silenciar hoje" trocava a página por um carregamento e voltava ao topo (bug real, agora atualiza no lugar); a página julgava o silêncio pelo relógio real e o serviço pelo dele (`ActiveAssistantService.now()`). Configurações: os testes passam a rolar até itens que saíram da área de 800×600.
