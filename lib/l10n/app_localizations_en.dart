@@ -3509,6 +3509,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todoTabOverdue => 'Overdue';
 
   @override
+  String get todoTabAll => 'All';
+
+  @override
+  String get todoEmptyAll => 'No tasks yet.';
+
+  @override
+  String get todoPhotoFromGallery => 'Choose photo from gallery';
+
+  @override
+  String get todoPhotoFromCamera => 'Take photo';
+
+  @override
+  String get todoPhotoOpen => 'Open photo';
+
+  @override
+  String get todoPhotoRemove => 'Remove photo';
+
+  @override
+  String todoPhotoCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '# photos',
+      one: '# photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todoPhotoSaveFailed => 'Could not save the photo.';
+
+  @override
   String get todoTabCompleted => 'Completed';
 
   @override

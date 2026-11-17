@@ -6255,6 +6255,54 @@ abstract class AppLocalizations {
   /// **'Overdue'**
   String get todoTabOverdue;
 
+  /// No description provided for @todoTabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get todoTabAll;
+
+  /// No description provided for @todoEmptyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks yet.'**
+  String get todoEmptyAll;
+
+  /// No description provided for @todoPhotoFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo from gallery'**
+  String get todoPhotoFromGallery;
+
+  /// No description provided for @todoPhotoFromCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get todoPhotoFromCamera;
+
+  /// No description provided for @todoPhotoOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open photo'**
+  String get todoPhotoOpen;
+
+  /// No description provided for @todoPhotoRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get todoPhotoRemove;
+
+  /// No description provided for @todoPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{# photo} other{# photos}}'**
+  String todoPhotoCount(int count);
+
+  /// No description provided for @todoPhotoSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the photo.'**
+  String get todoPhotoSaveFailed;
+
   /// No description provided for @todoTabCompleted.
   ///
   /// In en, this message translates to:

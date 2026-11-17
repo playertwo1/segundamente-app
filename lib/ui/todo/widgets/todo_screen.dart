@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:memex/data/services/todo_sync_service.dart';
 import 'package:memex/domain/models/calendar_slot.dart';
@@ -15,10 +16,13 @@ import 'package:memex/domain/use_cases/todo_schedule_calculator.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/chat/widgets/session_report_screen.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
+import 'package:memex/ui/core/widgets/local_image.dart';
+import 'package:memex/ui/main_screen/widgets/ai_core_button.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/active_assistant_sheet.dart';
 import 'package:memex/utils/toast_helper.dart';
 import 'package:memex/utils/user_storage.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:uuid/uuid.dart';
 
 typedef TodoDraft = ({
@@ -28,17 +32,20 @@ typedef TodoDraft = ({
   TodoPriority priority,
   List<TodoSubtask> subtasks,
   int alertMinutes,
+  List<String> attachments,
 });
 
 /// Opens the full-screen task editor. [notice] is shown under the fields; the
 /// floating "+ tarefa" sheet passes the F11-06 content notice (F15-05). The
-/// Todo screen passes none. Pops a [TodoDraft] on save, null on cancel.
+/// Todo screen passes none. [photos] adds the photo buttons when given (the
+/// view model picks and stores them). Pops a [TodoDraft] on save, null on cancel.
 Future<TodoDraft?> showTodoEditorDialog({
   required BuildContext context,
   required TodoShortcutSettings settings,
   TodoItem? item,
   TodoProposal? proposal,
   Widget? notice,
+  TodoViewModel? photos,
 }) =>
     showGeneralDialog<TodoDraft>(
       context: context,
@@ -48,6 +55,7 @@ Future<TodoDraft?> showTodoEditorDialog({
         proposal: proposal,
         settings: settings,
         notice: notice,
+        photos: photos,
       ),
     );
 
@@ -70,9 +78,9 @@ class _TodoScreenState extends State<TodoScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(
-      length: TodoListSection.values.length,
+      length: todoTabSections.length,
       vsync: this,
-      initialIndex: widget.viewModel.section.index,
+      initialIndex: _tabIndexOf(widget.viewModel.section),
     )..addListener(_onTabChanged);
     widget.viewModel.addListener(_syncTabControllerFromViewModel);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,8 +113,14 @@ class _TodoScreenState extends State<TodoScreen>
     super.dispose();
   }
 
+  /// Upcoming has no tab of its own; it shows inside the all tab.
+  int _tabIndexOf(TodoListSection section) {
+    final index = todoTabSections.indexOf(section);
+    return index < 0 ? 0 : index;
+  }
+
   void _onTabChanged() {
-    final target = TodoListSection.values[_tabController.index];
+    final target = todoTabSections[_tabController.index];
     if (widget.viewModel.section != target) {
       widget.viewModel.selectSection(target);
     }
@@ -114,7 +128,7 @@ class _TodoScreenState extends State<TodoScreen>
 
   void _syncTabControllerFromViewModel() {
     if (!mounted) return;
-    final targetIndex = widget.viewModel.section.index;
+    final targetIndex = _tabIndexOf(widget.viewModel.section);
     if (_tabController.index != targetIndex) {
       _tabController.animateTo(targetIndex);
     }
@@ -137,6 +151,7 @@ class _TodoScreenState extends State<TodoScreen>
       context: context,
       item: item,
       settings: widget.viewModel.shortcutSettings,
+      photos: widget.viewModel,
     );
     if (saved == null) return;
     if (item == null) {
@@ -147,6 +162,7 @@ class _TodoScreenState extends State<TodoScreen>
         priority: saved.priority,
         subtasks: saved.subtasks,
         alertMinutes: saved.alertMinutes,
+        attachments: saved.attachments,
       );
     } else {
       await widget.viewModel.edit(
@@ -158,6 +174,7 @@ class _TodoScreenState extends State<TodoScreen>
         priority: saved.priority,
         subtasks: saved.subtasks,
         alertMinutes: saved.alertMinutes,
+        attachments: saved.attachments,
       );
     }
   }
@@ -227,10 +244,8 @@ class _TodoScreenState extends State<TodoScreen>
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           tabs: [
-            Tab(text: l10n.todoTabToday),
-            Tab(text: l10n.todoTabUpcoming),
-            Tab(text: l10n.todoTabOverdue),
-            Tab(text: l10n.todoTabCompleted),
+            for (final section in todoTabSections)
+              Tab(text: _tabLabel(l10n, section)),
           ],
         ),
         actions: [
@@ -299,7 +314,7 @@ class _TodoScreenState extends State<TodoScreen>
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        for (final section in TodoListSection.values)
+                        for (final section in todoTabSections)
                           _sectionBody(viewModel, l10n, section),
                       ],
                     ),
@@ -311,51 +326,44 @@ class _TodoScreenState extends State<TodoScreen>
           Positioned(
             left: 0,
             right: 0,
-            bottom: 0,
-            child: _addBar(context, l10n),
+            bottom: MediaQuery.paddingOf(context).bottom + 8,
+            child: _addButton(l10n),
           ),
         ],
       ),
     );
   }
 
-  Widget _addBar(BuildContext context, AppLocalizations l10n) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Align(
-            widthFactor: 1,
-            heightFactor: 1,
-            child: Material(
-              color: AppColors.surface,
-              shape: const StadiumBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: Semantics(
-                button: true,
-                child: InkWell(
-                  key: const ValueKey('todo_add'),
-                  onTap: _addOrEdit,
-                  child: SizedBox(
-                    height: 56,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
-                      child: Center(
-                        child: Text(
-                          l10n.todoAdd,
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+  /// The round + button of the home screen, floating centred over the list.
+  Widget _addButton(AppLocalizations l10n) => Center(
+        child: Semantics(
+          button: true,
+          label: l10n.todoAdd,
+          child: AICoreButton(
+            key: const ValueKey('todo_add'),
+            onTap: () => _addOrEdit(),
+            onLongPress: () {},
           ),
         ),
       );
+
+  String _tabLabel(AppLocalizations l10n, TodoListSection section) =>
+      switch (section) {
+        TodoListSection.all => l10n.todoTabAll,
+        TodoListSection.today => l10n.todoTabToday,
+        TodoListSection.upcoming => l10n.todoTabUpcoming,
+        TodoListSection.overdue => l10n.todoTabOverdue,
+        TodoListSection.completed => l10n.todoTabCompleted,
+      };
+
+  String _sectionTitle(AppLocalizations l10n, TodoSectionKey key) =>
+      switch (key) {
+        TodoSectionKey.overdue => l10n.todoTabOverdue,
+        TodoSectionKey.today => l10n.todoTabToday,
+        TodoSectionKey.upcoming => l10n.todoTabUpcoming,
+        TodoSectionKey.undated => l10n.todoUndatedSection,
+        TodoSectionKey.completed => l10n.todoTabCompleted,
+      };
 
   Widget _activeAssistantSummaryBar(
     AppLocalizations l10n,
@@ -793,48 +801,23 @@ class _TodoScreenState extends State<TodoScreen>
     AppLocalizations l10n,
     TodoListSection section,
   ) {
+    if (section == TodoListSection.all) {
+      return _allBody(viewModel, l10n);
+    }
     final items = viewModel.itemsFor(section);
     if (items.isEmpty) {
-      final hasFilter = viewModel.priorityFilter != null;
-      final message = hasFilter
-          ? l10n.todoFilterEmpty
-          : switch (section) {
-              TodoListSection.today => l10n.todoEmptyToday,
-              TodoListSection.upcoming => l10n.todoEmptyUpcoming,
-              TodoListSection.overdue => l10n.todoEmptyOverdue,
-              TodoListSection.completed => l10n.todoEmptyCompleted,
-            };
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                message,
-                key: const ValueKey('todo_empty'),
-                textAlign: TextAlign.center,
-              ),
-              if (hasFilter) ...[
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  key: const ValueKey('todo_empty_clear_filter'),
-                  onPressed: () => viewModel.setPriorityFilter(null),
-                  icon: const Icon(Icons.filter_list_off),
-                  label: Text(l10n.todoFilterClear),
-                ),
-              ] else if (!viewModel.hasAny &&
-                  section == TodoListSection.today) ...[
-                const SizedBox(height: 12),
-                TextButton.icon(
-                  onPressed: _addOrEdit,
-                  icon: const Icon(Icons.add),
-                  label: Text(l10n.todoAdd),
-                ),
-              ],
-            ],
-          ),
-        ),
+      final message = switch (section) {
+        TodoListSection.all => l10n.todoEmptyAll,
+        TodoListSection.today => l10n.todoEmptyToday,
+        TodoListSection.upcoming => l10n.todoEmptyUpcoming,
+        TodoListSection.overdue => l10n.todoEmptyOverdue,
+        TodoListSection.completed => l10n.todoEmptyCompleted,
+      };
+      return _emptyBody(
+        viewModel,
+        l10n,
+        message,
+        showAdd: section == TodoListSection.today,
       );
     }
     final undated = section == TodoListSection.today
@@ -871,6 +854,127 @@ class _TodoScreenState extends State<TodoScreen>
           for (final item in undated) _taskRow(item, l10n, viewModel),
         ],
       ],
+    );
+  }
+
+  Widget _emptyBody(
+    TodoViewModel viewModel,
+    AppLocalizations l10n,
+    String message, {
+    required bool showAdd,
+  }) {
+    final hasFilter = viewModel.priorityFilter != null;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              hasFilter ? l10n.todoFilterEmpty : message,
+              key: const ValueKey('todo_empty'),
+              textAlign: TextAlign.center,
+            ),
+            if (hasFilter) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                key: const ValueKey('todo_empty_clear_filter'),
+                onPressed: () => viewModel.setPriorityFilter(null),
+                icon: const Icon(Icons.filter_list_off),
+                label: Text(l10n.todoFilterClear),
+              ),
+            ] else if (showAdd && !viewModel.hasAny) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: _addOrEdit,
+                icon: const Icon(Icons.add),
+                label: Text(l10n.todoAdd),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The all tab: one collapsible section per group, in the order the view
+  /// model gives. Each header shows the section name and its count.
+  Widget _allBody(TodoViewModel viewModel, AppLocalizations l10n) {
+    final groups = viewModel.allSections;
+    if (groups.isEmpty) {
+      return _emptyBody(
+        viewModel,
+        l10n,
+        l10n.todoEmptyAll,
+        showAdd: true,
+      );
+    }
+    return ListView(
+      key: const ValueKey('todo_section_all'),
+      // Keeps the last card clear of the floating add button.
+      padding: const EdgeInsets.only(bottom: 96),
+      children: [
+        for (final group in groups)
+          Column(
+            key: ValueKey('todo_all_section_${group.key.name}'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _sectionHeader(viewModel, l10n, group),
+              if (!viewModel.isSectionCollapsed(group.key))
+                for (final item in group.items)
+                  _taskRow(item, l10n, viewModel),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _sectionHeader(
+    TodoViewModel viewModel,
+    AppLocalizations l10n,
+    TodoSectionGroup group,
+  ) {
+    final collapsed = viewModel.isSectionCollapsed(group.key);
+    final textTheme = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      expanded: !collapsed,
+      child: InkWell(
+        key: ValueKey('todo_section_toggle_${group.key.name}'),
+        onTap: () => viewModel.toggleSection(group.key),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Row(
+              children: [
+                AnimatedRotation(
+                  turns: collapsed ? -0.25 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const ExcludeSemantics(
+                    child: Icon(
+                      Icons.expand_more,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${_sectionTitle(l10n, group.key)} · ${group.items.length}',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -920,7 +1024,10 @@ class _TodoPriorityFilterButton extends StatelessWidget {
           for (final priority in TodoPriority.values)
             PopupMenuItem(
               value: priority.name,
-              child: Text(_priorityLabel(l10n, priority)),
+              child: Text(
+                _priorityLabel(l10n, priority),
+                style: TextStyle(color: _priorityColor(priority)),
+              ),
             ),
         ],
       ),
@@ -1165,6 +1272,29 @@ class _TodoTaskRow extends StatelessWidget {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
+                                if (item.attachments.isNotEmpty)
+                                  Row(
+                                    key: ValueKey('todo_photos_${item.id}'),
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const ExcludeSemantics(
+                                        child: Icon(
+                                          Icons.attach_file,
+                                          size: 14,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        l10n.todoPhotoCount(
+                                          item.attachments.length,
+                                        ),
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 if (showSync)
                                   Text(
                                     viewModel.isItemSynced(item)
@@ -1393,9 +1523,11 @@ String _priorityLabel(AppLocalizations l10n, TodoPriority priority) =>
       TodoPriority.urgent => l10n.todoPriorityUrgent,
     };
 
+/// Colour never stands alone: every use also shows the priority label.
 Color _priorityColor(TodoPriority priority) => switch (priority) {
-      TodoPriority.low || TodoPriority.normal => AppColors.textSecondary,
-      TodoPriority.high => AppColors.primary,
+      TodoPriority.low => AppColors.priorityLow,
+      TodoPriority.normal => AppColors.textSecondary,
+      TodoPriority.high => AppColors.warning,
       TodoPriority.urgent => AppColors.danger,
     };
 
@@ -1479,12 +1611,14 @@ class _TodoEditorPage extends StatefulWidget {
     this.proposal,
     required this.settings,
     this.notice,
+    this.photos,
   }) : assert(item == null || proposal == null);
 
   final TodoItem? item;
   final TodoProposal? proposal;
   final TodoShortcutSettings settings;
   final Widget? notice;
+  final TodoViewModel? photos;
 
   @override
   State<_TodoEditorPage> createState() => _TodoEditorPageState();
@@ -1506,6 +1640,11 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
   late final List<TodoSubtask> _subtasks = [
     ...?widget.item?.subtasks,
   ];
+  // Stored `fs://` references, or local paths of photos picked in this session
+  // that are copied into the workspace only when the task is saved.
+  late final List<String> _photos = [...?widget.item?.attachments];
+  final Map<String, Future<String?>> _photoPaths = {};
+  bool _saving = false;
   late TodoPriority _priority = widget.item?.priority ?? TodoPriority.normal;
   late TodoRepeatFrequency? _frequency = widget.item?.recurrence?.frequency;
   late final Set<int> _weekdays =
@@ -1564,6 +1703,7 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 24),
             _editorBlock(context, l10n, hasTime),
             if (proposal?.dateState == TodoProposalDateState.ambiguous &&
                 !_hasValidDate) ...[
@@ -1639,7 +1779,6 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
   ) {
     final hasDate = _due.text.trim().isNotEmpty;
     final hasTitle = _text.text.trim().isNotEmpty;
-    final textTheme = Theme.of(context).textTheme;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -1648,46 +1787,7 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
-            child: Row(
-              children: [
-                const ExcludeSemantics(
-                  child: Icon(
-                    Icons.radio_button_unchecked,
-                    size: 22,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('todo_text'),
-                    controller: _text,
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textPrimary,
-                      fontSize: 17,
-                    ),
-                    decoration: _plainInput(
-                      hintText: l10n.todoTextHint,
-                      errorText: _textError,
-                    ),
-                    onChanged: (_) => setState(() => _textError = null),
-                  ),
-                ),
-                if (hasTitle)
-                  IconButton(
-                    key: const ValueKey('todo_text_clear'),
-                    tooltip: l10n.todoClearText,
-                    icon: const Icon(
-                      Icons.close,
-                      color: AppColors.textSecondary,
-                    ),
-                    onPressed: _clearText,
-                  ),
-              ],
-            ),
-          ),
+          _titleBlock(context, l10n, hasTitle),
           _divider(),
           _EditorLine(
             key: const ValueKey('todo_date_row'),
@@ -1759,7 +1859,10 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
                 for (final priority in TodoPriority.values)
                   DropdownMenuItem(
                     value: priority,
-                    child: Text(_priorityLabel(l10n, priority)),
+                    child: Text(
+                      _priorityLabel(l10n, priority),
+                      style: TextStyle(color: _priorityColor(priority)),
+                    ),
                   ),
               ],
               onChanged: (value) {
@@ -1772,6 +1875,218 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
         ],
       ),
     );
+  }
+
+  /// The task text: a larger multi-line field, then the photo buttons and thumbnails.
+  Widget _titleBlock(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool hasTitle,
+  ) {
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 14),
+                child: ExcludeSemantics(
+                  child: Icon(
+                    Icons.radio_button_unchecked,
+                    size: 22,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: TextField(
+                  key: const ValueKey('todo_text'),
+                  controller: _text,
+                  minLines: 2,
+                  maxLines: 5,
+                  keyboardType: TextInputType.multiline,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 20,
+                  ),
+                  decoration: _plainInput(
+                    hintText: l10n.todoTextHint,
+                    errorText: _textError,
+                  ),
+                  onChanged: (_) => setState(() => _textError = null),
+                ),
+              ),
+              if (hasTitle)
+                IconButton(
+                  key: const ValueKey('todo_text_clear'),
+                  tooltip: l10n.todoClearText,
+                  icon: const Icon(
+                    Icons.close,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed: _clearText,
+                ),
+            ],
+          ),
+          if (widget.photos != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 56),
+              child: Row(
+                children: [
+                  IconButton(
+                    key: const ValueKey('todo_photo_gallery'),
+                    tooltip: l10n.todoPhotoFromGallery,
+                    icon: const Icon(
+                      Icons.photo_library_outlined,
+                      color: AppColors.textSecondary,
+                    ),
+                    onPressed: () => _pickPhoto(ImageSource.gallery),
+                  ),
+                  IconButton(
+                    key: const ValueKey('todo_photo_camera'),
+                    tooltip: l10n.todoPhotoFromCamera,
+                    icon: const Icon(
+                      Icons.photo_camera_outlined,
+                      color: AppColors.textSecondary,
+                    ),
+                    onPressed: () => _pickPhoto(ImageSource.camera),
+                  ),
+                ],
+              ),
+            ),
+          if (_photos.isNotEmpty) _photoStrip(l10n),
+        ],
+      ),
+    );
+  }
+
+  Widget _photoStrip(AppLocalizations l10n) => SizedBox(
+        height: 76,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          // Top room for the remove buttons that overhang each thumbnail.
+          padding: const EdgeInsets.fromLTRB(56, 12, 16, 0),
+          itemCount: _photos.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (context, index) => _photoThumb(l10n, index),
+        ),
+      );
+
+  Widget _photoThumb(AppLocalizations l10n, int index) {
+    final photo = _photos[index];
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Semantics(
+              button: true,
+              label: l10n.todoPhotoOpen,
+              child: InkWell(
+                key: ValueKey('todo_photo_$index'),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _openPhoto(photo),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: FutureBuilder<String?>(
+                    future: _localPath(photo),
+                    builder: (context, snapshot) {
+                      final path = snapshot.data;
+                      if (path == null) {
+                        return const ColoredBox(
+                          color: AppColors.iconBgLight,
+                          child: Icon(
+                            Icons.image_outlined,
+                            color: AppColors.textSecondary,
+                          ),
+                        );
+                      }
+                      return LocalImage(
+                        url: path,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: -12,
+            right: -12,
+            child: IconButton(
+              key: ValueKey('todo_photo_remove_$index'),
+              tooltip: l10n.todoPhotoRemove,
+              icon: const Icon(
+                Icons.cancel,
+                size: 20,
+                color: AppColors.textPrimary,
+              ),
+              onPressed: () => setState(() => _photos.removeAt(index)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Local file of a photo: stored references are resolved once and cached.
+  Future<String?> _localPath(String photo) => _photoPaths.putIfAbsent(
+        photo,
+        () => _isStoredPhoto(photo)
+            ? (widget.photos?.photoPath(photo) ?? Future.value(null))
+            : Future.value(photo),
+      );
+
+  Future<void> _openPhoto(String photo) async {
+    final path = await _localPath(photo);
+    if (path == null || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => _TodoPhotoViewer(path: path)),
+    );
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    final l10n = UserStorage.l10n;
+    final photos = widget.photos;
+    if (photos == null) return;
+    String? path;
+    try {
+      path = await photos.pickPhoto(source);
+    } catch (_) {
+      if (mounted) ToastHelper.showError(context, l10n.todoPhotoSaveFailed);
+      return;
+    }
+    if (path == null || !mounted) return;
+    final picked = path;
+    setState(() => _photos.add(picked));
+  }
+
+  static bool _isStoredPhoto(String photo) => photo.startsWith('fs://');
+
+  /// Copies the photos picked in this session into the workspace. References
+  /// already stored are kept; the result follows the order shown.
+  Future<List<String>> _storedPhotos() async {
+    final pending = [
+      for (final photo in _photos)
+        if (!_isStoredPhoto(photo)) photo,
+    ];
+    if (pending.isEmpty) return List<String>.of(_photos);
+    final stored = await widget.photos!.storePhotos(pending);
+    var next = 0;
+    return [
+      for (final photo in _photos)
+        if (_isStoredPhoto(photo)) photo else stored[next++],
+    ];
   }
 
   Widget _removeButton(Key key, String tooltip, VoidCallback onPressed) =>
@@ -2056,7 +2371,8 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
         ),
       );
 
-  void _save() {
+  Future<void> _save() async {
+    if (_saving) return;
     final l10n = UserStorage.l10n;
     if (_text.text.trim().isEmpty) {
       setState(() => _textError = l10n.todoTextRequired);
@@ -2087,6 +2403,16 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
       setState(() => _scheduleError = l10n.todoRepeatRequiresDate);
       return;
     }
+    _saving = true;
+    List<String> photos;
+    try {
+      photos = await _storedPhotos();
+    } catch (_) {
+      _saving = false;
+      if (mounted) ToastHelper.showError(context, l10n.todoPhotoSaveFailed);
+      return;
+    }
+    if (!mounted) return;
     Navigator.of(context).pop<TodoDraft>((
       text: _text.text,
       due: _combinedDue,
@@ -2094,6 +2420,7 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
       priority: _priority,
       subtasks: List<TodoSubtask>.unmodifiable(_subtasks),
       alertMinutes: _alertMinutes,
+      attachments: List<String>.unmodifiable(photos),
     ));
   }
 
@@ -2342,6 +2669,28 @@ class _TodoEditorPageState extends State<_TodoEditorPage> {
         TodoRepeatFrequency.monthly =>
           TodoRecurrence.monthly(_anchorDate().day),
       };
+}
+
+/// Full-screen view of one task photo, with pinch zoom.
+class _TodoPhotoViewer extends StatelessWidget {
+  const _TodoPhotoViewer({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          foregroundColor: AppColors.textPrimary,
+          elevation: 0,
+        ),
+        body: PhotoView(
+          imageProvider: LocalImage.provider(path),
+          minScale: PhotoViewComputedScale.contained,
+          backgroundDecoration: const BoxDecoration(color: Colors.black),
+        ),
+      );
 }
 
 /// Full-page early alert picker; pops the chosen minutes, or null on back.
