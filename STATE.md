@@ -38,6 +38,11 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Prévia da bolha nativa no emulador (2026-11-18)
+
+- F15-07, `globalDev`: antes da correção, o Android 16 publicava uma notificação comum (`mAllowBubble=false`) porque o atalho de conversa tinha só o bot. Incluído o usuário local como participante, o Android passou a marcar a notificação como `BUBBLE` e apresentou a janela nativa.
+- `flutter build apk --flavor globalDev --debug --no-pub` → APK compilado. No emulador `CoreFlow_API36_Clean`, via ADB e Maestro Viewer: chat visível na bolha, recolhimento sobre Configurações e reabertura pelo ícone observados. S25 e critérios de autonomia `NOT_RUN`. F15-07 segue em andamento.
+
 ### Whisper turbo no lugar do Parakeet (2026-11-18, D-077)
 
 - A opção de transcrição no aparelho usa Whisper large-v3 turbo int8 em português (`pt`). Mantém blocos de até 30 s com cortes nas pausas. O download fica nas Configurações e o Parakeet só é removido depois de extrair os arquivos do Whisper.
