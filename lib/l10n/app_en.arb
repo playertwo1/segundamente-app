@@ -1229,7 +1229,7 @@
   "speechTranscribing": "Recognizing...",
   "speechNoResult": "No speech detected",
   "useLocalSpeechToTextTitle": "On-device transcription",
-  "useLocalSpeechToTextDesc": "On: speech is transcribed on-device by Parakeet, without sending the audio (download the ~470 MB model below). Off: audio goes straight to ChatGPT (or your configured cloud model).",
+  "useLocalSpeechToTextDesc": "On: Whisper turbo transcribes Portuguese on your device without sending audio. Download the model below. Off: audio goes straight to ChatGPT (or your configured cloud model).",
   "pendingAiProcessingHint": "Set up AI model to process",
   "demoWelcome": "Welcome to Segunda Mente!\nSee three ways to record, organize, and find your moments again.",
   "demoTapAdd": "Tap here to create your first record",

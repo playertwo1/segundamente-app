@@ -2658,7 +2658,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get useLocalSpeechToTextDesc =>
-      'Ligado: a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixe o modelo de ~470 MB abaixo). Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).';
+      'Ligado: o Whisper turbo transcreve em português no aparelho, sem enviar o áudio. Baixe o modelo abaixo. Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).';
 
   @override
   String get pendingAiProcessingHint => 'Configure o modelo AI para processar';

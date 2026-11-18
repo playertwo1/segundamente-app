@@ -24,7 +24,6 @@ class TranscriptionIsolate {
   Future<void> start({
     required String encoderPath,
     required String decoderPath,
-    required String joinerPath,
     required String tokensPath,
   }) async {
     if (_isolate != null) return;
@@ -38,7 +37,6 @@ class TranscriptionIsolate {
       {
         'encoderPath': encoderPath,
         'decoderPath': decoderPath,
-        'joinerPath': joinerPath,
         'tokensPath': tokensPath,
         'replyPort': receivePort.sendPort,
       },
@@ -94,24 +92,22 @@ class TranscriptionIsolate {
     _pending.clear();
   }
 
-  /// Parakeet TDT v3 (NeMo transducer). It picks the language itself among
-  /// its 25; there is no option to fix Portuguese. CPU only: NNAPI is not
-  /// proven for this model.
+  /// Multilingual Whisper turbo configured for Portuguese transcription.
   @visibleForTesting
-  static sherpa.OfflineRecognizerConfig parakeetConfig({
+  static sherpa.OfflineRecognizerConfig whisperConfig({
     required String encoderPath,
     required String decoderPath,
-    required String joinerPath,
     required String tokensPath,
   }) {
     return sherpa.OfflineRecognizerConfig(
       model: sherpa.OfflineModelConfig(
-        transducer: sherpa.OfflineTransducerModelConfig(
+        whisper: sherpa.OfflineWhisperModelConfig(
           encoder: encoderPath,
           decoder: decoderPath,
-          joiner: joinerPath,
+          language: 'pt',
+          task: 'transcribe',
         ),
-        modelType: 'nemo_transducer',
+        modelType: 'whisper',
         tokens: tokensPath,
         numThreads: 4,
         debug: false,
@@ -127,10 +123,9 @@ class TranscriptionIsolate {
     // Initialize sherpa-onnx in this isolate
     sherpa.initBindings();
 
-    final config = parakeetConfig(
+    final config = whisperConfig(
       encoderPath: initConfig['encoderPath'] as String,
       decoderPath: initConfig['decoderPath'] as String,
-      joinerPath: initConfig['joinerPath'] as String,
       tokensPath: initConfig['tokensPath'] as String,
     );
 

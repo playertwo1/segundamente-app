@@ -10,9 +10,7 @@ import 'package:memex/utils/audio_converter.dart';
 import 'package:memex/data/services/transcription_isolate.dart';
 import 'package:archive/archive_io.dart';
 
-/// Service for on-device speech-to-text using sherpa-onnx + NVIDIA Parakeet
-/// TDT 0.6B v3 (25 European languages, Portuguese included; F2-11). The
-/// class keeps its old name so callers stay unchanged.
+/// On-device Portuguese speech-to-text using sherpa-onnx and Whisper turbo.
 ///
 /// Handles model download, caching, and transcription.
 class WhisperService {
@@ -22,23 +20,20 @@ class WhisperService {
 
   final Logger _logger = getLogger('WhisperService');
 
-  static const _modelDirName = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8';
-  static const _encoderFileName = 'encoder.int8.onnx';
-  static const _decoderFileName = 'decoder.int8.onnx';
-  static const _joinerFileName = 'joiner.int8.onnx';
-  static const _tokensFileName = 'tokens.txt';
+  static const _modelDirName = 'sherpa-onnx-whisper-turbo';
+  static const _encoderFileName = 'turbo-encoder.int8.onnx';
+  static const _decoderFileName = 'turbo-decoder.int8.onnx';
+  static const _tokensFileName = 'turbo-tokens.txt';
   static const _modelFileNames = {
     _encoderFileName,
     _decoderFileName,
-    _joinerFileName,
     _tokensFileName,
   };
 
-  /// Earlier local models (SenseVoice without Portuguese, then Whisper
-  /// turbo); their files are removed when Parakeet is downloaded.
+  /// Earlier local models, removed after Whisper has been downloaded.
   static const _legacyModelDirNames = [
     'sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17',
-    'sherpa-onnx-whisper-turbo',
+    'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
   ];
 
   /// Download URL; a test points it at a local server.
@@ -82,7 +77,7 @@ class WhisperService {
     await Directory(dir).create(recursive: true);
 
     // Download tar.bz2 archive from GitHub
-    _logger.info('Downloading Parakeet model from $downloadUrl');
+    _logger.info('Downloading Whisper model from $downloadUrl');
     final tmpFile = File('$dir/model.tar.bz2');
     await _downloadFile(
       downloadUrl,
@@ -90,12 +85,14 @@ class WhisperService {
       onProgress: (p) => onProgress(p * 0.9),
     );
 
-    // Extract on disk in a background isolate: the archive is ~470 MB, too
-    // big to decompress in memory on the UI isolate.
+    // Extract on disk in a background isolate to limit memory use.
     _logger.info('Extracting model archive...');
     onProgress(0.9);
     await _extractInBackground(tmpFile.path, dir);
     if (tmpFile.existsSync()) await tmpFile.delete();
+    if (!await isModelDownloaded()) {
+      throw const FormatException('Whisper model archive is incomplete');
+    }
 
     final support = (await getApplicationSupportDirectory()).path;
     for (final name in _legacyModelDirNames) {
@@ -104,7 +101,7 @@ class WhisperService {
     }
     onProgress(1.0);
 
-    _logger.info('Parakeet model downloaded to $dir');
+    _logger.info('Whisper model downloaded to $dir');
   }
 
   /// Static so the isolate closure captures only the two paths: built inside
@@ -249,9 +246,7 @@ class WhisperService {
     _bgIsolate = null;
   }
 
-  /// Parakeet has no 30 s limit, but on the owner's notes 30 s pieces
-  /// transcribed better than the whole 5 min at once (31% vs 38% distance to
-  /// Whisper large-v3, F2-11 section 7) and keep memory flat on long audio.
+  /// The sherpa-onnx Whisper recognizer processes at most 30 s per call.
   static const int _chunkSamples = 16000 * 30;
 
   /// Pieces shorter than 0.1 s hold no word, and a few samples crashed the
@@ -329,7 +324,6 @@ class WhisperService {
     await _bgIsolate!.start(
       encoderPath: '$dir/$_encoderFileName',
       decoderPath: '$dir/$_decoderFileName',
-      joinerPath: '$dir/$_joinerFileName',
       tokensPath: '$dir/$_tokensFileName',
     );
   }
@@ -340,5 +334,5 @@ class WhisperService {
   }
 
   /// Model download size in MB (the release archive).
-  static const double modelSizeMB = 470;
+  static const double modelSizeMB = 538;
 }

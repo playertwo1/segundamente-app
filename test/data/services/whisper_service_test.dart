@@ -20,18 +20,18 @@ class _FakePathProvider extends PathProviderPlatform
 }
 
 void main() {
-  test('local model is Parakeet as a NeMo transducer on CPU', () {
-    final config = TranscriptionIsolate.parakeetConfig(
+  test('local Whisper transcribes Portuguese on CPU', () {
+    final config = TranscriptionIsolate.whisperConfig(
       encoderPath: 'e.onnx',
       decoderPath: 'd.onnx',
-      joinerPath: 'j.onnx',
       tokensPath: 't.txt',
     );
-    expect(config.model.transducer.encoder, 'e.onnx');
-    expect(config.model.transducer.decoder, 'd.onnx');
-    expect(config.model.transducer.joiner, 'j.onnx');
-    expect(config.model.modelType, 'nemo_transducer');
-    expect(config.model.whisper.encoder, isEmpty);
+    expect(config.model.whisper.encoder, 'e.onnx');
+    expect(config.model.whisper.decoder, 'd.onnx');
+    expect(config.model.whisper.language, 'pt');
+    expect(config.model.whisper.task, 'transcribe');
+    expect(config.model.modelType, 'whisper');
+    expect(config.model.transducer.encoder, isEmpty);
     expect(config.model.tokens, 't.txt');
     expect(config.model.provider, 'cpu');
     expect(config.model.senseVoice.model, isEmpty);
@@ -110,12 +110,21 @@ void main() {
       return ArchiveFile('model/$name', bytes.length, bytes);
     }
 
-    final archive =
-        BZip2Encoder().encodeBytes(TarEncoder().encodeBytes(Archive()
-          ..addFile(entry('encoder.int8.onnx'))
-          ..addFile(entry('decoder.int8.onnx'))
-          ..addFile(entry('joiner.int8.onnx'))
-          ..addFile(entry('tokens.txt'))));
+    final oldModel = Directory(
+      p.join(dir.path, 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8'),
+    )..createSync();
+    for (final name in [
+      'encoder.int8.onnx',
+      'decoder.int8.onnx',
+      'joiner.int8.onnx',
+      'tokens.txt',
+    ]) {
+      File(p.join(oldModel.path, name)).writeAsStringSync('old model');
+    }
+    final files = Archive()
+      ..addFile(entry('turbo-encoder.int8.onnx'))
+      ..addFile(entry('turbo-tokens.txt'));
+    var archive = BZip2Encoder().encodeBytes(TarEncoder().encodeBytes(files));
     server.listen((request) {
       request.response
         ..contentLength = archive.length
@@ -124,6 +133,16 @@ void main() {
     });
     WhisperService.downloadUrl = 'http://127.0.0.1:${server.port}/model';
 
+    expect(await WhisperService.instance.isModelDownloaded(), isFalse);
+    await expectLater(
+      WhisperService.instance.downloadModel(onProgress: (_) {}),
+      throwsFormatException,
+    );
+    expect(oldModel.existsSync(), isTrue);
+    expect(await WhisperService.instance.isModelDownloaded(), isFalse);
+
+    files.addFile(entry('turbo-decoder.int8.onnx'));
+    archive = BZip2Encoder().encodeBytes(TarEncoder().encodeBytes(files));
     final progress = <double>[];
     await WhisperService.instance.downloadModel(onProgress: (p) {
       port.sendPort; // keeps the port in this closure's context
@@ -131,10 +150,10 @@ void main() {
     });
 
     expect(await WhisperService.instance.isModelDownloaded(), isTrue);
+    expect(oldModel.existsSync(), isFalse);
     expect(progress.last, 1.0);
     expect(
-        File(p.join(dir.path, 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
-                'model.tar.bz2'))
+        File(p.join(dir.path, 'sherpa-onnx-whisper-turbo', 'model.tar.bz2'))
             .existsSync(),
         isFalse);
   });

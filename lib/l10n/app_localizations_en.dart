@@ -2633,7 +2633,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useLocalSpeechToTextDesc =>
-      'On: speech is transcribed on-device by Parakeet, without sending the audio (download the ~470 MB model below). Off: audio goes straight to ChatGPT (or your configured cloud model).';
+      'On: Whisper turbo transcribes Portuguese on your device without sending audio. Download the model below. Off: audio goes straight to ChatGPT (or your configured cloud model).';
 
   @override
   String get pendingAiProcessingHint => 'Set up AI model to process';

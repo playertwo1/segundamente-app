@@ -17,6 +17,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 3. **Validar F15-02 a F15-07 no S25:** chat flutuante pelos atalhos (abertura a frio, volta à tela de origem, Abrir no app), widgets pequeno, médio e grande, painel rápido e a bolha no build dev. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`; o dono decide o texto do limite de Falar (R03).
 4. **F12:** F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06. O S25 dev está revogado: parear de novo antes da F12-06 e conferir o rótulo "sem conexão" com o modo avião. Abertos no Lumen: QR maior e edição de horário que não salva.
 5. **A investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`); esse armazenamento guarda tokens de login.
+6. **Validar F2-11 no S25:** baixar o Whisper turbo, gravar em português e medir qualidade, latência e memória em gravação longa.
 
 ## Pendências do dono
 
@@ -36,6 +37,16 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Whisper turbo no lugar do Parakeet (2026-11-18, D-077)
+
+- A opção de transcrição no aparelho usa Whisper large-v3 turbo int8 em português (`pt`). Mantém blocos de até 30 s com cortes nas pausas. O download fica nas Configurações e o Parakeet só é removido depois de extrair os arquivos do Whisper.
+- A URL do release oficial do sherpa-onnx respondeu HTTP 200 após redirecionamento, com 563.790.207 bytes (~538 MiB).
+- `flutter test --no-pub -r expanded --concurrency=4 test/data/services/whisper_service_test.dart test/data/services/speech_model_source_test.dart test/l10n/ test/ui/settings/widgets/settings_page_test.dart test/ui/chat/` → 174 passaram. O teste de migração preserva a pasta do Parakeet no download incompleto e a remove no download completo.
+- `flutter test --no-pub --concurrency=3 -r expanded test/data/services/speech_transcription_chatgpt_test.dart test/data/services/duplex_voice_service_test.dart test/integration/duplex_voice_pipeline_test.dart` → 11 passaram.
+- `flutter analyze --no-pub` nos 7 arquivos Dart alterados de código e teste → 2 infos preexistentes de imports transitivos em `whisper_service_test.dart`. `python scripts/check_arb_key_parity.py` → paridade confirmada.
+- `flutter build apk --flavor global --release --no-pub` → APK local compilado. Conferidos os nomes do modelo no binário empacotado, o ícone de lembrete do Todo e a assinatura com o certificado da v1.0.57.
+- S25 `NOT_RUN`: aparelho ausente no ADB. F2-11 segue `IN_PROGRESS`.
 
 ### Cartões de tarefa e permissões de lembrete no Todo (2026-11-18)
 
