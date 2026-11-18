@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-17 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.57+142 (2026-11-17, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-18 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.57+142 (2026-11-17, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -12,7 +12,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Próxima ação
 
-1. **Instalar a v1.0.57 no S25** e conferir com o dono o Todo novo (v1.0.56) e a tela do registro (v1.0.57: balões, deslizar para responder, citação, tarefas do registro, Desfazer).
+1. **Validar no S25 o Todo e a tela do registro:** confirmar cartão com subtarefas em “Tarefas deste registro”, conferir a lista e Desfazer, verificar o estado das permissões e disparar um lembrete. Conferir também balões, deslizar para responder e citação.
 2. **Validar a F14 no S25:** na aba Todo, o painel do Assistente Ativo (resumo manhã/tarde, tarefas paradas, sugestões das personas pelo `TodoProposalCard`, silêncio).
 3. **Validar F15-02 a F15-07 no S25:** chat flutuante pelos atalhos (abertura a frio, volta à tela de origem, Abrir no app), widgets pequeno, médio e grande, painel rápido e a bolha no build dev. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`; o dono decide o texto do limite de Falar (R03).
 4. **F12:** F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06. O S25 dev está revogado: parear de novo antes da F12-06 e conferir o rótulo "sem conexão" com o modo avião. Abertos no Lumen: QR maior e edição de horário que não salva.
@@ -36,6 +36,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Cartões de tarefa e permissões de lembrete no Todo (2026-11-18)
+
+- Os cartões marcáveis da linha do tempo passam a ser oferecidos em “Tarefas deste registro”. Ao confirmar, o Todo salva o título e as subtarefas com suas marcações, sem data. Itens do texto que repetem uma subtarefa do cartão não viram tarefas avulsas.
+- O APK publicado da v1.0.57 não continha `drawable/ic_todo_notification`, exigido na inicialização de `flutter_local_notifications`. O Android agora mantém esse recurso no empacotamento com redução de recursos.
+- `flutter test --no-pub -r expanded --concurrency=4 test/domain/use_cases/card_task_extractor_test.dart test/domain/models/card_props_test.dart test/ui/core/cards/templates/temporal/task_card_test.dart test/ui/timeline/view_models/card_tasks_viewmodel_test.dart test/ui/timeline/widgets/card_tasks_section_test.dart test/integration/todo_undo_flow_test.dart test/ui/todo/ test/data/services/todo_alarm_service_test.dart` → `+152: All tests passed!`
+- `flutter analyze --no-pub` nos 9 arquivos Dart alterados → `No issues found!`
+- `flutter build apk --flavor global --release --no-pub` gerou o APK local. `aapt dump resources` confirmou `drawable/ic_todo_notification` e `aapt dump badging` mostrou as permissões de notificação e alarme exato. `apksigner verify --print-certs` confirmou a assinatura com o mesmo certificado da v1.0.57 publicada.
+- S25 `NOT_RUN`: aparelho ausente no ADB. F11 permanece arquivada.
 
 ### Reorganização dos documentos (2026-11-17)
 - `ROADMAP.md` virou índice com um resumo por fase. F0, F4, F5, F6 e F11 e os documentos de trabalho delas foram para `docs/arquivadas/`. Estados e prioridades foram para `docs/WATCHDOG.md` e as ideias futuras para `docs/roadmap/IDEIAS-FUTURAS.md`.

@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/domain/models/card_task_state.dart';
+import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/use_cases/card_task_extractor.dart';
 import 'package:memex/utils/result.dart';
+import 'package:uuid/uuid.dart';
 
 enum CardTasksPhase { loading, selecting, added, hidden }
 
@@ -11,7 +14,7 @@ class CardTasksViewModel extends ChangeNotifier {
   CardTasksViewModel({
     required MemexRouter router,
     required String cardId,
-    required List<String> candidates,
+    required List<CardTaskCandidate> candidates,
   })  : _router = router,
         _cardId = cardId,
         candidates = List.unmodifiable(candidates),
@@ -19,7 +22,7 @@ class CardTasksViewModel extends ChangeNotifier {
 
   final MemexRouter _router;
   final String _cardId;
-  final List<String> candidates;
+  final List<CardTaskCandidate> candidates;
   final List<bool> _selected;
 
   CardTasksPhase _phase = CardTasksPhase.loading;
@@ -89,7 +92,19 @@ class CardTasksViewModel extends ChangeNotifier {
     String? failure;
     for (var i = 0; i < candidates.length && failure == null; i++) {
       if (!_selected[i]) continue;
-      final result = await _router.addTodo(text: candidates[i], due: '');
+      final candidate = candidates[i];
+      final result = await _router.addTodo(
+        text: candidate.text,
+        due: '',
+        subtasks: [
+          for (final subtask in candidate.subtasks)
+            TodoSubtask(
+              id: const Uuid().v4(),
+              text: subtask.text,
+              done: subtask.done,
+            ),
+        ],
+      );
       switch (result) {
         case Ok(:final value):
           created.add(value.id);

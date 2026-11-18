@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/domain/models/card_task_state.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/use_cases/card_task_extractor.dart';
 import 'package:memex/ui/timeline/view_models/card_tasks_viewmodel.dart';
 import 'package:memex/utils/result.dart';
 
@@ -95,7 +96,7 @@ CardTasksViewModel _viewModel(
     CardTasksViewModel(
       router: router,
       cardId: 'card-1',
-      candidates: candidates,
+      candidates: candidates.map(CardTaskCandidate.new).toList(),
     );
 
 void main() {
@@ -115,7 +116,8 @@ void main() {
     await vm.load();
 
     expect(vm.phase, CardTasksPhase.selecting);
-    expect(vm.candidates, ['Trocar o Parakeet', 'Melhorar o Todo']);
+    expect(vm.candidates.map((task) => task.text),
+        ['Trocar o Parakeet', 'Melhorar o Todo']);
     expect(vm.isSelected(0), isTrue);
     expect(vm.isSelected(1), isTrue);
     expect(vm.selectedCount, 2);

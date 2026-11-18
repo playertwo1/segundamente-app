@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/domain/models/card_task_state.dart';
 import 'package:memex/domain/models/todo_item.dart';
+import 'package:memex/domain/use_cases/card_task_extractor.dart';
 import 'package:memex/l10n/app_localizations.dart';
 import 'package:memex/ui/timeline/view_models/card_tasks_viewmodel.dart';
 import 'package:memex/ui/timeline/widgets/card_tasks_section.dart';
@@ -95,7 +96,7 @@ Future<({_FakeRouter router, CardTasksViewModel vm})> _setUp(
   final vm = CardTasksViewModel(
     router: router,
     cardId: 'card-1',
-    candidates: const [_parakeet, _todo],
+    candidates: const [CardTaskCandidate(_parakeet), CardTaskCandidate(_todo)],
   );
   await vm.load();
   await tester.pumpWidget(
@@ -261,7 +262,10 @@ void main() {
     final vm = CardTasksViewModel(
       router: router,
       cardId: 'card-1',
-      candidates: const [_parakeet, _todo],
+      candidates: const [
+        CardTaskCandidate(_parakeet),
+        CardTaskCandidate(_todo)
+      ],
     );
     await vm.load();
     await tester.pumpWidget(

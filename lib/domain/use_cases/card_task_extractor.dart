@@ -1,4 +1,25 @@
+import 'package:collection/collection.dart';
 import 'package:memex/domain/models/card_detail_model.dart';
+import 'package:memex/domain/models/card_props.dart';
+
+typedef CardSubtask = ({String text, bool done});
+
+class CardTaskCandidate {
+  const CardTaskCandidate(this.text, {this.subtasks = const []});
+
+  final String text;
+  final List<CardSubtask> subtasks;
+
+  @override
+  bool operator ==(Object other) =>
+      other is CardTaskCandidate &&
+      text == other.text &&
+      const ListEquality<CardSubtask>().equals(subtasks, other.subtasks);
+
+  @override
+  int get hashCode =>
+      Object.hash(text, const ListEquality<CardSubtask>().hash(subtasks));
+}
 
 /// Most candidates offered for one record.
 const int cardTaskMaxCandidates = 10;
@@ -30,18 +51,18 @@ final RegExp _markerPattern = RegExp(
   r'^(?:[-*•–]|\d+[.)])\s+(?:\[[ xX]\](?:\s+|$))?(.*)$',
 );
 
-/// Tasks a record suggests: markdown list lines and list-valued fields.
+/// Tasks a record suggests: task cards, markdown lines and list-valued fields.
 /// Pure: no Flutter, no I/O. Deduped case-insensitively, capped at
 /// [cardTaskMaxCandidates].
-List<String> extractCardTaskCandidates(CardDetailModel detail) {
-  final candidates = <String>[];
+List<CardTaskCandidate> extractCardTaskCandidates(CardDetailModel detail) {
+  final candidates = <CardTaskCandidate>[];
   final seen = <String>{};
 
-  void offer(String raw) {
+  void offer(String raw, {List<CardSubtask> subtasks = const []}) {
     if (candidates.length >= cardTaskMaxCandidates) return;
     final text = _cleanCandidate(raw);
     if (text == null || !seen.add(text.toLowerCase())) return;
-    candidates.add(text);
+    candidates.add(CardTaskCandidate(text, subtasks: subtasks));
   }
 
   void visit(Object? node) {
@@ -53,8 +74,8 @@ List<String> extractCardTaskCandidates(CardDetailModel detail) {
         }
       case Map():
         node.forEach((key, value) {
-          final isTaskList = value is List &&
-              _listKeys.contains(key.toString().toLowerCase());
+          final isTaskList =
+              value is List && _listKeys.contains(key.toString().toLowerCase());
           if (isTaskList) {
             for (final element in value) {
               if (element is String) offer(_stripMarker(element));
@@ -68,6 +89,26 @@ List<String> extractCardTaskCandidates(CardDetailModel detail) {
     }
   }
 
+  for (final config in detail.uiConfigs) {
+    if (config.templateId != 'task') continue;
+    final title = config.data['title'];
+    if (title is! String) continue;
+    final rawSubtasks = config.data['subtasks'];
+    final subtasks = <CardSubtask>[
+      if (rawSubtasks is List)
+        for (final subtask in rawSubtasks)
+          if (subtask case {'title': final String title})
+            if (_cleanCandidate(title) case final text?)
+              (text: text, done: isCardTaskChecked(subtask['completed'])),
+    ];
+    offer(title, subtasks: List.unmodifiable(subtasks));
+  }
+
+  // The original text often repeats the subtasks already on the card.
+  seen.addAll(candidates.expand(
+    (candidate) =>
+        candidate.subtasks.map((subtask) => subtask.text.toLowerCase()),
+  ));
   visit(detail.rawContent);
   for (final config in detail.uiConfigs) {
     if (_skippedTemplates.contains(config.templateId)) continue;

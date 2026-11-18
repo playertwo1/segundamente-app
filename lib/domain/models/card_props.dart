@@ -56,14 +56,14 @@ Set<String> deriveCardProps(CardData card) {
 }
 
 bool _taskCompleted(Map<String, dynamic> data) {
-  if (_truthy(data['is_completed'])) return true;
+  if (isCardTaskChecked(data['is_completed'])) return true;
   final subtasks = data['subtasks'];
   return subtasks is List &&
       subtasks.isNotEmpty &&
-      subtasks.every((s) => s is Map && _truthy(s['completed']));
+      subtasks.every((s) => s is Map && isCardTaskChecked(s['completed']));
 }
 
-bool _truthy(dynamic value) {
+bool isCardTaskChecked(Object? value) {
   if (value is bool) return value;
   if (value is num) return value != 0;
   if (value is String) {
