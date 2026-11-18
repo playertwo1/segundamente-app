@@ -1222,7 +1222,7 @@
   "speechTranscribing": "Reconhecendo...",
   "speechNoResult": "Nenhuma fala detectada",
   "useLocalSpeechToTextTitle": "Transcrição no aparelho",
-  "useLocalSpeechToTextDesc": "Ligado: a voz em português é transcrita no aparelho pelo Parakeet, sem enviar o áudio (baixe o modelo de ~470 MB abaixo). Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).",
+  "useLocalSpeechToTextDesc": "Ligado: o Whisper turbo transcreve em português no aparelho, sem enviar o áudio. Baixe o modelo abaixo. Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).",
   "pendingAiProcessingHint": "Configure o modelo AI para processar",
   "demoWelcome": "Boas-vindas à Segunda Mente!\nVeja três formas de registrar, organizar e reencontrar seus momentos.",
   "demoTapAdd": "Toque aqui para criar seu primeiro registro",

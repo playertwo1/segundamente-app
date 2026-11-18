@@ -126,7 +126,7 @@ class SpeechTranscriptionService {
     return SpeechTranscriptionResult(
       text: text,
       usage: null,
-      model: 'parakeet-local',
+      model: 'whisper-turbo-local',
     );
   }
 
@@ -137,7 +137,7 @@ class SpeechTranscriptionService {
     return SpeechTranscriptionResult(
       text: text,
       usage: null,
-      model: 'parakeet-local',
+      model: 'whisper-turbo-local',
     );
   }
 

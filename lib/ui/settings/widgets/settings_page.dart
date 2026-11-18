@@ -667,7 +667,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 16),
-          // Local Parakeet or ChatGPT (cloud); the local model downloads here.
+          // Local Whisper or cloud transcription; the local model downloads here.
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(

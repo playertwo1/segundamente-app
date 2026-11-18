@@ -14,7 +14,7 @@
 | F2-08 | Menu único de anexos no chat: câmera, galeria, TXT, PDF e áudio, sem faixa de fotos recentes | P1 | F2-01 | DONE | Menu validado no S25; TXT chega ao agente; limites de PDF são descritos separadamente |
 | F2-09 | Transcrever áudio anexado/compartilhado em pt-BR; enviar ao modelo somente o texto após ação do usuário (D-011) | P0 | F2-08 | IN_PROGRESS | Áudios sintéticos de 8 s, 100 s e aproximadamente 50 min processados no S25; falta validar amostra real e limites/qualidade do serviço |
 | F2-10 | Abrir chat com o anexo ao compartilhar TXT, PDF ou áudio com o app | P1 | F2-08 | IN_PROGRESS | TXT validado no S25; PDF e áudio compartilhados ainda precisam de prova |
-| F2-11 | Transcrição local multilíngue, em português, com sherpa_onnx e Whisper como alternativa offline ao caminho D-011 | P1 | F2-09 | IN_PROGRESS | Comparar o mesmo áudio nos dois caminhos; medir tempo, memória e qualidade em áudio de aproximadamente 50 min no S25; registrar modelo escolhido |
+| F2-11 | Transcrição local com sherpa_onnx e Whisper large-v3 turbo em português (D-077) | P1 | F2-09 | IN_PROGRESS | Modelo definido e implementado. Falta comparar com D-011 e medir tempo, memória e qualidade em áudio de aproximadamente 50 min no S25 |
 | F2-12 | Importar legendas SRT/VTT preservando relógios e texto | P2 | F2-03 | IN_PROGRESS | Testes de parser para cabeçalho, numeração, intervalos e etiquetas de locutor; prévia validada no S25; parser, seletor e compartilhamento feitos, falta a prévia no aparelho |
 | F2-13 | Dicionário local editável de nomes, siglas e produtos para prompts | P1 | F3-08 | DONE | Limite documentado e testado; termos aparecem na prévia de envio; nome próprio corrigido em resumo real |
 

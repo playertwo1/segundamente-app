@@ -210,7 +210,7 @@ void main() {
     await tester.pump();
     expect(find.text(l10n.speechModelMissing), findsOneWidget);
     final downloadButton = find.byKey(const ValueKey('speech-model-download'));
-    expect(find.text(l10n.speechModelDownloadButton(470)), findsOneWidget);
+    expect(find.text(l10n.speechModelDownloadButton(538)), findsOneWidget);
 
     await tester.tap(downloadButton);
     await tester.pump();

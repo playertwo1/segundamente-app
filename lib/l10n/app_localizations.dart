@@ -4728,7 +4728,7 @@ abstract class AppLocalizations {
   /// No description provided for @useLocalSpeechToTextDesc.
   ///
   /// In en, this message translates to:
-  /// **'On: speech is transcribed on-device by Parakeet, without sending the audio (download the ~470 MB model below). Off: audio goes straight to ChatGPT (or your configured cloud model).'**
+  /// **'On: Whisper turbo transcribes Portuguese on your device without sending audio. Download the model below. Off: audio goes straight to ChatGPT (or your configured cloud model).'**
   String get useLocalSpeechToTextDesc;
 
   /// No description provided for @pendingAiProcessingHint.

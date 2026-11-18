@@ -46,6 +46,7 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 | D-054 | 2026-11-13 | Sync: relay do Coucou + caixa de correio no Cloudflare; escopo, avisos e backup semanal | ACCEPTED |
 | D-055 | 2026-11-13 | Google: login próprio, Drive (backup) e Calendar; NotebookLM pós-MVP sem previsão | ACCEPTED |
 | D-067 | 2026-11-15 | Repositório `playertwo1/segundamente-app` público; atualizador Android sem token GitHub (substitui D-046) | ACCEPTED |
+| D-077 | 2026-11-18 | Whisper large-v3 turbo em português substitui o Parakeet na transcrição local | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -451,3 +452,9 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
   - **Animações** com a curva `Cubic(0.16, 1, 0.3, 1)`; com "remover animações" do Android, só fades curtos.
 - Fora: indicador de "persona escrevendo" (o app não expõe um sinal por registro); o pôster de compartilhamento continua no formato antigo.
 - Consequência: reverter é trabalho só de UI; o estado salvo do bloco de tarefas é um mapa local que pode ser ignorado.
+
+## D-077 — Whisper turbo na transcrição local em português (2026-11-18)
+
+- Contexto: o dono relatou melhor reconhecimento em português com Whisper e pediu a troca do Parakeet. Na comparação anterior da F2-11, o turbo ficou mais perto da transcrição de referência do Whisper large-v3 (17% de diferença contra 31% do Parakeet, em três áudios no PC). O turbo levou mais tempo nessa medição.
+- Decisão: Whisper large-v3 turbo multilíngue, quantizado em int8, com idioma `pt` e tarefa `transcribe` no sherpa-onnx. A transcrição local continua opcional e mantém os cortes nas pausas em blocos de até 30 s. O caminho em nuvem continua disponível ao desligar a transcrição no aparelho.
+- Migração: baixar cerca de 538 MB nas Configurações. A pasta do Parakeet é removida após extrair os três arquivos do Whisper. Um download incompleto preserva a pasta antiga.
