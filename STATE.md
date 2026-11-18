@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-18 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.57+142 (2026-11-17, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-18 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.58+143 (2026-11-18, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -37,6 +37,11 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release v1.0.58+143 (2026-11-18)
+
+- Inclui cartões marcáveis no Todo, correção da leitura de permissões de lembretes e Whisper turbo em português. O README traz o download público e os passos de instalação.
+- Suíte completa com 2.172 aprovados, 2 ignorados e 0 falhas. APK conferido, com o mesmo certificado da v1.0.57. Evidências e SHA-256 em [docs/releases/v1.0.58.md](docs/releases/v1.0.58.md). Galaxy S25 Ultra `NOT_RUN`.
 
 ### Prévia da bolha nativa no emulador (2026-11-18)
 

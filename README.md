@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/playertwo1/segundamente-app/releases/tag/v1.0.46"><strong>Android v1.0.46</strong></a> · Release privada do GitHub; exige acesso ao repositório.
+  <a href="https://github.com/playertwo1/segundamente-app/releases/latest"><strong>Baixar para Android</strong></a> · APK público no GitHub
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@ A Segunda Mente ajuda a guardar pensamentos, conversas, imagens e documentos sem
 ## Conteúdo
 
 - [O que o aplicativo faz](#o-que-o-aplicativo-faz)
-- [Atualizações do aplicativo](#atualizações-do-aplicativo)
+- [Instalação e atualizações](#instalação-e-atualizações)
 - [Como os dados circulam](#como-os-dados-circulam)
 - [Privacidade e armazenamento](#privacidade-e-armazenamento)
 - [Modelos de IA](#modelos-de-ia)
@@ -36,6 +36,8 @@ A Segunda Mente ajuda a guardar pensamentos, conversas, imagens e documentos sem
 
 - Registra texto, imagens, áudio, transcrições e documentos nos fluxos suportados.
 - Organiza registros em cartões da linha do tempo e arquivos Markdown de conhecimento.
+- Organiza tarefas com subtarefas, prioridades e lembretes. Para incluir um cartão da linha do tempo, abra o registro e confirme em **Tarefas deste registro → Adicionar ao Todo**.
+- Transcreve áudio em português no aparelho com o Whisper large-v3 turbo. Ative **Configurações → Transcrição no aparelho** e baixe o modelo uma vez, cerca de 538 MB.
 - Gera insights que ajudam a encontrar padrões e relações entre registros.
 - Permite criar personas que comentam nos registros, conversar com elas e incluir uma contribuição contextual no chat principal quando o assunto combina.
 - Orienta as personas a responder com 3 a 6 frases em conversas substantivas, evitando repetição e conteúdo de preenchimento; Quick Query não inclui essa participação.
@@ -45,7 +47,9 @@ A Segunda Mente ajuda a guardar pensamentos, conversas, imagens e documentos sem
 
 A leitura de anexos e as capacidades de cada fluxo dependem do modelo configurado. Conversas aprofundadas a partir de comentários e criação de documentos nesses fios fazem parte da F10; consulte [o roadmap](ROADMAP.md) para acompanhar o estado e as evidências.
 
-## Atualizações do aplicativo
+## Instalação e atualizações
+
+Abra a [release pública mais recente](https://github.com/playertwo1/segundamente-app/releases/latest) e baixe o arquivo `segundamente_global_…apk` na seção **Assets**. Abra o arquivo no Android e siga as instruções de instalação. O APK público é para aparelhos ARM64 com Android 8.0 ou superior.
 
 No Android Stable e Early, **Configurações** permite consultar e baixar releases públicas diretamente de `playertwo1/segundamente-app` no GitHub, sem necessidade de token ou senha. O canal Dev não oferece essa função.
 
