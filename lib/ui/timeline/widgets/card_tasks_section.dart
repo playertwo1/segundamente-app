@@ -241,7 +241,7 @@ class _CardTasksSectionState extends State<CardTasksSection>
               reduce ? 0 : 6 * (1 - enter),
             ),
             child: _TaskRow(
-              text: vm.candidates[i],
+              text: vm.candidates[i].text,
               checked: checked,
               reduce: reduce,
               onTap: () => vm.toggle(i),

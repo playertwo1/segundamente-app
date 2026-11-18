@@ -9,8 +9,12 @@ import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_asset_server.dart';
 import 'package:memex/data/services/local_task_executor.dart';
+import 'package:memex/domain/models/card_detail_model.dart';
+import 'package:memex/domain/models/card_model.dart';
 import 'package:memex/domain/models/todo_item.dart';
 import 'package:memex/domain/models/todo_proposal.dart';
+import 'package:memex/domain/use_cases/card_task_extractor.dart';
+import 'package:memex/ui/timeline/view_models/card_tasks_viewmodel.dart';
 import 'package:memex/ui/todo/view_models/todo_proposal_viewmodel.dart';
 import 'package:memex/ui/todo/view_models/todo_viewmodel.dart';
 import 'package:memex/utils/result.dart';
@@ -66,6 +70,58 @@ void main() {
     expect(restored.id, created.id);
     expect(restored.isTombstoned, isFalse);
     expect(restored.version, created.version + 2);
+  });
+
+  test('a confirmed timeline task appears in the Todo list with its subtasks',
+      () async {
+    final detail = CardDetailModel(
+      id: 'task-record',
+      title: 'Preparar a apresentação',
+      timestamp: DateTime(2026, 11, 18),
+      address: '',
+      tags: const [],
+      rawContent: 'Preparar a apresentação',
+      insight:
+          InsightData(text: '', relatedCards: const [], comments: const []),
+      assets: const [],
+      uiConfigs: const [
+        UiConfig(templateId: 'task', data: {
+          'title': 'Preparar a apresentação',
+          'subtasks': [
+            {'title': 'Reunir os exemplos', 'completed': true},
+            {'title': 'Revisar os slides'},
+          ],
+        }),
+      ],
+    );
+    final cardTasks = CardTasksViewModel(
+      router: router!,
+      cardId: detail.id,
+      candidates: extractCardTaskCandidates(detail),
+    );
+    final todo = TodoViewModel(router: router!);
+    addTearDown(cardTasks.dispose);
+    addTearDown(todo.dispose);
+
+    await cardTasks.load();
+    await todo.load();
+    expect(todo.allItems, isEmpty);
+
+    expect(await cardTasks.addSelected(), isTrue);
+    await todo.load();
+    final task = todo.allItems.single;
+    expect(task.text, detail.title);
+    expect(task.dueDate, isNull);
+    expect(todo.allSections.single.items.single.id, task.id);
+    expect(task.subtasks.map((item) => (item.text, item.done)), [
+      ('Reunir os exemplos', true),
+      ('Revisar os slides', false),
+    ]);
+
+    await cardTasks.load();
+    expect(cardTasks.phase, CardTasksPhase.added);
+    expect(await cardTasks.addSelected(), isFalse);
+    expect((await router!.loadTodos()).valueOrThrow, hasLength(1));
   });
 
   test('AI proposal writes a task only after confirmation reaches storage',

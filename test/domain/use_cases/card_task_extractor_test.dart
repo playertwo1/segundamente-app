@@ -24,6 +24,49 @@ UiConfig _config(String templateId, Map<String, dynamic> data) =>
     UiConfig(templateId: templateId, data: data);
 
 void main() {
+  test('offers a task card even when the record has no text list', () {
+    final candidates = extractCardTaskCandidates(_detail(
+      rawContent: 'Preparar a apresentação',
+      uiConfigs: [
+        _config('task', {
+          'title': 'Preparar a apresentação',
+          'subtasks': [
+            {'title': 'Reunir os exemplos', 'completed': true},
+            {'title': 'Revisar os slides', 'completed': false},
+          ],
+        }),
+      ],
+    ));
+
+    expect(candidates, const [
+      CardTaskCandidate('Preparar a apresentação', subtasks: [
+        (text: 'Reunir os exemplos', done: true),
+        (text: 'Revisar os slides', done: false),
+      ]),
+    ]);
+  });
+
+  test('does not also offer a structured subtask from the original text', () {
+    final candidates = extractCardTaskCandidates(_detail(
+      rawContent:
+          '- Preparar a apresentação\n- Reunir os exemplos\n- Enviar o resumo',
+      uiConfigs: [
+        _config('task', {
+          'title': 'Preparar a apresentação',
+          'subtasks': [
+            {'title': 'Reunir os exemplos'},
+          ],
+        }),
+      ],
+    ));
+
+    expect(candidates.map((task) => task.text), [
+      'Preparar a apresentação',
+      'Enviar o resumo',
+    ]);
+    expect(candidates.first.subtasks.single.text, 'Reunir os exemplos');
+  });
+
   test('reads bullet markers of every supported kind', () {
     final candidates = extractCardTaskCandidates(_detail(
       rawContent: '- Trocar o Parakeet\n'
@@ -32,7 +75,7 @@ void main() {
           '– Quarta ideia',
     ));
 
-    expect(candidates, [
+    expect(candidates.map((task) => task.text), [
       'Trocar o Parakeet',
       'Melhorar o Todo',
       'Terceira ideia',
@@ -45,7 +88,7 @@ void main() {
       rawContent: '1. Primeiro\n2) Segundo',
     ));
 
-    expect(candidates, ['Primeiro', 'Segundo']);
+    expect(candidates.map((task) => task.text), ['Primeiro', 'Segundo']);
   });
 
   test('reads checklist items open, done and upper case', () {
@@ -53,7 +96,8 @@ void main() {
       rawContent: '- [ ] Aberta\n- [x] Feita\n- [X] Maiuscula',
     ));
 
-    expect(candidates, ['Aberta', 'Feita', 'Maiuscula']);
+    expect(
+        candidates.map((task) => task.text), ['Aberta', 'Feita', 'Maiuscula']);
   });
 
   test('strips one trailing period or semicolon', () {
@@ -61,7 +105,8 @@ void main() {
       rawContent: '- Fazer X.\n- Fazer Y;\n- Fazer Z',
     ));
 
-    expect(candidates, ['Fazer X', 'Fazer Y', 'Fazer Z']);
+    expect(
+        candidates.map((task) => task.text), ['Fazer X', 'Fazer Y', 'Fazer Z']);
   });
 
   test('dedupes case-insensitively keeping first order', () {
@@ -69,7 +114,7 @@ void main() {
       rawContent: '- Ideia\n- Outra\n- ideia',
     ));
 
-    expect(candidates, ['Ideia', 'Outra']);
+    expect(candidates.map((task) => task.text), ['Ideia', 'Outra']);
   });
 
   test('skips links and paths', () {
@@ -82,7 +127,7 @@ void main() {
           '- Algo util',
     ));
 
-    expect(candidates, ['Algo util']);
+    expect(candidates.map((task) => task.text), ['Algo util']);
   });
 
   test('skips image lists', () {
@@ -94,7 +139,7 @@ void main() {
       ],
     ));
 
-    expect(candidates, isEmpty);
+    expect(candidates.map((task) => task.text), isEmpty);
   });
 
   test('caps the result at ten candidates', () {
@@ -102,9 +147,9 @@ void main() {
 
     final candidates = extractCardTaskCandidates(_detail(rawContent: raw));
 
-    expect(candidates, hasLength(10));
-    expect(candidates.first, 'Item 1');
-    expect(candidates.last, 'Item 10');
+    expect(candidates.map((task) => task.text), hasLength(10));
+    expect(candidates.first.text, 'Item 1');
+    expect(candidates.last.text, 'Item 10');
   });
 
   test('skips candidates longer than 200 characters', () {
@@ -115,7 +160,7 @@ void main() {
       rawContent: '- $long\n- $fits',
     ));
 
-    expect(candidates, [fits]);
+    expect(candidates.map((task) => task.text), [fits]);
   });
 
   test('walks nested maps and lists of uiConfigs', () {
@@ -132,7 +177,8 @@ void main() {
       ],
     ));
 
-    expect(candidates, ['Primeiro', 'Segundo', 'Quarto']);
+    expect(
+        candidates.map((task) => task.text), ['Primeiro', 'Segundo', 'Quarto']);
   });
 
   test('reads task lists under a case-insensitive key', () {
@@ -144,7 +190,7 @@ void main() {
       ],
     ));
 
-    expect(candidates, ['Um', 'Dois']);
+    expect(candidates.map((task) => task.text), ['Um', 'Dois']);
   });
 
   test('ignores audio_card templates', () {
@@ -157,7 +203,7 @@ void main() {
       ],
     ));
 
-    expect(candidates, isEmpty);
+    expect(candidates.map((task) => task.text), isEmpty);
   });
 
   test('returns nothing when there is no list', () {
@@ -165,6 +211,6 @@ void main() {
       rawContent: 'Texto simples sem lista.',
     ));
 
-    expect(candidates, isEmpty);
+    expect(candidates.map((task) => task.text), isEmpty);
   });
 }

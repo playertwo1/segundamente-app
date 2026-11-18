@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:memex/domain/models/card_props.dart';
 import 'package:memex/ui/core/cards/ui/glass_card.dart';
 import 'package:memex/utils/date_util.dart';
 import 'package:memex/utils/user_storage.dart';
@@ -49,9 +50,9 @@ class _TaskCardState extends State<TaskCard> {
         .whereType<Map>()
         .map((task) => Map<String, dynamic>.from(task))
         .toList();
-    _isCompleted = _parseCompletedBool(widget.data['is_completed']) ||
+    _isCompleted = isCardTaskChecked(widget.data['is_completed']) ||
         (_subtasks.isNotEmpty &&
-            _subtasks.every((task) => _parseCompletedBool(task['completed'])));
+            _subtasks.every((task) => isCardTaskChecked(task['completed'])));
     if (_isCompleted && _subtasks.isNotEmpty) {
       _subtasks = _setSubtasksCompletion(_subtasks, completed: true);
     }
@@ -70,10 +71,10 @@ class _TaskCardState extends State<TaskCard> {
   void _toggleSubtask(int index) {
     setState(() {
       final task = Map<String, dynamic>.from(_subtasks[index]);
-      task['completed'] = !_parseCompletedBool(task['completed']);
+      task['completed'] = !isCardTaskChecked(task['completed']);
       _subtasks[index] = task;
       _isCompleted = _subtasks.isNotEmpty &&
-          _subtasks.every((task) => _parseCompletedBool(task['completed']));
+          _subtasks.every((task) => isCardTaskChecked(task['completed']));
     });
     _updateData();
   }
@@ -158,7 +159,7 @@ class _TaskCardState extends State<TaskCard> {
             ..._subtasks.asMap().entries.map((entry) {
               final int index = entry.key;
               final Map<String, dynamic> task = entry.value;
-              final bool done = _parseCompletedBool(task['completed']);
+              final bool done = isCardTaskChecked(task['completed']);
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
@@ -229,16 +230,4 @@ List<Map<String, dynamic>> _setSubtasksCompletion(
         (task) => {...Map<String, dynamic>.from(task), 'completed': completed},
       )
       .toList();
-}
-
-bool _parseCompletedBool(dynamic value) {
-  if (value is bool) return value;
-  if (value is num) return value != 0;
-  if (value is String) {
-    return switch (value.toLowerCase().trim()) {
-      'true' || 'yes' || 'y' || '1' || 'done' || 'completed' => true,
-      _ => false,
-    };
-  }
-  return false;
 }
