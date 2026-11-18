@@ -45,12 +45,13 @@ object CapsuleBubble {
         CapsuleLog.event("bubble channel ready; system bubbles allowed=${manager.areBubblesAllowed()}")
 
         val person = Person.Builder().setName("Segunda Mente").setBot(true).setKey(SHORTCUT_ID).build()
-        // Long-lived conversation shortcut: required for the notification to count as a conversation.
+        val localUser = Person.Builder().setName("Você").setKey("local_user").build()
+        // Android excludes conversations whose shortcut lists only bots.
         val shortcut = ShortcutInfo.Builder(context, SHORTCUT_ID)
             .setShortLabel("Segunda Mente")
             .setLongLived(true)
             .setLocusId(LocusId(SHORTCUT_ID))
-            .setPersons(arrayOf(person))
+            .setPersons(arrayOf(localUser, person))
             .setCategories(setOf(CONVERSATION_CATEGORY))
             .setIntent(hostIntent(context).setAction(Intent.ACTION_VIEW))
             .build()
@@ -76,7 +77,7 @@ object CapsuleBubble {
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setShortcutId(SHORTCUT_ID)
             .setStyle(
-                Notification.MessagingStyle(person)
+                Notification.MessagingStyle(localUser)
                     .addMessage("Protótipo da bolha: toque para conversar.", System.currentTimeMillis(), person),
             )
             .setContentIntent(contentIntent)

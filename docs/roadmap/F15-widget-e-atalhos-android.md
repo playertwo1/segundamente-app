@@ -18,4 +18,6 @@
 | F15-06 | Botão "Conversar" no painel de configurações rápidas | P2 | F15-02 | REVIEW (D-070; código pronto, device `NOT_RUN`) | Botão tocado no painel rápido do S25 e abre o chat flutuante; checklist em [F15-06-painel-rapido.md](../fases/F15-06-painel-rapido.md) |
 | F15-07 | Protótipos da minicápsula no S25: bolha oficial do Android × sobreposição própria ("Aparecer sobre outros apps"), comparados por abrir de qualquer app, minimizar mantendo a conversa, sobreviver à economia de bateria, custo de bateria e facilidade de esconder | P2 | F15-02 | IN_PROGRESS (D-071; forma escolhida: bolha oficial, D-073; medição da bolha no S25 `NOT_RUN`): protótipos só no build dev, em [F15-07-prototipos-capsula.md](../fases/F15-07-prototipos-capsula.md) | Forma escolhida e registrada em `docs/DECISIONS.md`, com os cinco critérios medidos no S25 |
 
+Prévia F15-07 no Android 16 emulado (2026-11-18): a bolha oficial apareceu, abriu o chat, recolheu sobre Configurações e reabriu pelo ícone após a correção no atalho dev. Os cinco critérios de aceite no S25 continuam `NOT_RUN`.
+
 **Portão F15:** F15-01 a F15-06 DONE com evidência no S25 e forma da minicápsula decidida (F15-07).
