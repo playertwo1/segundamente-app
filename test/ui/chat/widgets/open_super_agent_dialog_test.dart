@@ -2,12 +2,31 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/l10n/app_localizations.dart';
+import 'package:memex/ui/chat/view_models/chat_viewmodel.dart';
 import 'package:memex/ui/chat/widgets/agent_chat_dialog.dart';
+import 'package:memex/ui/chat/widgets/chat_history_screen.dart';
 import 'package:memex/ui/chat/widgets/open_super_agent_dialog.dart';
 import 'package:memex/utils/result.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _HistoryRouter extends Fake implements MemexRouter {
+  @override
+  Future<Result<List<Map<String, dynamic>>>> fetchChatSessions({
+    String? agentName,
+    int? limit,
+  }) async =>
+      const Ok([
+        {
+          'session_id': 'selected-session',
+          'title': 'Existing conversation',
+          'agent_name': 'memex_agent',
+          'scene': 'super_agent_home',
+        },
+      ]);
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +37,28 @@ void main() {
       'user_id': 'open-super-agent-test',
     });
     await UserStorage.initL10n();
+  });
+
+  testWidgets('opening a saved chat makes it the conversation to resume',
+      (tester) async {
+    await UserStorage.setLatestSuperAgentHomeSessionId('previous-session');
+    final vm =
+        ChatViewModel(router: _HistoryRouter(), agentName: 'memex_agent');
+    addTearDown(vm.dispose);
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: ChatHistoryScreen(viewModel: vm, agentName: 'memex_agent'),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Existing conversation'));
+    await tester.pump();
+
+    expect(
+      await latestSuperAgentSessionId(
+          sessionExists: (_) async => const Ok(true)),
+      'selected-session',
+    );
   });
 
   test('returns cached latest Super Agent home session id', () async {

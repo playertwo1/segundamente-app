@@ -473,3 +473,4 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 - O dono relatou que tarefas da lista sumiam do widget, o chat flutuante abria vazio e as ações da barra pareciam abrir o mesmo destino.
 - No widget grande, tarefas abertas sem data ocupam as linhas que sobrarem depois das atrasadas e das de hoje. Mantêm o rótulo **Sem data** e o limite de dez tarefas no snapshot privado. Isso atualiza o filtro da D-072.
 - **Capturar** abre a folha de anotação, **Tarefas** abre o Todo e **Linha do tempo** seleciona a aba da linha do tempo. Os atalhos do chat retomam a mesma conversa principal que o botão de chat dentro do app. Conversas antigas continuam disponíveis no histórico.
+- Na v1.0.60, abrir uma conversa principal pelo histórico passa a selecioná-la para os atalhos do chat e para a bolha. Sem uma conversa para retomar, a bolha oferece abrir o app e mantém o início da conversa sob controle do usuário.

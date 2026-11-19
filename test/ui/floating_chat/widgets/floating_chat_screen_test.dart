@@ -139,7 +139,11 @@ void main() {
 
   testWidgets('bubble mode fills its window without opening the keyboard',
       (tester) async {
-    await pumpSheet(tester, FloatingChatMode.bubble);
+    await pumpSheet(
+      tester,
+      FloatingChatMode.bubble,
+      loadSessionId: () async => 'saved-conversation',
+    );
 
     final dialog = tester.widget<AgentChatDialog>(find.byType(AgentChatDialog));
     expect(dialog.autofocusInput, isFalse);
@@ -148,6 +152,17 @@ void main() {
       tester.getSize(find.byKey(const ValueKey('agent_chat_dialog_container'))),
       const Size(390, 800),
     );
+  });
+
+  testWidgets('the bubble does not start a chat without a saved conversation',
+      (tester) async {
+    final router = await pumpSheet(tester, FloatingChatMode.bubble);
+    expect(find.byType(AgentChatDialog), findsNothing);
+    expect(find.text(UserStorage.l10n.noConversations), findsOneWidget);
+    await tester.tap(find.text(UserStorage.l10n.floatingOpenInApp));
+    await tester.pumpAndSettle();
+    expect(nativeCalls, ['openInApp']);
+    expect(router.routerDelegate.currentConfiguration.uri.path, '/');
   });
 
   testWidgets('remove animations gives the chat a stationary entrance',
@@ -173,6 +188,7 @@ void main() {
     await pumpSheet(
       tester,
       FloatingChatMode.bubble,
+      loadSessionId: () async => 'saved-conversation',
       size: const Size(320, 650),
       textScale: 2,
     );

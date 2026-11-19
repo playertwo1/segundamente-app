@@ -12,7 +12,8 @@ typedef SuperAgentSessionExistsChecker = Future<Result<bool>> Function(
   String sessionId,
 );
 
-bool _isHomeCompatible(Map<String, dynamic> session) {
+bool canResumeSuperAgentSession(Map<String, dynamic> session) {
+  if (session['is_quick_query'] == true) return false;
   final scene = session['scene']?.toString().trim();
   return scene == null ||
       scene.isEmpty ||
@@ -30,14 +31,15 @@ String? resolveLatestSuperAgentSessionId({
       normalizedCachedSessionId.isNotEmpty) {
     for (final session in sessions) {
       if (session['session_id']?.toString() == normalizedCachedSessionId &&
-          _isHomeCompatible(session)) {
+          canResumeSuperAgentSession(session)) {
         return normalizedCachedSessionId;
       }
     }
   }
 
   for (final session in sessions) {
-    if (session['scene'] == 'super_agent_home') {
+    if (session['scene'] == 'super_agent_home' &&
+        canResumeSuperAgentSession(session)) {
       return session['session_id']?.toString();
     }
   }
@@ -45,7 +47,7 @@ String? resolveLatestSuperAgentSessionId({
   // Sessions created before the unified Super Agent entry used the default
   // assistant scene. They remain valid home conversations after reinstall.
   for (final session in sessions) {
-    if (_isHomeCompatible(session)) {
+    if (canResumeSuperAgentSession(session)) {
       return session['session_id']?.toString();
     }
   }

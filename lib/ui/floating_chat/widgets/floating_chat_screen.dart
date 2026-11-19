@@ -9,6 +9,7 @@ import 'package:memex/ui/chat/widgets/open_super_agent_dialog.dart';
 import 'package:memex/ui/core/widgets/agent_logo_loading.dart';
 import 'package:memex/ui/floating_chat/floating_chat_host.dart';
 import 'package:memex/ui/floating_chat/view_models/listen_once_viewmodel.dart';
+import 'package:memex/utils/user_storage.dart';
 
 /// The floating chat sheet (F15-02): the super agent conversation drawn over
 /// the screen that was below it. Closing returns to the home route.
@@ -56,9 +57,37 @@ class _FloatingChatScreenState extends State<FloatingChatScreen> {
               return const Center(child: AgentLogoLoading(size: 56));
             }
             final mode = widget.mode;
+            final sessionId = snapshot.data;
+            if (mode == FloatingChatMode.bubble && sessionId == null) {
+              final l10n = UserStorage.l10n;
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(l10n.noConversations, textAlign: TextAlign.center),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          TextButton(
+                            onPressed: () => _openInApp(context, null),
+                            child: Text(l10n.floatingOpenInApp),
+                          ),
+                          TextButton(
+                            onPressed: () => _close(context),
+                            child: Text(l10n.close),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return AgentChatDialog(
               key: ValueKey(mode),
-              initialSessionId: snapshot.data,
+              initialSessionId: sessionId,
               floatingHost: FloatingChatHost(
                 fillsWindow: mode == FloatingChatMode.bubble,
                 onClose: () => _close(context),
