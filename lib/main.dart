@@ -403,9 +403,15 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
     });
     _mainOpenedSubscription =
         FloatingChatService.instance.mainOpened.listen((_) {
-      final uri = widget.router.routerDelegate.currentConfiguration.uri;
-      if (uri.path == AppRoutes.floatingChat &&
-          uri.queryParameters['mode'] == FloatingChatMode.bubble.wireName) {
+      final matches = widget.router.routerDelegate.currentConfiguration;
+      final top = matches.matches.lastOrNull;
+      final uri = top is ImperativeRouteMatch ? top.matches.uri : matches.uri;
+      if (const {
+        AppRoutes.floatingChat,
+        AppRoutes.floatingCapture,
+        AppRoutes.floatingTodoAdd,
+        AppRoutes.floatingTodoComplete,
+      }.contains(uri.path)) {
         widget.router.go(AppRoutes.home);
       }
     });
@@ -1473,12 +1479,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (!mounted || !_canHandleAppActions) return;
       _handleAppAction(action);
     });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   void _handleAppAction(String? action) {
     if (action == null) return;
     if (action == AppActionService.openTodoAction) {
       context.push(AppRoutes.todo);
+      return;
+    }
+    if (action == AppActionService.openTimelineAction) {
+      setState(() => _currentTab = 0);
+      context.go(AppRoutes.home);
       return;
     }
     if (action != AppActionService.quickNoteAction) {

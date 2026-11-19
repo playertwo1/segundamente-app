@@ -21,10 +21,15 @@ class AppActionService {
 
   static const String quickNoteAction = 'quick_note';
   static const String openTodoAction = 'open_todo';
+  static const String openTimelineAction = 'open_timeline';
   static const Duration defaultLateActionTimeout = Duration(seconds: 2);
   static const Duration _dedupWindow = Duration(seconds: 2);
 
-  static const Set<String> _knownActions = {quickNoteAction, openTodoAction};
+  static const Set<String> _knownActions = {
+    quickNoteAction,
+    openTodoAction,
+    openTimelineAction,
+  };
 
   final Logger _logger = getLogger('AppActionService');
   final DateTime Function() _now;
@@ -106,14 +111,7 @@ class AppActionService {
     final pathSegments =
         uri.pathSegments.map((segment) => segment.toLowerCase()).toList();
 
-    if (host == quickNoteAction && pathSegments.isEmpty) {
-      return quickNoteAction;
-    }
-
-    // memex://open_todo: the widget's task title (F15-05) opens the Todo list.
-    if (host == openTodoAction && pathSegments.isEmpty) {
-      return openTodoAction;
-    }
+    if (pathSegments.isEmpty && _knownActions.contains(host)) return host;
 
     if (host.isEmpty &&
         pathSegments.length == 1 &&

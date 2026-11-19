@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-18 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.59+144 (2026-11-18, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-19 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.59+144 (2026-11-18, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -37,6 +37,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Widget Android e continuidade do chat (2026-11-19, D-079)
+
+- O widget grande inclui pendências sem data nas vagas, depois das atrasadas e de hoje. A barra abre Anotar, Todo e linha do tempo pelos respectivos atalhos.
+- Conversar, Falar e a bolha carregam a sessão principal pelo mesmo resolvedor do chat do app. O código do atalho anterior abria sem sessão e não chamava exclusão de histórico.
+- 49 testes direcionados Flutter e 6 testes Kotlin do widget aprovados. `flutter analyze --no-pub` nos 10 arquivos Dart alterados sem diagnósticos. A suíte completa teve 2.181 aprovações, 2 ignorados e um erro de remoção de arquivo temporário no Windows. O arquivo de teste afetado passou integralmente na repetição isolada (16 testes).
+- `flutter build apk --flavor global --release --no-pub` gerou APK local assinado. No Android 16 emulado, a tarefa sintética sem data existia no Todo e ficava ausente no widget do APK publicado. Após atualizar sobre a instalação e abrir o app, a mesma tarefa apareceu no widget. O emulador perdeu o ADB durante a prova dos três atalhos. Galaxy S25 Ultra `NOT_RUN`. A correção ainda não foi publicada.
 
 ### Release v1.0.59+144 (2026-11-18)
 

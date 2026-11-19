@@ -30,7 +30,7 @@ class MainActivity : FlutterFragmentActivity() {
         SharedFlutterEngine.releaseHost(floatingHost)
         super.onCreate(savedInstanceState)
         current = WeakReference(this)
-        if (floatingHost is ChatBubbleActivity) FloatingChatChannelHandler.notifyMainOpened()
+        if (floatingHost != null) FloatingChatChannelHandler.notifyMainOpened()
         AppActionChannelHandler.handleIntent(this, intent)
         BackupImportChannelHandler.handleIntent(this, intent)
         ExternalFileImportChannelHandler.handleIntent(this, intent)

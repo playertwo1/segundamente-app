@@ -9,9 +9,9 @@ import 'package:memex/utils/logger.dart';
 /// Pushes the home-screen Todo widget's snapshot to Android (F15-05, D8).
 ///
 /// The snapshot carries only what the widget shows: id, title, due date and
-/// time, status and time zone, for the earliest [maxItems] open dated tasks.
-/// Undated tasks and conversation text never go in. The native side keeps the
-/// last snapshot in its own app-private storage.
+/// time, status and time zone, for up to [maxItems] open tasks. Up to three
+/// undated tasks can fill spare widget rows. The native side keeps the last
+/// snapshot in its own app-private storage.
 class TodoWidgetSnapshotService {
   TodoWidgetSnapshotService._() : _channel = _defaultChannel;
 
@@ -27,9 +27,7 @@ class TodoWidgetSnapshotService {
 
   static const int snapshotVersion = 1;
 
-  /// Enough for the widget's three rows after midnight: the native side picks
-  /// overdue first, then today. The earliest tasks are the ones it can show,
-  /// so later tasks never need to be in the snapshot.
+  /// Keeps a buffer of dated tasks for the widget's next day rollover.
   static const int maxItems = 10;
 
   static final _logger = getLogger('TodoWidgetSnapshot');
@@ -41,14 +39,17 @@ class TodoWidgetSnapshotService {
     List<TodoItem> items, {
     required DateTime now,
   }) {
-    final candidates = [
-      for (final item in items)
-        if (!item.done && !item.isTombstoned && item.dueDate != null) item,
-    ]..sort(_byDue);
+    final open = items.where((item) => !item.done && !item.isTombstoned);
+    final dated = open.where((item) => item.dueDate != null).toList()
+      ..sort(_byDue);
+    final undated = open.where((item) => item.dueDate == null).take(3).toList();
     return {
       'version': snapshotVersion,
       'items': [
-        for (final item in candidates.take(maxItems))
+        for (final item in [
+          ...dated.take(maxItems - undated.length),
+          ...undated
+        ])
           {
             'id': item.id,
             'title': item.text,

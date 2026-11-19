@@ -103,8 +103,8 @@ internal object WidgetLayouts {
     internal fun usesFullLargeChrome(minHeightDp: Int): Boolean =
         minHeightDp >= LARGE_FULL_MIN_HEIGHT_DP
 
-    internal fun formatTaskTimeLabel(todayLabel: String, row: WidgetRow): String {
-        val due = row.task.dueDate
+    internal fun formatTaskTimeLabel(todayLabel: String, row: WidgetRow, noDateLabel: String = ""): String {
+        val due = row.task.dueDate ?: return noDateLabel
         val date = "%02d/%02d".format(due.dayOfMonth, due.monthValue)
         val time = row.task.dueTime?.let { "%02d:%02d".format(it.hour, it.minute) }
         return when {
@@ -137,7 +137,7 @@ internal object WidgetLayouts {
                 setViewVisibility(R.id.widget_medium_header, if (showHeader) View.VISIBLE else View.GONE)
                 setOnClickPendingIntent(R.id.widget_open_app, openApp(context, REQUEST_OPEN_APP))
                 setOnClickPendingIntent(R.id.widget_open_external, openApp(context, REQUEST_OPEN_EXTERNAL))
-                setOnClickPendingIntent(R.id.widget_register_btn, floatingChat(context, MODE_TYPE, REQUEST_REGISTER_BTN))
+                setOnClickPendingIntent(R.id.widget_register_btn, floatingChat(context, MODE_NOTE, REQUEST_REGISTER_BTN))
             }
         }
 
@@ -162,10 +162,10 @@ internal object WidgetLayouts {
             setOnClickPendingIntent(R.id.widget_today_header, openTodo(context, REQUEST_TODAY_OPEN))
             setOnClickPendingIntent(R.id.widget_tasks_empty, openTodo(context, REQUEST_TODAY_OPEN))
             if (!compactChrome) {
-                setOnClickPendingIntent(R.id.widget_nav_capture, floatingChat(context, MODE_TYPE, REQUEST_NAV_CAPTURE))
+                setOnClickPendingIntent(R.id.widget_nav_capture, floatingChat(context, MODE_NOTE, REQUEST_NAV_CAPTURE))
                 setOnClickPendingIntent(R.id.widget_nav_tasks, openTodo(context, REQUEST_NAV_TASKS))
-                setOnClickPendingIntent(R.id.widget_nav_timeline, openApp(context, REQUEST_NAV_TIMELINE))
-                setOnClickPendingIntent(R.id.widget_register_btn, floatingChat(context, MODE_TYPE, REQUEST_REGISTER_BTN))
+                setOnClickPendingIntent(R.id.widget_nav_timeline, openDestination(context, "open_timeline", REQUEST_NAV_TIMELINE))
+                setOnClickPendingIntent(R.id.widget_register_btn, floatingChat(context, MODE_NOTE, REQUEST_REGISTER_BTN))
             }
             if (hiddenCount > 0) {
                 setTextViewText(R.id.widget_tasks_overflow, context.getString(R.string.widget_tasks_more, hiddenCount))
@@ -196,7 +196,10 @@ internal object WidgetLayouts {
                 if (row.overdue) R.drawable.widget_task_circle_overdue else R.drawable.widget_task_circle,
             )
             setTextViewText(R.id.widget_task_title, task.title)
-            setTextViewText(R.id.widget_task_time, formatTaskTimeLabel(todayLabel, row))
+            setTextViewText(
+                R.id.widget_task_time,
+                formatTaskTimeLabel(todayLabel, row, context.getString(R.string.widget_task_no_date)),
+            )
             setTextColor(
                 R.id.widget_task_time,
                 context.getColor(if (row.overdue) R.color.widget_amber else R.color.widget_secondary),
@@ -238,8 +241,11 @@ internal object WidgetLayouts {
         )
     }
 
-    private fun openTodo(context: Context, requestCode: Int): PendingIntent {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("memex://open_todo"))
+    private fun openTodo(context: Context, requestCode: Int): PendingIntent =
+        openDestination(context, "open_todo", requestCode)
+
+    private fun openDestination(context: Context, destination: String, requestCode: Int): PendingIntent {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("memex://$destination"))
             .setClass(context, MainActivity::class.java)
         return PendingIntent.getActivity(
             context,

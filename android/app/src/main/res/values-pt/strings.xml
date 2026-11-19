@@ -13,7 +13,8 @@
     <string name="widget_key_photo">Foto</string>
     <string name="widget_key_paste">Colar</string>
     <!-- F15-05: widget grande: tarefas, tecla "+ tarefa", descrição do círculo. -->
-    <string name="widget_tasks_empty">Nada para hoje</string>
+    <string name="widget_tasks_empty">Sem tarefas pendentes para mostrar</string>
+    <string name="widget_task_no_date">Sem data</string>
     <string name="widget_key_task_add">+ tarefa</string>
     <string name="widget_action_task_add">Nova tarefa</string>
     <string name="widget_tasks_more">+%1$d</string>
@@ -24,7 +25,7 @@
     <string name="widget_nav_timeline">Linha do tempo</string>
     <string name="widget_input_hint">O que você quer registrar?</string>
     <string name="widget_register_cta">Registrar</string>
-    <string name="widget_tasks_card_title">Tarefas de hoje</string>
+    <string name="widget_tasks_card_title">Tarefas pendentes</string>
     <string name="widget_see_all">Ver todas</string>
     <string name="widget_open_app">Abrir Segunda Mente</string>
     <string name="widget_more_options">Mais opções</string>

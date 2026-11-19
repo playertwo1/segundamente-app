@@ -12,7 +12,7 @@ import java.time.ZonedDateTime
 data class WidgetTask(
     val id: String,
     val title: String,
-    val dueDate: LocalDate,
+    val dueDate: LocalDate?,
     val dueTime: LocalTime?,
     val zone: ZoneId,
 )
@@ -22,8 +22,8 @@ data class WidgetRow(val task: WidgetTask, val overdue: Boolean)
 
 /**
  * The home-screen Todo snapshot pushed by Dart (F15-05, D8). It lives in the app's
- * private preferences, so it is never read by another app. Dart sends the open,
- * dated tasks only; this side chooses the rows for "now", so the rows roll over
+ * private preferences, so it is never read by another app. This side chooses
+ * the open tasks to display for "now", so the rows roll over
  * after midnight without a new push.
  */
 internal object TodoWidgetSnapshot {
@@ -49,7 +49,7 @@ internal object TodoWidgetSnapshot {
                 WidgetTask(
                     id = item.getString("id"),
                     title = item.getString("title"),
-                    dueDate = LocalDate.parse(item.getString("dueDate")),
+                    dueDate = if (item.isNull("dueDate")) null else LocalDate.parse(item.getString("dueDate")),
                     dueTime = if (item.isNull("dueTime")) null else LocalTime.parse(item.getString("dueTime")),
                     zone = ZoneId.of(item.getString("timeZone")),
                 )
@@ -59,12 +59,13 @@ internal object TodoWidgetSnapshot {
         }
     }
 
-    /** Overdue tasks first, then today's by time, at most [MAX_ROWS], for [now]. */
+    /** Overdue tasks first, then today's by time, then undated tasks. */
     fun rows(tasks: List<WidgetTask>, now: Instant): List<WidgetRow> {
         val rows = tasks.mapNotNull { task ->
             val local = ZonedDateTime.ofInstant(now, task.zone)
             val today = local.toLocalDate()
             when {
+                task.dueDate == null -> null
                 task.dueDate.isBefore(today) -> WidgetRow(task, overdue = true)
                 task.dueDate.isAfter(today) -> null
                 // Same rule as TodoScheduleCalculator.statusFor: a timed task is overdue once its time has passed.
@@ -73,7 +74,9 @@ internal object TodoWidgetSnapshot {
             }
         }
         val (overdue, today) = rows.partition { it.overdue }
-        return (overdue.sortedWith(byDue) + today.sortedWith(byDue)).take(MAX_ROWS)
+        val undated = tasks.asSequence().filter { it.dueDate == null }.map { WidgetRow(it, overdue = false) }
+        return (overdue.sortedWith(byDue).asSequence() + today.sortedWith(byDue) + undated)
+            .take(MAX_ROWS).toList()
     }
 
     /**
@@ -86,7 +89,8 @@ internal object TodoWidgetSnapshot {
             ZonedDateTime.ofInstant(now, zone).toLocalDate().plusDays(1).atStartOfDay(zone).toInstant()
         }
         val dueTimes = tasks.mapNotNull { task ->
-            task.dueTime?.let { ZonedDateTime.of(task.dueDate, it, task.zone).toInstant() }
+            val date = task.dueDate ?: return@mapNotNull null
+            task.dueTime?.let { ZonedDateTime.of(date, it, task.zone).toInstant() }
         }
         return (midnights + dueTimes).filter { it.isAfter(now) }.min().toEpochMilli()
     }
