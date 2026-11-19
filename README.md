@@ -39,6 +39,7 @@ A Segunda Mente ajuda a guardar pensamentos, conversas, imagens e documentos sem
 - Organiza tarefas com subtarefas, prioridades e lembretes. Para incluir um cartão da linha do tempo, abra o registro e confirme em **Tarefas deste registro → Adicionar ao Todo**.
 - Transcreve áudio em português no aparelho com o Whisper large-v3 turbo. Ative **Configurações → Transcrição no aparelho** e baixe o modelo uma vez, cerca de 538 MB.
 - Abre o chat sobre outros apps pela bolha nativa do Android. Ative **Configurações → Bolha do chat** no Android 11 ou superior e autorize as bolhas do app no sistema quando solicitado.
+- Mostra tarefas atrasadas, de hoje e sem data no widget grande do Android. Os atalhos **Capturar**, **Tarefas** e **Linha do tempo** abrem seus próprios destinos. A bolha retoma a conversa atual, inclusive uma selecionada no **Histórico de chat**.
 - Gera insights que ajudam a encontrar padrões e relações entre registros.
 - Permite criar personas que comentam nos registros, conversar com elas e incluir uma contribuição contextual no chat principal quando o assunto combina.
 - Orienta as personas a responder com 3 a 6 frases em conversas substantivas, evitando repetição e conteúdo de preenchimento; Quick Query não inclui essa participação.

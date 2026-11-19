@@ -8,6 +8,7 @@ import 'package:memex/ui/core/widgets/agent_logo_loading.dart';
 import 'package:memex/ui/core/widgets/back_button.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/chat/widgets/agent_chat_dialog.dart';
+import 'package:memex/ui/chat/widgets/open_super_agent_dialog.dart';
 import 'package:memex/ui/chat/widgets/session_report_screen.dart';
 import 'package:memex/ui/chat/widgets/transcript_file_import_button.dart';
 import 'package:memex/ui/core/themes/app_colors.dart';
@@ -110,7 +111,16 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     );
   }
 
-  void _openSession(ChatViewModel vm, String sessionId) {
+  Future<void> _openSession(
+    ChatViewModel vm,
+    String sessionId,
+    Map<String, dynamic> session,
+  ) async {
+    if (session['agent_name'] == 'memex_agent' &&
+        canResumeSuperAgentSession(session)) {
+      await UserStorage.setLatestSuperAgentHomeSessionId(sessionId);
+      if (!mounted) return;
+    }
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -210,7 +220,8 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16),
-                                onTap: () => _openSession(vm, sessionId),
+                                onTap: () =>
+                                    _openSession(vm, sessionId, session),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Row(

@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-19 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.59+144 (2026-11-18, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-19 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.60+145 (2026-11-19, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -14,7 +14,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 1. **Validar no S25 o Todo e a tela do registro:** confirmar cartão com subtarefas em “Tarefas deste registro”, conferir a lista e Desfazer, verificar o estado das permissões e disparar um lembrete. Conferir também balões, deslizar para responder e citação.
 2. **Validar a F14 no S25:** na aba Todo, o painel do Assistente Ativo (resumo manhã/tarde, tarefas paradas, sugestões das personas pelo `TodoProposalCard`, silêncio).
-3. **Validar F15-02 a F15-08 no S25:** chat flutuante pelos atalhos (abertura a frio, volta à tela de origem, Abrir no app), widgets pequeno, médio e grande, painel rápido e **Configurações → Bolha do chat** na versão pública. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`. O texto do limite de Falar (R03) aguarda decisão do dono.
+3. **Validar F15-02 a F15-08 no S25:** chat flutuante pelos atalhos, continuidade da conversa ao alternar entre o app e a bolha, widgets pequeno, médio e grande, painel rápido e **Configurações → Bolha do chat**. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`. O texto do limite de Falar (R03) aguarda decisão do dono.
 4. **F12:** F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06. O S25 dev está revogado: parear de novo antes da F12-06 e conferir o rótulo "sem conexão" com o modo avião. Abertos no Lumen: QR maior e edição de horário que não salva.
 5. **A investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`); esse armazenamento guarda tokens de login.
 6. **Validar F2-11 no S25:** baixar o Whisper turbo, gravar em português e medir qualidade, latência e memória em gravação longa.
@@ -38,12 +38,17 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Release v1.0.60+145 (2026-11-19)
+
+- O widget grande mostra tarefas sem data nas vagas. Capturar, Tarefas e Linha do tempo abrem seus destinos. A bolha retoma a conversa escolhida no histórico e, se não houver sessão, oferece **Abrir no app**.
+- 53 testes Flutter direcionados aprovados no ajuste final. Evidências e assinatura em [docs/releases/v1.0.60.md](docs/releases/v1.0.60.md). Galaxy S25 Ultra `NOT_RUN`.
+
 ### Widget Android e continuidade do chat (2026-11-19, D-079)
 
 - O widget grande inclui pendências sem data nas vagas, depois das atrasadas e de hoje. A barra abre Anotar, Todo e linha do tempo pelos respectivos atalhos.
 - Conversar, Falar e a bolha carregam a sessão principal pelo mesmo resolvedor do chat do app. O código do atalho anterior abria sem sessão e não chamava exclusão de histórico.
 - 49 testes direcionados Flutter e 6 testes Kotlin do widget aprovados. `flutter analyze --no-pub` nos 10 arquivos Dart alterados sem diagnósticos. A suíte completa teve 2.181 aprovações, 2 ignorados e um erro de remoção de arquivo temporário no Windows. O arquivo de teste afetado passou integralmente na repetição isolada (16 testes).
-- `flutter build apk --flavor global --release --no-pub` gerou APK local assinado. No Android 16 emulado, a tarefa sintética sem data existia no Todo e ficava ausente no widget do APK publicado. Após atualizar sobre a instalação e abrir o app, a mesma tarefa apareceu no widget. O emulador perdeu o ADB durante a prova dos três atalhos. Galaxy S25 Ultra `NOT_RUN`. A correção ainda não foi publicada.
+- `flutter build apk --flavor global --release --no-pub` gerou o APK de teste assinado. No Android 16 emulado, a tarefa sintética sem data existia no Todo e ficava ausente no widget da v1.0.59. Após atualizar sobre a instalação e abrir o app, a mesma tarefa apareceu no widget. O emulador perdeu o ADB durante a prova dos três atalhos. Galaxy S25 Ultra `NOT_RUN`.
 
 ### Release v1.0.59+144 (2026-11-18)
 
