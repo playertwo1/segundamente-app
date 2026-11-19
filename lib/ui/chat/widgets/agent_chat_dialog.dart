@@ -821,6 +821,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         _currentSessionId!,
         messageLimit: _agentChatHistoryTurnPageSize,
       );
+      if (!mounted) return;
       final messagesData = sessionData['messages'] as List<dynamic>? ?? [];
       final historyItems = _chatItemsFromSessionMessages(messagesData);
 
@@ -854,6 +855,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
       _loadMoreIfHistoryDoesNotFillViewport();
     } catch (e) {
       _logger.severe('Error loading history', e);
+      if (!mounted) return;
       unawaited(_clearLatestSuperAgentHomeSessionIdIfCurrent());
       setState(() => _isLoading = false);
       if (mounted) {

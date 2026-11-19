@@ -58,11 +58,15 @@ void main() {
     }
   }
 
-  GoRouter appRouter({String initialLocation = AppRoutes.home}) {
+  GoRouter appRouter({
+    String initialLocation = AppRoutes.home,
+    String? savedSessionId,
+  }) {
     return createAppRouter(
       GlobalKey<NavigatorState>(),
       () => const Scaffold(body: Text('home-screen')),
       initialLocation: initialLocation,
+      floatingSessionLoaderForTesting: () async => savedSessionId,
     );
   }
 
@@ -81,6 +85,30 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('home-screen'), findsOneWidget);
+    expect(find.byType(FloatingChatScreen), findsNothing);
+  });
+
+  testWidgets('a warm shortcut resumes the session before returning home',
+      (tester) async {
+    final router = appRouter(savedSessionId: 'previous-conversation');
+    await pumpApp(tester, router);
+    pendingMode = 'type';
+    await messenger.handlePlatformMessage(
+      channel.name,
+      codec.encodeMethodCall(const MethodCall('open')),
+      (_) {},
+    );
+    await tester.pumpAndSettle();
+    final dialog = tester.widget<AgentChatDialog>(find.byType(AgentChatDialog));
+    expect(dialog.initialSessionId, 'previous-conversation');
+
+    await messenger.handlePlatformMessage(
+      channel.name,
+      codec.encodeMethodCall(const MethodCall('mainOpened')),
+      (_) {},
+    );
+    await tester.pumpAndSettle();
     expect(find.text('home-screen'), findsOneWidget);
     expect(find.byType(FloatingChatScreen), findsNothing);
   });

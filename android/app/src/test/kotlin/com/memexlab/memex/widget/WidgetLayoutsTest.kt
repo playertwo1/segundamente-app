@@ -5,11 +5,28 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
+import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 
 class WidgetLayoutsTest {
     private val zone = ZoneId.of("America/Sao_Paulo")
+
+    @Test
+    fun `undated tasks fill remaining rows after late and today tasks`() {
+        val today = LocalDate.of(2026, 11, 19)
+        val undated = WidgetTask("undated", "Sem data", null, null, zone)
+        val tasks = listOf(
+            undated,
+            undated.copy(id = "future", dueDate = today.plusDays(1)),
+            undated.copy(id = "today", dueDate = today),
+            undated.copy(id = "late", dueDate = today.minusDays(1)),
+        )
+
+        val rows = TodoWidgetSnapshot.rows(tasks, Instant.parse("2026-11-19T15:00:00Z"))
+        assertEquals(listOf("late", "today", "undated"), rows.map { it.task.id })
+        assertEquals("Sem data", WidgetLayouts.formatTaskTimeLabel("Hoje", rows.last(), "Sem data"))
+    }
 
     @Test
     fun `visibleRowLimit scales cleanly from 0 to 3 rows without half-clipping`() {

@@ -48,6 +48,7 @@ void main() {
     WidgetTester tester,
     FloatingChatMode mode, {
     ListenOnceViewModel? listenOnce,
+    Future<String?> Function()? loadSessionId,
     Size size = const Size(390, 800),
     double textScale = 1,
   }) async {
@@ -64,6 +65,7 @@ void main() {
             mode: mode,
             service: service,
             listenOnceForTesting: listenOnce,
+            loadSessionId: loadSessionId ?? () async => null,
           ),
         ),
       ],
@@ -114,6 +116,26 @@ void main() {
     expect(dialog.listenOnceForTesting, same(listenOnce));
     expect(listenOnce.state, ListenOnceState.modelMissing);
   });
+
+  for (final mode in [FloatingChatMode.type, FloatingChatMode.bubble]) {
+    testWidgets('${mode.name} waits for and opens the saved conversation',
+        (tester) async {
+      final existingSession = Completer<String?>();
+      await pumpSheet(tester, mode,
+          loadSessionId: () => existingSession.future);
+      expect(find.byType(AgentChatDialog), findsNothing);
+
+      existingSession.complete('saved-conversation');
+      await tester.pump();
+      await tester.pump();
+      expect(
+        tester
+            .widget<AgentChatDialog>(find.byType(AgentChatDialog))
+            .initialSessionId,
+        'saved-conversation',
+      );
+    });
+  }
 
   testWidgets('bubble mode fills its window without opening the keyboard',
       (tester) async {
@@ -190,6 +212,7 @@ void main() {
           builder: (_, __) => FloatingChatScreen(
             mode: FloatingChatMode.type,
             service: service,
+            loadSessionId: () async => null,
           ),
         ),
       ],

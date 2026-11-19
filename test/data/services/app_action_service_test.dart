@@ -16,6 +16,11 @@ void main() {
   });
 
   group('AppActionService', () {
+    test('the timeline widget link queues its own destination', () {
+      expect(service.handleDeepLink('memex://open_timeline'), isTrue);
+      expect(service.consumeIfPending(), 'open_timeline');
+    });
+
     test('dispatches a supported quick_note action', () async {
       service.attach();
       final event = expectLater(

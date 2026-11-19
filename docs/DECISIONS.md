@@ -48,6 +48,7 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 | D-067 | 2026-11-15 | Repositório `playertwo1/segundamente-app` público; atualizador Android sem token GitHub (substitui D-046) | ACCEPTED |
 | D-077 | 2026-11-18 | Whisper large-v3 turbo em português substitui o Parakeet na transcrição local | ACCEPTED |
 | D-078 | 2026-11-18 | Bolha nativa nas Configurações da versão pública e refinamento de movimento e tipografia | ACCEPTED |
+| D-079 | 2026-11-19 | Widget mostra tarefas sem data nas vagas e atalhos retomam a conversa principal | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -466,3 +467,9 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 - A F15-08 disponibiliza **Bolha do chat** nas Configurações do Android 11 ou superior. O usuário controla a postagem e a remoção da bolha. O Android controla a exibição e oferece a opção de ativá-la pelo painel de notificações ou pelas configurações do sistema. A janela usa o chat existente e ocupa todo o espaço da bolha.
 - D-073 continua valendo para a escolha da bolha oficial e para os critérios de medição no S25. Esta decisão habilita a implementação em produção e mantém a sobreposição própria como protótipo dev.
 - O polimento preserva Inter, AMOLED e a composição existente. O escopo inclui tipografia compartilhada, transições das janelas flutuantes, feedback no chat e rolagem por seleção na linha do tempo.
+
+## D-079 — Tarefas sem data no widget e continuidade do chat
+
+- O dono relatou que tarefas da lista sumiam do widget, o chat flutuante abria vazio e as ações da barra pareciam abrir o mesmo destino.
+- No widget grande, tarefas abertas sem data ocupam as linhas que sobrarem depois das atrasadas e das de hoje. Mantêm o rótulo **Sem data** e o limite de dez tarefas no snapshot privado. Isso atualiza o filtro da D-072.
+- **Capturar** abre a folha de anotação, **Tarefas** abre o Todo e **Linha do tempo** seleciona a aba da linha do tempo. Os atalhos do chat retomam a mesma conversa principal que o botão de chat dentro do app. Conversas antigas continuam disponíveis no histórico.

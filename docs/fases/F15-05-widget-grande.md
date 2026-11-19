@@ -7,16 +7,16 @@
 O tamanho grande do widget "Segunda Mente" (faixa mínima 250×270 dp), no desenho "linhas" da [F15-01](F15-01-maquetes.md):
 
 - **Em cima:** a faixa de Conversar e Falar (F15-03) e a faixa de captura Anotar, Foto e Colar (F15-04).
-- **No meio:** até três tarefas de hoje. Cada linha tem um círculo (toque conclui a tarefa), o título (toque abre a lista de tarefas no app) e a hora. Atrasadas vêm primeiro, depois as de hoje por horário.
+- **No meio:** até três tarefas pendentes. Cada linha tem um círculo (toque conclui a tarefa), o título (toque abre a lista de tarefas no app) e a hora ou o rótulo **Sem data**.
 - **Embaixo:** a tecla **+ tarefa** (pt) / **+ Task** (en).
-- Sem tarefas: "Nada para hoje" (pt) / "Nothing for today" (en) no lugar das linhas.
+- A barra do widget grande abre a folha de anotação em **Capturar**, a lista em **Tarefas** e a tela inicial em **Linha do tempo**.
 
-## Quais tarefas aparecem (D-072)
+## Quais tarefas aparecem (D-079)
 
-- Só tarefas abertas (não concluídas, não apagadas) **com data**.
+- Só tarefas abertas.
 - Atrasadas: data anterior a hoje, ou hoje com hora já passada (mesma regra de `TodoScheduleCalculator.statusFor`, fuso America/Sao_Paulo).
 - De hoje: data de hoje, com ou sem hora.
-- Tarefas futuras e **sem data** não aparecem. Elas continuam na tela de Todo.
+- Sem data: preenchem as vagas livres depois das atrasadas e de hoje. Tarefas futuras aparecem no Todo.
 
 ## Fluxo de dados
 
@@ -29,7 +29,7 @@ O tamanho grande do widget "Segunda Mente" (faixa mínima 250×270 dp), no desen
 ```
 
 - Campos: `id`, `title`, `dueDate`, `dueTime` (ou `null`), `status` (informativo: `overdue`, `today` ou `upcoming` na hora do envio), `timeZone`. Nenhum outro campo; nenhum texto de conversa.
-- Conteúdo: as **10 primeiras** tarefas abertas com data, em ordem de data e hora. Com esse corte, o lado nativo sempre tem as três linhas certas depois da meia-noite: se houver dez atrasadas, as três mais antigas são as que aparecem.
+- Conteúdo: até **10 tarefas abertas**, com até três sem data e as demais por data e hora. O Android escolhe as linhas do widget na hora de desenhar, inclusive na virada do dia.
 - O nativo guarda o último JSON em `SharedPreferences` privado do app (`todo_widget_snapshot`). Não há arquivo gerenciado, então nenhum caminho novo entrou no `FileSystemService`.
 
 ### Quando envia

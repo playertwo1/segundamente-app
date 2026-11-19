@@ -84,6 +84,7 @@ GoRouter createAppRouter(
   GlobalKey<NavigatorState> navigatorKey,
   Widget Function() rootBuilder, {
   String initialLocation = AppRoutes.home,
+  Future<String?> Function()? floatingSessionLoaderForTesting,
 }) {
   return GoRouter(
     navigatorKey: navigatorKey,
@@ -98,6 +99,7 @@ GoRouter createAppRouter(
         pageBuilder: (context, state) => _floatingSheetPage(
           FloatingChatScreen(
             mode: _floatingModeOf(state, FloatingChatMode.type),
+            loadSessionId: floatingSessionLoaderForTesting,
           ),
         ),
       ),

@@ -33,7 +33,7 @@ void main() {
       });
     });
 
-    test('leaves out done, deleted and undated tasks', () {
+    test('includes open tasks from records without a due date', () {
       final done = todoTask('done', 'Feito', date: '2026-11-14')
           .copyWith(done: true, doneAt: '2026-11-14T10:00:00.000Z');
       final deleted = todoTask('gone', 'Apagada', date: '2026-11-14')
@@ -43,7 +43,7 @@ void main() {
 
       expect(
         itemsOf([done, deleted, undated, open], now).map((i) => i['id']),
-        ['open'],
+        ['open', 'undated'],
       );
     });
 
