@@ -240,6 +240,17 @@
 
             <!-- Note: text/images open as input drafts; other files import. .memex files restore. -->
         </activity>
+        <activity
+            android:name=".ChatBubbleActivity"
+            android:exported="false"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            android:documentLaunchMode="always"
+            android:taskAffinity="${applicationId}.bubble"
+            android:theme="@style/NormalTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize" />
         <!-- F15-02: floating chat sheet, opened by the chat_type/chat_talk shortcuts (explicit intent, no filter).
              Not exported: only this app's own intents open it (shortcuts, widget, tile). -->
         <activity

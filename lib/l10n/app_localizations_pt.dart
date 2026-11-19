@@ -2657,6 +2657,28 @@ class AppLocalizationsPt extends AppLocalizations {
   String get useLocalSpeechToTextTitle => 'Transcrição no aparelho';
 
   @override
+  String get chatBubbleTitle => 'Bolha do chat';
+
+  @override
+  String get chatBubbleDescription =>
+      'Mantenha um atalho flutuante para conversar sobre outros apps.';
+
+  @override
+  String get chatBubblePosted =>
+      'Se a bolha ainda não apareceu, toque no ícone de bolha na notificação ou permita as bolhas nas configurações do Android.';
+
+  @override
+  String get chatBubbleNotifications =>
+      'Permita as notificações para ativar a bolha.';
+
+  @override
+  String get chatBubbleOpenSettings => 'Configurações do Android';
+
+  @override
+  String get chatBubbleError =>
+      'Não foi possível alterar a bolha. Tente de novo.';
+
+  @override
   String get useLocalSpeechToTextDesc =>
       'Ligado: o Whisper turbo transcreve em português no aparelho, sem enviar o áudio. Baixe o modelo abaixo. Desligado: o áudio vai direto para o ChatGPT (ou para o modelo da nuvem configurado).';
 

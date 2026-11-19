@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_bubble_app" translatable="false">Segunda Mente</string>
+    <string name="chat_bubble_channel">Chat bubble</string>
+    <string name="chat_bubble_user">You</string>
+    <string name="chat_bubble_notification">Tap to open the chat. Use the bubble icon to keep it on screen.</string>
+</resources>

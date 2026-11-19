@@ -58,18 +58,23 @@ Page<void> _floatingSheetPage(Widget child) {
   return CustomTransitionPage<void>(
     opaque: true,
     barrierColor: null,
-    transitionDuration: const Duration(milliseconds: 180),
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 160),
     child: child,
-    transitionsBuilder: (context, animation, _, child) => FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.04),
-          end: Offset.zero,
-        ).animate(animation),
-        child: child,
-      ),
-    ),
+    transitionsBuilder: (context, animation, _, child) {
+      if (MediaQuery.disableAnimationsOf(context)) return child;
+      final arrival = animation.drive(CurveTween(curve: Curves.easeOutCubic));
+      return FadeTransition(
+        opacity: arrival,
+        child: SlideTransition(
+          position: arrival.drive(Tween(
+            begin: const Offset(0, 0.035),
+            end: Offset.zero,
+          )),
+          child: child,
+        ),
+      );
+    },
   );
 }
 

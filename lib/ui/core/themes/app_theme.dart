@@ -48,7 +48,8 @@ abstract final class AppTheme {
       headlineMedium: base.headlineMedium?.copyWith(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        height: 1.35,
+        height: 1.3,
+        letterSpacing: -0.35,
       ),
       headlineSmall: base.headlineSmall?.copyWith(
         fontSize: 18,
@@ -65,7 +66,8 @@ abstract final class AppTheme {
       titleMedium: base.titleMedium?.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        height: 1.4,
+        height: 1.35,
+        letterSpacing: -0.15,
       ),
       titleSmall: base.titleSmall?.copyWith(
         fontSize: 14,
@@ -79,9 +81,10 @@ abstract final class AppTheme {
         height: 1.6,
       ),
       bodyMedium: base.bodyMedium?.copyWith(
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: FontWeight.w400,
         height: 1.5,
+        letterSpacing: 0,
       ),
       bodySmall: base.bodySmall?.copyWith(
         fontSize: 12,
@@ -101,10 +104,10 @@ abstract final class AppTheme {
         height: 1.4,
       ),
       labelSmall: base.labelSmall?.copyWith(
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
         height: 1.4,
-        letterSpacing: 0.5,
+        letterSpacing: 0.18,
       ),
     );
   }
@@ -177,15 +180,16 @@ abstract final class AppTheme {
         color: AppColors.surface,
         surfaceTintColor: Colors.transparent,
       ),
-      snackBarTheme: const SnackBarThemeData(
+      snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surface,
-        contentTextStyle: TextStyle(color: AppColors.textPrimary),
+        contentTextStyle: textTheme.bodyMedium,
         actionTextColor: AppColors.primary,
       ),
       // Only the hint color: theme-level borders would override the
       // `border: InputBorder.none` that many fields rely on.
-      inputDecorationTheme: const InputDecorationTheme(
-        hintStyle: TextStyle(color: AppColors.textTertiary),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle:
+            textTheme.bodyMedium?.copyWith(color: AppColors.textTertiary),
       ),
       listTileTheme: const ListTileThemeData(
         iconColor: AppColors.textSecondary,

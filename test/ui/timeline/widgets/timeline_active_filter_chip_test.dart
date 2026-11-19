@@ -49,6 +49,7 @@ void main() {
 
     final chip = find.byKey(const ValueKey('timeline-active-filter'));
     expect(chip, findsOneWidget);
+    expect(tester.widget<Semantics>(chip).properties.selected, isTrue);
     expect(find.descendant(of: chip, matching: find.text('teste')),
         findsOneWidget);
 

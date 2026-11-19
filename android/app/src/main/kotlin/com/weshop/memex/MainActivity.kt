@@ -7,6 +7,7 @@ import com.memexlab.memex.channels.BackupImportChannelHandler
 import com.memexlab.memex.channels.BackupStorageChannelHandler
 import com.memexlab.memex.channels.ChannelRegistrar
 import com.memexlab.memex.channels.ExternalFileImportChannelHandler
+import com.memexlab.memex.channels.FloatingChatChannelHandler
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import java.lang.ref.WeakReference
@@ -25,9 +26,11 @@ class MainActivity : FlutterFragmentActivity() {
             intent?.removeExtra("some unique action key")
         }
         // One engine, one host: the floating sheet gives way to the full app.
-        SharedFlutterEngine.releaseHost(FloatingChatActivity.current?.get())
+        val floatingHost = FloatingChatActivity.current?.get()
+        SharedFlutterEngine.releaseHost(floatingHost)
         super.onCreate(savedInstanceState)
         current = WeakReference(this)
+        if (floatingHost is ChatBubbleActivity) FloatingChatChannelHandler.notifyMainOpened()
         AppActionChannelHandler.handleIntent(this, intent)
         BackupImportChannelHandler.handleIntent(this, intent)
         ExternalFileImportChannelHandler.handleIntent(this, intent)

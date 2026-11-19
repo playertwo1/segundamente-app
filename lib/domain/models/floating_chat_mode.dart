@@ -8,6 +8,7 @@
 /// wire names are what the Android side sends.
 enum FloatingChatMode {
   type('type'),
+  bubble('bubble'),
   talk('talk'),
   note('note'),
   photo('photo'),

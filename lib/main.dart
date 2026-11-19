@@ -385,6 +385,7 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
   bool _requiresAuth = true; // Whether actual authentication is required
   DateTime? _lastPausedTime; // Track when app was paused
   StreamSubscription<FloatingLaunch>? _floatingChatSubscription;
+  StreamSubscription<void>? _mainOpenedSubscription;
 
   @override
   void initState() {
@@ -392,8 +393,21 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _floatingChatSubscription =
         FloatingChatService.instance.openRequests.listen((launch) {
-      unawaited(
-          widget.router.push(AppRoutes.floatingLocationForLaunch(launch)));
+      final location = AppRoutes.floatingLocationForLaunch(launch);
+      final current = widget.router.routerDelegate.currentConfiguration.uri;
+      if (launch.mode == FloatingChatMode.bubble &&
+          current.toString() == location) {
+        return;
+      }
+      unawaited(widget.router.push(location));
+    });
+    _mainOpenedSubscription =
+        FloatingChatService.instance.mainOpened.listen((_) {
+      final uri = widget.router.routerDelegate.currentConfiguration.uri;
+      if (uri.path == AppRoutes.floatingChat &&
+          uri.queryParameters['mode'] == FloatingChatMode.bubble.wireName) {
+        widget.router.go(AppRoutes.home);
+      }
     });
     _checkUser();
     _checkLockSettings();
@@ -417,6 +431,7 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _floatingChatSubscription?.cancel();
+    _mainOpenedSubscription?.cancel();
     super.dispose();
   }
 

@@ -305,6 +305,17 @@ class SettingsRegistry {
   // ---------------------------------------------------------------------------
 
   static List<SettingsItem> get _settingsPageItems => [
+        if (Platform.isAndroid)
+          SettingsItem(
+            id: 'chat_bubble',
+            titleGetter: () => UserStorage.l10n.chatBubbleTitle,
+            descriptionGetter: () => UserStorage.l10n.chatBubbleDescription,
+            keywords: const ['bolha', 'bubble', 'overlay', 'chat flutuante'],
+            icon: Icons.chat_bubble_outline,
+            navigationTarget:
+                NavigationTarget(pageBuilder: (_) => const SettingsPage()),
+            parentPathGetter: () => [UserStorage.l10n.settings],
+          ),
         SettingsItem(
           id: 'settings.language',
           titleGetter: () => UserStorage.l10n.languageSettings,

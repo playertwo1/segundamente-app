@@ -66,6 +66,25 @@ void main() {
     );
   }
 
+  testWidgets('returning to the launcher from the bubble restores the app',
+      (tester) async {
+    final router = appRouter(
+      initialLocation: AppRoutes.floatingChatFor(FloatingChatMode.bubble),
+    );
+    await pumpApp(tester, router);
+    expect(find.byType(FloatingChatScreen), findsOneWidget);
+
+    await messenger.handlePlatformMessage(
+      channel.name,
+      codec.encodeMethodCall(const MethodCall('mainOpened')),
+      (_) {},
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('home-screen'), findsOneWidget);
+    expect(find.byType(FloatingChatScreen), findsNothing);
+  });
+
   testWidgets('a cold start on the sheet shows it first, then Close goes home',
       (tester) async {
     final router = appRouter(

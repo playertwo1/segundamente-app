@@ -673,11 +673,11 @@ class _AgentChatDialogState extends State<AgentChatDialog>
 
     // Animations
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
+      begin: const Offset(0, 0.16),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _fadeAnimation = Tween<double>(
@@ -2022,6 +2022,8 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   @override
   Widget build(BuildContext context) {
     final viewportSize = MediaQuery.of(context).size;
+    final fillsWindow = widget.floatingHost?.fillsWindow ?? false;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final keyboardBottomOffset = resolveSuperAgentInputBottomInset(
       keyboardInset: MediaQuery.of(context).viewInsets.bottom,
       inputFocused: _messageFocusNode.hasFocus,
@@ -2033,105 +2035,132 @@ class _AgentChatDialogState extends State<AgentChatDialog>
       nextInset: keyboardBottomOffset,
     );
     _lastKeyboardBottomOffset = keyboardBottomOffset;
-    final dialogHeight = resolveAgentChatDialogHeight(
-      viewportSize,
-      isFullScreen: _isFullScreen,
-      keyboardInset: keyboardBottomOffset,
-      topSafeInset: MediaQuery.viewPaddingOf(context).top,
-    );
-    final borderRadius = resolveAgentChatDialogBorderRadius(
-      isFullScreen: _isFullScreen,
-    );
+    final dialogHeight = fillsWindow
+        ? double.infinity
+        : resolveAgentChatDialogHeight(
+            viewportSize,
+            isFullScreen: _isFullScreen,
+            keyboardInset: keyboardBottomOffset,
+            topSafeInset: MediaQuery.viewPaddingOf(context).top,
+          );
+    final borderRadius = fillsWindow
+        ? BorderRadius.zero
+        : resolveAgentChatDialogBorderRadius(
+            isFullScreen: _isFullScreen,
+          );
 
     return Material(
       color: Colors.transparent,
       child: Stack(
         children: [
           // Backdrop
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: GestureDetector(
-              onTap: _dismiss,
-              child: Container(color: Colors.black.withValues(alpha: 0.2)),
+          if (!fillsWindow)
+            FadeTransition(
+              opacity: reduceMotion
+                  ? const AlwaysStoppedAnimation(1)
+                  : _fadeAnimation,
+              child: GestureDetector(
+                onTap: _dismiss,
+                child: Container(color: Colors.black.withValues(alpha: 0.2)),
+              ),
             ),
-          ),
           // Dialog
           SlideTransition(
-            position: _slideAnimation,
+            position: fillsWindow || reduceMotion
+                ? const AlwaysStoppedAnimation(Offset.zero)
+                : _slideAnimation,
             child: AnimatedPadding(
-              duration: keyboardInsetAnimationDuration,
+              duration:
+                  reduceMotion ? Duration.zero : keyboardInsetAnimationDuration,
               curve: Curves.easeOutCubic,
               padding: EdgeInsets.only(bottom: keyboardBottomOffset),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: AnimatedContainer(
                   key: const ValueKey('agent_chat_dialog_container'),
-                  duration: const Duration(milliseconds: 220),
+                  duration: reduceMotion || fillsWindow
+                      ? Duration.zero
+                      : const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
                   width: double.infinity,
                   height: dialogHeight,
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
                     borderRadius: borderRadius,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 40,
-                        offset: Offset(0, -10),
-                      ),
+                    boxShadow: [
+                      if (!fillsWindow)
+                        const BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 40,
+                          offset: Offset(0, -10),
+                        ),
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: SafeArea(
                     top: _isFullScreen,
                     bottom: false,
-                    child: Column(
-                      children: [
-                        _buildHeader(),
-                        Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: _messageFocusNode.unfocus,
-                            child: Container(
-                              color: AppColors.cardBackground,
-                              child: _items.isEmpty
-                                  ? _isLoading
-                                      ? const SizedBox.expand()
-                                      : _buildEmptyState()
-                                  : ListView.builder(
-                                      controller: _scrollController,
-                                      reverse: true,
-                                      keyboardDismissBehavior:
-                                          ScrollViewKeyboardDismissBehavior
-                                              .onDrag,
-                                      padding: const EdgeInsets.all(24),
-                                      itemCount: _agentChatListItemCount(),
-                                      itemBuilder: (context, index) {
-                                        final extraItems =
-                                            _showAgentThinkingRow ? 1 : 0;
-                                        if (extraItems == 1 && index == 0) {
-                                          return _buildAgentThinkingItem();
-                                        }
-                                        if (_shouldShowHistoryLoaderAt(index)) {
-                                          return _buildHistoryLoadMoreIndicator();
-                                        }
-                                        final itemIndex =
-                                            superAgentItemIndexForReversedList(
-                                          listIndex: index,
-                                          itemCount: _items.length,
-                                          extraItems: extraItems,
-                                        );
-                                        return _buildItemWithTimeDivider(
-                                          itemIndex,
-                                        );
-                                      },
-                                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => Column(
+                        children: [
+                          _buildHeader(),
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onTap: _messageFocusNode.unfocus,
+                              child: Container(
+                                color: AppColors.cardBackground,
+                                child: _items.isEmpty
+                                    ? _isLoading
+                                        ? const SizedBox.expand()
+                                        : _buildEmptyState()
+                                    : ListView.builder(
+                                        controller: _scrollController,
+                                        reverse: true,
+                                        keyboardDismissBehavior:
+                                            ScrollViewKeyboardDismissBehavior
+                                                .onDrag,
+                                        padding: const EdgeInsets.all(24),
+                                        itemCount: _agentChatListItemCount(),
+                                        itemBuilder: (context, index) {
+                                          final extraItems =
+                                              _showAgentThinkingRow ? 1 : 0;
+                                          if (extraItems == 1 && index == 0) {
+                                            return _buildAgentThinkingItem();
+                                          }
+                                          if (_shouldShowHistoryLoaderAt(
+                                              index)) {
+                                            return _buildHistoryLoadMoreIndicator();
+                                          }
+                                          final itemIndex =
+                                              superAgentItemIndexForReversedList(
+                                            listIndex: index,
+                                            itemCount: _items.length,
+                                            extraItems: extraItems,
+                                          );
+                                          return _buildItemWithTimeDivider(
+                                            itemIndex,
+                                          );
+                                        },
+                                      ),
+                              ),
                             ),
                           ),
-                        ),
-                        _buildContextIndicator(),
-                        _buildInput(),
-                      ],
+                          _buildContextIndicator(),
+                          if (fillsWindow)
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: constraints.maxHeight * 0.65,
+                              ),
+                              child: SingleChildScrollView(
+                                reverse: true,
+                                child: _buildInput(),
+                              ),
+                            )
+                          else
+                            _buildInput(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -2288,6 +2317,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
   /// Floating sheet header: the two text actions replace the icon buttons.
   Widget _buildFloatingHeader(FloatingChatHost host) {
     final l10n = UserStorage.l10n;
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
     return Container(
       width: double.infinity,
       padding: const EdgeInsetsDirectional.only(start: 24, end: 4),
@@ -2295,44 +2325,61 @@ class _AgentChatDialogState extends State<AgentChatDialog>
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.background)),
       ),
-      child: SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            _buildAgentMark(size: 22),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text(
-                'Segunda Mente',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 315 ||
+              MediaQuery.textScalerOf(context).scale(14) > 18;
+          return Row(
+            children: [
+              _buildAgentMark(size: 22),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Segunda Mente',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStyle,
                 ),
               ),
-            ),
-            TextButton(
-              key: const ValueKey('floating_chat_open_in_app_button'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                minimumSize: const Size(48, 48),
-              ),
-              onPressed: () => host.onOpenInApp(_currentSessionId),
-              child: Text(l10n.floatingOpenInApp),
-            ),
-            TextButton(
-              key: const ValueKey('floating_chat_close_button'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
-                minimumSize: const Size(48, 48),
-              ),
-              onPressed: host.onClose,
-              child: Text(l10n.close),
-            ),
-          ],
-        ),
+              if (compact)
+                IconButton(
+                  key: const ValueKey('floating_chat_open_in_app_button'),
+                  tooltip: l10n.floatingOpenInApp,
+                  color: AppColors.primary,
+                  onPressed: () => host.onOpenInApp(_currentSessionId),
+                  icon: const Icon(Icons.open_in_new),
+                )
+              else
+                TextButton(
+                  key: const ValueKey('floating_chat_open_in_app_button'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    minimumSize: const Size(48, 48),
+                  ),
+                  onPressed: () => host.onOpenInApp(_currentSessionId),
+                  child: Text(l10n.floatingOpenInApp),
+                ),
+              if (compact)
+                IconButton(
+                  key: const ValueKey('floating_chat_close_button'),
+                  tooltip: l10n.close,
+                  onPressed: host.onClose,
+                  icon: const Icon(Icons.close),
+                )
+              else
+                TextButton(
+                  key: const ValueKey('floating_chat_close_button'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    minimumSize: const Size(48, 48),
+                  ),
+                  onPressed: host.onClose,
+                  child: Text(l10n.close),
+                ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -4806,7 +4853,10 @@ class _CopyMessageButtonState extends State<_CopyMessageButton> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 140),
+          switchInCurve: Curves.easeOutCubic,
           child: Icon(
             _copied ? Icons.check_rounded : Icons.copy_outlined,
             key: ValueKey(_copied),

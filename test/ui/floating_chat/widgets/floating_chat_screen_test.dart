@@ -48,6 +48,8 @@ void main() {
     WidgetTester tester,
     FloatingChatMode mode, {
     ListenOnceViewModel? listenOnce,
+    Size size = const Size(390, 800),
+    double textScale = 1,
   }) async {
     final router = GoRouter(
       initialLocation: '/floating-chat',
@@ -66,12 +68,18 @@ void main() {
         ),
       ],
     );
-    tester.view.physicalSize = const Size(390, 800);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp.router(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: child!,
+        ),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
@@ -105,6 +113,50 @@ void main() {
     expect(dialog.autofocusInput, isFalse);
     expect(dialog.listenOnceForTesting, same(listenOnce));
     expect(listenOnce.state, ListenOnceState.modelMissing);
+  });
+
+  testWidgets('bubble mode fills its window without opening the keyboard',
+      (tester) async {
+    await pumpSheet(tester, FloatingChatMode.bubble);
+
+    final dialog = tester.widget<AgentChatDialog>(find.byType(AgentChatDialog));
+    expect(dialog.autofocusInput, isFalse);
+    expect(dialog.listenOnStart, isFalse);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('agent_chat_dialog_container'))),
+      const Size(390, 800),
+    );
+  });
+
+  testWidgets('remove animations gives the chat a stationary entrance',
+      (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await pumpSheet(tester, FloatingChatMode.type);
+
+    final panel = find.byKey(const ValueKey('agent_chat_dialog_container'));
+    final slide = tester.widget<SlideTransition>(
+      find.ancestor(of: panel, matching: find.byType(SlideTransition)).first,
+    );
+    final keyboardPadding = tester.widget<AnimatedPadding>(
+      find.ancestor(of: panel, matching: find.byType(AnimatedPadding)).first,
+    );
+    expect(slide.position.value, Offset.zero);
+    expect(keyboardPadding.duration, Duration.zero);
+  });
+
+  testWidgets('the bubble keeps the header actions at twice the text size',
+      (tester) async {
+    await pumpSheet(
+      tester,
+      FloatingChatMode.bubble,
+      size: const Size(320, 650),
+      textScale: 2,
+    );
+
+    expect(find.byTooltip(UserStorage.l10n.floatingOpenInApp), findsOneWidget);
+    expect(find.byTooltip(UserStorage.l10n.close), findsOneWidget);
   });
 
   testWidgets('Close closes the native sheet and returns home', (tester) async {

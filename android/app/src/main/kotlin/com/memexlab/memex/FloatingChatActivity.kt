@@ -10,7 +10,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import java.lang.ref.WeakReference
 
 /** Translucent chat sheet over the home screen (F15-02). Shares the engine with MainActivity. */
-class FloatingChatActivity : FlutterFragmentActivity() {
+open class FloatingChatActivity : FlutterFragmentActivity() {
 
     companion object {
         const val EXTRA_MODE = "floating_chat_mode"
@@ -20,6 +20,7 @@ class FloatingChatActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // One engine, one host: the full app gives way to the sheet.
         SharedFlutterEngine.releaseHost(MainActivity.current?.get())
+        SharedFlutterEngine.releaseHost(current?.get())
         FloatingChatChannelHandler.setPendingMode(intent?.getStringExtra(EXTRA_MODE))
         super.onCreate(savedInstanceState)
         current = WeakReference(this)

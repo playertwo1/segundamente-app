@@ -7,7 +7,13 @@ import 'package:memex/routing/routes.dart';
 /// host decides what closing and opening in the app mean; the dialog only
 /// reports the taps.
 class FloatingChatHost {
-  const FloatingChatHost({required this.onClose, required this.onOpenInApp});
+  const FloatingChatHost({
+    required this.onClose,
+    required this.onOpenInApp,
+    this.fillsWindow = false,
+  });
+
+  final bool fillsWindow;
 
   /// Close button, backdrop tap and system back.
   final VoidCallback onClose;

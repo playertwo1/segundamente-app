@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:memex/domain/models/floating_chat_mode.dart';
 import 'package:memex/utils/logger.dart';
 
+enum ChatBubbleStatus { unsupported, off, posted, active, notifications }
+
 /// Bridge to the Android floating sheets (F15-02, D-065; F15-05 Todo launches).
 ///
 /// The native side keeps the pending launch from the intent. Dart asks for it
@@ -27,9 +29,11 @@ class FloatingChatService {
   final MethodChannel _channel;
   final StreamController<FloatingLaunch> _openController =
       StreamController<FloatingLaunch>.broadcast();
+  final _mainOpenedController = StreamController<void>.broadcast();
 
   /// Launches requested while the app is running (the sheet was opened again).
   Stream<FloatingLaunch> get openRequests => _openController.stream;
+  Stream<void> get mainOpened => _mainOpenedController.stream;
 
   /// Installs the handler for native `open` signals. Call once at start-up.
   void initialize() {
@@ -37,6 +41,10 @@ class FloatingChatService {
   }
 
   Future<dynamic> _handleCall(MethodCall call) async {
+    if (call.method == 'mainOpened') {
+      _mainOpenedController.add(null);
+      return null;
+    }
     if (call.method != 'open') return null;
     final launch = await takePendingLaunch();
     if (launch != null) _openController.add(launch);
@@ -55,7 +63,8 @@ class FloatingChatService {
       final raw = await _channel.invokeMethod<String>('takePendingMode');
       final launch = FloatingLaunch.parse(raw);
       if (raw != null && launch == null) {
-        _logger.warning('Ignoring unknown floating chat mode (length ${raw.length})');
+        _logger.warning(
+            'Ignoring unknown floating chat mode (length ${raw.length})');
       }
       return launch;
     } on MissingPluginException {
@@ -71,6 +80,28 @@ class FloatingChatService {
 
   /// Leaves the sheet for the full app.
   Future<void> openInApp() => _invoke('openInApp');
+
+  Future<ChatBubbleStatus> bubbleStatus() => _readBubble('bubbleStatus');
+
+  Future<ChatBubbleStatus> setBubbleVisible(bool visible) =>
+      _readBubble(visible ? 'showBubble' : 'hideBubble');
+
+  Future<void> openBubbleSettings({required bool notifications}) =>
+      _channel.invokeMethod<void>('openBubbleSettings', {
+        'notifications': notifications,
+      });
+
+  Future<ChatBubbleStatus> _readBubble(String method) async {
+    try {
+      final status = await _channel.invokeMethod<String>(method);
+      return ChatBubbleStatus.values.firstWhere(
+        (value) => value.name == status,
+        orElse: () => ChatBubbleStatus.unsupported,
+      );
+    } on MissingPluginException {
+      return ChatBubbleStatus.unsupported;
+    }
+  }
 
   Future<void> _invoke(String method) async {
     try {

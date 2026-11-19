@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chat_bubble_channel">Bolha do chat</string>
+    <string name="chat_bubble_user">Você</string>
+    <string name="chat_bubble_notification">Toque para abrir o chat. Use o ícone de bolha para mantê-lo na tela.</string>
+</resources>

@@ -1,20 +1,20 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-18 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.58+143 (2026-11-18, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-18 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.59+144 (2026-11-18, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
 ## Fases em andamento
 
 - **F14 — Assistente ativo:** `REVIEW` (D-074). F14-01 a F14-03 com código e testes no celular; S25 `NOT_RUN`. Calendar (F13-04) e Lumen (F12-06) entram depois.
-- **F15 — Widget e atalhos:** F15-02 a F15-07 com código na `main`; S25 `NOT_RUN`. Minicápsula: bolha (D-073), falta medir.
+- **F15 — Widget e atalhos:** F15-02 a F15-08 com código na `main`. Bolha da versão pública em `REVIEW` (D-078). S25 `NOT_RUN`.
 - **F12 — Sync com o Lumen:** `IN_PROGRESS` (D-066). F12-02 a F12-05 DONE; F12-01 espera o dono ler o contrato; F12-06 e F12-07 READY.
 
 ## Próxima ação
 
 1. **Validar no S25 o Todo e a tela do registro:** confirmar cartão com subtarefas em “Tarefas deste registro”, conferir a lista e Desfazer, verificar o estado das permissões e disparar um lembrete. Conferir também balões, deslizar para responder e citação.
 2. **Validar a F14 no S25:** na aba Todo, o painel do Assistente Ativo (resumo manhã/tarde, tarefas paradas, sugestões das personas pelo `TodoProposalCard`, silêncio).
-3. **Validar F15-02 a F15-07 no S25:** chat flutuante pelos atalhos (abertura a frio, volta à tela de origem, Abrir no app), widgets pequeno, médio e grande, painel rápido e a bolha no build dev. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`; o dono decide o texto do limite de Falar (R03).
+3. **Validar F15-02 a F15-08 no S25:** chat flutuante pelos atalhos (abertura a frio, volta à tela de origem, Abrir no app), widgets pequeno, médio e grande, painel rápido e **Configurações → Bolha do chat** na versão pública. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`. O texto do limite de Falar (R03) aguarda decisão do dono.
 4. **F12:** F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06. O S25 dev está revogado: parear de novo antes da F12-06 e conferir o rótulo "sem conexão" com o modo avião. Abertos no Lumen: QR maior e edição de horário que não salva.
 5. **A investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`); esse armazenamento guarda tokens de login.
 6. **Validar F2-11 no S25:** baixar o Whisper turbo, gravar em português e medir qualidade, latência e memória em gravação longa.
@@ -37,6 +37,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release v1.0.59+144 (2026-11-18)
+
+- Bolha nativa em **Configurações → Bolha do chat**. Transições polidas no chat e na linha do tempo, com redução de movimento, e ajustes na hierarquia da Inter.
+- `flutter test --no-pub` com 2.178 aprovados, 2 ignorados e 0 falhas. Analyze direcionado com 2 infos já existentes na linha do tempo. Paridade EN/PT confirmada.
+- APK global release assinado com o mesmo certificado da v1.0.58. No emulador Android 16, o APK assinado mostrou o pedido de notificação, abriu as permissões de bolha, abriu o chat sobre outro app e removeu a bolha ao desativar o controle. S25 `NOT_RUN`. Detalhes em [docs/releases/v1.0.59.md](docs/releases/v1.0.59.md).
 
 ### Release v1.0.58+143 (2026-11-18)
 
