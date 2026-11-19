@@ -3216,8 +3216,8 @@ class AppLocalizationsPt extends AppLocalizations {
       'Você já está na versão compatível mais recente.';
 
   @override
-  String earlyUpdateFound(Object version, Object build) {
-    return 'A build $version+$build está disponível.';
+  String earlyUpdateFound(Object version) {
+    return 'A versão $version está disponível.';
   }
 
   @override

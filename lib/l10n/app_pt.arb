@@ -1452,11 +1452,10 @@
   "earlyUpdateChecking": "Verificando releases do GitHub...",
   "earlyUpdateSkippedMobile": "Ignorado porque downloads somente por Wi-Fi estão ativados.",
   "earlyUpdateNoUpdate": "Você já está na versão compatível mais recente.",
-  "earlyUpdateFound": "A build {version}+{build} está disponível.",
+  "earlyUpdateFound": "A versão {version} está disponível.",
   "@earlyUpdateFound": {
     "placeholders": {
-      "version": {},
-      "build": {}
+      "version": {}
     }
   },
   "earlyUpdateDownloadAndInstall": "Baixar e instalar",

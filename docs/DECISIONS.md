@@ -49,6 +49,7 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 | D-077 | 2026-11-18 | Whisper large-v3 turbo em português substitui o Parakeet na transcrição local | ACCEPTED |
 | D-078 | 2026-11-18 | Bolha nativa nas Configurações da versão pública e refinamento de movimento e tipografia | ACCEPTED |
 | D-079 | 2026-11-19 | Widget mostra tarefas sem data nas vagas e atalhos retomam a conversa principal | ACCEPTED |
+| D-080 | 2026-11-19 | Nome público 1.0.7 e número de compilação somente para controle de atualizações | ACCEPTED |
 
 ## D-001 — Base: fork do Memex
 - Contexto: Memex já traz diário/chat, banco local (Drift/SQLite), provedores e OAuth. Licença GPL-3.0.
@@ -474,3 +475,8 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 - No widget grande, tarefas abertas sem data ocupam as linhas que sobrarem depois das atrasadas e das de hoje. Mantêm o rótulo **Sem data** e o limite de dez tarefas no snapshot privado. Isso atualiza o filtro da D-072.
 - **Capturar** abre a folha de anotação, **Tarefas** abre o Todo e **Linha do tempo** seleciona a aba da linha do tempo. Os atalhos do chat retomam a mesma conversa principal que o botão de chat dentro do app. Conversas antigas continuam disponíveis no histórico.
 - Na v1.0.60, abrir uma conversa principal pelo histórico passa a selecioná-la para os atalhos do chat e para a bolha. Sem uma conversa para retomar, a bolha oferece abrir o app e mantém o início da conversa sob controle do usuário.
+
+## D-080 — Nome público 1.0.7
+
+- A release que sucede a v1.0.60 usa o nome público **1.0.7**. Configurações mostra somente o nome da versão disponível.
+- O `versionCode` continua crescente. O APK mantém o código no nome do arquivo para compatibilidade com a seleção de atualizações nas versões anteriores.

@@ -80,6 +80,25 @@ void main() {
   });
 
   group('release selection', () {
+    test('uses the Android build number after a public version rename', () {
+      final update = buildService(flavorName: 'global', isEarlyChannel: false)
+          .selectBestUpdate(
+        currentBuildNumber: 145,
+        flavorName: 'global',
+        isEarlyChannel: false,
+        releases: [
+          release(
+            prerelease: false,
+            assetName: 'segundamente_global_1.0.7_146.apk',
+            downloadUrl: 'https://example.com/update.apk',
+          ),
+        ],
+      );
+
+      expect(update?.versionName, '1.0.7');
+      expect(update?.buildNumber, 146);
+    });
+
     test('supports Android Stable and Early but not Dev builds', () {
       expect(buildService(flavorName: 'global').isSupported, isTrue);
       expect(buildService(flavorName: 'globalEarly').isSupported, isTrue);

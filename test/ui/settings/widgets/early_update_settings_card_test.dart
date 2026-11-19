@@ -74,9 +74,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text(UserStorage.l10n.earlyUpdateFound('1.0.30', 113)),
+      find.text(UserStorage.l10n.earlyUpdateFound('1.0.30')),
       findsOneWidget,
     );
+    expect(find.textContaining('1.0.30+113'), findsNothing);
     expect(
       find.text(UserStorage.l10n.earlyUpdateDownloadAndInstall),
       findsOneWidget,
