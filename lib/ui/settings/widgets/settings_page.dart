@@ -6,6 +6,7 @@ import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/core/widgets/language_picker.dart';
 import 'package:memex/utils/user_storage.dart';
 import 'package:memex/ui/settings/widgets/backup_restore_page.dart';
+import 'package:memex/ui/settings/widgets/chat_bubble_setting.dart';
 import 'package:memex/ui/settings/widgets/data_import_page.dart';
 import 'package:memex/ui/settings/widgets/data_storage_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
@@ -294,6 +295,7 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const ChatBubbleSetting(),
           // Language
           Container(
             padding: const EdgeInsets.all(20),

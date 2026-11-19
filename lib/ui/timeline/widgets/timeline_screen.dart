@@ -73,11 +73,15 @@ class TimelineScreenState extends State<TimelineScreen> {
   /// Scroll to top and refresh timeline (called from main screen).
   void scrollToTopAndRefresh() {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _scrollController.jumpTo(0);
+      } else {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+        );
+      }
     }
     if (mounted) {
       widget.viewModel.refresh();
@@ -231,10 +235,14 @@ class TimelineScreenState extends State<TimelineScreen> {
         (MediaQuery.of(context).size.width / 2 - estimatedChipWidth / 2);
     final maxScroll = _tagScrollController.position.maxScrollExtent;
     final clampedOffset = targetOffset.clamp(0.0, maxScroll);
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _tagScrollController.jumpTo(clampedOffset);
+      return;
+    }
     _tagScrollController.animateTo(
       clampedOffset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
     );
   }
 
@@ -888,6 +896,7 @@ class TimelineFilterBar extends StatelessWidget {
       itemBuilder: (context, index) {
         if (index == 0) {
           return _buildTagChip(
+            context,
             label: UserStorage.l10n.timelineFilterAll,
             isSelected: viewModel.activeFilter == 'all' &&
                 viewModel.viewMode == TimelineViewMode.timeline,
@@ -902,6 +911,7 @@ class TimelineFilterBar extends StatelessWidget {
 
         if (index == 1) {
           final chip = _buildTagChip(
+            context,
             label: UserStorage.l10n.insights,
             isSelected: viewModel.viewMode == TimelineViewMode.insight,
             onTap: () {
@@ -922,6 +932,7 @@ class TimelineFilterBar extends StatelessWidget {
 
         if (showActive && index == 2) {
           return _buildTagChip(
+            context,
             key: const ValueKey('timeline-active-filter'),
             label: [viewModel.activeFilter, ...viewModel.extraTags].join(' + '),
             isSelected: true,
@@ -935,6 +946,7 @@ class TimelineFilterBar extends StatelessWidget {
 
         final tag = userTags[index - lead];
         return _buildTagChip(
+          context,
           label: tag.name,
           isSelected: viewModel.activeFilter == tag.name &&
               viewModel.viewMode == TimelineViewMode.timeline,
@@ -949,40 +961,53 @@ class TimelineFilterBar extends StatelessWidget {
     );
   }
 
-  Widget _buildTagChip({
+  Widget _buildTagChip(
+    BuildContext context, {
     Key? key,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    final motion = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 140);
+    final textTheme = Theme.of(context).textTheme;
+    return Semantics(
+      selected: isSelected,
+      button: true,
       key: key,
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.iconBgLight : AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
-            width: 0.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-                letterSpacing: -0.15,
-              ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: motion,
+          curve: Curves.easeOutCubic,
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? AppColors.iconBgLight : AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.divider,
+              width: 0.5,
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedDefaultTextStyle(
+                duration: motion,
+                curve: Curves.easeOutCubic,
+                style: (textTheme.labelLarge ?? const TextStyle()).copyWith(
+                  color:
+                      isSelected ? AppColors.primary : AppColors.textSecondary,
+                  letterSpacing: -0.15,
+                ),
+                child: Text(label),
+              ),
+            ],
+          ),
         ),
       ),
     );

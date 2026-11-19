@@ -4725,6 +4725,42 @@ abstract class AppLocalizations {
   /// **'On-device transcription'**
   String get useLocalSpeechToTextTitle;
 
+  /// No description provided for @chatBubbleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat bubble'**
+  String get chatBubbleTitle;
+
+  /// No description provided for @chatBubbleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep a floating shortcut to chat over other apps.'**
+  String get chatBubbleDescription;
+
+  /// No description provided for @chatBubblePosted.
+  ///
+  /// In en, this message translates to:
+  /// **'If the bubble is still hidden, tap the bubble icon on the notification or allow bubbles in Android settings.'**
+  String get chatBubblePosted;
+
+  /// No description provided for @chatBubbleNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications to turn on the bubble.'**
+  String get chatBubbleNotifications;
+
+  /// No description provided for @chatBubbleOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Android settings'**
+  String get chatBubbleOpenSettings;
+
+  /// No description provided for @chatBubbleError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not change the chat bubble. Try again.'**
+  String get chatBubbleError;
+
   /// No description provided for @useLocalSpeechToTextDesc.
   ///
   /// In en, this message translates to:

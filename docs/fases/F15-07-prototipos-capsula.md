@@ -2,6 +2,8 @@
 
 > Subfase da [F15](../roadmap/F15-widget-e-atalhos-android.md). Decisão de forma em D11 do [questionário](../questionario/2026-11-14-widget-e-capsula.md). Abertura em código antes da validação da F15-02 no S25: [D-071](../DECISIONS.md).
 
+> Registro histórico do protótipo. Com a D-078, o atalho dev usa a implementação compartilhada `ChatBubble` e `ChatBubbleActivity`, também acessíveis em **Configurações → Bolha do chat**. A sobreposição própria continua no flavor dev.
+
 **Estado:** IN_PROGRESS. Forma escolhida pelo dono: bolha oficial do Android (D-073, 2026-11-15). A medição da bolha no S25 está pendente; a sobreposição (B) fica como plano B. Os dois protótipos existem no build dev e compilam. Nada foi medido no aparelho ainda (`NOT_RUN`).
 
 ## Escolha do dono (2026-11-15)

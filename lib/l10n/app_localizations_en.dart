@@ -2632,6 +2632,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useLocalSpeechToTextTitle => 'On-device transcription';
 
   @override
+  String get chatBubbleTitle => 'Chat bubble';
+
+  @override
+  String get chatBubbleDescription =>
+      'Keep a floating shortcut to chat over other apps.';
+
+  @override
+  String get chatBubblePosted =>
+      'If the bubble is still hidden, tap the bubble icon on the notification or allow bubbles in Android settings.';
+
+  @override
+  String get chatBubbleNotifications =>
+      'Allow notifications to turn on the bubble.';
+
+  @override
+  String get chatBubbleOpenSettings => 'Android settings';
+
+  @override
+  String get chatBubbleError => 'Could not change the chat bubble. Try again.';
+
+  @override
   String get useLocalSpeechToTextDesc =>
       'On: Whisper turbo transcribes Portuguese on your device without sending audio. Download the model below. Off: audio goes straight to ChatGPT (or your configured cloud model).';
 

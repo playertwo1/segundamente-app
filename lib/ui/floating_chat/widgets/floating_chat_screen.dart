@@ -36,8 +36,10 @@ class FloatingChatScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: AgentChatDialog(
+          key: ValueKey(mode),
           initialSessionId: null,
           floatingHost: FloatingChatHost(
+            fillsWindow: mode == FloatingChatMode.bubble,
             onClose: () => _close(context),
             onOpenInApp: (sessionId) => _openInApp(context, sessionId),
           ),
