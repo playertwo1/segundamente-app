@@ -1461,11 +1461,10 @@
   "earlyUpdateNoUpdate": "You already have the latest supported build.",
   "@earlyUpdateFound": {
     "placeholders": {
-      "version": {},
-      "build": {}
+      "version": {}
     }
   },
-  "earlyUpdateFound": "Build {version}+{build} is available.",
+  "earlyUpdateFound": "Version {version} is available.",
   "earlyUpdateDownloadAndInstall": "Download and install",
   "earlyUpdateDownloadInProgress": "Downloading update...",
   "@earlyUpdateDownloadingPercent": {

@@ -3183,8 +3183,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'You already have the latest supported build.';
 
   @override
-  String earlyUpdateFound(Object version, Object build) {
-    return 'Build $version+$build is available.';
+  String earlyUpdateFound(Object version) {
+    return 'Version $version is available.';
   }
 
   @override

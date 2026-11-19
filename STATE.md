@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-19 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** v1.0.60+145 (2026-11-19, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-19 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.7 (2026-11-19, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -37,6 +37,11 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release 1.0.7 (2026-11-19)
+
+- Nome público e tela de atualizações usam a versão sem o contador. APK com `versionCode` 146 para atualizar a instalação da v1.0.60, de código 145. Evidências em [docs/releases/v1.0.7.md](docs/releases/v1.0.7.md).
+- 37 testes direcionados aprovados. Instalação via ADB sobre a 1.0.60 confirmada no Galaxy S25 Ultra. A validação dos fluxos da F15 no aparelho continua pendente.
 
 ### Release v1.0.60+145 (2026-11-19)
 

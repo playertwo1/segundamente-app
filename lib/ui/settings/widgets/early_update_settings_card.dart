@@ -117,10 +117,7 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
             _downloadPercent = activeDownloadProgress?.percent ?? 0;
             _statusText = _availableUpdateDownloading
                 ? _downloadStatusText(activeDownloadProgress)
-                : UserStorage.l10n.earlyUpdateFound(
-                    update.versionName,
-                    update.buildNumber,
-                  );
+                : UserStorage.l10n.earlyUpdateFound(update.versionName);
         }
       });
       _syncDownloadPolling();
@@ -312,10 +309,7 @@ class _EarlyUpdateSettingsCardState extends State<EarlyUpdateSettingsCard> {
         _statusText = UserStorage.l10n.earlyUpdateDownloadReadyToInstall;
       } else {
         _downloadPercent = 0;
-        _statusText = UserStorage.l10n.earlyUpdateFound(
-          update.versionName,
-          update.buildNumber,
-        );
+        _statusText = UserStorage.l10n.earlyUpdateFound(update.versionName);
       }
     });
     _syncDownloadPolling();

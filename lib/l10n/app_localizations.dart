@@ -5700,8 +5700,8 @@ abstract class AppLocalizations {
   /// No description provided for @earlyUpdateFound.
   ///
   /// In en, this message translates to:
-  /// **'Build {version}+{build} is available.'**
-  String earlyUpdateFound(Object version, Object build);
+  /// **'Version {version} is available.'**
+  String earlyUpdateFound(Object version);
 
   /// No description provided for @earlyUpdateDownloadAndInstall.
   ///

@@ -783,12 +783,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  UserStorage.l10n.earlyUpdateFound(
-                    update.versionName,
-                    update.buildNumber,
-                  ),
-                ),
+                Text(UserStorage.l10n.earlyUpdateFound(update.versionName)),
                 if (notes.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
