@@ -299,10 +299,17 @@ class OpenAiAuthService {
   /// Get the saved tokens as a Map
   static Future<Map<String, dynamic>?> getSavedTokens() async {
     final prefs = await SharedPreferences.getInstance();
-    final accessToken =
-        await SecretStorage.readMigrating(prefs, 'openai_access_token');
-    final refreshToken =
-        await SecretStorage.readMigrating(prefs, 'openai_refresh_token');
+    final String? accessToken;
+    final String? refreshToken;
+    try {
+      accessToken =
+          await SecretStorage.readMigrating(prefs, 'openai_access_token');
+      refreshToken =
+          await SecretStorage.readMigrating(prefs, 'openai_refresh_token');
+    } catch (e) {
+      _logger.warning('Failed to read OpenAI tokens from keystore: $e');
+      return null;
+    }
     final accountId = prefs.getString('openai_account_id');
     final expiresAt = prefs.getInt('openai_expires_at');
 

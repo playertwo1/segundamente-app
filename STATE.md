@@ -16,7 +16,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 2. **Validar a F14 no S25:** na aba Todo, o painel do Assistente Ativo (resumo manhã/tarde, tarefas paradas, sugestões das personas pelo `TodoProposalCard`, silêncio).
 3. **Validar F15-02 a F15-08 no S25:** chat flutuante pelos atalhos, continuidade da conversa ao alternar entre o app e a bolha, widgets pequeno, médio e grande, painel rápido e **Configurações → Bolha do chat**. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`. O texto do limite de Falar (R03) aguarda decisão do dono.
 4. **F12:** F12-01 (schemas finais da v1.1 e chunking acima de 64 KiB), depois F12-06. O S25 dev está revogado: parear de novo antes da F12-06 e conferir o rótulo "sem conexão" com o modo avião. Abertos no Lumen: QR maior e edição de horário que não salva.
-5. **A investigar:** o cold start mostra erro do `FlutterSecureStorage` (`Could not decrypt key`); esse armazenamento guarda tokens de login.
+5. **Conferir no S25:** confirmar no `logcat` que o erro de cold start do `FlutterSecureStorage` (`Could not decrypt key`) não aparece mais após o ajuste de `AndroidOptions` e exclusão do Auto Backup.
 6. **Validar F2-11 no S25:** baixar o Whisper turbo, gravar em português e medir qualidade, latência e memória em gravação longa.
 
 ## Pendências do dono
@@ -37,6 +37,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Correção do cold start do FlutterSecureStorage (2026-11-20)
+
+- Causa raiz: o `flutter_secure_storage` `10.3.4` tenta inicializar `EncryptedSharedPreferences` na partida quando `migrateWithBackup` é `false` e não há marcador de migração, falhando com `SecurityException: Could not decrypt key` quando o arquivo vem restaurado sem a chave do KeyStore.
+- Ajuste em [secret_storage.dart](lib/utils/secret_storage.dart) (`AndroidOptions(resetOnError: true, migrateWithBackup: true)`), exclusão de `FlutterSecureStorage.xml` do Auto Backup em [AndroidManifest.xml](android/app/src/main/AndroidManifest.xml), [backup_rules.xml](android/app/src/main/res/xml/backup_rules.xml) e [data_extraction_rules.xml](android/app/src/main/res/xml/data_extraction_rules.xml), e proteção de leitura em `UserStorage.getLLMConfigs()` e `getSavedTokens()` (`OpenAiAuthService`, `ClaudeAuthService`, `GeminiAuthService`).
+- `flutter.bat analyze --no-pub` nos 6 arquivos Dart alterados → `No issues found! (79.1s)`.
+- `flutter.bat test --no-pub --reporter compact test/utils/secret_storage_test.dart` → `+7: All tests passed!`.
+- `flutter.bat build apk --flavor globalDev --debug --no-pub` → `Built build\app\outputs\flutter-apk\app-globaldev-debug.apk`. Instalado e iniciado no emulador `CoreFlow_API36_Clean` (`pidof app.segundamente.dev` = `4470`); `logcat` sem ocorrências de `FlutterSecureStorage`, `Could not decrypt` ou `EncryptedSharedPreferences`.
+- `NOT_RUN`: Galaxy S25 Ultra (aparelho ausente) e suíte completa do repositório.
 
 ### Release 1.0.7 (2026-11-19)
 

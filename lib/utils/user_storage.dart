@@ -347,7 +347,12 @@ class UserStorage {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_keyLLMConfigs);
 
-      final secretsJson = await SecretStorage.read(_keyLLMConfigSecrets);
+      String? secretsJson;
+      try {
+        secretsJson = await SecretStorage.read(_keyLLMConfigSecrets);
+      } catch (e) {
+        _logger.warning('Failed to read LLM config secrets from keystore: $e');
+      }
       final secrets = secretsJson == null
           ? const <String, dynamic>{}
           : jsonDecode(secretsJson) as Map<String, dynamic>;
