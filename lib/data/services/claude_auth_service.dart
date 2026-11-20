@@ -258,10 +258,17 @@ class ClaudeAuthService {
 
   static Future<Map<String, dynamic>?> getSavedTokens() async {
     final prefs = await SharedPreferences.getInstance();
-    final accessToken =
-        await SecretStorage.readMigrating(prefs, 'claude_access_token');
-    final refreshToken =
-        await SecretStorage.readMigrating(prefs, 'claude_refresh_token');
+    final String? accessToken;
+    final String? refreshToken;
+    try {
+      accessToken =
+          await SecretStorage.readMigrating(prefs, 'claude_access_token');
+      refreshToken =
+          await SecretStorage.readMigrating(prefs, 'claude_refresh_token');
+    } catch (e) {
+      _logger.warning('Failed to read Claude tokens from keystore: $e');
+      return null;
+    }
     final email = prefs.getString('claude_email');
     final expiresAt = prefs.getInt('claude_expires_at');
 

@@ -362,10 +362,17 @@ class GeminiAuthService {
 
   static Future<Map<String, dynamic>?> getSavedTokens() async {
     final prefs = await SharedPreferences.getInstance();
-    final accessToken =
-        await SecretStorage.readMigrating(prefs, 'gemini_access_token');
-    final refreshToken =
-        await SecretStorage.readMigrating(prefs, 'gemini_refresh_token');
+    final String? accessToken;
+    final String? refreshToken;
+    try {
+      accessToken =
+          await SecretStorage.readMigrating(prefs, 'gemini_access_token');
+      refreshToken =
+          await SecretStorage.readMigrating(prefs, 'gemini_refresh_token');
+    } catch (e) {
+      _logger.warning('Failed to read Gemini tokens from keystore: $e');
+      return null;
+    }
     final email = prefs.getString('gemini_email');
     final expiresAt = prefs.getInt('gemini_expires_at');
 

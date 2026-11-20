@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memex/data/services/claude_auth_service.dart';
+import 'package:memex/data/services/gemini_auth_service.dart';
 import 'package:memex/data/services/openai_auth_service.dart';
 import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/utils/secret_storage.dart';
@@ -119,5 +122,57 @@ void main() {
     final secrets = jsonDecode((await SecretStorage.read('llm_config_secrets'))!)
         as Map<String, dynamic>;
     expect(secrets.keys, ['default']);
+  });
+
+  group('keystore read errors', () {
+    const channel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'read') {
+          throw PlatformException(
+            code: 'Exception encountered',
+            message: 'SecurityException: Could not decrypt key',
+          );
+        }
+        return null;
+      });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('getLLMConfigs preserves non-secret configs when keystore read fails',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        'llm_client_configs': jsonEncode([
+          const LLMConfig(
+            key: 'ollama-local',
+            type: 'ollama',
+            modelId: 'llama3',
+            apiKey: '',
+            baseUrl: 'http://localhost:11434',
+          ).toJson(),
+        ]),
+      });
+
+      final configs = await UserStorage.getLLMConfigs();
+
+      expect(configs.any((c) => c.key == 'ollama-local'), isTrue);
+      final ollama = configs.firstWhere((c) => c.key == 'ollama-local');
+      expect(ollama.modelId, 'llama3');
+      expect(ollama.apiKey, isEmpty);
+    });
+
+    test('OAuth getSavedTokens returns null when keystore read fails',
+        () async {
+      expect(await OpenAiAuthService.getSavedTokens(), isNull);
+      expect(await ClaudeAuthService.getSavedTokens(), isNull);
+      expect(await GeminiAuthService.getSavedTokens(), isNull);
+    });
   });
 }
