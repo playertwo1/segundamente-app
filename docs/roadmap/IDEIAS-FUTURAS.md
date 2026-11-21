@@ -10,7 +10,7 @@
 | Separação de falantes/voiceprint | Se as transcrições reais não preservarem identificação suficiente; medir no S25 |
 | Interface MCP para agentes externos | Decisão da F7-05 e limites de permissão aprovados |
 | Escolher idioma do resumo pelo idioma predominante | Só se o produto voltar a suportar mais de en e pt |
-| Biblioteca agregada de fotos, PDFs e áudios | Depois de F2/F6, se a busca atual não bastar |
+| Biblioteca agregada de fotos, PDFs e áudios | Autorizada por D-081 (2026-11-21) |
 | Índice semântico gravado no banco (Drift): guardar o vetor de cada item e calcular só os novos | Reserva da F6-01 (hoje o índice vive só na memória do app). Reavaliar se a primeira busca do dia passar de ~2 s ou o histórico passar de alguns milhares de itens; medir antes no S25 |
 | Modelo local no aparelho (F7-02): Gemma 4 E2B/E4B pelo LiteRT-LM (Apache-2.0) | Adiado pelo dono em 2026-11-06 (D-041); nada implementado. No PC o E2B acertou 23/40 (57,5%) no corpus da F9-02 com o melhor prompt; falta comparar com o modelo remoto + regra da F3-07 e medir velocidade/RAM no S25. Detalhes em `docs/fases/F7-02-medicao.md` e `docs/fases/F7-02-pesquisa-modelos.md` |
 | Chave Gemini como reserva de transcrição | Se o caminho D-011 falhar ou se os limites medidos forem insuficientes |

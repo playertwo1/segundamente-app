@@ -12,6 +12,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:memex/data/repositories/memex_router.dart';
 import 'package:memex/ui/memory/view_models/memory_viewmodel.dart';
+import 'package:memex/ui/media_library/view_models/media_library_viewmodel.dart';
+import 'package:memex/ui/media_library/widgets/media_library_screen.dart';
 import 'package:memex/ui/thread_document/view_models/thread_document_viewmodel.dart';
 import 'package:memex/ui/thread_document/widgets/thread_document_screen.dart';
 import 'package:memex/ui/todo/widgets/todo_screen.dart';
@@ -187,6 +189,15 @@ GoRouter createAppRouter(
           final vm = MemoryViewModel(router: context.read<MemexRouter>());
           vm.loadMemory();
           return MemoryScreen(viewModel: vm);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.mediaLibrary,
+        builder: (context, state) {
+          final vm = MediaLibraryViewModel(
+            router: context.read<MemexRouter>(),
+          );
+          return MediaLibraryScreen(viewModel: vm);
         },
       ),
       GoRoute(

@@ -2171,5 +2171,16 @@
   "activeAssistantPrioritiesGroup": "Priorities",
   "activeAssistantEmptyState": "All caught up! No active briefings, stalled tasks, or suggestions.",
   "@activeAssistantSummaryBanner": {"placeholders": {"count": {"type": "int"}}},
-  "activeAssistantSummaryBanner": "{count} assistant update(s)"
+  "activeAssistantSummaryBanner": "{count} assistant update(s)",
+  "mediaLibraryTitle": "Media library",
+  "mediaLibrarySubtitle": "Saved photos, PDFs, and audios",
+  "mediaLibraryFilterAll": "All",
+  "mediaLibraryFilterPhotos": "Photos",
+  "mediaLibraryFilterPdfs": "PDFs",
+  "mediaLibraryFilterAudios": "Audios",
+  "mediaLibrarySearchHint": "Search by file or record...",
+  "mediaLibraryEmpty": "No photos, PDFs, or audios saved yet.",
+  "mediaLibraryNoMatches": "No items match the current filter.",
+  "mediaLibraryOpenRecord": "Open record",
+  "mediaLibraryShare": "Share"
 }

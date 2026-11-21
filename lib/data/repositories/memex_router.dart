@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:memex/data/services/native_photo_picker_service.dart';
+import 'package:memex/data/services/media_library_service.dart';
+import 'package:memex/domain/models/media_library_item.dart';
 import 'package:memex/domain/models/native_photo_selection.dart';
 import 'package:memex/data/services/photo_attachment_service.dart';
 import 'package:memex/domain/models/prepared_photo_attachment.dart';
@@ -2541,4 +2543,18 @@ class MemexRouter {
 
   Future<Result<LumenUnlinkResult>> unlinkLumen() =>
       runResult(_lumenPairingService.unlink);
+
+  // ---------------------------------------------------------------------------
+  // Media library
+  // ---------------------------------------------------------------------------
+
+  late final MediaLibraryService _mediaLibraryService = MediaLibraryService(
+    loadCards: () => getTimelineCards(page: 1, limit: 500),
+  );
+
+  Future<Result<List<MediaLibraryItem>>> fetchMediaLibrary() =>
+      runResult(() async {
+        await _ensureInitialized();
+        return _mediaLibraryService.listAll();
+      });
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:memex/routing/routes.dart';
 import 'package:memex/ui/knowledge/view_models/knowledge_base_viewmodel.dart';
 import 'package:memex/ui/knowledge/widgets/knowledge/knowledge_file_card.dart';
 import 'package:memex/ui/knowledge/widgets/knowledge_search_delegate.dart';
@@ -104,6 +106,13 @@ class KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildGuidesSection(context, vm),
+                        EditorialRow(
+                          title: UserStorage.l10n.mediaLibraryTitle,
+                          subtitle: UserStorage.l10n.mediaLibrarySubtitle,
+                          leading: const Icon(Icons.perm_media_outlined),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push(AppRoutes.mediaLibrary),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: _buildParaGrid(context, vm),

@@ -9218,6 +9218,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} assistant update(s)'**
   String activeAssistantSummaryBanner(int count);
+
+  /// No description provided for @mediaLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Media library'**
+  String get mediaLibraryTitle;
+
+  /// No description provided for @mediaLibrarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved photos, PDFs, and audios'**
+  String get mediaLibrarySubtitle;
+
+  /// No description provided for @mediaLibraryFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get mediaLibraryFilterAll;
+
+  /// No description provided for @mediaLibraryFilterPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get mediaLibraryFilterPhotos;
+
+  /// No description provided for @mediaLibraryFilterPdfs.
+  ///
+  /// In en, this message translates to:
+  /// **'PDFs'**
+  String get mediaLibraryFilterPdfs;
+
+  /// No description provided for @mediaLibraryFilterAudios.
+  ///
+  /// In en, this message translates to:
+  /// **'Audios'**
+  String get mediaLibraryFilterAudios;
+
+  /// No description provided for @mediaLibrarySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by file or record...'**
+  String get mediaLibrarySearchHint;
+
+  /// No description provided for @mediaLibraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos, PDFs, or audios saved yet.'**
+  String get mediaLibraryEmpty;
+
+  /// No description provided for @mediaLibraryNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No items match the current filter.'**
+  String get mediaLibraryNoMatches;
+
+  /// No description provided for @mediaLibraryOpenRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Open record'**
+  String get mediaLibraryOpenRecord;
+
+  /// No description provided for @mediaLibraryShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get mediaLibraryShare;
 }
 
 class _AppLocalizationsDelegate
