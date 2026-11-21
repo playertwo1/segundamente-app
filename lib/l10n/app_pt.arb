@@ -2162,5 +2162,16 @@
   "activeAssistantPrioritiesGroup": "Prioridades",
   "activeAssistantEmptyState": "Tudo em dia! Sem resumos, tarefas paradas ou sugestões no momento.",
   "@activeAssistantSummaryBanner": {"placeholders": {"count": {"type": "int"}}},
-  "activeAssistantSummaryBanner": "{count} aviso(s) do assistente"
+  "activeAssistantSummaryBanner": "{count} aviso(s) do assistente",
+  "mediaLibraryTitle": "Biblioteca de mídia",
+  "mediaLibrarySubtitle": "Fotos, PDFs e áudios salvos",
+  "mediaLibraryFilterAll": "Todos",
+  "mediaLibraryFilterPhotos": "Fotos",
+  "mediaLibraryFilterPdfs": "PDFs",
+  "mediaLibraryFilterAudios": "Áudios",
+  "mediaLibrarySearchHint": "Buscar por arquivo ou registro...",
+  "mediaLibraryEmpty": "Nenhuma foto, PDF ou áudio salvo ainda.",
+  "mediaLibraryNoMatches": "Nenhum item encontrado para esse filtro.",
+  "mediaLibraryOpenRecord": "Abrir registro",
+  "mediaLibraryShare": "Compartilhar"
 }

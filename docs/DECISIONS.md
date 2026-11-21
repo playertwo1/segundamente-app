@@ -480,3 +480,8 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 
 - A release que sucede a v1.0.60 usa o nome público **1.0.7**. Configurações mostra somente o nome da versão disponível.
 - O `versionCode` continua crescente. O APK mantém o código no nome do arquivo para compatibilidade com a seleção de atualizações nas versões anteriores.
+
+## D-081 — Biblioteca agregada de fotos, PDFs e áudios (2026-11-21)
+
+- Autorizada pelo dono a implementação da biblioteca agregada de fotos, PDFs e áudios (antes em `IDEIAS-FUTURAS.md`).
+- Acessível pelo menu principal (`MainMenuDrawer`) e pela aba Conhecimento (`KnowledgeBaseScreen`), listando os arquivos locais de `Facts/assets/` com filtro por tipo, busca, visualização in-app e link para o registro de origem quando existir.

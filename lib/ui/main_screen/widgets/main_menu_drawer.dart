@@ -19,6 +19,7 @@ class MainMenuDrawer extends StatelessWidget {
     required this.onOpenSavedViews,
     required this.onOpenGlossary,
     required this.onOpenMemory,
+    this.onOpenMediaLibrary,
     required this.onOpenActivity,
     required this.onOpenProfile,
   });
@@ -34,6 +35,7 @@ class MainMenuDrawer extends StatelessWidget {
   final VoidCallback onOpenSavedViews;
   final VoidCallback onOpenGlossary;
   final VoidCallback onOpenMemory;
+  final VoidCallback? onOpenMediaLibrary;
   final VoidCallback onOpenActivity;
   final VoidCallback onOpenProfile;
 
@@ -103,6 +105,12 @@ class MainMenuDrawer extends StatelessWidget {
               label: l10n.memoryTitle,
               onTap: close(onOpenMemory),
             ),
+            if (onOpenMediaLibrary != null)
+              _MenuItem(
+                icon: Icons.perm_media_outlined,
+                label: l10n.mediaLibraryTitle,
+                onTap: close(onOpenMediaLibrary!),
+              ),
             _MenuItem(
               icon: Icons.sync_outlined,
               label: l10n.activityMenu,

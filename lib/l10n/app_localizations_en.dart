@@ -5230,4 +5230,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String activeAssistantSummaryBanner(int count) {
     return '$count assistant update(s)';
   }
+
+  @override
+  String get mediaLibraryTitle => 'Media library';
+
+  @override
+  String get mediaLibrarySubtitle => 'Saved photos, PDFs, and audios';
+
+  @override
+  String get mediaLibraryFilterAll => 'All';
+
+  @override
+  String get mediaLibraryFilterPhotos => 'Photos';
+
+  @override
+  String get mediaLibraryFilterPdfs => 'PDFs';
+
+  @override
+  String get mediaLibraryFilterAudios => 'Audios';
+
+  @override
+  String get mediaLibrarySearchHint => 'Search by file or record...';
+
+  @override
+  String get mediaLibraryEmpty => 'No photos, PDFs, or audios saved yet.';
+
+  @override
+  String get mediaLibraryNoMatches => 'No items match the current filter.';
+
+  @override
+  String get mediaLibraryOpenRecord => 'Open record';
+
+  @override
+  String get mediaLibraryShare => 'Share';
 }

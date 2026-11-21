@@ -63,6 +63,7 @@ abstract final class AppRoutes {
   /// Memory.
   static const String memory = '/memory';
   static const String todo = '/todo';
+  static const String mediaLibrary = '/media-library';
 
   /// Document made from a comment thread; push as '/document/$id'.
   static const String threadDocument = '/document';

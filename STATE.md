@@ -38,6 +38,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Biblioteca agregada de fotos, PDFs e áudios (2026-11-21, D-081)
+
+- Criados [media_library_item.dart](lib/domain/models/media_library_item.dart), [media_library_service.dart](lib/data/services/media_library_service.dart), [media_library_viewmodel.dart](lib/ui/media_library/view_models/media_library_viewmodel.dart) e [media_library_screen.dart](lib/ui/media_library/widgets/media_library_screen.dart), com filtro por tipo (`Todos`, `Fotos`, `PDFs`, `Áudios`), busca, visualização in-app (`PhotoView`, `pdfrx`, `AudioPlayerWidget`), compartilhamento e atalho para o registro de origem quando vinculado.
+- Integrada em [memex_router.dart](lib/data/repositories/memex_router.dart), [routes.dart](lib/routing/routes.dart), [router.dart](lib/routing/router.dart), [main_menu_drawer.dart](lib/ui/main_screen/widgets/main_menu_drawer.dart), [main.dart](lib/main.dart), [knowledge_base_screen.dart](lib/ui/knowledge/widgets/knowledge_base_screen.dart) e localizações EN/PT (`app_en.arb`, `app_pt.arb`, `app_localizations*.dart`).
+- `python scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+- `flutter.bat analyze --no-pub` nos 10 arquivos/diretórios alterados e criados → `No issues found! (17.7s)`.
+- `flutter.bat test --no-pub --timeout 30s --reporter compact test/data/services/media_library_service_test.dart test/ui/media_library/widgets/media_library_screen_test.dart test/ui/main_screen/widgets/main_menu_drawer_test.dart test/l10n/` → `+15: All tests passed!`.
+- `NOT_RUN`: validação visual/toque no Galaxy S25 Ultra e no emulador (visualizador `pdfrx`, `PhotoView` e `AudioPlayerWidget` com arquivos reais), e suíte completa do repositório.
+
 ### Correção do cold start do FlutterSecureStorage (2026-11-20)
 
 - Causa raiz: o `flutter_secure_storage` `10.3.4` tenta inicializar `EncryptedSharedPreferences` na partida quando `migrateWithBackup` é `false` e não há marcador de migração, falhando com `SecurityException: Could not decrypt key` quando o arquivo vem restaurado sem a chave do KeyStore.

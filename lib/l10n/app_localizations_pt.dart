@@ -5276,4 +5276,38 @@ class AppLocalizationsPt extends AppLocalizations {
   String activeAssistantSummaryBanner(int count) {
     return '$count aviso(s) do assistente';
   }
+
+  @override
+  String get mediaLibraryTitle => 'Biblioteca de mídia';
+
+  @override
+  String get mediaLibrarySubtitle => 'Fotos, PDFs e áudios salvos';
+
+  @override
+  String get mediaLibraryFilterAll => 'Todos';
+
+  @override
+  String get mediaLibraryFilterPhotos => 'Fotos';
+
+  @override
+  String get mediaLibraryFilterPdfs => 'PDFs';
+
+  @override
+  String get mediaLibraryFilterAudios => 'Áudios';
+
+  @override
+  String get mediaLibrarySearchHint => 'Buscar por arquivo ou registro...';
+
+  @override
+  String get mediaLibraryEmpty => 'Nenhuma foto, PDF ou áudio salvo ainda.';
+
+  @override
+  String get mediaLibraryNoMatches =>
+      'Nenhum item encontrado para esse filtro.';
+
+  @override
+  String get mediaLibraryOpenRecord => 'Abrir registro';
+
+  @override
+  String get mediaLibraryShare => 'Compartilhar';
 }

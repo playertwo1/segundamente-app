@@ -1941,6 +1941,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           onOpenSavedViews: _openSavedViews,
           onOpenGlossary: () => context.push(AppRoutes.glossary),
           onOpenMemory: () => context.push(AppRoutes.memory),
+          onOpenMediaLibrary: () => context.push(AppRoutes.mediaLibrary),
           onOpenActivity: () => context.push(AppRoutes.activity),
           onOpenProfile: () => showModalBottomSheet(
             context: context,
