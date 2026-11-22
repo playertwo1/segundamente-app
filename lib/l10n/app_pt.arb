@@ -892,7 +892,7 @@
   "invalidJson": "JSON inválido",
   "warning": "Configuração incompleta",
   "invalidConfigurationWarning": "A configuração ainda não está completa (por exemplo, falta API Key ou Model ID). Você ainda pode salvar e configurar depois. Continuar?",
-  "invalidModelConfigDetailed": "AI Agent \"{agentId}\" precisa de uma configuração de modelo válida (key: \"{configKey}\") para operar. Verifique as configurações de modelo.",
+  "invalidModelConfigDetailed": "Configure um modelo de IA nas Configurações para usar {agentId} ({configKey}).",
   "discardChangesTitle": "Sair desta página?",
   "discardChangesMessage": "Se você fez alterações, salve antes de sair.",
   "discardButton": "Descartar",

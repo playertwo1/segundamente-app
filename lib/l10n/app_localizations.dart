@@ -3546,7 +3546,7 @@ abstract class AppLocalizations {
   /// No description provided for @invalidModelConfigDetailed.
   ///
   /// In en, this message translates to:
-  /// **'AI Agent \"{agentId}\" needs a valid model configuration (key: \"{configKey}\") to operate. Please check the model settings.'**
+  /// **'Configure an AI model in Settings to use {agentId} ({configKey}).'**
   String invalidModelConfigDetailed(Object agentId, Object configKey);
 
   /// No description provided for @discardChangesTitle.

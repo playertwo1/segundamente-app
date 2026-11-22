@@ -899,7 +899,7 @@
   "invalidJson": "Invalid JSON",
   "warning": "Incomplete Setup",
   "invalidConfigurationWarning": "The configuration is not complete yet (e.g., API Key or Model ID is missing). You can still save and configure it later. Continue?",
-  "invalidModelConfigDetailed": "AI Agent \"{agentId}\" needs a valid model configuration (key: \"{configKey}\") to operate. Please check the model settings.",
+  "invalidModelConfigDetailed": "Configure an AI model in Settings to use {agentId} ({configKey}).",
   "discardChangesTitle": "Leave this page?",
   "discardChangesMessage": "If you made any changes, please save them before leaving.",
   "discardButton": "Discard",

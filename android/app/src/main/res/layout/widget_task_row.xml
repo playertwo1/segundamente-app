@@ -35,7 +35,7 @@
             android:focusable="true"
             android:gravity="center_vertical"
             android:lineSpacingMultiplier="1.12"
-            android:maxLines="2"
+            android:maxLines="1"
             android:minHeight="@dimen/widget_key_height"
             android:paddingTop="5dp"
             android:paddingEnd="8dp"
