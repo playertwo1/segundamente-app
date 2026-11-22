@@ -12,6 +12,7 @@ import 'package:memex/config/dependencies.dart';
 import 'package:memex/config/app_flavor.dart';
 import 'package:memex/data/services/floating_chat_service.dart';
 import 'package:memex/domain/models/floating_chat_mode.dart';
+import 'package:memex/domain/models/llm_config.dart';
 import 'package:memex/ui/insight/view_models/insight_viewmodel.dart';
 import 'package:memex/ui/knowledge/view_models/knowledge_base_viewmodel.dart';
 import 'package:memex/ui/timeline/view_models/timeline_viewmodel.dart';
@@ -858,6 +859,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void _handleInvalidModelConfig(EventBusMessage message) {
     if (!mounted) return;
     if (message is! InvalidModelConfigMessage) return;
+
+    if (shouldSuppressInvalidModelDialog(message)) {
+      return;
+    }
 
     // Check if dialog is already showing to prevent stacking
     if (_isInvalidConfigDialogShowing) return;
@@ -2131,4 +2136,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       }
     }
   }
+}
+
+/// The Timeline already shows the "Configure Now" banner when no default model
+/// is set; avoid blocking cold start with a modal for background companion runs.
+@visibleForTesting
+bool shouldSuppressInvalidModelDialog(InvalidModelConfigMessage message) {
+  return message.configKey == LLMConfig.defaultClientKey &&
+      message.agentId.toLowerCase() == 'companion';
 }

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!-- KeyStore keys are device-bound; restoring FlutterSecureStorage.xml fails with Could not decrypt key. -->
+    <!-- KeyStore keys are device-bound; restoring these files fails with Could not decrypt key. -->
     <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration.xml" />
 </full-backup-content>

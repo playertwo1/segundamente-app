@@ -35,6 +35,7 @@ void main() {
           onOpenSavedViews: () => calls.add('views'),
           onOpenGlossary: () => calls.add('glossary'),
           onOpenMemory: () => calls.add('memory'),
+          onOpenMediaLibrary: () => calls.add('media'),
           onOpenActivity: () => calls.add('activity'),
           onOpenProfile: () => calls.add('profile'),
         ),
@@ -58,6 +59,7 @@ void main() {
     expect(await openAndTap(tester, 'Visões salvas'), ['views']);
     expect(await openAndTap(tester, 'Dicionário de termos'), ['glossary']);
     expect(await openAndTap(tester, 'Memória'), ['memory']);
+    expect(await openAndTap(tester, 'Biblioteca de mídia'), ['media']);
     expect(await openAndTap(tester, 'Atividade'), ['activity']);
     expect(await openAndTap(tester, 'Conversar'), ['chat']);
     expect(await openAndTap(tester, 'Histórico de chat'), ['history']);

@@ -316,7 +316,7 @@ class _SystemActionCardState extends State<SystemActionCard> {
                       _isProcessing || !isSupported ? null : _handleAccept,
                   style: FilledButton.styleFrom(
                     backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onPrimary,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                     shape: RoundedRectangleBorder(
@@ -329,8 +329,8 @@ class _SystemActionCardState extends State<SystemActionCard> {
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.onPrimary),
                           ),
                         )
                       : Text(buttonText,

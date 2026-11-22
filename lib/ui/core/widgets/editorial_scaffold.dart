@@ -46,8 +46,8 @@ class EditorialScaffold extends StatelessWidget {
                       child: IconButton(
                         tooltip: UserStorage.l10n.lockBack,
                         icon: const Icon(
-                          Icons.chevron_left,
-                          size: 28,
+                          Icons.arrow_back,
+                          size: 24,
                           color: AppColors.textPrimary,
                         ),
                         onPressed:

@@ -9,22 +9,23 @@ import 'package:memex/domain/models/character_message.dart';
 import 'package:memex/domain/models/character_emoji.dart';
 import 'package:memex/domain/models/persona_chat.dart';
 import 'package:memex/ui/character/view_models/persona_chat_viewmodel.dart';
+import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:memex/ui/core/widgets/character_avatar.dart';
 import 'package:memex/ui/core/widgets/local_image.dart';
 import 'package:memex/utils/user_storage.dart';
 
-const _personaBackground = Color(0xFF000000);
-const _personaPanel = Color(0xFF111113);
+const _personaBackground = AppColors.background;
+const _personaPanel = AppColors.surface;
 const _personaPanelRaised = Color(0xFF1C1C1E);
-const _personaPanelSoft = Color(0xFF171719);
-const _personaText = Color(0xFFF5F1EA);
-const _personaTextSecondary = Color(0xFFA09D98);
-const _personaTextQuiet = Color(0xFF797671);
-const _personaLine = Color(0xFF29292C);
-const _personaLineStrong = Color(0xFF3A3A3F);
+const _personaPanelSoft = AppColors.surface;
+const _personaText = AppColors.textPrimary;
+const _personaTextSecondary = AppColors.textSecondary;
+const _personaTextQuiet = AppColors.textTertiary;
+const _personaLine = AppColors.divider;
+const _personaLineStrong = AppColors.divider;
 const _personaAccent = Color(0xFFFF8A3D);
-const _personaAccentSoft = Color(0xFF27170D);
-const _personaOnAccent = Color(0xFF1B1008);
+const _personaAccentSoft = AppColors.tagActiveBg;
+const _personaOnAccent = AppColors.onPrimary;
 
 final _cachedMarkdownStyle = MarkdownStyleSheet(
   p: const TextStyle(
