@@ -211,7 +211,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Text(
                       '$count',
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 12,
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
@@ -306,7 +306,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             child: Text(
                               tag,
                               style: const TextStyle(
-                                  fontSize: 10, color: AppColors.textSecondary),
+                                  fontSize: 12, color: AppColors.textSecondary),
                             ),
                           )),
                     ],

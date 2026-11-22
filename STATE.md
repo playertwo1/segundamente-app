@@ -38,6 +38,19 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Polimento após Impeccable Critique (2026-11-21)
+
+- [main_menu_drawer.dart](lib/ui/main_screen/widgets/main_menu_drawer.dart): 14 destinos organizados em 3 grupos (Principal, Organização, Sistema) com divisores.
+- [system_action_card.dart](lib/ui/card_attachments/widgets/system_action_card.dart) e [classic_card.dart](lib/ui/core/cards/templates/classic_card.dart): removidos azul iOS (`0xFF007AFF`) e gradiente roxo (`0xFF8B5CF6`) em favor de `AppColors`.
+- [calendar_screen.dart](lib/ui/calendar/widgets/calendar_screen.dart): textos de `9`–`10sp` elevados para `12sp`.
+- [media_library_screen.dart](lib/ui/media_library/widgets/media_library_screen.dart): subtítulo simplificado (`data · tamanho`).
+- [widget_task_row.xml](android/app/src/main/res/layout/widget_task_row.xml): título em `maxLines="1"` com `ellipsize="end"`.
+- [app_en.arb](lib/l10n/app_en.arb) e [app_pt.arb](lib/l10n/app_pt.arb): reescrita de `invalidModelConfigDetailed` sem jargão técnico.
+- `python scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+- `flutter.bat analyze --no-pub` nos 5 arquivos Dart alterados → 0 erros/warnings (apenas 4 `info` preexistentes).
+- `flutter.bat test --no-pub --timeout 30s --reporter compact test/ui/main_screen/widgets/main_menu_drawer_test.dart test/ui/calendar/ test/ui/media_library/ test/l10n/ test/ui/rtl/arabic_layout_smoke_test.dart` → `+18: All tests passed!`.
+- `NOT_RUN`: nova captura no emulador/S25 após o polimento, testes JVM do widget Kotlin e suíte completa do repositório.
+
 ### Biblioteca agregada de fotos, PDFs e áudios (2026-11-21, D-081)
 
 - Criados [media_library_item.dart](lib/domain/models/media_library_item.dart), [media_library_service.dart](lib/data/services/media_library_service.dart), [media_library_viewmodel.dart](lib/ui/media_library/view_models/media_library_viewmodel.dart) e [media_library_screen.dart](lib/ui/media_library/widgets/media_library_screen.dart), com filtro por tipo (`Todos`, `Fotos`, `PDFs`, `Áudios`), busca, visualização in-app (`PhotoView`, `pdfrx`, `AudioPlayerWidget`), compartilhamento e atalho para o registro de origem quando vinculado.

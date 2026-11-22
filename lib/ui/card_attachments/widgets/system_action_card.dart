@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:memex/ui/core/themes/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:memex/data/services/system_action_service.dart';
 import 'package:memex/db/app_database.dart';
@@ -161,8 +162,7 @@ class _SystemActionCardState extends State<SystemActionCard> {
     final bool isSupported = isCalendar || isReminder;
 
     final colorScheme = Theme.of(context).colorScheme;
-    final primaryColor =
-        isCalendar ? const Color(0xFF007AFF) : const Color(0xFFFF9500);
+    final primaryColor = isCalendar ? AppColors.primary : AppColors.warning;
     final iconData =
         isCalendar ? Icons.calendar_month_rounded : Icons.checklist_rounded;
     final headerText = switch (widget.action.actionType) {
@@ -450,8 +450,7 @@ class _SystemActionArtifactPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCalendar = actionKind == 'calendar';
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor =
-        isCalendar ? const Color(0xFF007AFF) : const Color(0xFFFF9500);
+    final accentColor = isCalendar ? AppColors.primary : AppColors.warning;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),

@@ -300,7 +300,7 @@ class _MediaRow extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        '$dateStr · $sizeStr · ${item.fileName}',
+        '$dateStr · $sizeStr',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(

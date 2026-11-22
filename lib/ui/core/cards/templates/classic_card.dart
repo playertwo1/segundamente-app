@@ -195,36 +195,31 @@ class _ClassicCardState extends State<ClassicCard> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFF8B5CF6).withValues(alpha: 0.08),
-              const Color(0xFF8B5CF6).withValues(alpha: 0.04),
-            ],
-          ),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+            color: AppColors.divider,
             width: 0.5,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 14,
               height: 14,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.7),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(width: 8),
             Text(
               UserStorage.l10n.processingStatus,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.8),
+                color: AppColors.primary,
               ),
             ),
           ],

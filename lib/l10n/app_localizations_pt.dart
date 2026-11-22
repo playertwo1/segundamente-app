@@ -1973,7 +1973,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String invalidModelConfigDetailed(Object agentId, Object configKey) {
-    return 'AI Agent \"$agentId\" precisa de uma configuração de modelo válida (key: \"$configKey\") para operar. Verifique as configurações de modelo.';
+    return 'Configure um modelo de IA nas Configurações para usar $agentId ($configKey).';
   }
 
   @override

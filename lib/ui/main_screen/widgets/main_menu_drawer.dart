@@ -76,6 +76,25 @@ class MainMenuDrawer extends StatelessWidget {
               onTap: close(() => onSelectTab(1)),
             ),
             _MenuItem(
+              icon: Icons.checklist,
+              label: l10n.todoTitle,
+              onTap: close(onOpenTodo),
+            ),
+            _MenuItem(
+              icon: Icons.chat_bubble_outline,
+              label: l10n.navChat,
+              onTap: close(onOpenChat),
+            ),
+            _MenuItem(
+              icon: Icons.history,
+              label: l10n.chatHistory,
+              onTap: close(onOpenChatHistory),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(color: AppColors.divider, height: 1, thickness: 1),
+            ),
+            _MenuItem(
               icon: Icons.calendar_today_outlined,
               label: l10n.calendar,
               onTap: close(onOpenCalendar),
@@ -111,25 +130,14 @@ class MainMenuDrawer extends StatelessWidget {
                 label: l10n.mediaLibraryTitle,
                 onTap: close(onOpenMediaLibrary!),
               ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Divider(color: AppColors.divider, height: 1, thickness: 1),
+            ),
             _MenuItem(
               icon: Icons.sync_outlined,
               label: l10n.activityMenu,
               onTap: close(onOpenActivity),
-            ),
-            _MenuItem(
-              icon: Icons.chat_bubble_outline,
-              label: l10n.navChat,
-              onTap: close(onOpenChat),
-            ),
-            _MenuItem(
-              icon: Icons.history,
-              label: l10n.chatHistory,
-              onTap: close(onOpenChatHistory),
-            ),
-            _MenuItem(
-              icon: Icons.checklist,
-              label: l10n.todoTitle,
-              onTap: close(onOpenTodo),
             ),
             _MenuItem(
               icon: Icons.settings_outlined,
