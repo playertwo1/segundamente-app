@@ -38,6 +38,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Polimento completo pós-auditoria (2026-11-22)
+
+- **Timeline e Detalhe:** suprimido o modal bloqueante de `companion` + `default` no cold start ([main.dart](lib/main.dart), `shouldSuppressInvalidModelDialog`), suprimido o template `snapshot` duplicado quando há imagem no cabeçalho ([timeline_card_detail_screen.dart](lib/ui/timeline/widgets/timeline_card_detail_screen.dart)) e elevados os botões do cabeçalho para `48x48` com `tooltip` semântico e `Icons.arrow_back`.
+- **Chat e Tokens:** migrados os tokens `_persona*` em [persona_chat_screen.dart](lib/ui/character/widgets/persona_chat_screen.dart) para `AppColors` (mantidas as bolhas âmbar/grafite testadas); corrigidos o contraste de botão/spinner em [system_action_card.dart](lib/ui/card_attachments/widgets/system_action_card.dart) (`AppColors.onPrimary`), o fundo/divisor de ferramenta em [agent_chat_dialog.dart](lib/ui/chat/widgets/agent_chat_dialog.dart) (`AppColors.surface` / `AppColors.divider`, `12sp`), o botão voltar de [editorial_scaffold.dart](lib/ui/core/widgets/editorial_scaffold.dart) (`Icons.arrow_back`), o `tooltip` e cores do visualizador em [media_library_screen.dart](lib/ui/media_library/widgets/media_library_screen.dart) e a exclusão de `FlutterSecureKeyStorage.xml` / `FlutterSecureStorageConfiguration.xml` no Auto Backup Android.
+- **Auditoria e testes:** após apontamento do subagente `general-auditor` e correção de todos os achados HIGH e MEDIUM, `flutter.bat analyze --no-pub` nos 7 arquivos/diretórios tocados → `No issues found! (14.2s)`; `flutter.bat test --no-pub --timeout 30s --reporter compact` em `main_invalid_model_dialog_test.dart`, `floating_chat_flow_test.dart`, `test/ui/media_library/` (incluindo `media_library_viewmodel_test.dart`), `main_menu_drawer_test.dart`, `system_action_card_test.dart`, `timeline_card_detail_body_section_test.dart`, `persona_chat_screen_test.dart` e `agent_chat_dialog_test.dart` → `+89: All tests passed!`.
+- `NOT_RUN`: nova captura no emulador/S25 após o segundo ciclo de polimento e suíte completa do repositório.
+
 ### Polimento após Impeccable Critique (2026-11-21)
 
 - [main_menu_drawer.dart](lib/ui/main_screen/widgets/main_menu_drawer.dart): 14 destinos organizados em 3 grupos (Principal, Organização, Sistema) com divisores.

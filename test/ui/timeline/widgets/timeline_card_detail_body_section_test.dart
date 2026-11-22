@@ -201,12 +201,37 @@ void main() {
 
     expect(tappedTag, 'Visual');
   });
+
+  testWidgets('skips duplicate snapshot template when hero image asset exists',
+      (tester) async {
+    final detail = _detail(
+      rawContent: 'Texto do registro.',
+      assets: [AssetData(type: 'image', url: '/tmp/sample.png')],
+      uiConfigs: const [
+        UiConfig(
+          templateId: 'snapshot',
+          data: {'url': '/tmp/sample.png', 'caption': 'SNAPSHOT'},
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TimelineCardDetailTemplateSection(detail: detail),
+        ),
+      ),
+    );
+
+    expect(find.text('SNAPSHOT'), findsNothing);
+  });
 }
 
 CardDetailModel _detail({
   required String rawContent,
   required List<UiConfig> uiConfigs,
   List<String> tags = const [],
+  List<AssetData> assets = const [],
   String title = '端午的温馨家常晚餐和太顺杨梅',
 }) {
   return CardDetailModel(
@@ -221,7 +246,7 @@ CardDetailModel _detail({
       relatedCards: const [],
       comments: const [],
     ),
-    assets: const [],
+    assets: assets,
     uiConfigs: uiConfigs,
   );
 }

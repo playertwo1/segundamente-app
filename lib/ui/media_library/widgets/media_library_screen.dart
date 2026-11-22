@@ -90,6 +90,7 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
                   ),
             actions: [
               IconButton(
+                tooltip: l10n.globalSearchOpen,
                 onPressed: _toggleSearch,
                 icon: Icon(
                   _searching ? Icons.close : Icons.search,
@@ -358,8 +359,8 @@ class _MediaPhotoViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: _viewerAppBar(context, item, dark: true),
+      backgroundColor: AppColors.background,
+      appBar: _viewerAppBar(context, item),
       body: PhotoView(
         imageProvider: FileImage(File(item.filePath)),
         minScale: PhotoViewComputedScale.contained,
@@ -378,7 +379,7 @@ class _MediaPdfViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _viewerAppBar(context, item, dark: false),
+      appBar: _viewerAppBar(context, item),
       body: PdfViewer.file(item.filePath),
     );
   }
@@ -448,17 +449,16 @@ class _MediaAudioSheet extends StatelessWidget {
 
 PreferredSizeWidget _viewerAppBar(
   BuildContext context,
-  MediaLibraryItem item, {
-  required bool dark,
-}) {
+  MediaLibraryItem item,
+) {
   final l10n = UserStorage.l10n;
   final title = (item.cardTitle ?? '').trim().isNotEmpty
       ? item.cardTitle!
       : item.fileName;
 
   return AppBar(
-    backgroundColor: dark ? Colors.black : AppColors.background,
-    foregroundColor: dark ? Colors.white : AppColors.textPrimary,
+    backgroundColor: AppColors.background,
+    foregroundColor: AppColors.textPrimary,
     title: Text(
       title,
       maxLines: 1,

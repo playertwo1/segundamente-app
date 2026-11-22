@@ -1092,62 +1092,50 @@ class _TimelineCardDetailScreenState extends State<TimelineCardDetailScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 9,
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.chevron_left,
-                            size: 22,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
+                    IconButton(
+                      tooltip: UserStorage.l10n.lockBack,
+                      onPressed: () => Navigator.pop(context),
+                      constraints:
+                          const BoxConstraints(minWidth: 48, minHeight: 48),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        size: 24,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: _shareCard,
-                          child: SvgPicture.asset(
+                        IconButton(
+                          tooltip: UserStorage.l10n.mediaLibraryShare,
+                          onPressed: _shareCard,
+                          constraints:
+                              const BoxConstraints(minWidth: 48, minHeight: 48),
+                          icon: SvgPicture.asset(
                             'assets/icons/btn_share.svg',
-                            width: 36,
-                            height: 36,
+                            width: 24,
+                            height: 24,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: _showChatDialog,
-                          child: SizedBox(
-                            width: 36,
-                            height: 36,
-                            child: Center(
-                              child: SvgPicture.asset(
-                                'assets/icons/chat_add.svg',
-                                width: 22,
-                                height: 20,
-                              ),
-                            ),
+                        IconButton(
+                          tooltip: UserStorage.l10n.navChat,
+                          onPressed: _showChatDialog,
+                          constraints:
+                              const BoxConstraints(minWidth: 48, minHeight: 48),
+                          icon: SvgPicture.asset(
+                            'assets/icons/chat_add.svg',
+                            width: 22,
+                            height: 20,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: _deleteCard,
-                          child: SvgPicture.asset(
+                        IconButton(
+                          tooltip: UserStorage.l10n.delete,
+                          onPressed: _deleteCard,
+                          constraints:
+                              const BoxConstraints(minWidth: 48, minHeight: 48),
+                          icon: SvgPicture.asset(
                             'assets/icons/btn_delete.svg',
-                            width: 36,
-                            height: 36,
+                            width: 24,
+                            height: 24,
                           ),
                         ),
                       ],
@@ -2147,10 +2135,12 @@ class TimelineCardDetailTemplateSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasHeroImage = detail.assets.any((a) => a.isImage);
     final configs = detail.uiConfigs
         .where((config) =>
             config.templateId != 'classic_card' &&
-            config.templateId != 'audio_card')
+            config.templateId != 'audio_card' &&
+            !(hasHeroImage && config.templateId == 'snapshot'))
         .toList(growable: false);
     if (configs.isEmpty) return const SizedBox.shrink();
 

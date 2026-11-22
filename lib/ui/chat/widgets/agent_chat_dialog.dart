@@ -3606,8 +3606,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
                     : AppColors.cardBackground,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color:
-                      isPending ? const Color(0xFFFDE68A) : AppColors.divider,
+                  color: isPending ? AppColors.primary : AppColors.divider,
                 ),
               ),
               child: Column(
@@ -3619,7 +3618,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
                         Icons.verified_user_outlined,
                         size: 16,
                         color: isPending
-                            ? const Color(0xFFB45309)
+                            ? AppColors.primary
                             : AppColors.textTertiary,
                       ),
                       const SizedBox(width: 6),
@@ -3636,7 +3635,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: isPending
-                                ? const Color(0xFF92400E)
+                                ? AppColors.primary
                                 : AppColors.textSecondary,
                           ),
                         ),
@@ -4358,7 +4357,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
     return Container(
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBFCFE),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.divider),
       ),
@@ -4370,7 +4369,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
             child: Text(
               _agentChat.toolActivity,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: AppColors.textTertiary,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0,
@@ -4379,7 +4378,7 @@ class _AgentChatDialogState extends State<AgentChatDialog>
           ),
           for (var index = 0; index < tools.length; index++) ...[
             if (index > 0)
-              const Divider(height: 1, thickness: 1, color: AppColors.surface),
+              const Divider(height: 1, thickness: 1, color: AppColors.divider),
             _buildToolCallItem(tools[index]),
           ],
         ],
