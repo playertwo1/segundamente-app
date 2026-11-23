@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-19 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.7 (2026-11-19, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-22 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.8 (2026-11-22, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -37,6 +37,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release 1.0.8 (2026-11-22)
+
+- APK `segundamente_global_1.0.8_147.apk` (`128980775` bytes, SHA-256 `442e7b730e190e241564177baa7153891c02681a7f9cddff6372884b6d21353d`), `versionCode` `147` / `versionName` `1.0.8`, pacote `app.segundamente`. Notas em [docs/releases/v1.0.8.md](docs/releases/v1.0.8.md).
+- Certificado `V2 Signer: CN=Segunda Mente, O=Segunda Mente, C=BR` com SHA-256 `216c29ff2c784b10b6bdf60a792a00e2d96c46ccafd9e4cb986f3a5f2c1ee05f` (idêntico ao da `1.0.7`).
+- `python scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`; `flutter.bat test --no-pub --timeout 30s --reporter compact test/data/services/app_update_service_test.dart` → `+25: All tests passed!`.
+- `NOT_RUN`: instalação/validação física no Galaxy S25 Ultra e suíte completa do repositório.
 
 ### Polimento completo pós-auditoria (2026-11-22)
 
