@@ -17,6 +17,7 @@ class _ChatBubbleSettingState extends State<ChatBubbleSetting> {
   ChatBubbleStatus _status = ChatBubbleStatus.unsupported;
   bool _busy = false;
   bool _failed = false;
+  bool _repostOnResume = false;
 
   @override
   void initState() {
@@ -34,7 +35,15 @@ class _ChatBubbleSettingState extends State<ChatBubbleSetting> {
   Future<void> _refresh() async {
     if (_busy) return;
     try {
-      final status = await _service.bubbleStatus();
+      var status = await _service.bubbleStatus();
+      if (_repostOnResume &&
+          (status == ChatBubbleStatus.posted ||
+              status == ChatBubbleStatus.off)) {
+        _repostOnResume = false;
+        status = await _service.setBubbleVisible(true);
+      } else if (status == ChatBubbleStatus.active) {
+        _repostOnResume = false;
+      }
       if (mounted && !_busy) setState(() => _status = status);
     } on PlatformException {
       if (mounted) setState(() => _failed = true);
@@ -46,12 +55,16 @@ class _ChatBubbleSettingState extends State<ChatBubbleSetting> {
       _busy = true;
       _failed = false;
     });
+    if (!visible) _repostOnResume = false;
     try {
       if (visible && _status == ChatBubbleStatus.notifications) {
         await Permission.notification.request();
         if (!mounted) return;
       }
       final status = await _service.setBubbleVisible(visible);
+      _repostOnResume = visible &&
+          (status == ChatBubbleStatus.posted ||
+              status == ChatBubbleStatus.notifications);
       if (mounted) setState(() => _status = status);
     } on PlatformException {
       if (mounted) setState(() => _failed = true);
@@ -61,6 +74,7 @@ class _ChatBubbleSettingState extends State<ChatBubbleSetting> {
   }
 
   Future<void> _openSettings() async {
+    _repostOnResume = true;
     try {
       await _service.openBubbleSettings(
         notifications: _status == ChatBubbleStatus.notifications,

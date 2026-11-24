@@ -62,4 +62,48 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(setting), findsNothing);
   });
+
+  testWidgets(
+      're-posts the bubble automatically when returning from Android settings',
+      (tester) async {
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var bubblesAllowed = false;
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return switch (call.method) {
+        'bubbleStatus' => bubblesAllowed ? 'posted' : 'off',
+        'showBubble' => bubblesAllowed ? 'active' : 'posted',
+        _ => null,
+      };
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: ChatBubbleSetting()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(setting));
+    await tester.pumpAndSettle();
+    expect(find.text(UserStorage.l10n.chatBubblePosted), findsOneWidget);
+
+    await tester.tap(find.text(UserStorage.l10n.chatBubbleOpenSettings));
+    await tester.pumpAndSettle();
+
+    bubblesAllowed = true;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.text(UserStorage.l10n.chatBubblePosted), findsNothing);
+    expect(find.text(UserStorage.l10n.chatBubbleDescription), findsOneWidget);
+    expect(calls, [
+      'bubbleStatus',
+      'showBubble',
+      'openBubbleSettings',
+      'bubbleStatus',
+      'showBubble',
+    ]);
+  });
 }

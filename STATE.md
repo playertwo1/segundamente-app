@@ -38,6 +38,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Bolha do chat, captura flutuante e snapshot do widget (2026-11-23, não commitado)
+
+- **Bolha:** canal `chat_bubble_v2` com `IMPORTANCE_HIGH` e `setAllowBubbles(true)` (o canal antigo é apagado), notificação sempre suprimida, ícone `launcher_icon`, `ChatBubbleActivity` com modo padrão `bubble`, fechar remove a bolha, abrir no app com `CLEAR_TOP` e cascata de telas de configuração. Ao voltar das configurações do Android, a tela de Configurações publica a bolha de novo ([chat_bubble_setting.dart](lib/ui/settings/widgets/chat_bubble_setting.dart)).
+- **Captura flutuante:** dá para remover a foto escolhida (`clearImage`) e escolher outra. Durante o salvamento, a folha mostra progresso e fica travada.
+- **Widget Todo:** tarefas sem data são ordenadas por prioridade, snapshots idênticos não são reenviados e um JSON inválido no lado nativo vira lista vazia.
+- `flutter.bat test --no-pub --timeout 30s --reporter compact test/data/services/todo_widget_snapshot_service_test.dart test/ui/floating_chat/ test/ui/settings/widgets/chat_bubble_setting_test.dart` → `+62: All tests passed!`; `flutter.bat analyze --no-pub` nos 7 itens alterados → `No issues found!`.
+- `gradlew :app:testGlobalDebugUnitTest` (JDK 17) → `BUILD SUCCESSFUL`, `WidgetLayoutsTest` 7/7. Corrigido antes um erro de compilação: `Settings.EXTRA_APP_UID` não é API pública.
+- `NOT_RUN`: bolha, widget e captura no Galaxy S25 Ultra; suíte completa.
+
 ### Release 1.0.8 (2026-11-22)
 
 - APK `segundamente_global_1.0.8_147.apk` (`128980775` bytes, SHA-256 `442e7b730e190e241564177baa7153891c02681a7f9cddff6372884b6d21353d`), `versionCode` `147` / `versionName` `1.0.8`, pacote `app.segundamente`. Notas em [docs/releases/v1.0.8.md](docs/releases/v1.0.8.md).

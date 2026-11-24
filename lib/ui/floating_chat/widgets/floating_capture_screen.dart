@@ -60,7 +60,10 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
     if (saved && mounted) await closeFloatingSheet(context, _service);
   }
 
-  Future<void> _close() => closeFloatingSheet(context, _service);
+  Future<void> _close() {
+    if (_vm.saving) return Future<void>.value();
+    return closeFloatingSheet(context, _service);
+  }
 
   String _title() {
     final l10n = UserStorage.l10n;
@@ -103,15 +106,29 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
         final canSave = _vm.canSave(_text.text) && !_vm.saving;
         return Material(
           color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          shape: const RoundedRectangleBorder(
+            side: BorderSide(color: AppColors.divider, width: 0.5),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.divider,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                   Text(
                     _title(),
                     style: const TextStyle(
@@ -129,6 +146,7 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _text,
+                      enabled: !_vm.saving,
                       autofocus: _vm.mode == FloatingChatMode.note,
                       minLines: 1,
                       maxLines: 4,
@@ -139,7 +157,7 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
                       ),
                     ),
                   ],
-                  if (_vm.clipboardEmpty) ...[
+                  if (_vm.clipboardEmpty && _text.text.trim().isEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
                       l10n.floatingCapturePasteEmpty,
@@ -158,11 +176,31 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      TextButton(onPressed: _close, child: Text(l10n.close)),
+                      TextButton(
+                        onPressed: _vm.saving ? null : _close,
+                        style:
+                            TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                        child: Text(l10n.close),
+                      ),
                       const Spacer(),
                       FilledButton(
                         onPressed: canSave ? _save : null,
-                        child: Text(l10n.floatingCaptureSave),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size(88, 48)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_vm.saving) ...[
+                              const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Text(l10n.floatingCaptureSave),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -178,19 +216,28 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
   /// Foto before a pick: the camera or the gallery, as the attachments do.
   Widget _buildPhotoChoice() {
     final l10n = UserStorage.l10n;
+    final style = OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(48),
+    );
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(
-            onPressed: () => _vm.pickPhoto(ImageSource.camera),
-            child: Text(l10n.floatingCaptureCamera),
+          child: OutlinedButton.icon(
+            onPressed:
+                _vm.saving ? null : () => _vm.pickPhoto(ImageSource.camera),
+            style: style,
+            icon: const Icon(Icons.photo_camera_outlined, size: 18),
+            label: Text(l10n.floatingCaptureCamera),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: OutlinedButton(
-            onPressed: () => _vm.pickPhoto(ImageSource.gallery),
-            child: Text(l10n.floatingCaptureGallery),
+          child: OutlinedButton.icon(
+            onPressed:
+                _vm.saving ? null : () => _vm.pickPhoto(ImageSource.gallery),
+            style: style,
+            icon: const Icon(Icons.photo_library_outlined, size: 18),
+            label: Text(l10n.floatingCaptureGallery),
           ),
         ),
       ],
@@ -198,20 +245,43 @@ class _FloatingCaptureScreenState extends State<FloatingCaptureScreen> {
   }
 
   Widget _buildImagePreview(XFile image) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.file(
-        File(image.path),
-        height: 160,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox(
-          height: 160,
-          child: Center(
-            child: Icon(Icons.broken_image_outlined,
-                color: AppColors.textTertiary),
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.file(
+            File(image.path),
+            width: double.infinity,
+            height: 160,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox(
+              height: 160,
+              child: Center(
+                child: Icon(Icons.broken_image_outlined,
+                    color: AppColors.textTertiary),
+              ),
+            ),
           ),
         ),
-      ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: IconButton(
+            key: const ValueKey('floating_capture_clear_image'),
+            tooltip: UserStorage.l10n.delete,
+            onPressed: _vm.saving ? null : _vm.clearImage,
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.background.withValues(alpha: 0.75),
+              minimumSize: const Size(48, 48),
+            ),
+            icon: const Icon(
+              Icons.close,
+              size: 18,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -152,4 +152,23 @@ void main() {
     expect(vm.image, isNotNull);
     expect(router.sent, isEmpty);
   });
+
+  test('clearImage removes the picked photo and notifies listeners', () async {
+    picked = XFile('/synthetic/foto.jpg');
+    final vm = viewModel(FloatingChatMode.photo);
+    var notifications = 0;
+    vm.addListener(() => notifications++);
+
+    await vm.pickPhoto(ImageSource.gallery);
+    expect(vm.canSave(''), isTrue);
+
+    vm.clearImage();
+    expect(vm.image, isNull);
+    expect(vm.canSave(''), isFalse);
+    expect(notifications, 2);
+
+    // Calling again when empty is a no-op.
+    vm.clearImage();
+    expect(notifications, 2);
+  });
 }

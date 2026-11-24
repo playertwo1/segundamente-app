@@ -18,7 +18,8 @@ import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 
 /** An Android conversation bubble, posted only on an explicit user action. */
 object ChatBubble {
-    private const val CHANNEL_ID = "chat_bubble"
+    private const val LEGACY_CHANNEL_ID = "chat_bubble"
+    private const val CHANNEL_ID = "chat_bubble_v2"
     private const val SHORTCUT_ID = "chat_bubble_conversation"
     private const val NOTIFICATION_ID = 1508
 
@@ -37,10 +38,14 @@ object ChatBubble {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return "unsupported"
         if (status(activity) == "notifications") return "notifications"
         val manager = activity.getSystemService(NotificationManager::class.java)
+        manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
         manager.createNotificationChannel(
             NotificationChannel(
-                CHANNEL_ID, activity.getString(R.string.chat_bubble_channel), NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply { setSound(null, null) },
+                CHANNEL_ID, activity.getString(R.string.chat_bubble_channel), NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                setAllowBubbles(true)
+                setSound(null, null)
+            },
         )
         val title = activity.getString(R.string.chat_bubble_app)
         val user = Person.Builder().setName(activity.getString(R.string.chat_bubble_user))
@@ -49,7 +54,7 @@ object ChatBubble {
         val intent = Intent(activity, ChatBubbleActivity::class.java)
             .setAction(Intent.ACTION_VIEW)
             .putExtra(FloatingChatActivity.EXTRA_MODE, "bubble")
-        val icon = Icon.createWithResource(activity, R.mipmap.ic_launcher)
+        val icon = Icon.createWithResource(activity, R.mipmap.launcher_icon)
         val shortcut = ShortcutInfo.Builder(activity, SHORTCUT_ID)
             .setShortLabel(title)
             .setIcon(icon)
@@ -68,7 +73,7 @@ object ChatBubble {
         val bubble = Notification.BubbleMetadata.Builder(pending, icon)
             .setDesiredHeight(560)
             .setAutoExpandBubble(expand)
-            .setSuppressNotification(expand)
+            .setSuppressNotification(true)
             .build()
         manager.notify(
             NOTIFICATION_ID,
@@ -84,11 +89,11 @@ object ChatBubble {
                 )
                 .setContentIntent(pending)
                 .setOnlyAlertOnce(true)
-                .setVisibility(Notification.VISIBILITY_SECRET)
+                .setVisibility(Notification.VISIBILITY_PRIVATE)
                 .setBubbleMetadata(bubble)
                 .build(),
         )
-        return "posted"
+        return if (status(activity) == "active") "active" else "posted"
     }
 
     fun hide(activity: Activity): String {
@@ -97,20 +102,31 @@ object ChatBubble {
     }
 
     fun openSettings(activity: Activity, notifications: Boolean = false) {
-        val action = if (notifications) Settings.ACTION_APP_NOTIFICATION_SETTINGS
+        val primary = if (notifications) Settings.ACTION_APP_NOTIFICATION_SETTINGS
             else Settings.ACTION_APP_NOTIFICATION_BUBBLE_SETTINGS
-        try {
-            activity.startActivity(Intent(action).putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName))
-        } catch (_: ActivityNotFoundException) {
-            activity.startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(android.net.Uri.fromParts("package", activity.packageName, null)),
-            )
+        val candidates = listOfNotNull(
+            Intent(primary).putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName),
+            if (!notifications) {
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+            } else null,
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(android.net.Uri.fromParts("package", activity.packageName, null)),
+        )
+        for (intent in candidates) {
+            try {
+                activity.startActivity(intent)
+                return
+            } catch (_: ActivityNotFoundException) {
+            } catch (_: SecurityException) {
+            }
         }
     }
 }
 
 /** The system embeds this Activity in the bubble task. */
 class ChatBubbleActivity : FloatingChatActivity() {
+    override val defaultMode: String = "bubble"
+
     override fun getBackgroundMode(): BackgroundMode = BackgroundMode.opaque
 }
