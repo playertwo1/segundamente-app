@@ -59,6 +59,13 @@ class FloatingCaptureViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Removes the picked photo so the user can pick another one or type only.
+  void clearImage() {
+    if (image == null) return;
+    image = null;
+    notifyListeners();
+  }
+
   /// Colar: the clipboard text, or null (and [clipboardEmpty] set) when there is none.
   Future<String?> paste() async {
     String? text;

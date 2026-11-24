@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -207,5 +209,74 @@ void main() {
         find.text(UserStorage.l10n.floatingCaptureSaveFailed), findsOneWidget);
     expect(nativeCalls, isEmpty);
     expect(find.text('home-screen'), findsNothing);
+  });
+
+  testWidgets('Foto allows clearing the picked photo and picking again',
+      (tester) async {
+    picked = XFile('/synthetic/foto.jpg', name: 'foto.jpg');
+    await pumpSheet(tester, FloatingChatMode.photo);
+
+    await tester.tap(find.text(UserStorage.l10n.floatingCaptureGallery));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.byKey(const ValueKey('floating_capture_clear_image')),
+        findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('floating_capture_clear_image')));
+    await tester.pump();
+
+    expect(find.byType(Image), findsNothing);
+    expect(find.text(UserStorage.l10n.floatingCaptureCamera), findsOneWidget);
+    expect(find.text(UserStorage.l10n.floatingCaptureGallery), findsOneWidget);
+    expect(saveButton(tester).onPressed, isNull);
+    expect(router.sent, isEmpty);
+  });
+
+  testWidgets(
+      'Colar hides the empty clipboard notice as soon as the user types',
+      (tester) async {
+    clipboard = null;
+    await pumpSheet(tester, FloatingChatMode.paste);
+
+    expect(
+        find.text(UserStorage.l10n.floatingCapturePasteEmpty), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'anotado manualmente');
+    await tester.pump();
+
+    expect(find.text(UserStorage.l10n.floatingCapturePasteEmpty), findsNothing);
+    expect(saveButton(tester).onPressed, isNotNull);
+  });
+
+  testWidgets('while saving, shows progress and keeps the sheet locked open',
+      (tester) async {
+    final gate = Completer<void>();
+    router.sendOutcome = () => Stream.fromFuture(
+          gate.future.then((_) => ChatAgentStartedEvent('turn-1')),
+        );
+    await pumpSheet(tester, FloatingChatMode.note);
+
+    await tester.enterText(find.byType(TextField), 'lembrar');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(
+        FilledButton, UserStorage.l10n.floatingCaptureSave));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+    expect(
+      tester
+          .widget<TextButton>(
+              find.widgetWithText(TextButton, UserStorage.l10n.close))
+          .onPressed,
+      isNull,
+    );
+    expect(nativeCalls, isEmpty);
+
+    gate.complete();
+    await settle(tester);
+
+    expect(nativeCalls, ['close']);
+    expect(find.text('home-screen'), findsOneWidget);
   });
 }

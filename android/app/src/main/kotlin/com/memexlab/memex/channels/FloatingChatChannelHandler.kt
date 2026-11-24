@@ -3,6 +3,7 @@ package com.memexlab.memex.channels
 import android.app.Activity
 import android.content.Intent
 import com.memexlab.memex.ChatBubble
+import com.memexlab.memex.ChatBubbleActivity
 import com.memexlab.memex.FloatingChatActivity
 import com.memexlab.memex.MainActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -61,13 +62,16 @@ object FloatingChatChannelHandler {
                     }
                     // Only the floating sheet may close itself or hand off to the app; never the MainActivity.
                     "close" -> {
+                        if (activity is ChatBubbleActivity) ChatBubble.hide(activity)
                         if (activity is FloatingChatActivity) activity.finish()
                         result.success(null)
                     }
                     "openInApp" -> {
                         if (activity is FloatingChatActivity) {
                             activity.startActivity(
-                                Intent(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                Intent(activity, MainActivity::class.java).addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
+                                ),
                             )
                         }
                         result.success(null)

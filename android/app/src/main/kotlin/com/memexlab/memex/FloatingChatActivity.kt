@@ -17,11 +17,13 @@ open class FloatingChatActivity : FlutterFragmentActivity() {
         var current: WeakReference<FloatingChatActivity>? = null
     }
 
+    protected open val defaultMode: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // One engine, one host: the full app gives way to the sheet.
         SharedFlutterEngine.releaseHost(MainActivity.current?.get())
         SharedFlutterEngine.releaseHost(current?.get())
-        FloatingChatChannelHandler.setPendingMode(intent?.getStringExtra(EXTRA_MODE))
+        FloatingChatChannelHandler.setPendingMode(intent?.getStringExtra(EXTRA_MODE) ?: defaultMode)
         super.onCreate(savedInstanceState)
         current = WeakReference(this)
     }
@@ -29,7 +31,7 @@ open class FloatingChatActivity : FlutterFragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        FloatingChatChannelHandler.setPendingMode(intent.getStringExtra(EXTRA_MODE))
+        FloatingChatChannelHandler.setPendingMode(intent.getStringExtra(EXTRA_MODE) ?: defaultMode)
         FloatingChatChannelHandler.notifyOpen()
     }
 

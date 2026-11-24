@@ -72,6 +72,30 @@ void main() {
 
       expect(ids, [for (var day = 1; day <= 10; day++) 't$day']);
     });
+
+    test(
+        'breaks same-time ties and orders undated tasks by highest priority first',
+        () {
+      final snapshot = itemsOf([
+        todoTask('low', 'Baixa', date: '2026-11-14', time: '09:00')
+            .copyWith(priority: TodoPriority.low),
+        todoTask('urgent', 'Urgente', date: '2026-11-14', time: '09:00')
+            .copyWith(priority: TodoPriority.urgent),
+        todoTask('high', 'Alta', date: '2026-11-14', time: '09:00')
+            .copyWith(priority: TodoPriority.high),
+        todoTask('u-low', 'Sem data baixa').copyWith(priority: TodoPriority.low),
+        todoTask('u-high', 'Sem data alta')
+            .copyWith(priority: TodoPriority.high),
+        todoTask('u-urgent', 'Sem data urgente')
+            .copyWith(priority: TodoPriority.urgent),
+        todoTask('u-normal', 'Sem data normal'),
+      ], now);
+
+      expect(
+        snapshot.map((i) => i['id']),
+        ['urgent', 'high', 'low', 'u-urgent', 'u-high', 'u-normal'],
+      );
+    });
   });
 
   group('status and midnight', () {
@@ -135,6 +159,42 @@ void main() {
           channel, (call) async => throw PlatformException(code: 'boom'));
       await TodoWidgetSnapshotService.forTesting(channel: channel)
           .push(const [], now: now);
+    });
+
+    test('skips redundant pushes when the serialized snapshot did not change',
+        () async {
+      final service = TodoWidgetSnapshotService.forTesting(channel: channel);
+      final items = [
+        todoTask('a', 'Pagar', date: '2026-11-14', time: '10:00'),
+      ];
+
+      await service.push(items, now: now);
+      await service.push(items, now: now);
+      expect(calls, hasLength(1));
+
+      await service.push(
+        [todoTask('a', 'Pagar hoje', date: '2026-11-14', time: '10:00')],
+        now: now,
+      );
+      expect(calls, hasLength(2));
+    });
+
+    test('retries the same snapshot after a failed push', () async {
+      var fail = true;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        if (fail) throw PlatformException(code: 'boom');
+        return null;
+      });
+      final service = TodoWidgetSnapshotService.forTesting(channel: channel);
+      final items = [todoTask('a', 'Pagar', date: '2026-11-14')];
+
+      await service.push(items, now: now);
+      fail = false;
+      await service.push(items, now: now);
+      await service.push(items, now: now);
+
+      expect(calls, hasLength(2));
     });
   });
 }

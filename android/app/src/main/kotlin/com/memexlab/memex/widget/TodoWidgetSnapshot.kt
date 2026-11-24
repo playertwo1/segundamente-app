@@ -40,9 +40,13 @@ internal object TodoWidgetSnapshot {
     fun load(context: Context): List<WidgetTask> =
         prefs(context).getString(KEY, null)?.let { parse(it) } ?: emptyList()
 
-    /** Tasks from the snapshot JSON; a malformed entry is skipped, never shown. */
+    /** Tasks from the snapshot JSON; a malformed payload or entry is skipped, never shown. */
     fun parse(raw: String): List<WidgetTask> {
-        val items = JSONObject(raw).optJSONArray("items") ?: return emptyList()
+        val items = try {
+            JSONObject(raw).optJSONArray("items")
+        } catch (_: Exception) {
+            null
+        } ?: return emptyList()
         return (0 until items.length()).mapNotNull { index ->
             try {
                 val item = items.getJSONObject(index)

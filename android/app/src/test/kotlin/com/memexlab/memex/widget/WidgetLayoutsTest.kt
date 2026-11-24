@@ -121,4 +121,11 @@ class WidgetLayoutsTest {
             }
         }
     }
+
+    @Test
+    fun `parse returns empty list on malformed or empty snapshot json`() {
+        assertEquals(emptyList<WidgetTask>(), TodoWidgetSnapshot.parse(""))
+        assertEquals(emptyList<WidgetTask>(), TodoWidgetSnapshot.parse("{not-json"))
+        assertEquals(emptyList<WidgetTask>(), TodoWidgetSnapshot.parse("{}"))
+    }
 }

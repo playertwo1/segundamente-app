@@ -395,7 +395,9 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
     _floatingChatSubscription =
         FloatingChatService.instance.openRequests.listen((launch) {
       final location = AppRoutes.floatingLocationForLaunch(launch);
-      final current = widget.router.routerDelegate.currentConfiguration.uri;
+      final matches = widget.router.routerDelegate.currentConfiguration;
+      final top = matches.matches.lastOrNull;
+      final current = top is ImperativeRouteMatch ? top.matches.uri : matches.uri;
       if (launch.mode == FloatingChatMode.bubble &&
           current.toString() == location) {
         return;

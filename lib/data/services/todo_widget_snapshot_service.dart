@@ -33,6 +33,7 @@ class TodoWidgetSnapshotService {
   static final _logger = getLogger('TodoWidgetSnapshot');
 
   final MethodChannel _channel;
+  String? _lastPushedJson;
 
   /// The snapshot for [items] as seen at [now]. Pure: no I/O, no channel.
   static Map<String, Object?> buildSnapshot(
@@ -42,7 +43,9 @@ class TodoWidgetSnapshotService {
     final open = items.where((item) => !item.done && !item.isTombstoned);
     final dated = open.where((item) => item.dueDate != null).toList()
       ..sort(_byDue);
-    final undated = open.where((item) => item.dueDate == null).take(3).toList();
+    final undatedSorted = open.where((item) => item.dueDate == null).toList()
+      ..sort(_byPriorityThenId);
+    final undated = undatedSorted.take(3).toList();
     return {
       'version': snapshotVersion,
       'items': [
@@ -72,16 +75,24 @@ class TodoWidgetSnapshotService {
     if (byDate != 0) return byDate;
     // "HH:mm" sorts as text; a task without a time comes after the timed ones.
     final byTime = (a.dueTime ?? '99:99').compareTo(b.dueTime ?? '99:99');
-    return byTime != 0 ? byTime : a.id.compareTo(b.id);
+    return byTime != 0 ? byTime : _byPriorityThenId(a, b);
+  }
+
+  static int _byPriorityThenId(TodoItem a, TodoItem b) {
+    final byPriority = b.priority.index.compareTo(a.priority.index);
+    return byPriority != 0 ? byPriority : a.id.compareTo(b.id);
   }
 
   /// Sends the snapshot of [items]. The JSON is built and the call is made
   /// before the first await, so pushes reach the native side in call order.
+  /// Identical snapshots since the last successful push are skipped.
   /// Errors are logged and never thrown: a widget problem must not fail a save.
   Future<void> push(List<TodoItem> items, {DateTime? now}) async {
     final json = jsonEncode(buildSnapshot(items, now: now ?? DateTime.now()));
+    if (json == _lastPushedJson) return;
     try {
       await _channel.invokeMethod<void>('updateSnapshot', json);
+      _lastPushedJson = json;
     } on MissingPluginException {
       // No widget bridge here (iOS, tests).
       _logger.fine('Todo widget bridge not available; snapshot not sent.');
