@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-22 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.8 (2026-11-22, GitHub Release) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-23 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.9 (2026-11-23, GitHub Release; a 1.0.8 ficou como rascunho sem APK no GitHub) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -37,6 +37,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release 1.0.9 (2026-11-23)
+
+- APK `segundamente_global_1.0.9_148.apk` (`128980775` bytes, SHA-256 `0e2d69ab802ef4d1369b8b5529a409edec993214859683e5b88249c8f935c69d`), `versionCode` `148` / `versionName` `1.0.9`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao das anteriores. Notas em [docs/releases/v1.0.9.md](docs/releases/v1.0.9.md).
+- A release `1.0.8` no GitHub continua como rascunho, sem APK; a última publicada antes desta era a `1.0.7`.
+- `NOT_RUN`: instalação/validação física no Galaxy S25 Ultra e suíte completa do repositório.
 
 ### Bolha do chat, captura flutuante e snapshot do widget (2026-11-23, não commitado)
 
