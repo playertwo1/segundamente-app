@@ -75,6 +75,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `flutter test --no-pub test/data/services/character_initiative_handler_test.dart` → `+8: All tests passed!`; `flutter analyze --no-pub` nos 2 arquivos de lib → `No issues found!`.
 - `NOT_RUN`: validação no S25. Pendente de confirmar no aparelho: (1) permissão de notificação do app ligada e canal "Persona messages" não silenciado; (2) bateria do app em "Sem restrições" (o despertar em segundo plano depende do WorkManager, sujeito a Doze); (3) o toque na notificação ainda não abre o chat da persona (só abre o app). Frequência/horário continuam decididos pelo modelo; sem decisão D-xxx nova.
 - Publicada na release 1.0.12 (+151), ver [docs/releases/v1.0.12.md](docs/releases/v1.0.12.md).
+- **Toque abre o chat (branch `fix/persona-notificacao-abre-chat`):** o payload `persona:<id>` chega pelo mesmo tratador do plugin em [main.dart](lib/main.dart), vira a ação `open_persona_chat:<id>` no [AppActionService](lib/data/services/app_action_service.dart) e a tela principal abre `/persona_chat/<id>` (vale também com o app fechado, pela resposta de abertura). `flutter test --no-pub test/data/services/app_action_service_test.dart` → `+16: All tests passed!`; `flutter analyze --no-pub` em `main.dart` e `app_action_service.dart` → `No issues found!`. Sem teste de widget da navegação (a tela principal não tem teste de ações). S25 `NOT_RUN`.
 
 ### Bolha só aparecia pelas Configurações (2026-11-25, branch `fix/bolha-volta-ao-abrir-app`)
 
