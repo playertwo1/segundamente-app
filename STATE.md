@@ -38,6 +38,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Release 1.0.11 (2026-11-25)
+
+- APK `segundamente_global_1.0.11_150.apk` (`128980779` bytes, SHA-256 `0ee054b64afbdcedb0c458d1d668d2d4614b06602216623068044dd978ea8d20`), `versionCode` `150` / `versionName` `1.0.11`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao da `1.0.10`. Notas em [docs/releases/v1.0.11.md](docs/releases/v1.0.11.md).
+- Bolha do chat (`cbc1bb50`, integrada à `main` pelo commit `586c6e85`): se a bolha estiver ligada, ela volta sozinha ao abrir o app, mesmo após fechar a conversa ou o Android encerrar o app. Desligar nas configurações continua removendo.
+- `gradlew.bat :app:testGlobalDebugUnitTest` (JDK 17) → `BUILD SUCCESSFUL in 28s`; `ChatBubbleTest` `tests=1 failures=0 errors=0`.
+- Inclui tudo da `1.0.10`.
+- `NOT_RUN`: instalação/validação física da bolha no Galaxy S25 Ultra; suíte Flutter completa nesta release.
+
 ### Release 1.0.10 (2026-11-24)
 
 - APK `segundamente_global_1.0.10_149.apk` (`128980779` bytes, SHA-256 `82cec81bd2134b750cf320adad1eb51fce1e5e241e6a63ce670a08d024ec89d9`), `versionCode` `149` / `versionName` `1.0.10`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao da `1.0.9`. Notas em [docs/releases/v1.0.10.md](docs/releases/v1.0.10.md).
