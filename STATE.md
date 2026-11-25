@@ -38,6 +38,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### F3-07: citação conferida por item (2026-11-24)
+
+- **Mudança:** item com trecho fora do segmento, segmento desconhecido ou relógio errado é descartado sozinho e registrado em log (`report item skipped`); a resposta sem nenhum item válido continua falhando. Aspas tipográficas e espaços diferentes não derrubam mais o item, e a citação guardada é sempre o trecho exato do original. Ideia do ontosmith (MIT), reimplementada sem copiar código.
+- `flutter test --no-pub test/domain/models/session_report_test.dart` → `+24: All tests passed!` (inclui 4 testes novos: aspas e espaços, item inventado, segmento desconhecido com relógio errado, resposta toda inválida).
+- `pdf_import_service_test.dart`, "a quote from the wrong page is refused": a resposta continua recusada, agora com `items empty`, porque o item da página errada é descartado sozinho e nada sobra. Só a mensagem esperada mudou.
+- `flutter test --no-pub --reporter compact` (suíte inteira) → `+2206 ~2: All other tests passed!`.
+- `flutter analyze --no-pub` → `176 issues found` no repositório; nos 4 arquivos alterados, `10 issues found`, todos `prefer_const_constructors` (info) em linhas que já existiam, nenhum nas linhas novas.
+- Validação no S25: NOT_RUN.
+
 ### Release 1.0.9 (2026-11-23)
 
 - APK `segundamente_global_1.0.9_148.apk` (`128980775` bytes, SHA-256 `0e2d69ab802ef4d1369b8b5529a409edec993214859683e5b88249c8f935c69d`), `versionCode` `148` / `versionName` `1.0.9`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao das anteriores. Notas em [docs/releases/v1.0.9.md](docs/releases/v1.0.9.md).

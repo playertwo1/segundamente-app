@@ -182,8 +182,9 @@ void main() {
           ],
         })),
       ),
+      // The wrong-page item is skipped on its own; with nothing left, the reply fails.
       throwsA(isA<FormatException>()
-          .having((e) => e.message, 'message', contains('excerpt is not in'))),
+          .having((e) => e.message, 'message', contains('items empty'))),
     );
   });
 }
