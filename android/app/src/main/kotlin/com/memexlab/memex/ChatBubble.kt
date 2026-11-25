@@ -22,6 +22,20 @@ object ChatBubble {
     private const val CHANNEL_ID = "chat_bubble_v2"
     private const val SHORTCUT_ID = "chat_bubble_conversation"
     private const val NOTIFICATION_ID = 1508
+    private const val PREFS = "chat_bubble"
+    private const val WANTED = "wanted"
+
+    /** Restore only when the user wants the bubble and nothing is posted; "posted" means the system refuses bubbles. */
+    fun shouldRestore(wanted: Boolean, status: String): Boolean = wanted && status == "off"
+
+    private fun prefs(activity: Activity) = activity.getSharedPreferences(PREFS, Activity.MODE_PRIVATE)
+
+    /** Reposts the bubble after it was closed or the app was killed; the user opted in earlier. */
+    fun restore(activity: Activity) {
+        if (shouldRestore(prefs(activity).getBoolean(WANTED, false), status(activity))) {
+            try { show(activity) } catch (_: RuntimeException) {}
+        }
+    }
 
     fun status(activity: Activity): String {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return "unsupported"
@@ -37,6 +51,7 @@ object ChatBubble {
     fun show(activity: Activity, expand: Boolean = false): String {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return "unsupported"
         if (status(activity) == "notifications") return "notifications"
+        prefs(activity).edit().putBoolean(WANTED, true).apply()
         val manager = activity.getSystemService(NotificationManager::class.java)
         manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
         manager.createNotificationChannel(
@@ -96,7 +111,9 @@ object ChatBubble {
         return if (status(activity) == "active") "active" else "posted"
     }
 
-    fun hide(activity: Activity): String {
+    /** [forget] false keeps the opt-in, so closing the conversation only removes this bubble. */
+    fun hide(activity: Activity, forget: Boolean = true): String {
+        if (forget) prefs(activity).edit().putBoolean(WANTED, false).apply()
         activity.getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
         return "off"
     }

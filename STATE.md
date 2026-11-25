@@ -59,6 +59,13 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - A release `1.0.8` no GitHub continua como rascunho, sem APK; a última publicada antes desta era a `1.0.7`.
 - `NOT_RUN`: instalação/validação física no Galaxy S25 Ultra e suíte completa do repositório.
 
+### Bolha só aparecia pelas Configurações (2026-11-25, branch `fix/bolha-volta-ao-abrir-app`)
+
+- **Relato do dono (S25):** a bolha só aparece se ele abre Configurações e toca nela; fechar a conversa não a traz de volta. Causa: a bolha só era publicada por ação explícita nas Configurações e `close` apagava a notificação sem lembrar a escolha.
+- **Correção:** [ChatBubble.kt](android/app/src/main/kotlin/com/memexlab/memex/ChatBubble.kt) grava a escolha (`wanted`) em `show`, apaga só no desligar explícito (`hide`), e `MainActivity.onResume` chama `ChatBubble.restore` (republica se desejada e sem notificação ativa). Fechar a conversa mantém a escolha (`hide(forget = false)`).
+- `gradlew :app:testGlobalDebugUnitTest --tests ChatBubbleTest` (JDK 17) → `BUILD SUCCESSFUL`.
+- `NOT_RUN`: validação no S25. Não coberto: personas comentando sozinhas durante o dia (assunto à parte, F14); bolha não reaparece sem abrir o app (sem receiver de boot).
+
 ### Bolha do chat, captura flutuante e snapshot do widget (2026-11-23, não commitado)
 
 - **Bolha:** canal `chat_bubble_v2` com `IMPORTANCE_HIGH` e `setAllowBubbles(true)` (o canal antigo é apagado), notificação sempre suprimida, ícone `launcher_icon`, `ChatBubbleActivity` com modo padrão `bubble`, fechar remove a bolha, abrir no app com `CLEAR_TOP` e cascata de telas de configuração. Ao voltar das configurações do Android, a tela de Configurações publica a bolha de novo ([chat_bubble_setting.dart](lib/ui/settings/widgets/chat_bubble_setting.dart)).
