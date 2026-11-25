@@ -9,6 +9,7 @@ import 'package:memex/data/services/event_bus_service.dart';
 import 'package:memex/data/services/file_system_service.dart';
 import 'package:memex/data/services/local_task_executor.dart';
 import 'package:memex/data/services/persona_chat_service.dart';
+import 'package:memex/data/services/persona_message_notifier.dart';
 import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
 import 'package:memex/domain/models/character_initiative.dart';
 import 'package:memex/domain/models/character_message.dart';
@@ -49,6 +50,12 @@ typedef CharacterInitiativeWakeScheduler = Future<void> Function({
   required String reason,
 });
 
+typedef CharacterInitiativeNotifier = Future<void> Function({
+  required String characterId,
+  required String characterName,
+  required String body,
+});
+
 typedef CharacterLatestMessageIdLoader = Future<int> Function(
   String characterId,
 );
@@ -86,6 +93,7 @@ class CharacterInitiativeTaskHandler {
     CharacterInitiativeRetryScheduler? initiativeRetryScheduler,
     CharacterExecutionCoordinator? executionCoordinator,
     ActiveAssistantService? activeAssistantService,
+    CharacterInitiativeNotifier? notifier,
     DateTime Function()? clock,
   })  : _workspaceService =
             workspaceService ?? CharacterWorkspaceService.instance,
@@ -126,6 +134,7 @@ class CharacterInitiativeTaskHandler {
             executionCoordinator ?? CharacterExecutionCoordinator.instance,
         _activeAssistantService =
             activeAssistantService ?? ActiveAssistantService.instance,
+        _notifier = notifier ?? PersonaMessageNotifier.instance.notify,
         _clock = clock ?? DateTime.now;
 
   final CharacterWorkspaceService _workspaceService;
@@ -140,6 +149,7 @@ class CharacterInitiativeTaskHandler {
   final CharacterInitiativeRetryScheduler _initiativeRetryScheduler;
   final CharacterExecutionCoordinator _executionCoordinator;
   final ActiveAssistantService _activeAssistantService;
+  final CharacterInitiativeNotifier _notifier;
   final DateTime Function() _clock;
   final _logger = getLogger('CharacterInitiativeTaskHandler');
 
@@ -306,6 +316,15 @@ class CharacterInitiativeTaskHandler {
               _logger.info(
                 'Character ${character.id} initiated private contact with '
                 '${messages.length} message(s)',
+              );
+              final firstText = messages.firstWhere(
+                (m) => m.type == CharacterOutgoingMessageType.text,
+                orElse: () => messages.first,
+              );
+              await _notifier(
+                characterId: character.id,
+                characterName: character.name,
+                body: firstText.content,
               );
             } else {
               deferredForConversation = true;

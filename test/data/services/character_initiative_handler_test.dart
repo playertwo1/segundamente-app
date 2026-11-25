@@ -45,7 +45,13 @@ void main() {
     DateTime? scheduledWakeAt;
     String? scheduledWakeReason;
     var clockReads = 0;
+    String? notifiedBody;
     final handler = CharacterInitiativeTaskHandler(
+      notifier: (
+          {required characterId, required characterName, required body}) async {
+        expect(characterName, character.name);
+        notifiedBody = body;
+      },
       workspaceService: workspaceService,
       primaryCompanionLoader: (_) async => character,
       clock: () => now.add(Duration(seconds: clockReads++)),
@@ -117,6 +123,7 @@ void main() {
       sentMessages?.map((message) => message.content),
       ['你刚才那句，', '我过了一会儿还是觉得有点可爱。'],
     );
+    expect(notifiedBody, '你刚才那句，');
     expect(sentFactId, '2026/07/13.md#ts_1');
     expect(sentEpisodeId, 'character_initiative:event-1');
     expect(scheduledWakeAt, now.add(const Duration(hours: 6)));
