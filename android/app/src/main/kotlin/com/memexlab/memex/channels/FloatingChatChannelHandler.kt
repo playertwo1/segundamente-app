@@ -62,7 +62,7 @@ object FloatingChatChannelHandler {
                     }
                     // Only the floating sheet may close itself or hand off to the app; never the MainActivity.
                     "close" -> {
-                        if (activity is ChatBubbleActivity) ChatBubble.hide(activity)
+                        if (activity is ChatBubbleActivity) ChatBubble.hide(activity, forget = false)
                         if (activity is FloatingChatActivity) activity.finish()
                         result.success(null)
                     }

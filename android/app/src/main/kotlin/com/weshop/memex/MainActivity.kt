@@ -46,6 +46,11 @@ class MainActivity : FlutterFragmentActivity() {
         AgentBackgroundChannelHandler.handleIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        ChatBubble.restore(this)
+    }
+
     override fun onDestroy() {
         if (current?.get() === this) current = null
         super.onDestroy()
