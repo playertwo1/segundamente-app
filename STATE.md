@@ -74,6 +74,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - **Correção:** [persona_message_notifier.dart](lib/data/services/persona_message_notifier.dart) (canal `persona_messages`, só Android, não notifica com o app em primeiro plano), chamado pelo handler depois de gravar a mensagem. Teste em `character_initiative_handler_test.dart`.
 - `flutter test --no-pub test/data/services/character_initiative_handler_test.dart` → `+8: All tests passed!`; `flutter analyze --no-pub` nos 2 arquivos de lib → `No issues found!`.
 - `NOT_RUN`: validação no S25. Pendente de confirmar no aparelho: (1) permissão de notificação do app ligada e canal "Persona messages" não silenciado; (2) bateria do app em "Sem restrições" (o despertar em segundo plano depende do WorkManager, sujeito a Doze); (3) o toque na notificação ainda não abre o chat da persona (só abre o app). Frequência/horário continuam decididos pelo modelo; sem decisão D-xxx nova.
+- Publicada na release 1.0.12 (+151), ver [docs/releases/v1.0.12.md](docs/releases/v1.0.12.md).
 
 ### Bolha só aparecia pelas Configurações (2026-11-25, branch `fix/bolha-volta-ao-abrir-app`)
 
