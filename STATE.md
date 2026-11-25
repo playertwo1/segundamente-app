@@ -38,6 +38,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Release 1.0.10 (2026-11-24)
+
+- APK `segundamente_global_1.0.10_149.apk` (`128980779` bytes, SHA-256 `82cec81bd2134b750cf320adad1eb51fce1e5e241e6a63ce670a08d024ec89d9`), `versionCode` `149` / `versionName` `1.0.10`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao da `1.0.9`. Notas em [docs/releases/v1.0.10.md](docs/releases/v1.0.10.md).
+- Inclui a conferência de citação por item (F3-07) e tudo da `1.0.9`.
+- `NOT_RUN`: instalação/validação física no Galaxy S25 Ultra.
+
 ### F3-07: citação conferida por item (2026-11-24)
 
 - **Mudança:** item com trecho fora do segmento, segmento desconhecido ou relógio errado é descartado sozinho e registrado em log (`report item skipped`); a resposta sem nenhum item válido continua falhando. Aspas tipográficas e espaços diferentes não derrubam mais o item, e a citação guardada é sempre o trecho exato do original. Ideia do ontosmith (MIT), reimplementada sem copiar código.
