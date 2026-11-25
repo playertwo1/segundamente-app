@@ -67,6 +67,14 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - A release `1.0.8` no GitHub continua como rascunho, sem APK; a última publicada antes desta era a `1.0.7`.
 - `NOT_RUN`: instalação/validação física no Galaxy S25 Ultra e suíte completa do repositório.
 
+### Personas não avisavam durante o dia (2026-11-25, branch `fix/persona-notificacao`)
+
+- **Relato do dono:** as personas não falam nem mandam notificação durante o dia.
+- **Causa (código):** a fala espontânea existe ([character_initiative_handler.dart](lib/data/services/task_handlers/character_initiative_handler.dart), laço de despertar em [character_initiative_service.dart](lib/data/services/character_initiative_service.dart), reagendado pelo próprio modelo via `wakeAt`). Mas, ao gravar a mensagem, só emitia evento interno de UI: nenhum código no repositório publicava notificação do sistema para mensagem de persona (`flutter_local_notifications` só era usado por [todo_alarm_service.dart](lib/data/services/todo_alarm_service.dart)). A mensagem ficava no chat, sem aviso.
+- **Correção:** [persona_message_notifier.dart](lib/data/services/persona_message_notifier.dart) (canal `persona_messages`, só Android, não notifica com o app em primeiro plano), chamado pelo handler depois de gravar a mensagem. Teste em `character_initiative_handler_test.dart`.
+- `flutter test --no-pub test/data/services/character_initiative_handler_test.dart` → `+8: All tests passed!`; `flutter analyze --no-pub` nos 2 arquivos de lib → `No issues found!`.
+- `NOT_RUN`: validação no S25. Pendente de confirmar no aparelho: (1) permissão de notificação do app ligada e canal "Persona messages" não silenciado; (2) bateria do app em "Sem restrições" (o despertar em segundo plano depende do WorkManager, sujeito a Doze); (3) o toque na notificação ainda não abre o chat da persona (só abre o app). Frequência/horário continuam decididos pelo modelo; sem decisão D-xxx nova.
+
 ### Bolha só aparecia pelas Configurações (2026-11-25, branch `fix/bolha-volta-ao-abrir-app`)
 
 - **Relato do dono (S25):** a bolha só aparece se ele abre Configurações e toca nela; fechar a conversa não a traz de volta. Causa: a bolha só era publicada por ação explícita nas Configurações e `close` apagava a notificação sem lembrar a escolha.
