@@ -22,6 +22,7 @@ class AppActionService {
   static const String quickNoteAction = 'quick_note';
   static const String openTodoAction = 'open_todo';
   static const String openTimelineAction = 'open_timeline';
+  static const String openPersonaChatPrefix = 'open_persona_chat:';
   static const Duration defaultLateActionTimeout = Duration(seconds: 2);
   static const Duration _dedupWindow = Duration(seconds: 2);
 
@@ -90,6 +91,10 @@ class AppActionService {
 
   String? normalizeActionId(String actionType) {
     final normalized = actionType.trim();
+    if (normalized.startsWith(openPersonaChatPrefix) &&
+        normalized.length > openPersonaChatPrefix.length) {
+      return normalized;
+    }
     if (!_knownActions.contains(normalized)) return null;
     return normalized;
   }

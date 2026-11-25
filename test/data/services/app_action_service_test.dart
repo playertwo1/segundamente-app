@@ -33,6 +33,18 @@ void main() {
       await event;
     });
 
+    test('queues the persona chat from a persona notification', () {
+      service.handleAction(
+        '${AppActionService.openPersonaChatPrefix}yaoyao',
+        source: 'persona_notification',
+      );
+      expect(service.consumeIfPending(), 'open_persona_chat:yaoyao');
+      expect(
+        service.normalizeActionId(AppActionService.openPersonaChatPrefix),
+        isNull,
+      );
+    });
+
     test('dispatches open_todo from a task notification', () {
       service.handleAction(
         AppActionService.openTodoAction,

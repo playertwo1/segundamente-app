@@ -90,6 +90,15 @@ final GlobalKey<RootShellState> rootShellKey = GlobalKey<RootShellState>();
 Future<void> _handleTodoAlarmResponse(NotificationResponse response) async {
   const payloadPrefix = 'todoAlarm:';
   final payload = response.payload;
+  // Persona messages share the plugin, so their taps arrive here too.
+  if (payload != null && payload.startsWith('persona:')) {
+    AppActionService.instance.handleAction(
+      '${AppActionService.openPersonaChatPrefix}'
+      '${payload.substring('persona:'.length)}',
+      source: 'persona_notification',
+    );
+    return;
+  }
   if (payload == null || !payload.startsWith(payloadPrefix)) return;
   final id = payload.substring(payloadPrefix.length);
   if (id.isEmpty) return;
@@ -397,7 +406,8 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
       final location = AppRoutes.floatingLocationForLaunch(launch);
       final matches = widget.router.routerDelegate.currentConfiguration;
       final top = matches.matches.lastOrNull;
-      final current = top is ImperativeRouteMatch ? top.matches.uri : matches.uri;
+      final current =
+          top is ImperativeRouteMatch ? top.matches.uri : matches.uri;
       if (launch.mode == FloatingChatMode.bubble &&
           current.toString() == location) {
         return;
@@ -1488,6 +1498,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     if (action == null) return;
     if (action == AppActionService.openTodoAction) {
       context.push(AppRoutes.todo);
+      return;
+    }
+    if (action.startsWith(AppActionService.openPersonaChatPrefix)) {
+      context.push(
+        '${AppRoutes.personaChat}/'
+        '${action.substring(AppActionService.openPersonaChatPrefix.length)}',
+      );
       return;
     }
     if (action == AppActionService.openTimelineAction) {
