@@ -298,12 +298,16 @@ List<ReportImage> _reportImages(Object? raw) {
 /// A model reply may suggest a person, a date, or a confirmed status.
 /// Those fields are discarded. The stored item stays unconfirmed, with the
 /// fixed literals for an absent assignee and due date.
+/// Items with an unknown segment, an excerpt not found in the segment, or a
+/// wrong clock are skipped and reported through onSkip; the reply fails only
+/// when no item survives.
 SessionReport sessionReportFromModelJson({
   required String sessionId,
   required ReportKind kind,
   required String? customTitle,
   required List<ReportSegment> segments,
   required Map<String, dynamic> json,
+  void Function(String reason)? onSkip,
 }) {
   final migrated = _migrate(json);
   final rawItems = migrated['items'];
@@ -328,15 +332,18 @@ SessionReport sessionReportFromModelJson({
         _requiredText(map['segment_id']).split(RegExp(r'\s+')).first;
     final segment = byId[segmentId];
     if (segment == null) {
-      throw FormatException('unknown segment $segmentId');
+      onSkip?.call('item $i: unknown segment $segmentId');
+      continue;
     }
-    final excerpt = _requiredText(map['excerpt']);
-    if (!segment.text.contains(excerpt)) {
-      throw FormatException('excerpt is not in $segmentId');
+    final excerpt = _sourceExcerpt(segment.text, _requiredText(map['excerpt']));
+    if (excerpt == null) {
+      onSkip?.call('item $i: excerpt is not in $segmentId');
+      continue;
     }
     final clock = map['clock']?.toString();
     if (clock != null && clock.isNotEmpty && clock != segment.clock) {
-      throw FormatException('clock does not match $segmentId');
+      onSkip?.call('item $i: clock does not match $segmentId');
+      continue;
     }
     final finalKind = _kindAfterTaskGuard(itemKind, '$text $excerpt');
     if (!sections.contains(finalKind)) continue;
@@ -415,6 +422,49 @@ ReportItemKind _kindAfterTaskGuard(ReportItemKind kind, String evidence) {
   if (_pastFact.hasMatch(evidence)) return ReportItemKind.summary;
   if (_opinion.hasMatch(evidence)) return ReportItemKind.idea;
   return kind;
+}
+
+final _space = RegExp(r'\s');
+
+/// The exact slice of [segmentText] that [excerpt] stands for, or null.
+/// Whitespace runs and typographic quotes are folded on both sides before
+/// matching, so the result is always original text, never the model's copy.
+String? _sourceExcerpt(String segmentText, String excerpt) {
+  if (segmentText.contains(excerpt)) return excerpt;
+  final needle = _foldForMatch(excerpt).$1.trim();
+  if (needle.isEmpty) return null;
+  final (folded, starts) = _foldForMatch(segmentText);
+  final at = folded.indexOf(needle);
+  if (at < 0) return null;
+  return segmentText.substring(starts[at], starts[at + needle.length]);
+}
+
+/// Folded text, and for each folded char the index where it starts in [text].
+/// The last entry is the end of [text], so a match ends at starts[end].
+(String, List<int>) _foldForMatch(String text) {
+  final out = StringBuffer();
+  final starts = <int>[];
+  var i = 0;
+  while (i < text.length) {
+    starts.add(i);
+    if (_space.hasMatch(text[i])) {
+      while (i < text.length && _space.hasMatch(text[i])) {
+        i++;
+      }
+      out.write(' ');
+      continue;
+    }
+    out.write(_foldQuote(text[i]));
+    i++;
+  }
+  starts.add(text.length);
+  return (out.toString(), starts);
+}
+
+String _foldQuote(String ch) {
+  if ('"“”„‟'.contains(ch)) return '"';
+  if ("'‘’‚‛".contains(ch)) return "'";
+  return ch;
 }
 
 String _normalizedKey(String value) {

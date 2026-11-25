@@ -494,4 +494,113 @@ void main() {
     expect(isAmbiguousDue(reportDueUnknown), isFalse);
     expect(isAmbiguousDue(' '), isFalse);
   });
+
+  group('one bad item does not lose the reply', () {
+    Map<String, dynamic> item(String segmentId, String excerpt,
+            {String? clock}) =>
+        {
+          'kind': 'decision',
+          'text': excerpt,
+          'segment_id': segmentId,
+          'excerpt': excerpt,
+          if (clock != null) 'clock': clock,
+        };
+
+    test('quotes and whitespace are matched, the stored excerpt is original',
+        () {
+      const text = 'Reunião.  Ana disse:  "vamos\nfechar o escopo" hoje.';
+      const curlyExcerpt = 'Ana disse: “vamos fechar o escopo” hoje.';
+      const original = 'Ana disse:  "vamos\nfechar o escopo" hoje.';
+      final report = sessionReportFromModelJson(
+        sessionId: 's',
+        kind: ReportKind.reuniao,
+        customTitle: null,
+        segments: const [ReportSegment(id: 'seg_0', text: text)],
+        json: {
+          'schema_version': 1,
+          'items': [item('seg_0', curlyExcerpt)],
+        },
+      );
+      expect(text.contains(original), isTrue);
+      expect(report.items.single.source.excerpt, original);
+
+      const curlySegment = 'Ana disse: “vamos fechar o escopo” hoje.';
+      final reverse = sessionReportFromModelJson(
+        sessionId: 's',
+        kind: ReportKind.reuniao,
+        customTitle: null,
+        segments: const [ReportSegment(id: 'seg_0', text: curlySegment)],
+        json: {
+          'schema_version': 1,
+          'items': [
+            item('seg_0', 'Ana disse: "vamos fechar o escopo" hoje.'),
+          ],
+        },
+      );
+      expect(reverse.items.single.source.excerpt, curlySegment);
+    });
+
+    test('an invented excerpt is skipped and reported, the rest is kept', () {
+      final skipped = <String>[];
+      final report = sessionReportFromModelJson(
+        sessionId: 's',
+        kind: ReportKind.reuniao,
+        customTitle: null,
+        segments: segments,
+        json: {
+          'schema_version': 1,
+          'items': [
+            item('seg_0', 'fechar o escopo'),
+            item('seg_1', 'inventado'),
+          ],
+        },
+        onSkip: skipped.add,
+      );
+      expect(report.items.single.text, 'fechar o escopo');
+      expect(skipped, ['item 1: excerpt is not in seg_1']);
+    });
+
+    test('an unknown segment and a wrong clock are skipped one by one', () {
+      final skipped = <String>[];
+      final report = sessionReportFromModelJson(
+        sessionId: 's',
+        kind: ReportKind.reuniao,
+        customTitle: null,
+        segments: segments,
+        json: {
+          'schema_version': 1,
+          'items': [
+            item('seg_0', 'fechar o escopo'),
+            item('seg_9', 'fechar o escopo'),
+            item('seg_1', 'mandar o resumo', clock: '00:00:09'),
+          ],
+        },
+        onSkip: skipped.add,
+      );
+      expect(report.items.single.text, 'fechar o escopo');
+      expect(skipped, hasLength(2));
+      expect(skipped[0], contains('unknown segment'));
+      expect(skipped[1], contains('clock does not match'));
+    });
+
+    test('a reply where every item fails still throws', () {
+      expect(
+        () => sessionReportFromModelJson(
+          sessionId: 's',
+          kind: ReportKind.reuniao,
+          customTitle: null,
+          segments: segments,
+          json: {
+            'schema_version': 1,
+            'items': [
+              item('seg_1', 'inventado'),
+              item('seg_9', 'fechar o escopo'),
+            ],
+          },
+          onSkip: (_) {},
+        ),
+        throwsFormatException,
+      );
+    });
+  });
 }

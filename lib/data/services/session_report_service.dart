@@ -148,6 +148,7 @@ class SessionReportService {
       customTitle: customTitle,
       segments: await _segments(userId, sessionId),
       json: json,
+      onSkip: (reason) => _logger.warning('report item skipped: $reason'),
     );
     final report = extracted.copyWith(
       images: await _attachedImages(userId, sessionId),
