@@ -40,6 +40,8 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ### Assistente Ativo: despertar da persona com o app em segundo plano (2026-11-25, PR #2)
 
+- Publicada na release 1.0.14 (+153), junto com o PR #1, ver [docs/releases/v1.0.14.md](docs/releases/v1.0.14.md).
+
 - Causa confirmada no código: ao terminar com trabalho futuro (o despertar da persona), o `AgentQueueBackgroundWorker` se reagendava sob o mesmo nome único `agent_queue_drain` com `KEEP`. Para o WorkManager, o worker em execução ainda é trabalho pendente, então o pedido era descartado. Fora do app, o despertar só rodava quando o app abria, e aí o aviso é suprimido porque o chat está visível.
 - Correção: o reagendamento vai para `agent_queue_drain_follow_up`. Ele usa `REPLACE` vindo do dreno imediato e `APPEND_OR_REPLACE` vindo do próprio follow-up. Quando outra instância é dona da fila e nada está devido, o adiamento espera o próximo trabalho em vez de 30 s, para o app aberto não acordar um dreno a cada 30 s.
 - CI: `subosito/flutter-action` fixado em `3.47.9`. O stable flutuante (3.50.1) quebrava o `pub get`.
