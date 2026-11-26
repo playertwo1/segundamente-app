@@ -18,5 +18,6 @@
 | Resumo e próximo evento no widget Android (D-062) | Depois que F13 (Calendar) e F14 (assistente ativo) tiverem dados |
 | Captura sem sair do app pela minicápsula: anotar ou mandar print ou trecho para a linha do tempo (D-062) | Depois que a F15-07 medir a bolha no S25 e a F15-02 estiver validada no S25 |
 | Assistente que vê a tela, por leitura de acessibilidade (D-062) | Exige decisão própria antes de qualquer trabalho: risco alto de privacidade, pois lê e-mails e mensagens de terceiros |
+| Ideias do MyBrain (2026-11-25): propor várias tarefas num cartão só, anexar tarefa ou registro ao chat, cartão do item real depois de confirmar, Android AppFunctions, Gemini Nano pelo ML Kit e gráfico de humor. Detalhes, licença e aceite em [estudo-mybrain.md](../fases/estudo-mybrain.md) | Decisão do dono por item. AppFunctions precisa antes de decisão de privacidade (o resultado vai para o Gemini); Gemini Nano só com a reabertura da F7-02; propor em lote combinado com o Lumen (L-MB3) |
 
 Ideias já avaliadas e distribuídas em tarefas ficam nas decisões D-014, D-016 e D-018; não reabrir essas pesquisas sem uma lacuna concreta.
