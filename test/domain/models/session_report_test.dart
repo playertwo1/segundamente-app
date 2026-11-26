@@ -583,6 +583,53 @@ void main() {
       expect(skipped[1], contains('clock does not match'));
     });
 
+    test('a missing, null or blank excerpt skips only that item', () {
+      for (final bad in <Map<String, dynamic>>[
+        {'kind': 'decision', 'text': 'sem prova', 'segment_id': 'seg_1'},
+        {...item('seg_1', 'x'), 'excerpt': null},
+        {...item('seg_1', 'x'), 'excerpt': '   '},
+      ]) {
+        for (final items in [
+          [item('seg_0', 'fechar o escopo'), bad],
+          [bad, item('seg_0', 'fechar o escopo')],
+        ]) {
+          final skipped = <String>[];
+          final report = sessionReportFromModelJson(
+            sessionId: 's',
+            kind: ReportKind.reuniao,
+            customTitle: null,
+            segments: segments,
+            json: {'schema_version': 1, 'items': items},
+            onSkip: skipped.add,
+          );
+          expect(report.items.single.text, 'fechar o escopo');
+          expect(report.items.single.source.excerpt, 'fechar o escopo');
+          expect(skipped, hasLength(1));
+          expect(skipped.single, contains('excerpt missing'));
+        }
+      }
+    });
+
+    test('a reply where every excerpt is missing still throws', () {
+      expect(
+        () => sessionReportFromModelJson(
+          sessionId: 's',
+          kind: ReportKind.reuniao,
+          customTitle: null,
+          segments: segments,
+          json: {
+            'schema_version': 1,
+            'items': [
+              {...item('seg_0', 'x'), 'excerpt': null},
+              {...item('seg_1', 'x'), 'excerpt': ''},
+            ],
+          },
+          onSkip: (_) {},
+        ),
+        throwsFormatException,
+      );
+    });
+
     test('a reply where every item fails still throws', () {
       expect(
         () => sessionReportFromModelJson(
