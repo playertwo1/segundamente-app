@@ -19,5 +19,7 @@ analyzer:
     - build/**
     - android/**
     - ios/**
+    # Separate packages with their own pubspec and dependency versions.
+    - tools/**
 
 
