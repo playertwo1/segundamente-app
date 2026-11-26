@@ -47,6 +47,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - Não alterado, falta decisão do dono: persona principal marcada e desativada não restaura o despertar (`getPrimaryCompanion`); com 3 erros temporários seguidos, o laço só volta na próxima abertura do app.
 - `NOT_RUN`: S25. Roteiro: instalar, ligar uma persona principal, fechar o app pelo gesto de recentes (não “Forçar parada”), esperar o despertar fora do silêncio e conferir o aviso; `adb shell dumpsys jobscheduler | grep agent_queue` deve listar o follow-up.
 
+### Relatório: citação ausente descarta só o item (2026-11-25, PR #1)
+
+- `sessionReportFromModelJson`: `excerpt` ausente, nulo ou em branco agora vira descarte do item via `onSkip` (`excerpt missing`), em vez de abortar o relatório. Continua lançando quando nenhum item sobra.
+- `flutter test --no-pub test/domain/models/session_report_test.dart` → `+26: All tests passed!` (2 testes novos, as duas ordens). `flutter analyze --no-pub` nos dois arquivos → só 10 `prefer_const` da linha de base.
+- `NOT_RUN`: suíte completa e S25.
+
 ### Release 1.0.11 (2026-11-25)
 
 - APK `segundamente_global_1.0.11_150.apk` (`128980779` bytes, SHA-256 `0ee054b64afbdcedb0c458d1d668d2d4614b06602216623068044dd978ea8d20`), `versionCode` `150` / `versionName` `1.0.11`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao da `1.0.10`. Notas em [docs/releases/v1.0.11.md](docs/releases/v1.0.11.md).

@@ -298,8 +298,8 @@ List<ReportImage> _reportImages(Object? raw) {
 /// A model reply may suggest a person, a date, or a confirmed status.
 /// Those fields are discarded. The stored item stays unconfirmed, with the
 /// fixed literals for an absent assignee and due date.
-/// Items with an unknown segment, an excerpt not found in the segment, or a
-/// wrong clock are skipped and reported through onSkip; the reply fails only
+/// Items with an unknown segment, a missing excerpt, an excerpt not found in
+/// the segment, or a wrong clock are skipped and reported through onSkip; the reply fails only
 /// when no item survives.
 SessionReport sessionReportFromModelJson({
   required String sessionId,
@@ -335,7 +335,12 @@ SessionReport sessionReportFromModelJson({
       onSkip?.call('item $i: unknown segment $segmentId');
       continue;
     }
-    final excerpt = _sourceExcerpt(segment.text, _requiredText(map['excerpt']));
+    final rawExcerpt = map['excerpt']?.toString().trim() ?? '';
+    if (rawExcerpt.isEmpty) {
+      onSkip?.call('item $i: excerpt missing');
+      continue;
+    }
+    final excerpt = _sourceExcerpt(segment.text, rawExcerpt);
     if (excerpt == null) {
       onSkip?.call('item $i: excerpt is not in $segmentId');
       continue;
