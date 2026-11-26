@@ -33,6 +33,7 @@ class AgentQueueBackgroundWorker {
     AgentActivityService? activityService,
     Duration maxRunDuration = _maxRunDuration,
     Duration databaseRetryDelay = const Duration(milliseconds: 300),
+    bool isFollowUp = false,
   }) async {
     WidgetsFlutterBinding.ensureInitialized();
     await setupLogger();
@@ -96,9 +97,9 @@ class AgentQueueBackgroundWorker {
         } else {
           await AgentForegroundTaskTracker.instance.clearPause();
         }
-        await queueScheduler.schedule(
+        await queueScheduler.scheduleFollowUp(
           initialDelay: result.nextRunnableDelay ?? _defaultRetryDelay,
-          expedited: false,
+          fromFollowUp: isFollowUp,
         );
       } else {
         await AgentForegroundTaskTracker.instance.clearPause();

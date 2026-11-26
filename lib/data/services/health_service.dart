@@ -8,6 +8,7 @@ import 'package:workmanager/workmanager.dart'; // Added for Workmanager
 import 'dart:isolate'; // Added for Isolate
 import 'package:flutter/foundation.dart'; // Added for debugPrint
 import 'package:memex/data/services/agent_queue_background_worker.dart';
+import 'package:memex/data/services/agent_queue_drain_scheduler.dart';
 import 'package:memex/data/services/file_logger_service.dart'; // Added
 import 'package:memex/data/services/todo_sync_service.dart';
 import 'health_strategies.dart';
@@ -335,7 +336,10 @@ void callbackDispatcher() {
     }
 
     if (AgentQueueBackgroundWorker.isAgentQueueDrainTask(task)) {
-      return AgentQueueBackgroundWorker.run();
+      return AgentQueueBackgroundWorker.run(
+        isFollowUp: inputData?['source'] ==
+            WorkmanagerAgentQueueDrainScheduler.followUpSource,
+      );
     }
     if (TodoSyncService.isPeriodicSyncTask(task)) {
       return TodoSyncService.runBackgroundSyncTask();

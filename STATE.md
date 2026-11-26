@@ -38,6 +38,15 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
+### Assistente Ativo: despertar da persona com o app em segundo plano (2026-11-25, PR #2)
+
+- Causa confirmada no código: ao terminar com trabalho futuro (o despertar da persona), o `AgentQueueBackgroundWorker` se reagendava sob o mesmo nome único `agent_queue_drain` com `KEEP`. Para o WorkManager, o worker em execução ainda é trabalho pendente, então o pedido era descartado. Fora do app, o despertar só rodava quando o app abria, e aí o aviso é suprimido porque o chat está visível.
+- Correção: o reagendamento vai para `agent_queue_drain_follow_up`. Ele usa `REPLACE` vindo do dreno imediato e `APPEND_OR_REPLACE` vindo do próprio follow-up. Quando outra instância é dona da fila e nada está devido, o adiamento espera o próximo trabalho em vez de 30 s, para o app aberto não acordar um dreno a cada 30 s.
+- CI: `subosito/flutter-action` fixado em `3.47.9`. O stable flutuante (3.50.1) quebrava o `pub get`.
+- `flutter test --no-pub --reporter compact` → `+2210 ~2: All other tests passed!`. `flutter analyze --no-pub` nos arquivos alterados → só o aviso antigo `unawaited_return_in_try_block` em `health_service.dart:352`.
+- Não alterado, falta decisão do dono: persona principal marcada e desativada não restaura o despertar (`getPrimaryCompanion`); com 3 erros temporários seguidos, o laço só volta na próxima abertura do app.
+- `NOT_RUN`: S25. Roteiro: instalar, ligar uma persona principal, fechar o app pelo gesto de recentes (não “Forçar parada”), esperar o despertar fora do silêncio e conferir o aviso; `adb shell dumpsys jobscheduler | grep agent_queue` deve listar o follow-up.
+
 ### Relatório: citação ausente descarta só o item (2026-11-25, PR #1)
 
 - `sessionReportFromModelJson`: `excerpt` ausente, nulo ou em branco agora vira descarte do item via `onSkip` (`excerpt missing`), em vez de abortar o relatório. Continua lançando quando nenhum item sobra.
