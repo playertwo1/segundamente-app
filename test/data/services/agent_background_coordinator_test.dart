@@ -390,6 +390,12 @@ class _FakeScheduler implements AgentQueueDrainScheduler {
   var cancelCount = 0;
 
   @override
+  Future<void> scheduleFollowUp({
+    required Duration initialDelay,
+    required bool fromFollowUp,
+  }) async {}
+
+  @override
   Future<void> cancel() async {
     cancelCount++;
     events.add('cancel');

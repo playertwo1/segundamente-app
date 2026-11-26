@@ -450,6 +450,12 @@ class _NoopScheduler implements AgentQueueDrainScheduler {
   Future<void> cancel() async {}
 
   @override
+  Future<void> scheduleFollowUp({
+    required Duration initialDelay,
+    required bool fromFollowUp,
+  }) async {}
+
+  @override
   Future<void> schedule({
     Duration? initialDelay,
     bool expedited = false,

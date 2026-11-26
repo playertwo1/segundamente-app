@@ -70,6 +70,90 @@ void main() {
       );
     });
 
+    test('a follow-up never uses KEEP, so a running drain cannot drop it', () {
+      expect(
+        WorkmanagerAgentQueueDrainScheduler.followUpPolicy(
+          fromFollowUp: false,
+        ),
+        ExistingWorkPolicy.replace,
+      );
+      expect(
+        WorkmanagerAgentQueueDrainScheduler.followUpPolicy(fromFollowUp: true),
+        ExistingWorkPolicy.append,
+      );
+      expect(
+        WorkmanagerAgentQueueDrainScheduler.followUpUniqueName,
+        isNot(WorkmanagerAgentQueueDrainScheduler.uniqueName),
+      );
+    });
+
+    test('future work schedules a follow-up drain that knows its origin',
+        () async {
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      await db.into(db.tasks).insert(
+            TasksCompanion.insert(
+              id: 'future-wake',
+              type: 'unknown_task',
+              payload: const Value('{}'),
+              status: 'pending',
+              createdAt: Value(now),
+              scheduledAt: Value(now + 3600),
+            ),
+          );
+
+      for (final isFollowUp in [false, true]) {
+        await AgentQueueBackgroundWorker.run(
+          initializeTaskQueue: (_) async {},
+          executor: executor,
+          scheduler: scheduler,
+          backgroundPlatform: _FakeBackgroundPlatform(),
+          databaseRetryDelay: Duration.zero,
+          isFollowUp: isFollowUp,
+        );
+      }
+
+      expect(scheduler.fromFollowUpValues, [false, true]);
+      for (final delay in scheduler.initialDelays) {
+        expect(delay!.inSeconds, inInclusiveRange(3590, 3600));
+      }
+    });
+
+    test('a foreground owner with only future work defers until that work',
+        () async {
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      await db.into(db.kvStore).insert(
+            KvStoreCompanion.insert(
+              key: 'agent_queue_lease:worker-user',
+              value: const Value('foreground-owner:foreground'),
+              bucket: const Value('agent_queue_lease'),
+              updatedAt: Value(now),
+            ),
+          );
+      await db.into(db.tasks).insert(
+            TasksCompanion.insert(
+              id: 'future-wake',
+              type: 'unknown_task',
+              payload: const Value('{}'),
+              status: 'pending',
+              createdAt: Value(now),
+              scheduledAt: Value(now + 3600),
+            ),
+          );
+
+      await AgentQueueBackgroundWorker.run(
+        initializeTaskQueue: (_) async {},
+        executor: executor,
+        scheduler: scheduler,
+        backgroundPlatform: _FakeBackgroundPlatform(),
+        databaseRetryDelay: Duration.zero,
+        isFollowUp: true,
+      );
+
+      expect(scheduler.scheduleCalls, 1);
+      expect(scheduler.initialDelays.single!.inSeconds,
+          inInclusiveRange(3590, 3600));
+    });
+
     test('clamps immediate retry delay to at least thirty seconds', () {
       final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
@@ -568,6 +652,7 @@ class _FakeBackgroundPlatform implements AgentBackgroundPlatform {
 class _FakeDrainScheduler implements AgentQueueDrainScheduler {
   final initialDelays = <Duration?>[];
   final expeditedValues = <bool>[];
+  final fromFollowUpValues = <bool>[];
   var cancelCalls = 0;
 
   int get scheduleCalls => initialDelays.length;
@@ -584,6 +669,16 @@ class _FakeDrainScheduler implements AgentQueueDrainScheduler {
   }) async {
     initialDelays.add(initialDelay);
     expeditedValues.add(expedited);
+  }
+
+  @override
+  Future<void> scheduleFollowUp({
+    required Duration initialDelay,
+    required bool fromFollowUp,
+  }) async {
+    initialDelays.add(initialDelay);
+    expeditedValues.add(false);
+    fromFollowUpValues.add(fromFollowUp);
   }
 }
 

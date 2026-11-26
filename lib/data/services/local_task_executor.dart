@@ -430,10 +430,16 @@ class LocalTaskExecutor {
         _logger.info(
           'Deferring agent queue drain for user $userId because another executor owns the queue.',
         );
+        // Retry soon only while work is due; otherwise an open app would
+        // wake a background drain every few seconds just to defer again.
+        final workIsDue =
+            await _hasProcessingTasks() || await _hasRunnableTasks();
         return TaskQueueDrainResult(
           snapshot: await getTaskActivitySnapshot(),
           timedOut: false,
-          nextRunnableDelay: _queueOwnershipRetryDelay,
+          nextRunnableDelay: workIsDue
+              ? _queueOwnershipRetryDelay
+              : await _nextRunnableDelay() ?? _queueOwnershipRetryDelay,
           deferredToAnotherOwner: true,
         );
       }
