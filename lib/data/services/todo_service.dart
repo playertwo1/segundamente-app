@@ -34,6 +34,11 @@ class TodoService {
       widgetSnapshotSynchronizer =
       (items) => TodoWidgetSnapshotService.instance.push(items);
 
+  /// Seam for the ESP32 task sync: told about every local mutation. It runs
+  /// inside [_storageLock], so it must only start asynchronous work.
+  static void Function(String userId, List<TodoItem> changed)?
+      localMutationObserver;
+
   // Alarm sync runs outside [_storageLock]. At most one run is active; a
   // request made meanwhile only sets [_alarmDirty], so exactly one more run
   // re-reads the newest list.
@@ -654,6 +659,13 @@ class TodoService {
     List<TodoItem> allItems,
   ) async {
     if (mutations.isEmpty) return;
+    try {
+      localMutationObserver?.call(userId, [for (final m in mutations) m.item]);
+    } catch (error) {
+      _logger.warning(
+        'Local mutation observer failed (${error.runtimeType})',
+      );
+    }
     try {
       final sync = _syncService ?? TodoSyncService.instance;
       final shouldPush = await sync.recordLocalMutations(
