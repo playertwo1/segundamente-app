@@ -4,7 +4,7 @@
 
 **Leia também:** [STATE.md](STATE.md) (estado e próxima ação) · [docs/DECISIONS.md](docs/DECISIONS.md) (decisões) · [docs/WATCHDOG.md](docs/WATCHDOG.md) (regras, estados e prioridades) · [PROJECT.md](PROJECT.md) (escopo)
 
-**Atualizado:** 2026-11-17. Se este resumo divergir do arquivo da fase ou de uma evidência posterior em STATE.md, valem o arquivo da fase e a evidência.
+**Atualizado:** 2026-11-27. Se este resumo divergir do arquivo da fase ou de uma evidência posterior em STATE.md, valem o arquivo da fase e a evidência.
 
 ## Ordem de trabalho
 
@@ -31,7 +31,8 @@ O lado desktop (Lumen) tem roadmap próprio no repositório `playertwo1/coucou`.
 | [F13 — Google](docs/roadmap/F13-google.md) | Login Google, backup semanal no Drive e Google Calendar | BLOCKED: falta o projeto Google Cloud do dono (D-055) |
 | [F14 — Assistente ativo](docs/roadmap/F14-assistente-ativo.md) | Resumos de manhã e de tarde, cobrança de tarefas paradas e sugestões das personas | REVIEW (D-074): código pronto, S25 NOT_RUN |
 | [F15 — Widget e atalhos Android](docs/roadmap/F15-widget-e-atalhos-android.md) | Widget redimensionável, chat flutuante, painel rápido e minicápsula | F15-01 DONE; F15-02 a F15-07 com código, S25 NOT_RUN |
-| [F16 — Ponte Bluetooth LE com a placa ESP32-S3 AMOLED](docs/roadmap/F16-ponte-placa-esp32.md) | Pareamento PIN 6 dígitos, sync bidirecional de tarefas, notificações e config da placa via BLE GATT | IN_PROGRESS: F16-01 a F16-06 com código e testes; S25 NOT_RUN |
+| [F16 — Ponte Bluetooth LE com a placa ESP32-S3 AMOLED](docs/roadmap/F16-ponte-placa-esp32.md) | Pareamento PIN, sync de tarefas, notificações e config da placa via BLE GATT | CANCELLED (D-082): a placa saiu do BLE; substituída pela F17 |
+| [F17 — Placa por MQTT](docs/roadmap/F17-placa-por-mqtt.md) | Tarefas e notificações com a placa e o Lumen por broker MQTT cifrado, em qualquer rede; remove o BLE do app | READY (D-082): placa já fala MQTT; falta o broker do dono |
 
 Ideias aprovadas para pensar depois, sem autorização de implementação: [docs/roadmap/IDEIAS-FUTURAS.md](docs/roadmap/IDEIAS-FUTURAS.md).
 

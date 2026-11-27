@@ -2,7 +2,7 @@
 
 ## F16 — Ponte Bluetooth LE com a placa ESP32-S3 AMOLED
 
-**Estado:** IN_PROGRESS — F16-01 a F16-06 com código (Kotlin nativo `Esp32BleManager`, `Esp32NotificationListenerService`, `Esp32BleChannelHandler`; Dart `Esp32BleBridgeService`, `Esp32BoardViewModel`, `Esp32BoardPage` em Configurações → Placa ESP32-S3) e testes automatizados de unidade/widget. Validação no S25 com a placa física: `NOT_RUN`. Observação: o cliente BLE é nativo (MethodChannel `com.memexlab.memex/esp32_ble`), sem `flutter_blue_plus`, para não adicionar dependência.
+**Estado:** CANCELLED (D-082, 2026-11-27). A placa removeu o Bluetooth e fala MQTT; o que serve daqui (listener de notificações, filtro de apps, modelo de tarefas) segue na [F17 — Placa por MQTT](F17-placa-por-mqtt.md), que também remove o código BLE do app. Antes: IN_PROGRESS — F16-01 a F16-06 com código (Kotlin nativo `Esp32BleManager`, `Esp32NotificationListenerService`, `Esp32BleChannelHandler`; Dart `Esp32BleBridgeService`, `Esp32BoardViewModel`, `Esp32BoardPage` em Configurações → Placa ESP32-S3) e testes automatizados de unidade/widget. Validação no S25 com a placa física: `NOT_RUN`. Observação: o cliente BLE é nativo (MethodChannel `com.memexlab.memex/esp32_ble`), sem `flutter_blue_plus`, para não adicionar dependência.
 
 **Objetivo:** com o celular por perto, o Segunda Mente conversa diretamente com a placa de mesa `SegundaMente-Placa` por Bluetooth LE (GATT) para sincronizar tarefas nos dois sentidos sem duplicar, encaminhar notificações escolhidas do Android para a tela da placa e configurar a placa (Wi-Fi, cidade e personagem) pelo app sem recompilar.
 

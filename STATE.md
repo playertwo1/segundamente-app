@@ -1,13 +1,13 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F16 — Ponte BLE (`IN_PROGRESS`, falta S25); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`READY`, D-082; a F16/BLE foi cancelada); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
 ## Fases em andamento
 
 - **F14 — Assistente ativo:** `REVIEW` (D-074). F14-01 a F14-03 com código e testes no celular; S25 `NOT_RUN`. Calendar (F13-04) e Lumen (F12-06) entram depois.
-- **F16 — Ponte BLE com a placa ESP32-S3 AMOLED:** `IN_PROGRESS`. F16-01 a F16-06 com código Android nativo + Flutter e testes de unidade/widget; S25 e placa física `NOT_RUN`. Testes: `flutter test --no-pub` nos 2 arquivos novos de `esp32` (6 de serviço + 1 de widget, 0 falhas).
+- **F16 — Ponte BLE com a placa ESP32-S3 AMOLED:** `CANCELLED` (D-082, 2026-11-27): a placa removeu o Bluetooth. Sucessora: **F17 — Placa por MQTT** (`READY`), que reaproveita o listener de notificações e o filtro de apps e remove o código BLE.
 - **F15 — Widget e atalhos:** F15-02 a F15-08 com código na `main`. Bolha da versão pública em `REVIEW` (D-078). S25 `NOT_RUN`.
 - **F12 — Sync com o Lumen:** `IN_PROGRESS` (D-066). F12-02 a F12-05 DONE; F12-01 espera o dono ler o contrato; F12-06 e F12-07 READY.
 

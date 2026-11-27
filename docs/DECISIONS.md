@@ -485,3 +485,10 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 
 - Autorizada pelo dono a implementação da biblioteca agregada de fotos, PDFs e áudios (antes em `IDEIAS-FUTURAS.md`).
 - Acessível pelo menu principal (`MainMenuDrawer`) e pela aba Conhecimento (`KnowledgeBaseScreen`), listando os arquivos locais de `Facts/assets/` com filtro por tipo, busca, visualização in-app e link para o registro de origem quando existir.
+
+## D-082 — Placa ESP32 por MQTT em vez de Bluetooth (2026-11-27)
+
+- O dono decidiu tirar a ponte Bluetooth LE com a placa ESP32-S3 AMOLED (F16) e ligar celular, Lumen e placa por um broker MQTT na nuvem, que funciona dentro e fora de casa e com os três ao mesmo tempo.
+- A placa já removeu o BLE e fala MQTT (firmware Q1 do `esp32-s3-amoled-2-16`, 2026-11-27). O contrato é `esp32-s3-amoled-2-16/docs/roadmap/mqtt/PROTOCOLO.md`.
+- A F16 passa a `CANCELLED`: o protocolo BLE dela não existe mais na placa. O que serve continua na F17: o listener de notificações, o filtro de apps e o modelo de tarefas.
+- A F17 implementa o cliente MQTT, o pareamento por QR, as tarefas pelo `SyncEnvelope` v1 e as notificações, e remove o código BLE do app. A configuração de Wi-Fi, cidade e personagem pelo app sai: a placa tem portal próprio e só um personagem.
