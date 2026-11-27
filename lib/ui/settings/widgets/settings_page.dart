@@ -12,6 +12,9 @@ import 'package:memex/ui/settings/widgets/data_storage_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
 import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
 import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_notification_forwarder.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_task_sync.dart';
 import 'package:memex/ui/esp32/view_models/esp32_board_viewmodel.dart';
 import 'package:memex/ui/esp32/widgets/esp32_board_page.dart';
 import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
@@ -1078,7 +1081,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => Esp32BoardPage(
-                    viewModel: Esp32BoardViewModel(),
+                    viewModel: Esp32BoardViewModel(
+                      service: Esp32MqttService.instance,
+                      taskSync: Esp32MqttTaskSync.instance,
+                      forwarder: Esp32MqttNotificationForwarder.instance,
+                    ),
                   ),
                 ),
               ),
@@ -1102,8 +1109,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         children: [
                           Text(
                             _currentLocaleTag.startsWith('pt')
-                                ? 'Placa ESP32-S3 (BLE)'
-                                : 'ESP32-S3 Board (BLE)',
+                                ? 'Placa ESP32-S3'
+                                : 'ESP32-S3 Board',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -1113,8 +1120,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(height: 2),
                           Text(
                             _currentLocaleTag.startsWith('pt')
-                                ? 'Pareamento Bluetooth, tarefas e notificações'
-                                : 'Bluetooth pairing, tasks & notifications',
+                                ? 'Pareamento MQTT, tarefas e notificações'
+                                : 'MQTT pairing, tasks & notifications',
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textTertiary,

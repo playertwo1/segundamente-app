@@ -1,172 +1,91 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show PlatformException;
-import 'package:memex/data/services/esp32_ble_bridge_service.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_notification_forwarder.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_pairing.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_task_sync.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_transport.dart';
+import 'package:memex/utils/logger.dart';
 
-/// Character options available on the ESP32-S3 AMOLED firmware (`0..3`).
-const List<String> kEsp32CharacterNames = <String>[
-  'Mochi',
-  'Sprout',
-  'Peach',
-  'Nimbus',
-];
-
-/// State controller for [Esp32BoardPage] (F16).
+/// State controller for [Esp32BoardPage] (F17-05). Holds no secrets: the
+/// pairing lives in [Esp32MqttService] and this only reads its status.
 class Esp32BoardViewModel extends ChangeNotifier {
-  Esp32BoardViewModel({Esp32BleBridgeService? service})
-      : _service = service ?? Esp32BleBridgeService();
-
-  final Esp32BleBridgeService _service;
-  StreamSubscription<bool>? _connSub;
-
-  /// Poll interval while waiting for the Bluetooth permission dialog.
-  @visibleForTesting
-  Duration permissionPollInterval = const Duration(milliseconds: 500);
-
-  bool _connected = false;
-  bool _paired = false;
-  bool _hasBlePermissions = true;
-  bool _hasNotificationAccess = false;
-  bool _busy = false;
-  String? _statusMessage;
-  bool _pairCodeRequested = false;
-  int _selectedCharIdx = 0;
-  int _pendingTasksCount = 0;
-  int _lastSyncedRemoteCount = 0;
-  Set<String> _allowedApps = Set<String>.from(kEsp32DefaultAllowedApps);
-
-  bool get connected => _connected;
-  bool get paired => _paired;
-  bool get hasBlePermissions => _hasBlePermissions;
-  bool get hasNotificationAccess => _hasNotificationAccess;
-  bool get busy => _busy;
-  String? get statusMessage => _statusMessage;
-  bool get pairCodeRequested => _pairCodeRequested;
-  int get selectedCharIdx => _selectedCharIdx;
-  int get pendingTasksCount => _pendingTasksCount;
-  int get lastSyncedRemoteCount => _lastSyncedRemoteCount;
-  Set<String> get allowedApps => Set<String>.unmodifiable(_allowedApps);
-
-  Future<void> initialize() async {
-    _connSub?.cancel();
-    _connSub = _service.connectionStream.listen((value) {
-      _connected = value;
-      notifyListeners();
-    });
-    await refreshState();
+  Esp32BoardViewModel({
+    required Esp32MqttService service,
+    required Esp32MqttTaskSync taskSync,
+    required Esp32MqttNotificationForwarder forwarder,
+  })  : _service = service,
+        _taskSync = taskSync,
+        _forwarder = forwarder {
+    _status = _service.status.value;
+    _service.status.addListener(_onStatusChanged);
   }
 
-  Future<void> refreshState() async {
+  static final _logger = getLogger('Esp32BoardViewModel');
+
+  final Esp32MqttService _service;
+  final Esp32MqttTaskSync _taskSync;
+  final Esp32MqttNotificationForwarder _forwarder;
+
+  late Esp32MqttStatus _status;
+  bool _busy = false;
+  Esp32PairingError? _pairingError;
+  bool _hasNotificationAccess = false;
+  Set<String> _allowedApps = Set<String>.from(kEsp32NotifDefaultApps);
+
+  bool get paired => _status.paired;
+  Esp32MqttLinkState get link => _status.link;
+  bool get boardOnline => _status.boardOnline;
+  bool get keyRejected => _status.keyRejected;
+  Esp32MqttConnectResult? get lastError => _status.lastError;
+  bool get busy => _busy;
+  Esp32PairingError? get pairingError => _pairingError;
+  bool get hasNotificationAccess => _hasNotificationAccess;
+  Set<String> get allowedApps => Set<String>.unmodifiable(_allowedApps);
+
+  /// Reads the notification access and the apps the user allowed.
+  Future<void> initialize() async {
+    _allowedApps = await _forwarder.loadAllowedApps();
+    await refreshNotificationAccess();
+  }
+
+  /// Called when the app comes back from the Android settings screen.
+  Future<void> refreshNotificationAccess() async {
     try {
-      _connected = await _service.isConnected();
-      _paired = await _service.isPaired();
-      _hasBlePermissions = await _service.hasBlePermissions();
-      _hasNotificationAccess = await _service.hasNotificationAccess();
-      _allowedApps = await _service.loadAllowedApps();
-      _pendingTasksCount = (await _service.loadPendingTasks()).length;
-    } catch (e) {
-      _statusMessage = e.toString();
+      _hasNotificationAccess = await _forwarder.hasNotificationAccess();
+    } catch (error, stackTrace) {
+      _logger.warning('Notification access unavailable', error, stackTrace);
+      _hasNotificationAccess = false;
     }
     notifyListeners();
   }
 
-  Future<void> requestPermissions() async {
-    _hasBlePermissions = await _service.requestBlePermissions();
-    notifyListeners();
-  }
-
   Future<void> openNotificationAccessSettings() =>
-      _service.openNotificationAccessSettings();
+      _forwarder.openNotificationAccessSettings();
 
-  Future<void> connect() async {
+  /// Returns true when the code paired. On error, [pairingError] says why and
+  /// nothing is stored.
+  Future<bool> pairFromCode(String raw) async {
+    var paired = false;
     await _runBusy(() async {
-      _statusMessage = null;
-      if (!_hasBlePermissions || !await _service.hasBlePermissions()) {
-        _hasBlePermissions = await _service.requestBlePermissions();
-        // The native request is asynchronous (system dialog): wait for the answer.
-        for (var i = 0; i < 40 && !_hasBlePermissions; i++) {
-          await Future<void>.delayed(permissionPollInterval);
-          _hasBlePermissions = await _service.hasBlePermissions();
-        }
-        notifyListeners();
-        if (!_hasBlePermissions) {
-          _statusMessage = 'ble_permission_required';
-          return;
-        }
-      }
-      try {
-        _statusMessage = 'connecting';
-        notifyListeners();
-        final ok = await _service.connect();
-        _connected = ok;
-        _statusMessage = ok ? 'connected' : 'connect_failed';
-        _pendingTasksCount = (await _service.loadPendingTasks()).length;
-      } catch (e) {
-        // Native errors (scan_timeout, bluetooth_disabled, gatt_status_*...)
-        // arrive as PlatformException; surface them instead of failing silently.
-        _connected = false;
-        _statusMessage = 'connect_failed: ${_describeError(e)}';
-      }
+      final error = await _service.pairFromCode(raw);
+      _pairingError = error;
+      paired = error == null;
     });
+    return paired;
   }
 
-  String _describeError(Object e) {
-    if (e is PlatformException) return e.message ?? e.code;
-    return e.toString();
-  }
+  Future<void> syncNow() => _runBusy(_taskSync.syncNow);
 
-  Future<void> disconnect() async {
-    await _runBusy(() async {
-      await _service.disconnect();
-      _connected = false;
-      _statusMessage = 'disconnected';
-    });
-  }
+  Future<void> connect() => _runBusy(() async {
+        await _service.connect();
+      });
 
-  Future<void> startPairing() async {
-    await _runBusy(() async {
-      final ok = await _service.startPairing();
-      _pairCodeRequested = ok;
-      _statusMessage = ok ? 'pair_code_requested' : 'pair_start_failed';
-    });
-  }
-
-  Future<bool> confirmPairing(String code) async {
-    var success = false;
-    await _runBusy(() async {
-      success = await _service.confirmPairing(code);
-      if (success) {
-        _paired = true;
-        _pairCodeRequested = false;
-        _statusMessage = 'paired';
-      } else {
-        _statusMessage = 'pair_invalid_code';
-      }
-    });
-    return success;
-  }
-
-  Future<void> revokePairing() async {
-    await _runBusy(() async {
-      await _service.revokePairing();
-      _paired = false;
-      _pairCodeRequested = false;
-      _statusMessage = 'revoked';
-    });
-  }
-
-  Future<void> syncTasks() async {
-    await _runBusy(() async {
-      try {
-        _lastSyncedRemoteCount = await _service.syncWithTodoService();
-        _pendingTasksCount = (await _service.loadPendingTasks()).length;
-        _statusMessage = 'sync_ok';
-      } catch (e) {
-        _statusMessage = 'sync_failed: $e';
-      }
-    });
-  }
+  /// Disconnects, deletes the stored key and clears the task sync metadata.
+  Future<void> forget() => _runBusy(() async {
+        await _service.forget();
+        await _taskSync.clearMeta();
+        _pairingError = null;
+      });
 
   Future<void> toggleAllowedApp(String app, bool enabled) async {
     final next = Set<String>.from(_allowedApps);
@@ -177,27 +96,12 @@ class Esp32BoardViewModel extends ChangeNotifier {
     }
     _allowedApps = next;
     notifyListeners();
-    await _service.saveAllowedApps(next);
+    await _forwarder.saveAllowedApps(next);
   }
 
-  void selectCharacter(int index) {
-    if (index < 0 || index > 3) return;
-    _selectedCharIdx = index;
+  void _onStatusChanged() {
+    _status = _service.status.value;
     notifyListeners();
-  }
-
-  Future<bool> sendConfig({String? ssid, String? pass, String? city}) async {
-    var ok = false;
-    await _runBusy(() async {
-      ok = await _service.configureBoard(
-        ssid: ssid,
-        pass: pass,
-        city: city,
-        charIdx: _selectedCharIdx,
-      );
-      _statusMessage = ok ? 'config_ok' : 'config_failed';
-    });
-    return ok;
   }
 
   Future<void> _runBusy(Future<void> Function() action) async {
@@ -214,8 +118,7 @@ class Esp32BoardViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _connSub?.cancel();
-    _service.dispose();
+    _service.status.removeListener(_onStatusChanged);
     super.dispose();
   }
 }

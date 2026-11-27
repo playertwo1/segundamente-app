@@ -5263,4 +5263,125 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mediaLibraryShare => 'Share';
+
+  @override
+  String get esp32BoardTitle => 'ESP32-S3 board';
+
+  @override
+  String get esp32SectionStatus => 'Status';
+
+  @override
+  String get esp32LinkNotPaired => 'Not paired';
+
+  @override
+  String get esp32LinkDisconnected => 'Disconnected';
+
+  @override
+  String get esp32LinkConnecting => 'Connecting…';
+
+  @override
+  String get esp32LinkConnected => 'Connected';
+
+  @override
+  String get esp32BoardOnline => 'Board online';
+
+  @override
+  String get esp32BoardOffline => 'Board offline';
+
+  @override
+  String get esp32KeyRejectedWarning =>
+      'The board changed its key. Scan the new QR code.';
+
+  @override
+  String get esp32BadCredentialsWarning =>
+      'The MQTT server rejected the username or password.';
+
+  @override
+  String get esp32SyncNow => 'Sync now';
+
+  @override
+  String get esp32ConnectNow => 'Connect';
+
+  @override
+  String get esp32SectionPairing => 'Pairing';
+
+  @override
+  String get esp32PairingUnpairedHint =>
+      'Scan the QR code shown on the board, or paste its text, to pair this phone.';
+
+  @override
+  String get esp32PairingPairedHint =>
+      'This phone is paired with the board. Forgetting the board deletes the saved key.';
+
+  @override
+  String get esp32ScanQr => 'Scan board QR code';
+
+  @override
+  String get esp32ScannerTitle => 'Point the camera at the board QR code';
+
+  @override
+  String get esp32PasteCodeLabel => 'Paste code';
+
+  @override
+  String get esp32PairButton => 'Pair';
+
+  @override
+  String get esp32ForgetBoard => 'Forget board';
+
+  @override
+  String get esp32ForgetConfirmTitle => 'Forget the board?';
+
+  @override
+  String get esp32ForgetConfirmBody =>
+      'This phone stops syncing with the board until you scan a new QR code. The saved key is deleted.';
+
+  @override
+  String get esp32ForgetConfirmAction => 'Forget';
+
+  @override
+  String get esp32PairErrorNotJson => 'This text is not a board code.';
+
+  @override
+  String get esp32PairErrorWrongType =>
+      'This QR code is not from the ESP32-S3 board.';
+
+  @override
+  String get esp32PairErrorUnsupportedVersion =>
+      'This board code version is not supported. Update the app or the board.';
+
+  @override
+  String get esp32PairErrorBadUri =>
+      'The broker address in the code is invalid.';
+
+  @override
+  String get esp32PairErrorMissingCredentials =>
+      'The code has no MQTT username or password.';
+
+  @override
+  String get esp32PairErrorBadRoom => 'The room id in the code is invalid.';
+
+  @override
+  String get esp32PairErrorBadKey => 'The room key in the code is invalid.';
+
+  @override
+  String get esp32SectionNotifications => 'Forwarded notifications';
+
+  @override
+  String get esp32NotifAccessHint =>
+      'To forward notifications, allow Segunda Mente to read them in the Android settings.';
+
+  @override
+  String get esp32EnableNotifAccess => 'Enable notification access';
+
+  @override
+  String get esp32NotifAppWhatsapp => 'WhatsApp';
+
+  @override
+  String get esp32NotifAppCall => 'Calls';
+
+  @override
+  String get esp32NotifAppMessages => 'Messages (SMS)';
+
+  @override
+  String get esp32NotifAppCalendar => 'Calendar';
 }

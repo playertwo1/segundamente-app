@@ -5310,4 +5310,125 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get mediaLibraryShare => 'Compartilhar';
+
+  @override
+  String get esp32BoardTitle => 'Placa ESP32-S3';
+
+  @override
+  String get esp32SectionStatus => 'Estado';
+
+  @override
+  String get esp32LinkNotPaired => 'Não pareado';
+
+  @override
+  String get esp32LinkDisconnected => 'Desconectado';
+
+  @override
+  String get esp32LinkConnecting => 'Conectando…';
+
+  @override
+  String get esp32LinkConnected => 'Conectado';
+
+  @override
+  String get esp32BoardOnline => 'Placa online';
+
+  @override
+  String get esp32BoardOffline => 'Placa offline';
+
+  @override
+  String get esp32KeyRejectedWarning =>
+      'A placa trocou a chave. Leia o QR novo.';
+
+  @override
+  String get esp32BadCredentialsWarning =>
+      'O servidor MQTT recusou o usuário ou a senha.';
+
+  @override
+  String get esp32SyncNow => 'Sincronizar agora';
+
+  @override
+  String get esp32ConnectNow => 'Conectar';
+
+  @override
+  String get esp32SectionPairing => 'Pareamento';
+
+  @override
+  String get esp32PairingUnpairedHint =>
+      'Leia o QR code da placa ou cole o texto dele para parear este celular.';
+
+  @override
+  String get esp32PairingPairedHint =>
+      'Este celular está pareado com a placa. Esquecer a placa apaga a chave guardada.';
+
+  @override
+  String get esp32ScanQr => 'Ler QR da placa';
+
+  @override
+  String get esp32ScannerTitle => 'Aponte a câmera para o QR da placa';
+
+  @override
+  String get esp32PasteCodeLabel => 'Colar código';
+
+  @override
+  String get esp32PairButton => 'Parear';
+
+  @override
+  String get esp32ForgetBoard => 'Esquecer placa';
+
+  @override
+  String get esp32ForgetConfirmTitle => 'Esquecer a placa?';
+
+  @override
+  String get esp32ForgetConfirmBody =>
+      'Este celular deixa de sincronizar com a placa até você ler um QR novo. A chave guardada é apagada.';
+
+  @override
+  String get esp32ForgetConfirmAction => 'Esquecer';
+
+  @override
+  String get esp32PairErrorNotJson => 'Este texto não é um código da placa.';
+
+  @override
+  String get esp32PairErrorWrongType => 'Este QR code não é da placa ESP32-S3.';
+
+  @override
+  String get esp32PairErrorUnsupportedVersion =>
+      'A versão deste código não é suportada. Atualize o app ou a placa.';
+
+  @override
+  String get esp32PairErrorBadUri =>
+      'O endereço do broker no código é inválido.';
+
+  @override
+  String get esp32PairErrorMissingCredentials =>
+      'O código não traz usuário ou senha do MQTT.';
+
+  @override
+  String get esp32PairErrorBadRoom =>
+      'O identificador da sala no código é inválido.';
+
+  @override
+  String get esp32PairErrorBadKey => 'A chave da sala no código é inválida.';
+
+  @override
+  String get esp32SectionNotifications => 'Notificações encaminhadas';
+
+  @override
+  String get esp32NotifAccessHint =>
+      'Para encaminhar notificações, permita que o Segunda Mente as leia nas configurações do Android.';
+
+  @override
+  String get esp32EnableNotifAccess => 'Habilitar acesso a notificações';
+
+  @override
+  String get esp32NotifAppWhatsapp => 'WhatsApp';
+
+  @override
+  String get esp32NotifAppCall => 'Chamadas';
+
+  @override
+  String get esp32NotifAppMessages => 'Mensagens (SMS)';
+
+  @override
+  String get esp32NotifAppCalendar => 'Agenda';
 }

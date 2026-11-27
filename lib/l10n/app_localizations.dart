@@ -9284,6 +9284,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share'**
   String get mediaLibraryShare;
+
+  /// No description provided for @esp32BoardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ESP32-S3 board'**
+  String get esp32BoardTitle;
+
+  /// No description provided for @esp32SectionStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get esp32SectionStatus;
+
+  /// No description provided for @esp32LinkNotPaired.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paired'**
+  String get esp32LinkNotPaired;
+
+  /// No description provided for @esp32LinkDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get esp32LinkDisconnected;
+
+  /// No description provided for @esp32LinkConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get esp32LinkConnecting;
+
+  /// No description provided for @esp32LinkConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get esp32LinkConnected;
+
+  /// No description provided for @esp32BoardOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Board online'**
+  String get esp32BoardOnline;
+
+  /// No description provided for @esp32BoardOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Board offline'**
+  String get esp32BoardOffline;
+
+  /// No description provided for @esp32KeyRejectedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The board changed its key. Scan the new QR code.'**
+  String get esp32KeyRejectedWarning;
+
+  /// No description provided for @esp32BadCredentialsWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The MQTT server rejected the username or password.'**
+  String get esp32BadCredentialsWarning;
+
+  /// No description provided for @esp32SyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get esp32SyncNow;
+
+  /// No description provided for @esp32ConnectNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get esp32ConnectNow;
+
+  /// No description provided for @esp32SectionPairing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairing'**
+  String get esp32SectionPairing;
+
+  /// No description provided for @esp32PairingUnpairedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the QR code shown on the board, or paste its text, to pair this phone.'**
+  String get esp32PairingUnpairedHint;
+
+  /// No description provided for @esp32PairingPairedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone is paired with the board. Forgetting the board deletes the saved key.'**
+  String get esp32PairingPairedHint;
+
+  /// No description provided for @esp32ScanQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan board QR code'**
+  String get esp32ScanQr;
+
+  /// No description provided for @esp32ScannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the board QR code'**
+  String get esp32ScannerTitle;
+
+  /// No description provided for @esp32PasteCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste code'**
+  String get esp32PasteCodeLabel;
+
+  /// No description provided for @esp32PairButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair'**
+  String get esp32PairButton;
+
+  /// No description provided for @esp32ForgetBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget board'**
+  String get esp32ForgetBoard;
+
+  /// No description provided for @esp32ForgetConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget the board?'**
+  String get esp32ForgetConfirmTitle;
+
+  /// No description provided for @esp32ForgetConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone stops syncing with the board until you scan a new QR code. The saved key is deleted.'**
+  String get esp32ForgetConfirmBody;
+
+  /// No description provided for @esp32ForgetConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget'**
+  String get esp32ForgetConfirmAction;
+
+  /// No description provided for @esp32PairErrorNotJson.
+  ///
+  /// In en, this message translates to:
+  /// **'This text is not a board code.'**
+  String get esp32PairErrorNotJson;
+
+  /// No description provided for @esp32PairErrorWrongType.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code is not from the ESP32-S3 board.'**
+  String get esp32PairErrorWrongType;
+
+  /// No description provided for @esp32PairErrorUnsupportedVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'This board code version is not supported. Update the app or the board.'**
+  String get esp32PairErrorUnsupportedVersion;
+
+  /// No description provided for @esp32PairErrorBadUri.
+  ///
+  /// In en, this message translates to:
+  /// **'The broker address in the code is invalid.'**
+  String get esp32PairErrorBadUri;
+
+  /// No description provided for @esp32PairErrorMissingCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'The code has no MQTT username or password.'**
+  String get esp32PairErrorMissingCredentials;
+
+  /// No description provided for @esp32PairErrorBadRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'The room id in the code is invalid.'**
+  String get esp32PairErrorBadRoom;
+
+  /// No description provided for @esp32PairErrorBadKey.
+  ///
+  /// In en, this message translates to:
+  /// **'The room key in the code is invalid.'**
+  String get esp32PairErrorBadKey;
+
+  /// No description provided for @esp32SectionNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded notifications'**
+  String get esp32SectionNotifications;
+
+  /// No description provided for @esp32NotifAccessHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To forward notifications, allow Segunda Mente to read them in the Android settings.'**
+  String get esp32NotifAccessHint;
+
+  /// No description provided for @esp32EnableNotifAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notification access'**
+  String get esp32EnableNotifAccess;
+
+  /// No description provided for @esp32NotifAppWhatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get esp32NotifAppWhatsapp;
+
+  /// No description provided for @esp32NotifAppCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get esp32NotifAppCall;
+
+  /// No description provided for @esp32NotifAppMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages (SMS)'**
+  String get esp32NotifAppMessages;
+
+  /// No description provided for @esp32NotifAppCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get esp32NotifAppCalendar;
 }
 
 class _AppLocalizationsDelegate
