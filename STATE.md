@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.16 (2026-11-27, GitHub Release) · **Fase ativa:** F16 — Ponte BLE (`IN_PROGRESS`, falta S25); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F16 — Ponte BLE (`IN_PROGRESS`, falta S25); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -39,9 +39,9 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Evidências recentes
 
-### Release 1.0.16: correção do Conectar da placa BLE (2026-11-27)
+### Release 1.0.20: correção do Conectar da placa BLE (2026-11-27)
 
-- APK `segundamente_global_1.0.16_155.apk` (`129046579` bytes, SHA-256 `9b8591f62f99de41459fa5a11c5138f71222874f1355c4fe894d6ff5c42d81ce`), `versionCode` `155` / `versionName` `1.0.16`. Certificado `216c29ff…ee05f`, igual ao da `1.0.15`. Notas em [docs/releases/v1.0.16.md](docs/releases/v1.0.16.md).
+- APK `segundamente_global_1.0.20_156.apk` (`129046583` bytes, SHA-256 `0547a8d9a77c4fafd8ee1a68f3861969bf883b80b3fd9133f2417a738ab5f9ae`), `versionCode` `156` / `versionName` `1.0.20`. Certificado `216c29ff…ee05f`, igual ao da `1.0.15`. Notas em [docs/releases/v1.0.20.md](docs/releases/v1.0.20.md).
 - `flutter test --no-pub` → `+2222 ~2: All other tests passed!`. `flutter build apk --flavor global --release --no-pub` → OK.
 - `NOT_RUN`: S25 com a placa física.
 
