@@ -3,12 +3,13 @@ package com.memexlab.memex
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.memexlab.memex.channels.Esp32BleChannelHandler
+import com.memexlab.memex.channels.Esp32NotificationChannelHandler
 
 /**
- * Optional notification listener for F16-04: forwards selected notifications
- * (calls, WhatsApp, SMS/messages, Calendar) to `Esp32BleChannelHandler` so Dart
- * applies user app filters and HMAC-signs packets to `SegundaMente-Placa`.
+ * Optional notification listener for F17-04: forwards selected notifications
+ * (calls, WhatsApp, SMS/messages, Calendar) to `Esp32NotificationChannelHandler`.
+ * Dart applies the user's app filter and publishes them to the board over MQTT
+ * (`sm/<sala>/notif`).
  */
 class Esp32NotificationListenerService : NotificationListenerService() {
 
@@ -38,6 +39,6 @@ class Esp32NotificationListenerService : NotificationListenerService() {
             ?: extras.getCharSequence(Notification.EXTRA_TEXT))?.toString()?.trim().orEmpty()
         if (title.isEmpty() && body.isEmpty()) return
 
-        Esp32BleChannelHandler.emitNotification(app = appTag, title = title, body = body)
+        Esp32NotificationChannelHandler.emitNotification(app = appTag, title = title, body = body)
     }
 }
