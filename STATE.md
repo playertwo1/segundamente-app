@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-23 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.9 (2026-11-23, GitHub Release; a 1.0.8 ficou como rascunho sem APK no GitHub) · **Fase ativa:** F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.15 (2026-11-27, GitHub Release) · **Fase ativa:** F16 — Ponte BLE (`IN_PROGRESS`, falta S25); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -38,6 +38,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### Release 1.0.15 + Ponte BLE F16 (2026-11-27)
+
+- APK `segundamente_global_1.0.15_154.apk` (`129046583` bytes, SHA-256 `f8e44d4405a63d21792d4c979f7c81ec3cc631bb2b04c9b995fe667230a3fdc7`), `versionCode` `154` / `versionName` `1.0.15`, pacote `app.segundamente`. Certificado `216c29ff…ee05f`, igual ao da `1.0.14`. Notas em [docs/releases/v1.0.15.md](docs/releases/v1.0.15.md).
+- `flutter test --no-pub --reporter compact` → `+2219 ~2: All other tests passed!` (0 falhas). `flutter analyze --no-pub` nos arquivos da F16 → `No issues found!`. `flutter build apk --flavor global --release` → `BUILD_EXIT=0` (Kotlin + Gradle + R8 OK).
+- `NOT_RUN`: validação presencial da F16 no Galaxy S25 Ultra com a placa física (pareamento PIN 6 dígitos, sync bidirecional de tarefas, WhatsApp em ≤ 5 s 3x, Wi-Fi/cidade/personagem, revogação e conferência de logs).
 
 ### Assistente Ativo: despertar da persona com o app em segundo plano (2026-11-25, PR #2)
 
