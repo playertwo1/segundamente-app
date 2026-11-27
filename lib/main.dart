@@ -74,6 +74,7 @@ import 'package:memex/data/services/app_action_link_service.dart';
 import 'package:memex/data/services/app_action_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/data/services/todo_sync_service.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_bootstrap.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
 import 'package:memex/utils/wakelock_manager.dart';
@@ -276,6 +277,15 @@ class RootShellState extends State<RootShell> {
             .syncNow(reason: 'lifecycle')
             .then((_) {}, onError: (_) {}),
       );
+      unawaited(
+        Esp32MqttBootstrap.instance.start().then<void>(
+          (_) {},
+          onError: (Object error, StackTrace stackTrace) {
+            getLogger('Esp32MqttBootstrap')
+                .warning('MQTT start failed', error, stackTrace);
+          },
+        ),
+      );
     }
 
     if (mounted) {
@@ -463,11 +473,13 @@ class _MemexAppState extends State<MemexApp> with WidgetsBindingObserver {
         ),
       );
       unawaited(AgentBackgroundTaskService.instance.onAppPaused());
+      Esp32MqttBootstrap.instance.onPaused();
       _lastPausedTime = DateTime.now();
       _checkLockSettingsBeforeLocking();
     } else if (state == AppLifecycleState.resumed) {
       unawaited(LocalTaskExecutor.instance.clearGracefulShutdownMarker());
       unawaited(AgentBackgroundTaskService.instance.onAppResumed());
+      Esp32MqttBootstrap.instance.onResumed();
       unawaited(
         TodoSyncService.instance
             .syncNow(reason: 'lifecycle')
