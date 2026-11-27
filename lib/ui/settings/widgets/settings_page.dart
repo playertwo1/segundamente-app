@@ -12,6 +12,8 @@ import 'package:memex/ui/settings/widgets/data_storage_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
 import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
 import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
+import 'package:memex/ui/esp32/view_models/esp32_board_viewmodel.dart';
+import 'package:memex/ui/esp32/widgets/esp32_board_page.dart';
 import 'package:memex/ui/todo/view_models/todo_shortcut_settings_viewmodel.dart';
 import 'package:memex/ui/todo/widgets/active_assistant_settings_page.dart';
 import 'package:memex/ui/todo/widgets/todo_shortcut_settings_page.dart';
@@ -1051,6 +1053,68 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(height: 2),
                           Text(
                             UserStorage.l10n.lumenPairingSubtitle,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textTertiary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.divider),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const ValueKey('esp32-board-settings'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => Esp32BoardPage(
+                    viewModel: Esp32BoardViewModel(),
+                  ),
+                ),
+              ),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.divider)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.watch_outlined,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _currentLocaleTag.startsWith('pt')
+                                ? 'Placa ESP32-S3 (BLE)'
+                                : 'ESP32-S3 Board (BLE)',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _currentLocaleTag.startsWith('pt')
+                                ? 'Pareamento Bluetooth, tarefas e notificações'
+                                : 'Bluetooth pairing, tasks & notifications',
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textTertiary,
