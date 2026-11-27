@@ -27,5 +27,6 @@ object ChannelRegistrar {
         ClipboardPreviewChannelHandler.register(flutterEngine, activity)
         TtsChannelHandler.register(flutterEngine, activity)
         FloatingChatChannelHandler.register(flutterEngine, activity)
+        Esp32BleChannelHandler.register(flutterEngine, activity)
     }
 }

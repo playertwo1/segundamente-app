@@ -31,6 +31,7 @@ O lado desktop (Lumen) tem roadmap próprio no repositório `playertwo1/coucou`.
 | [F13 — Google](docs/roadmap/F13-google.md) | Login Google, backup semanal no Drive e Google Calendar | BLOCKED: falta o projeto Google Cloud do dono (D-055) |
 | [F14 — Assistente ativo](docs/roadmap/F14-assistente-ativo.md) | Resumos de manhã e de tarde, cobrança de tarefas paradas e sugestões das personas | REVIEW (D-074): código pronto, S25 NOT_RUN |
 | [F15 — Widget e atalhos Android](docs/roadmap/F15-widget-e-atalhos-android.md) | Widget redimensionável, chat flutuante, painel rápido e minicápsula | F15-01 DONE; F15-02 a F15-07 com código, S25 NOT_RUN |
+| [F16 — Ponte Bluetooth LE com a placa ESP32-S3 AMOLED](docs/roadmap/F16-ponte-placa-esp32.md) | Pareamento PIN 6 dígitos, sync bidirecional de tarefas, notificações e config da placa via BLE GATT | IN_PROGRESS: F16-01 a F16-06 com código e testes; S25 NOT_RUN |
 
 Ideias aprovadas para pensar depois, sem autorização de implementação: [docs/roadmap/IDEIAS-FUTURAS.md](docs/roadmap/IDEIAS-FUTURAS.md).
 
