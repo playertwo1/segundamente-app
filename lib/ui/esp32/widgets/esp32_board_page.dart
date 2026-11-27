@@ -55,6 +55,17 @@ class _Esp32BoardPageState extends State<Esp32BoardPage> {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
+            if (vm.statusMessage != null) ...<Widget>[
+              Text(
+                vm.statusMessage!,
+                key: const ValueKey('esp32-status-text'),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             _buildConnectionCard(vm),
             const SizedBox(height: 16),
             _buildPairingCard(vm),
@@ -64,17 +75,6 @@ class _Esp32BoardPageState extends State<Esp32BoardPage> {
             _buildNotificationCard(vm),
             const SizedBox(height: 16),
             _buildConfigCard(vm),
-            if (vm.statusMessage != null) ...<Widget>[
-              const SizedBox(height: 16),
-              Text(
-                vm.statusMessage!,
-                key: const ValueKey('esp32-status-text'),
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-            ],
           ],
         ),
       ),

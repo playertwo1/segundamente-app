@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:memex/data/services/esp32_ble_bridge_service.dart';
 
 /// Character options available on the ESP32-S3 AMOLED firmware (`0..3`).
@@ -18,6 +19,10 @@ class Esp32BoardViewModel extends ChangeNotifier {
 
   final Esp32BleBridgeService _service;
   StreamSubscription<bool>? _connSub;
+
+  /// Poll interval while waiting for the Bluetooth permission dialog.
+  @visibleForTesting
+  Duration permissionPollInterval = const Duration(milliseconds: 500);
 
   bool _connected = false;
   bool _paired = false;
@@ -76,18 +81,39 @@ class Esp32BoardViewModel extends ChangeNotifier {
 
   Future<void> connect() async {
     await _runBusy(() async {
-      if (!_hasBlePermissions) {
+      _statusMessage = null;
+      if (!_hasBlePermissions || !await _service.hasBlePermissions()) {
         _hasBlePermissions = await _service.requestBlePermissions();
+        // The native request is asynchronous (system dialog): wait for the answer.
+        for (var i = 0; i < 40 && !_hasBlePermissions; i++) {
+          await Future<void>.delayed(permissionPollInterval);
+          _hasBlePermissions = await _service.hasBlePermissions();
+        }
+        notifyListeners();
         if (!_hasBlePermissions) {
           _statusMessage = 'ble_permission_required';
           return;
         }
       }
-      final ok = await _service.connect();
-      _connected = ok;
-      _statusMessage = ok ? 'connected' : 'connect_failed';
-      _pendingTasksCount = (await _service.loadPendingTasks()).length;
+      try {
+        _statusMessage = 'connecting';
+        notifyListeners();
+        final ok = await _service.connect();
+        _connected = ok;
+        _statusMessage = ok ? 'connected' : 'connect_failed';
+        _pendingTasksCount = (await _service.loadPendingTasks()).length;
+      } catch (e) {
+        // Native errors (scan_timeout, bluetooth_disabled, gatt_status_*...)
+        // arrive as PlatformException; surface them instead of failing silently.
+        _connected = false;
+        _statusMessage = 'connect_failed: ${_describeError(e)}';
+      }
     });
+  }
+
+  String _describeError(Object e) {
+    if (e is PlatformException) return e.message ?? e.code;
+    return e.toString();
   }
 
   Future<void> disconnect() async {
