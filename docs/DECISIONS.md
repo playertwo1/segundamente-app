@@ -492,3 +492,16 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 - A placa já removeu o BLE e fala MQTT (firmware Q1 do `esp32-s3-amoled-2-16`, 2026-11-27). O contrato é `esp32-s3-amoled-2-16/docs/roadmap/mqtt/PROTOCOLO.md`.
 - A F16 passa a `CANCELLED`: o protocolo BLE dela não existe mais na placa. O que serve continua na F17: o listener de notificações, o filtro de apps e o modelo de tarefas.
 - A F17 implementa o cliente MQTT, o pareamento por QR, as tarefas pelo `SyncEnvelope` v1 e as notificações, e remove o código BLE do app. A configuração de Wi-Fi, cidade e personagem pelo app sai: a placa tem portal próprio e só um personagem.
+
+## D-083 — Cliente MQTT da F17 e regras locais do sync com a placa (2026-11-27)
+
+- **Dependência:** `mqtt_client` 10.14.0 (MIT, Dart puro, MQTT 3.1.1 com TLS), com `event_bus` 2.0.1 (MIT) como transitiva. A cifra AES-256-GCM usa o `pointycastle` que o app já tinha, e o QR usa o `mobile_scanner` do pareamento do Lumen. Nada de cliente MQTT nativo no Kotlin.
+- **Notificações em segundo plano:** o listener nativo entrega a notificação ao Dart pelo motor Flutter compartilhado (`SharedFlutterEngine`), que vive enquanto o processo vive. O Dart conecta, publica e desconecta depois de um tempo ocioso se o app não estiver aberto. Se o Android matar o processo e só o listener voltar, a notificação daquele momento se perde. Isso é aceito até a validação no S25 mostrar o contrário.
+- **Segredos:** o texto inteiro do QR fica numa só chave do `SecretStorage` (`esp32_mqtt_pairing_v1`). As preferências guardam só metadados das tarefas (id, `updated_at`, resumo do conteúdo) e os apps permitidos.
+- **Tarefas:** o celular publica `{"id","text","done","due_ts"}` dentro do envelope. Prioridade, subtarefas e repetição não vão para a placa. `updated_at` é a hora da edição local, registrada quando o `TodoService` grava a mudança. Tarefa concluída há mais de 14 dias e nunca publicada não é enviada. Na limpeza ao reconectar, uma tarefa com edição local ainda não publicada é republicada em vez de apagada.
+
+## D-083 — Alerta de agentes do PC no celular (2026-11-27)
+
+- O dono pediu para trazer ao projeto as ideias do VibePulse (MIT): ver quais agentes estão trabalhando, saber quando um precisa de atenção e responder sem ir ao terminal.
+- O Lumen segura as perguntas e permissões do Claude Code e do Codex (L11 do `coucou`) e publica o pedido no MQTT; a placa (etapa P do `esp32-s3-amoled-2-16`) e o celular podem responder, e a primeira resposta vence.
+- No app: F17-08 (notificação com Aprovar/Negar/Deixar no PC) e F17-09 (como o alerta chega com o app fechado). Aprovar só aparece quando o Lumen marca `can_approve` (opção recomendada pelo próprio agente ou comando na faixa segura); silêncio nunca aprova.

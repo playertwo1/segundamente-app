@@ -4,7 +4,7 @@
 
 **Estado:** READY. A placa já fala MQTT (gravada e com autoteste em 2026-11-27); o broker real depende do dono (conta no HiveMQ Cloud ou EMQX). Substitui a F16 (BLE), que está `CANCELLED` pela D-082.
 
-**Objetivo:** o Segunda Mente sincroniza tarefas com a placa e o Lumen e manda notificações escolhidas do Android para a tela da placa, pelo broker MQTT, com o celular em qualquer rede. O código BLE sai do app.
+**Objetivo:** o Segunda Mente sincroniza tarefas com a placa e o Lumen, manda notificações escolhidas do Android para a tela da placa e avisa quando um agente do PC (Claude Code, Codex) precisa de você, deixando responder pelo celular — tudo pelo broker MQTT, em qualquer rede. O código BLE sai do app.
 
 **Limites:**
 - **Conexão:** MQTT 3.1.1 com TLS (`mqtts://host:8883`). client_id `celular-<sala>`; LWT `sm/<sala>/presenca/celular` = `0`, retido; `1` retido ao conectar.
@@ -24,9 +24,12 @@
 | F17-05 | Tela "Placa ESP32-S3" em Configurações: ler QR (ou colar o código), estado (conectado, placa online), apps permitidos e "Esquecer placa". Saem Wi-Fi, senha, cidade e personagem (D-082) | P1 | F17-02 | READY | Widget test da tela; textos em pt-BR e en |
 | F17-06 | Remover o BLE: `esp32_ble_bridge_service.dart`, `Esp32BleManager.kt`, `Esp32BleChannelHandler.kt` e o registro em `ChannelRegistrar.kt`, as permissões `BLUETOOTH*` do manifest, `kEsp32CharacterNames`, a chave segura `esp32_ble_key_v1` e as preferências `esp32_pending_sync_tasks` (limpas na primeira abertura). Trocar os 10 testes de BLE pelos da F17 | P0 | F17-03, F17-04, F17-05 | READY | `flutter test` e `flutter analyze` verdes; `aapt dump permissions` sem `BLUETOOTH`; nenhuma referência a `esp32_ble` no código |
 | F17-07 | Ponta a ponta no S25 com a placa e o Lumen (broker real do dono) | P0 | F17-06, L10 do Lumen | READY | Notificação de WhatsApp na placa em ≤ 3 s, 3x seguidas, com celular e placa em redes diferentes; tarefa concluída no app aparece concluída na placa e no Lumen; celular desligado durante 3 alterações recebe tudo ao voltar, sem duplicar; broker (MQTTX) sem texto claro nem segredo |
+| F17-08 | Alerta de agente no celular (D-083): assinar `sm/<sala>/pc/agentes/pedido` e mostrar notificação "Claude/Codex precisa de você em <projeto>"; com `can_approve`, ações **Aprovar** (opção recomendada pelo agente) e **Negar**; sempre **Deixar no PC**. Publicar a decisão cifrada em `pc/agentes/decisao` (`{"request_id","view_sha256","verdict","ts"}`). Pedido vencido ou já respondido pela placa some da notificação. Opcional na tela da placa: lista curta de agentes ativos de `pc/agentes/status` | P1 | F17-02, L11.5 do Lumen | READY | Teste com transporte falso: pedido mostra notificação, aprovação publica a decisão certa, vencido não mostra ação, pedido limpo some; no S25, pergunta do Claude aprovada pelo celular chega ao terminal |
+| F17-09 | Decidir como o alerta chega com o app fechado (o Android corta a rede em segundo plano): (a) só com o app aberto, (b) serviço em primeiro plano enquanto houver pedido, ou (c) push (FCM ou ntfy) disparado pelo Lumen sem conteúdo sensível. Registrar em DECISIONS e implementar a escolhida | P1 | F17-08 | READY | Decisão registrada; com a opção escolhida, alerta chega com o app fechado em ≤ 10 s no S25 (ou limite documentado) |
 
 **Portão F17:** validado no Galaxy S25 Ultra com a placa física e o Lumen.
 - Tarefas convergem nos três aparelhos em ≤ 5 s, sem duplicar nem ressuscitar apagadas.
 - WhatsApp chega à placa em ≤ 3 s (3x).
 - A revogação na placa faz o app pedir o QR novo.
 - APK sem permissões de Bluetooth e zero segredos em logs.
+- Alerta de agente (F17-08/09): pedido do Claude Code aprovado pelo celular chega ao terminal, e nada é aprovado sem toque.
