@@ -1,18 +1,19 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`READY`, D-082; a F16/BLE foi cancelada); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`IN_PROGRESS`, D-082/D-084: F17-01 a F17-06 DONE; F17-07 espera o broker do dono); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
 ## Fases em andamento
 
 - **F14 — Assistente ativo:** `REVIEW` (D-074). F14-01 a F14-03 com código e testes no celular; S25 `NOT_RUN`. Calendar (F13-04) e Lumen (F12-06) entram depois.
-- **F16 — Ponte BLE com a placa ESP32-S3 AMOLED:** `CANCELLED` (D-082, 2026-11-27): a placa removeu o Bluetooth. Sucessora: **F17 — Placa por MQTT** (`READY`), que reaproveita o listener de notificações e o filtro de apps e remove o código BLE.
+- **F17 — Placa por MQTT:** `IN_PROGRESS` (D-082, D-084). F17-01 a F17-06 DONE em 2026-11-27 (código, testes e APK sem Bluetooth). F17-07 (ponta a ponta no S25) espera o broker do dono; F17-08 e F17-09 (alerta de agentes, D-083) ficam para outra rodada. A F16 (BLE) está `CANCELLED` e o código BLE saiu do app.
 - **F15 — Widget e atalhos:** F15-02 a F15-08 com código na `main`. Bolha da versão pública em `REVIEW` (D-078). S25 `NOT_RUN`.
 - **F12 — Sync com o Lumen:** `IN_PROGRESS` (D-066). F12-02 a F12-05 DONE; F12-01 espera o dono ler o contrato; F12-06 e F12-07 READY.
 
 ## Próxima ação
 
+0. **F17-07 no S25:** quando o dono criar o broker (HiveMQ Cloud ou EMQX), parear pela tela **Configurações → Placa ESP32-S3** lendo o QR da placa, ligar o acesso a notificações e conferir: WhatsApp na placa em ≤ 3 s (3x, redes diferentes), tarefa concluída no app aparece na placa e no Lumen, 3 alterações com o celular desligado chegam sem duplicar, revogar na placa mostra o aviso de QR novo, e o MQTTX não mostra texto claro nem segredo. Conferir também se a notificação chega com o app fechado pelo gesto de recentes (D-084).
 1. **Validar no S25 o Todo e a tela do registro:** confirmar cartão com subtarefas em “Tarefas deste registro”, conferir a lista e Desfazer, verificar o estado das permissões e disparar um lembrete. Conferir também balões, deslizar para responder e citação.
 2. **Validar a F14 no S25:** na aba Todo, o painel do Assistente Ativo (resumo manhã/tarde, tarefas paradas, sugestões das personas pelo `TodoProposalCard`, silêncio).
 3. **Validar F15-02 a F15-08 no S25:** chat flutuante pelos atalhos, continuidade da conversa ao alternar entre o app e a bolha, widgets pequeno, médio e grande, painel rápido e **Configurações → Bolha do chat**. Também os pontos R01, R02, R04 e R05 de `docs/reviews/F15.md`. O texto do limite de Falar (R03) aguarda decisão do dono.
@@ -38,6 +39,23 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### F17-01 a F17-06: placa por MQTT e remoção do BLE (2026-11-27, D-084)
+
+- **F17-01:** `mqtt_client` 10.14.0 (MIT) e `event_bus` 2.0.1 (transitiva). O QR usa o `mobile_scanner`, e a cifra o `pointycastle`, que o app já tinha.
+- **F17-02:** `lib/data/services/esp32_mqtt/` (`Esp32RoomCrypto`, `Esp32MqttPairing`, `Esp32MqttService`). Vetores fixos de AES-256-GCM gerados fora do Dart foram abertos pelo app: um no .NET `AesGcm` (AAD `placa`) e outro no Python `cryptography` 50.0.2 `AESGCM` (AAD `lumen`). Com o `from` trocado, o envelope é recusado.
+- **F17-03:** `Esp32MqttTaskSync`, com tópico retido por tarefa, vazio retido ao apagar, maior `updated_at` vence e limpeza com a trava do protocolo. O `TodoService.localMutationObserver` marca a hora da edição local.
+- **F17-04:** `Esp32MqttNotificationForwarder` e o canal Kotlin `com.memexlab.memex/esp32_notif`, com filtro de apps, corte em 63/159 bytes e fila de 5 min.
+- **F17-05:** tela da placa reescrita, com QR ou colar, estado, aviso de chave trocada, apps e "Esquecer placa", em 37 chaves ARB EN/PT. Saíram PIN, Wi-Fi, cidade e personagem.
+- **F17-06:** removidos o serviço BLE, `Esp32BleManager.kt`, `Esp32BleChannelHandler.kt`, as permissões `BLUETOOTH*` e os 10 testes BLE. `Esp32MqttBootstrap` limpa `esp32_ble_key_v1` e `esp32_pending_sync_tasks` uma vez, conecta ao abrir e desconecta 60 s depois de o app sair da tela.
+- `flutter test --no-pub --reporter compact` → `+2327 ~2: All other tests passed!`.
+- `flutter analyze --no-pub` → `165 issues found`, 0 erros e nenhuma nos arquivos da F17. A linha de base era 170.
+- `python scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+- `gradlew :app:compileGlobalDevDebugKotlin` (JDK 17) → `BUILD SUCCESSFUL`.
+- Build release `flutter build apk --flavor global --release` → `Built build\app\outputs\flutter-apk\app-global-release.apk (123.3MB)`. A primeira tentativa com `--no-pub` falhou porque o `GeneratedPluginRegistrant.java` estava velho e citava o `flutter_native_splash` (dev). Sem `--no-pub`, o arquivo é gerado de novo e o build passa.
+- `aapt dump permissions` no APK → 27 permissões, 0 com `BLUETOOTH`.
+- Restam referências a `esp32_ble` só nas chaves de legado limpas pelo bootstrap e na preferência `esp32_ble_allowed_apps`, mantida para preservar a escolha de apps.
+- `NOT_RUN`: tudo com broker real, placa física e S25. Isso inclui conexão TLS, LWT, notificação real com o app aberto e fechado, convergência com o Lumen, revogação, leitura do QR pela câmera e logs sem segredo no aparelho. Todos os testes usam transporte falso. Nenhuma release foi publicada.
 
 ### Release 1.0.20: correção do Conectar da placa BLE (2026-11-27)
 
