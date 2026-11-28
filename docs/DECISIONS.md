@@ -505,3 +505,52 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 - **Notificações em segundo plano:** o listener nativo entrega a notificação ao Dart pelo motor Flutter compartilhado (`SharedFlutterEngine`), que vive enquanto o processo vive. O Dart conecta, publica e desconecta depois de um tempo ocioso se o app não estiver aberto. Se o Android matar o processo e só o listener voltar, a notificação daquele momento se perde. Isso é aceito até a validação no S25 mostrar o contrário.
 - **Segredos:** o texto inteiro do QR fica numa só chave do `SecretStorage` (`esp32_mqtt_pairing_v1`). As preferências guardam só metadados das tarefas (id, `updated_at`, resumo do conteúdo) e os apps permitidos.
 - **Tarefas:** o celular publica `{"id","text","done","due_ts"}` dentro do envelope. Prioridade, subtarefas e repetição não vão para a placa. `updated_at` é a hora da edição local, registrada quando o `TodoService` grava a mudança. Tarefa concluída há mais de 14 dias e nunca publicada não é enviada. Na limpeza ao reconectar, uma tarefa com edição local ainda não publicada é republicada em vez de apagada.
+
+## D-085 — Como o alerta de agente chega com o app fechado (F17-09) (2026-11-28) — PROPOSED
+
+> **Estado: PROPOSED.** Nada foi implementado. A escolha é do dono; até lá vale o comportamento atual da F17-08 (opção a). Os números abaixo são estimativas de projeto, não medições: tudo no S25 está `NOT_RUN`.
+
+**Problema.** A F17-08 só recebe `pc/agentes/pedido` enquanto o MQTT está ligado, isto é, com o app aberto e por até 60 s depois de ele sair da tela (D-084). Com o app fechado, o Android 15+ corta a rede de apps em segundo plano (Doze, App Standby e, no S25, o "Apps em suspensão" da Samsung). O pedido fica retido no broker e só aparece quando o app volta. O critério da F17-09 é o alerta chegar em ≤ 10 s com o app fechado. Observação: o STATE registra o S25 com Android 17. As restrições abaixo valem desde o Android 15 e continuam valendo nele.
+
+### (a) Só com o app aberto (o que existe hoje)
+
+- **Bateria:** zero a mais. A conexão já existe com o app na tela.
+- **Rede:** zero a mais. São a conexão TLS ao abrir (~5–10 KB) e o keepalive enquanto o app está aberto.
+- **Alcance:** não cumpre o critério de ≤ 10 s com o app fechado. Serve quando o dono está com o app aberto ou abre o app para conferir.
+- **Custo de código:** nenhum.
+
+### (b) Serviço em primeiro plano
+
+- **Como seria:** o app não sabe que existe pedido sem estar conectado. Na prática, o serviço fica ligado o tempo todo enquanto a placa está pareada, ou numa janela que o dono liga ("sessão no PC"). Ele mantém o MQTT aberto e assina só `pc/agentes/pedido`. O `pc/agentes/status` muda até 1 vez por segundo enquanto os agentes trabalham, então ficaria de fora.
+- **Bateria:** é a opção mais cara. A conexão TLS fica aberta com keepalive.
+  - Com 60 s de keepalive, o rádio acorda ~1.440 vezes por dia: algo como **2–5 %/dia** no 5G/LTE e menos no Wi-Fi.
+  - Com 300 s, cai para ~288 vezes por dia, mas a queda do link é detectada mais devagar.
+  - Precisa da bateria do app em "Sem restrições" no S25.
+- **Rede:** ~0,3–1 MB/dia só de keepalive e reconexões (60 s), mais cada pedido (< 1 KB).
+- **Android 15:**
+  - Notificação fixa obrigatória.
+  - O tipo de serviço tem de ser declarado. `dataSync` tem limite de 6 h a cada 24 h no Android 15, então não serve para ficar ligado o dia todo. O que serve é `remoteMessaging` ou `specialUse`, que fora da Play Store não exige justificativa, mas mesmo assim pode ser morto pela Samsung.
+  - Não pode ser iniciado a partir do segundo plano: só ao abrir o app ou por uma ação do usuário.
+- **Custo de código:** serviço Kotlin e motor Flutter em segundo plano (ou cliente MQTT nativo, que a D-084 descartou), permissão `FOREGROUND_SERVICE_*`, notificação fixa e validação longa no S25.
+
+### (c) Push (FCM ou ntfy) disparado pelo Lumen, sem conteúdo sensível
+
+- **Como seria:** quando há pedido novo, o Lumen (ou o Worker do relay, que já existe) manda um push só para acordar o app. O push leva um id opaco, sem projeto, pergunta ou opções. O app acorda, conecta ao MQTT por ~60 s, recebe o pedido retido cifrado e mostra a notificação da F17-08. Se não conseguir conectar a tempo, mostra um aviso genérico ("Um agente do PC precisa de você").
+- **Bateria:**
+  - **FCM:** ~0 a mais. Usa a conexão que o Google Play Services já mantém, e a mensagem de alta prioridade fura o Doze.
+  - **ntfy:** depende de como chega. Pelo app ntfy, há uma conexão própria, que custa como (b) só que dividida. Pelo UnifiedPush, o custo é o do distribuidor.
+- **Rede:** ~1 KB por push, mais uma conexão TLS ao MQTT (~5–15 KB) por pedido. Com dezenas de pedidos por dia, fica abaixo de 1 MB/dia.
+- **Latência esperada:** FCM de alta prioridade em ~1–3 s, mais ~1–3 s para conectar ao MQTT. Cabe nos ≤ 10 s, a confirmar no S25.
+- **Custo e risco:**
+  - **FCM:**
+    - Exige um projeto Firebase e o `google-services.json` no app (não é segredo, mas é identificador do projeto). Também exige uma credencial de envio no Lumen ou no Worker, que é segredo e fica fora do repositório.
+    - Traz a dependência `firebase_messaging` (BSD-3) e o Google Play Services.
+    - O Android rebaixa a prioridade se o push não gerar notificação visível.
+  - **ntfy:**
+    - Não depende do Google, mas precisa do app ntfy instalado ou de um distribuidor UnifiedPush.
+    - No `ntfy.sh`, o tópico é público por obscuridade. Por isso o conteúdo não pode ser sensível, o que já é regra aqui.
+  - Nos dois casos, dá trabalho no Lumen ou no Worker (etapa L11 do `coucou`).
+
+### Recomendação do agente (não é decisão)
+
+(c) com FCM, só para acordar o app, mantendo (a) como base. É a única opção com custo de bateria próximo de zero que cumpre os ≤ 10 s com o app fechado. A (b) cumpre o tempo, mas com notificação fixa e o maior gasto de bateria. Se o dono não quiser Google no caminho, a alternativa é (c) com ntfy pelo UnifiedPush.
