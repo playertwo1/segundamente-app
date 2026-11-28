@@ -9506,6 +9506,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Calendar'**
   String get esp32NotifAppCalendar;
+
+  /// No description provided for @esp32AgentNeedsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{provider} needs you in {project}'**
+  String esp32AgentNeedsYou(String provider, String project);
+
+  /// No description provided for @esp32AgentUnknownProject.
+  ///
+  /// In en, this message translates to:
+  /// **'a project'**
+  String get esp32AgentUnknownProject;
+
+  /// No description provided for @esp32AgentActionApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get esp32AgentActionApprove;
+
+  /// No description provided for @esp32AgentActionDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get esp32AgentActionDeny;
+
+  /// No description provided for @esp32AgentActionTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave on PC'**
+  String get esp32AgentActionTerminal;
+
+  /// No description provided for @esp32AgentChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'PC agents'**
+  String get esp32AgentChannelName;
+
+  /// No description provided for @esp32SectionAgents.
+  ///
+  /// In en, this message translates to:
+  /// **'Agents on the PC'**
+  String get esp32SectionAgents;
+
+  /// No description provided for @esp32AgentsNoneActive.
+  ///
+  /// In en, this message translates to:
+  /// **'No active agent right now.'**
+  String get esp32AgentsNoneActive;
+
+  /// No description provided for @esp32AgentStateWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'working'**
+  String get esp32AgentStateWorking;
+
+  /// No description provided for @esp32AgentStateWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'waiting for you'**
+  String get esp32AgentStateWaiting;
+
+  /// No description provided for @esp32AgentStateError.
+  ///
+  /// In en, this message translates to:
+  /// **'error'**
+  String get esp32AgentStateError;
 }
 
 class _AppLocalizationsDelegate

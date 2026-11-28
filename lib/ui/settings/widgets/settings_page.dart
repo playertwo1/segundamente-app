@@ -12,6 +12,7 @@ import 'package:memex/ui/settings/widgets/data_storage_page.dart';
 import 'package:memex/ui/settings/widgets/location_context_settings_page.dart';
 import 'package:memex/ui/lumen/view_models/lumen_pairing_viewmodel.dart';
 import 'package:memex/ui/lumen/widgets/lumen_pairing_page.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_notification_forwarder.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_task_sync.dart';
@@ -1085,6 +1086,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       service: Esp32MqttService.instance,
                       taskSync: Esp32MqttTaskSync.instance,
                       forwarder: Esp32MqttNotificationForwarder.instance,
+                      agentAlerts: Esp32MqttAgentAlerts.instance,
                     ),
                   ),
                 ),

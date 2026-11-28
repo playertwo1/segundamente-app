@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_crypto.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_notification_forwarder.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
@@ -94,6 +95,7 @@ void main() {
     WidgetTester tester, {
     String locale = 'pt',
     Widget Function(BuildContext, ValueChanged<String>)? scanner,
+    Esp32MqttAgentAlerts? agentAlerts,
   }) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1.0;
@@ -103,6 +105,7 @@ void main() {
       service: service,
       taskSync: taskSync,
       forwarder: forwarder,
+      agentAlerts: agentAlerts,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -364,4 +367,95 @@ void main() {
       expect(find.text('Forwarded notifications'), findsOneWidget);
     });
   });
+
+  group('PC agents (F17-08)', () {
+    Uint8List lumenSnapshot(Object snapshot) => Uint8List.fromList(
+          utf8.encode(
+            Esp32RoomCrypto(kFakeRoomKey, random: Random(5)).seal(
+              from: kEsp32FromLumen,
+              plaintext: jsonEncode(snapshot),
+            ),
+          ),
+        );
+
+    testWidgets('lists only the active agents from the Lumen snapshot',
+        (tester) async {
+      final alerts = Esp32MqttAgentAlerts(
+        service: service,
+        notifier: _NoopAgentNotifier(),
+        timerFactory: timers.create,
+      );
+      addTearDown(alerts.stop);
+      await alerts.start();
+      await pairSilently();
+      await pumpPage(tester, agentAlerts: alerts);
+
+      expect(find.text('Agentes no PC'), findsOneWidget);
+      expect(find.text('Nenhum agente ativo agora.'), findsOneWidget);
+
+      await injectFromBoard(
+        tester,
+        'sm/$kFakeRoom/pc/agentes/status',
+        lumenSnapshot(<String, Object>{
+          'v': 2,
+          'seq': 4,
+          'agents': <String, Object>{
+            'claude': <String, Object>{
+              'active_count': 1,
+              'jobs': <Object>[
+                <String, Object>{
+                  'task_id': 't1',
+                  'state': 'working',
+                  'project': 'proj-sintetico',
+                  'activity': 'Edit',
+                  'updated_ms': 500,
+                },
+                <String, Object>{
+                  'task_id': 't2',
+                  'state': 'done',
+                  'project': 'proj-pronto',
+                  'activity': '',
+                  'updated_ms': 500,
+                },
+              ],
+            },
+            'codex': <String, Object>{
+              'active_count': 1,
+              'jobs': <Object>[
+                <String, Object>{
+                  'task_id': 't3',
+                  'state': 'waiting',
+                  'project': 'outro-proj',
+                  'activity': '',
+                  'updated_ms': 3000,
+                },
+              ],
+            },
+          },
+        }),
+        retained: true,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nenhum agente ativo agora.'), findsNothing);
+      expect(find.text('Claude · proj-sintetico · trabalhando'), findsOneWidget);
+      expect(find.text('Codex · outro-proj · esperando você'), findsOneWidget);
+      expect(find.textContaining('proj-pronto'), findsNothing);
+    });
+
+    testWidgets('without the agents service the section is hidden',
+        (tester) async {
+      await pairSilently();
+      await pumpPage(tester);
+      expect(find.text('Agentes no PC'), findsNothing);
+    });
+  });
+}
+
+class _NoopAgentNotifier implements Esp32AgentNotifier {
+  @override
+  Future<void> show(Esp32AgentAlertContent content) async {}
+
+  @override
+  Future<void> cancel() async {}
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_notification_forwarder.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_pairing.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
@@ -13,11 +14,14 @@ class Esp32BoardViewModel extends ChangeNotifier {
     required Esp32MqttService service,
     required Esp32MqttTaskSync taskSync,
     required Esp32MqttNotificationForwarder forwarder,
+    Esp32MqttAgentAlerts? agentAlerts,
   })  : _service = service,
         _taskSync = taskSync,
-        _forwarder = forwarder {
+        _forwarder = forwarder,
+        _agentAlerts = agentAlerts {
     _status = _service.status.value;
     _service.status.addListener(_onStatusChanged);
+    agentAlerts?.activeAgents.addListener(notifyListeners);
   }
 
   static final _logger = getLogger('Esp32BoardViewModel');
@@ -25,6 +29,7 @@ class Esp32BoardViewModel extends ChangeNotifier {
   final Esp32MqttService _service;
   final Esp32MqttTaskSync _taskSync;
   final Esp32MqttNotificationForwarder _forwarder;
+  final Esp32MqttAgentAlerts? _agentAlerts;
 
   late Esp32MqttStatus _status;
   bool _busy = false;
@@ -41,6 +46,13 @@ class Esp32BoardViewModel extends ChangeNotifier {
   Esp32PairingError? get pairingError => _pairingError;
   bool get hasNotificationAccess => _hasNotificationAccess;
   Set<String> get allowedApps => Set<String>.unmodifiable(_allowedApps);
+
+  /// Whether the screen shows the PC agents section (F17-08).
+  bool get showsAgents => _agentAlerts != null;
+
+  /// Active agents from the Lumen snapshot; empty without one.
+  List<Esp32AgentJob> get activeAgents =>
+      _agentAlerts?.activeAgents.value ?? const <Esp32AgentJob>[];
 
   /// Reads the notification access and the apps the user allowed.
   Future<void> initialize() async {
@@ -84,6 +96,7 @@ class Esp32BoardViewModel extends ChangeNotifier {
   Future<void> forget() => _runBusy(() async {
         await _service.forget();
         await _taskSync.clearMeta();
+        await _agentAlerts?.reset();
         _pairingError = null;
       });
 
@@ -119,6 +132,7 @@ class Esp32BoardViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _service.status.removeListener(_onStatusChanged);
+    _agentAlerts?.activeAgents.removeListener(notifyListeners);
     super.dispose();
   }
 }

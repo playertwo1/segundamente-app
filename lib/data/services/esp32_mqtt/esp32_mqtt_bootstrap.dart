@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_notification_forwarder.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_task_sync.dart';
@@ -23,6 +24,7 @@ class Esp32MqttBootstrap {
     required Esp32MqttTaskSync taskSync,
     required Esp32MqttNotificationForwarder forwarder,
     required Esp32MqttSecretStore secretStore,
+    Esp32MqttAgentAlerts? agentAlerts,
     Future<SharedPreferences> Function()? prefsProvider,
     Timer Function(Duration, void Function())? timerFactory,
     this.backgroundIdle = const Duration(seconds: 60),
@@ -30,6 +32,7 @@ class Esp32MqttBootstrap {
         _taskSync = taskSync,
         _forwarder = forwarder,
         _secretStore = secretStore,
+        _agentAlerts = agentAlerts,
         _prefsProvider = prefsProvider ?? SharedPreferences.getInstance,
         _timerFactory = timerFactory ?? _defaultTimer;
 
@@ -38,6 +41,7 @@ class Esp32MqttBootstrap {
     taskSync: Esp32MqttTaskSync.instance,
     forwarder: Esp32MqttNotificationForwarder.instance,
     secretStore: const SecureEsp32MqttSecretStore(),
+    agentAlerts: Esp32MqttAgentAlerts.instance,
   );
 
   static final _logger = getLogger('Esp32MqttBootstrap');
@@ -46,6 +50,7 @@ class Esp32MqttBootstrap {
   final Esp32MqttTaskSync _taskSync;
   final Esp32MqttNotificationForwarder _forwarder;
   final Esp32MqttSecretStore _secretStore;
+  final Esp32MqttAgentAlerts? _agentAlerts;
   final Future<SharedPreferences> Function() _prefsProvider;
   final Timer Function(Duration, void Function()) _timerFactory;
 
@@ -65,6 +70,7 @@ class Esp32MqttBootstrap {
     await _service.init();
     await _taskSync.start();
     await _forwarder.start();
+    await _agentAlerts?.start();
     if (_service.status.value.paired) {
       unawaited(
         _service.connect().then<void>(

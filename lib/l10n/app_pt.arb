@@ -2210,5 +2210,17 @@
   "esp32NotifAppWhatsapp": "WhatsApp",
   "esp32NotifAppCall": "Chamadas",
   "esp32NotifAppMessages": "Mensagens (SMS)",
-  "esp32NotifAppCalendar": "Agenda"
+  "esp32NotifAppCalendar": "Agenda",
+  "esp32AgentNeedsYou": "{provider} precisa de você em {project}",
+  "@esp32AgentNeedsYou": {"placeholders": {"provider": {"type": "String"}, "project": {"type": "String"}}},
+  "esp32AgentUnknownProject": "um projeto",
+  "esp32AgentActionApprove": "Aprovar",
+  "esp32AgentActionDeny": "Negar",
+  "esp32AgentActionTerminal": "Deixar no PC",
+  "esp32AgentChannelName": "Agentes do PC",
+  "esp32SectionAgents": "Agentes no PC",
+  "esp32AgentsNoneActive": "Nenhum agente ativo agora.",
+  "esp32AgentStateWorking": "trabalhando",
+  "esp32AgentStateWaiting": "esperando você",
+  "esp32AgentStateError": "erro"
 }

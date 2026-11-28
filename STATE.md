@@ -1,13 +1,13 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-27 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`IN_PROGRESS`, D-082/D-084: F17-01 a F17-06 DONE; F17-07 espera o broker do dono); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-28 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`IN_PROGRESS`, D-082/D-084: F17-01 a F17-06 DONE; F17-08 REVIEW; F17-07 espera o broker do dono); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
 ## Fases em andamento
 
 - **F14 — Assistente ativo:** `REVIEW` (D-074). F14-01 a F14-03 com código e testes no celular; S25 `NOT_RUN`. Calendar (F13-04) e Lumen (F12-06) entram depois.
-- **F17 — Placa por MQTT:** `IN_PROGRESS` (D-082, D-084). F17-01 a F17-06 DONE em 2026-11-27 (código, testes e APK sem Bluetooth). F17-07 (ponta a ponta no S25) espera o broker do dono; F17-08 e F17-09 (alerta de agentes, D-083) ficam para outra rodada. A F16 (BLE) está `CANCELLED` e o código BLE saiu do app.
+- **F17 — Placa por MQTT:** `IN_PROGRESS` (D-082, D-084). F17-01 a F17-06 DONE em 2026-11-27 (código, testes e APK sem Bluetooth). F17-07 (ponta a ponta no S25) espera o broker do dono. F17-08 (alerta de agentes, D-083) em `REVIEW`: código e testes com transporte falso; S25 e Lumen `NOT_RUN` (o Lumen ainda não publica os tópicos, L11.5). F17-09 ainda não começou. A F16 (BLE) está `CANCELLED` e o código BLE saiu do app.
 - **F15 — Widget e atalhos:** F15-02 a F15-08 com código na `main`. Bolha da versão pública em `REVIEW` (D-078). S25 `NOT_RUN`.
 - **F12 — Sync com o Lumen:** `IN_PROGRESS` (D-066). F12-02 a F12-05 DONE; F12-01 espera o dono ler o contrato; F12-06 e F12-07 READY.
 
@@ -39,6 +39,28 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### F17-08: alerta de agentes do PC no celular (2026-11-28, D-083)
+
+- `lib/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart` (`Esp32MqttAgentAlerts`):
+  - assina `pc/agentes/pedido` e `pc/agentes/status` a cada conexão; só aceita pedido com `from: lumen`;
+  - mostra "Claude/Codex precisa de você em <projeto>" no canal `pc_agents`;
+  - Aprovar e Negar só aparecem com `can_approve`, e Deixar no PC sempre;
+  - publica `{"request_id","view_sha256","verdict","ts"}` cifrado e não retido em `pc/agentes/decisao`, com `ts` em segundos Unix;
+  - o pedido some quando vence (`expires_at`), com payload vazio ou com outro `request_id`, e o já respondido não volta ao reconectar;
+  - um toque feito antes de o pedido retido chegar (abertura a frio) é aplicado uma vez, por até 60 s;
+  - a notificação leva só o `request_id`. Nada do texto vai para log ou `SharedPreferences`.
+- Iniciado pelo `Esp32MqttBootstrap`, e os toques chegam pelo tratador de notificações do `main.dart`. As ações abrem o app (`showsUserInterface`), porque o MQTT vive no isolate principal. "Esquecer placa" limpa pedido e lista.
+- Tela da placa: a seção "Agentes no PC" lista os ativos do snapshot v2: `working`, ou `waiting`/`error` com idade ≤ 120 s. São 12 chaves ARB EN/PT.
+- `flutter test --no-pub --reporter expanded test/data/services/esp32_mqtt/` → `+105: All tests passed!`, com 19 testes novos em `esp32_mqtt_agent_alerts_test.dart`. Cobrem: pedido mostra a notificação, Aprovar publica a decisão certa, sem `can_approve` não há Aprovar nem Negar, vencido não mostra ação, vencimento e payload vazio removem a notificação, e outro `request_id` substitui.
+- `flutter test --no-pub test/ui/esp32/` → `+26: All tests passed!`, com 2 widget tests novos da lista de agentes.
+- `flutter test --no-pub --reporter compact` (suíte inteira) → `+2347 ~2 -1`.
+  - A falha foi `agent_tool_error_result_test.dart`, por `PathAccessException` ao apagar a pasta temporária no Windows (errno 32), fora da F17.
+  - Rodando o arquivo sozinho → `+16: All tests passed!`.
+  - A primeira rodada também teve 1 falha, num teste da F17 que eu editei durante a execução. Rodando de novo → `+105`.
+- `flutter analyze --no-pub` → `165 issues found`, igual à linha de base, e nenhum nos arquivos da F17.
+- `python scripts/check_arb_key_parity.py` → `ARB key parity OK across 1 locales.`
+- `NOT_RUN`: S25, broker real e Lumen (L11.5 não publica ainda). Fica pendente o critério "pergunta do Claude aprovada pelo celular chega ao terminal". Não há teste do `LocalEsp32AgentNotifier` com o plugin real: os botões foram conferidos pelo `Esp32AgentAlertContent`.
 
 ### F17-01 a F17-06: placa por MQTT e remoção do BLE (2026-11-27, D-084)
 

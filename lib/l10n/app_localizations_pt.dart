@@ -5431,4 +5431,39 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get esp32NotifAppCalendar => 'Agenda';
+
+  @override
+  String esp32AgentNeedsYou(String provider, String project) {
+    return '$provider precisa de você em $project';
+  }
+
+  @override
+  String get esp32AgentUnknownProject => 'um projeto';
+
+  @override
+  String get esp32AgentActionApprove => 'Aprovar';
+
+  @override
+  String get esp32AgentActionDeny => 'Negar';
+
+  @override
+  String get esp32AgentActionTerminal => 'Deixar no PC';
+
+  @override
+  String get esp32AgentChannelName => 'Agentes do PC';
+
+  @override
+  String get esp32SectionAgents => 'Agentes no PC';
+
+  @override
+  String get esp32AgentsNoneActive => 'Nenhum agente ativo agora.';
+
+  @override
+  String get esp32AgentStateWorking => 'trabalhando';
+
+  @override
+  String get esp32AgentStateWaiting => 'esperando você';
+
+  @override
+  String get esp32AgentStateError => 'erro';
 }

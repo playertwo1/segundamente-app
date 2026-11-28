@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_pairing.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_service.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_transport.dart';
@@ -182,6 +183,10 @@ class _Esp32BoardPageState extends State<Esp32BoardPage>
             _buildPairingCard(vm),
             const SizedBox(height: 16),
             _buildNotificationsCard(vm),
+            if (vm.showsAgents && vm.paired) ...<Widget>[
+              const SizedBox(height: 16),
+              _buildAgentsCard(vm),
+            ],
           ],
         ),
       ),
@@ -421,6 +426,62 @@ class _Esp32BoardPageState extends State<Esp32BoardPage>
             label: Text(l10n.esp32ForgetBoard),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildAgentsCard(Esp32BoardViewModel vm) {
+    final l10n = UserStorage.l10n;
+    final agents = vm.activeAgents;
+    return _buildSection(
+      title: l10n.esp32SectionAgents,
+      children: <Widget>[
+        if (agents.isEmpty)
+          Text(
+            l10n.esp32AgentsNoneActive,
+            key: const ValueKey('esp32-agents-empty'),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          )
+        else
+          for (final job in agents.take(8))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                key: ValueKey('esp32-agent-${job.provider}-${job.project}'),
+                children: <Widget>[
+                  Icon(
+                    job.state == 'working'
+                        ? Icons.autorenew
+                        : job.state == 'error'
+                            ? Icons.error_outline
+                            : Icons.front_hand_outlined,
+                    size: 18,
+                    color: job.state == 'working'
+                        ? AppColors.success
+                        : job.state == 'error'
+                            ? AppColors.danger
+                            : AppColors.warning,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      <String>[
+                        esp32AgentProviderLabel(job.provider),
+                        if (job.project.isNotEmpty) job.project,
+                        switch (job.state) {
+                          'working' => l10n.esp32AgentStateWorking,
+                          'error' => l10n.esp32AgentStateError,
+                          _ => l10n.esp32AgentStateWaiting,
+                        },
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
       ],
     );
   }

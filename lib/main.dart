@@ -74,6 +74,7 @@ import 'package:memex/data/services/app_action_link_service.dart';
 import 'package:memex/data/services/app_action_service.dart';
 import 'package:memex/data/services/todo_alarm_service.dart';
 import 'package:memex/data/services/todo_sync_service.dart';
+import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_agent_alerts.dart';
 import 'package:memex/data/services/esp32_mqtt/esp32_mqtt_bootstrap.dart';
 import 'package:memex/data/services/speech_transcription_service.dart';
 import 'package:memex/data/services/task_handlers/llm_error_utils.dart';
@@ -91,6 +92,12 @@ final GlobalKey<RootShellState> rootShellKey = GlobalKey<RootShellState>();
 Future<void> _handleTodoAlarmResponse(NotificationResponse response) async {
   const payloadPrefix = 'todoAlarm:';
   final payload = response.payload;
+  // PC agent alerts (F17-08) share the plugin too.
+  if (payload != null && payload.startsWith(kEsp32AgentPayloadPrefix)) {
+    await Esp32MqttAgentAlerts.instance
+        .handleNotificationAction(response.actionId, payload);
+    return;
+  }
   // Persona messages share the plugin, so their taps arrive here too.
   if (payload != null && payload.startsWith('persona:')) {
     AppActionService.instance.handleAction(
