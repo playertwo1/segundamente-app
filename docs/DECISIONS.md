@@ -506,9 +506,15 @@ Decisões substituídas (`SUPERSEDED`) ou já cumpridas, que só abriam, ordenav
 - **Segredos:** o texto inteiro do QR fica numa só chave do `SecretStorage` (`esp32_mqtt_pairing_v1`). As preferências guardam só metadados das tarefas (id, `updated_at`, resumo do conteúdo) e os apps permitidos.
 - **Tarefas:** o celular publica `{"id","text","done","due_ts"}` dentro do envelope. Prioridade, subtarefas e repetição não vão para a placa. `updated_at` é a hora da edição local, registrada quando o `TodoService` grava a mudança. Tarefa concluída há mais de 14 dias e nunca publicada não é enviada. Na limpeza ao reconectar, uma tarefa com edição local ainda não publicada é republicada em vez de apagada.
 
-## D-085 — Como o alerta de agente chega com o app fechado (F17-09) (2026-11-28) — PROPOSED
+## D-085 — Como o alerta de agente chega com o app fechado (F17-09) (2026-11-28) — ACCEPTED
 
-> **Estado: PROPOSED.** Nada foi implementado. A escolha é do dono; até lá vale o comportamento atual da F17-08 (opção a). Os números abaixo são estimativas de projeto, não medições: tudo no S25 está `NOT_RUN`.
+> **Estado: ACCEPTED em 2026-11-28. O dono escolheu a opção (a), só com o app aberto.**
+> - **Por quê:** não gasta bateria nem rede a mais, não exige notificação fixa, Firebase nem trabalho novo no Lumen.
+> - **Limite aceito:** com o app fechado, o alerta não chega. O pedido fica retido no broker e aparece ao abrir o app, enquanto não vencer (`expires_at`). Até 60 s depois de o app sair da tela, a conexão ainda está aberta e o alerta chega. Depois disso, o terminal do PC continua sendo o caminho. Silêncio nunca aprova (D-083).
+> - **Código:** nenhum código novo. É o comportamento da F17-08 com o `Esp32MqttBootstrap` (D-084).
+> - **Opções futuras:** (b) e (c) ficam registradas abaixo como alternativas. Para reabrir, é preciso uma decisão nova.
+>
+> O texto abaixo é a proposta original. Os números são estimativas de projeto, não medições.
 
 **Problema.** A F17-08 só recebe `pc/agentes/pedido` enquanto o MQTT está ligado, isto é, com o app aberto e por até 60 s depois de ele sair da tela (D-084). Com o app fechado, o Android 15+ corta a rede de apps em segundo plano (Doze, App Standby e, no S25, o "Apps em suspensão" da Samsung). O pedido fica retido no broker e só aparece quando o app volta. O critério da F17-09 é o alerta chegar em ≤ 10 s com o app fechado. Observação: o STATE registra o S25 com Android 17. As restrições abaixo valem desde o Android 15 e continuam valendo nele.
 

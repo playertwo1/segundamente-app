@@ -7,7 +7,7 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 ## Fases em andamento
 
 - **F14 — Assistente ativo:** `REVIEW` (D-074). F14-01 a F14-03 com código e testes no celular; S25 `NOT_RUN`. Calendar (F13-04) e Lumen (F12-06) entram depois.
-- **F17 — Placa por MQTT:** `IN_PROGRESS` (D-082, D-084). F17-01 a F17-06 DONE em 2026-11-27 (código, testes e APK sem Bluetooth). F17-07 (ponta a ponta no S25) espera o broker do dono. F17-08 (alerta de agentes, D-083) em `REVIEW`: código e testes com transporte falso; S25 e Lumen `NOT_RUN` (o Lumen ainda não publica os tópicos, L11.5). F17-09 `BLOCKED`: a proposta D-085 (`PROPOSED`) espera o dono escolher entre (a), (b) e (c). Nada foi implementado. A F16 (BLE) está `CANCELLED` e o código BLE saiu do app.
+- **F17 — Placa por MQTT:** `IN_PROGRESS` (D-082, D-084). F17-01 a F17-06 DONE em 2026-11-27 (código, testes e APK sem Bluetooth). F17-07 (ponta a ponta no S25) espera o broker do dono. F17-08 (alerta de agentes, D-083) em `REVIEW`: código e testes com transporte falso; S25 e Lumen `NOT_RUN` (o Lumen ainda não publica os tópicos, L11.5). F17-09 DONE: o dono escolheu a opção (a), só com o app aberto (D-085, `ACCEPTED`). O alerta não chega com o app fechado, só aparece ao abrir o app enquanto o pedido não vence. Não houve código novo. A F16 (BLE) está `CANCELLED` e o código BLE saiu do app.
 - **F15 — Widget e atalhos:** F15-02 a F15-08 com código na `main`. Bolha da versão pública em `REVIEW` (D-078). S25 `NOT_RUN`.
 - **F12 — Sync com o Lumen:** `IN_PROGRESS` (D-066). F12-02 a F12-05 DONE; F12-01 espera o dono ler o contrato; F12-06 e F12-07 READY.
 
@@ -23,7 +23,6 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 
 ## Pendências do dono
 
-- Escolher como o alerta de agente chega com o app fechado (D-085, `PROPOSED`): (a) só com o app aberto, (b) serviço em primeiro plano ou (c) push (FCM ou ntfy) sem conteúdo, disparado pelo Lumen.
 - Criar o projeto Google Cloud em produção sem verificação (F13-01, D-055).
 - Escolher o visual do Lumen no protótipo (Fase L1 do fork).
 - Ler o texto final de `docs/lumen/CONTRATO-SYNC.md` (F12-01).
@@ -40,6 +39,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `main` `91feef7e` (2026-11-15, F15 integrada): `flutter test --no-pub --reporter compact` com 1.972 aprovados, 4 ignorados e 0 falhas; `flutter analyze --no-pub` com 170 issues (11 errors, todos em `tools/f610_probe`, sonda fora do app sem `pub get`; os outros 159 são a linha de base).
 
 ## Evidências recentes
+
+### F17-09: alerta com o app fechado (2026-11-28, D-085)
+
+- O dono escolheu a opção (a), só com o app aberto. A D-085 passou de `PROPOSED` para `ACCEPTED`, com o limite documentado: com o app fechado, não há alerta; o pedido retido aparece ao abrir o app enquanto não vencer, e até 60 s depois de o app sair da tela o alerta ainda chega.
+- Nenhum código mudou: o comportamento é o da F17-08 com o `Esp32MqttBootstrap`. Por isso os testes do app não rodaram de novo nesta mudança (os da F17-08 estão logo abaixo).
+- `NOT_RUN`: conferir no S25 que o pedido aparece ao abrir o app e que some ao vencer.
 
 ### F17-08: alerta de agentes do PC no celular (2026-11-28, D-083)
 
