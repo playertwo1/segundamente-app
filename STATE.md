@@ -1,6 +1,6 @@
 # STATE — ponto de retomada
 
-**Atualizado:** 2026-11-28 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.20 (2026-11-27, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`IN_PROGRESS`, D-082/D-084: F17-01 a F17-06 DONE; F17-08 REVIEW; F17-07 espera o broker do dono); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
+**Atualizado:** 2026-11-28 · **MVP:** pronto (portão da F5 fechado em 2026-11-05, `docs/reviews/F5.md`: AUDIT RESULT: PASS) · **Última release:** 1.0.21 (2026-11-28, GitHub Release) · **Fase ativa:** F17 — Placa por MQTT (`IN_PROGRESS`, D-082/D-084: F17-01 a F17-06 DONE; F17-08 REVIEW; F17-07 espera o broker do dono); F14 — Assistente ativo (`REVIEW`, `D-074`, falta S25); F12 — Sync com o Lumen (`IN_PROGRESS`, `D-066`)
 
 Este arquivo guarda só o estado atual, a próxima ação e as evidências recentes. O estado de cada fase está no [ROADMAP](ROADMAP.md). Evidências antigas ficam em [docs/arquivadas/state/](docs/arquivadas/state/).
 
@@ -84,6 +84,12 @@ Este arquivo guarda só o estado atual, a próxima ação e as evidências recen
 - `aapt dump permissions` no APK → 27 permissões, 0 com `BLUETOOTH`.
 - Restam referências a `esp32_ble` só nas chaves de legado limpas pelo bootstrap e na preferência `esp32_ble_allowed_apps`, mantida para preservar a escolha de apps.
 - `NOT_RUN`: tudo com broker real, placa física e S25. Isso inclui conexão TLS, LWT, notificação real com o app aberto e fechado, convergência com o Lumen, revogação, leitura do QR pela câmera e logs sem segredo no aparelho. Todos os testes usam transporte falso. Nenhuma release foi publicada.
+
+### Release 1.0.21: placa por MQTT (F17) (2026-11-28)
+
+- Pedido do dono ("Lançar a 1.0.21") para parear o celular com o broker real (EMQX) depois do Lumen 0.7.33. Entram F17-01 a F17-06 e F17-08 (D-082, D-083, D-084, D-085).
+- APK `segundamente_global_1.0.21_157.apk` (`129243427` bytes, SHA-256 `85f60309aa97a5bfec6b3e432ce7ea8b1ec4aff796084b353c5283570964c445`), `versionCode` `157` / `versionName` `1.0.21`. Certificado `216c29ff…ee05f`, igual ao da `1.0.20`. `flutter test` +2348 ~2, 0 falhas. Notas em [docs/releases/v1.0.21.md](docs/releases/v1.0.21.md).
+- `NOT_RUN`: F17-07 no S25.
 
 ### Release 1.0.20: correção do Conectar da placa BLE (2026-11-27)
 
